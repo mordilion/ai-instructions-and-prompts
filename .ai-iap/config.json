@@ -1,0 +1,355 @@
+{
+  "version": "1.0.0",
+  "tools": {
+    "cursor": {
+      "name": "Cursor",
+      "outputDir": ".cursor/rules",
+      "fileExtension": ".mdc",
+      "useFrontmatter": true,
+      "supportsGlobs": true,
+      "supportsSubfolders": true,
+      "recommended": true
+    },
+    "claude-cli": {
+      "name": "Claude CLI",
+      "outputFile": "CLAUDE.md",
+      "fileExtension": ".md",
+      "useFrontmatter": false,
+      "concatenate": true,
+      "recommended": true
+    },
+    "github-copilot": {
+      "name": "GitHub Copilot",
+      "outputFile": ".github/copilot-instructions.md",
+      "fileExtension": ".md",
+      "useFrontmatter": false,
+      "concatenate": true
+    },
+    "windsurf": {
+      "name": "Windsurf",
+      "outputFile": ".windsurfrules",
+      "fileExtension": "",
+      "useFrontmatter": false,
+      "concatenate": true
+    },
+    "aider": {
+      "name": "Aider",
+      "outputFile": "CONVENTIONS.md",
+      "fileExtension": ".md",
+      "useFrontmatter": false,
+      "concatenate": true
+    }
+  },
+  "languages": {
+    "general": {
+      "name": "General",
+      "globs": "*",
+      "alwaysApply": true,
+      "description": "General coding standards",
+      "files": ["persona", "architecture", "code-style"]
+    },
+    "dart": {
+      "name": "Dart/Flutter",
+      "globs": "*.dart",
+      "alwaysApply": false,
+      "description": "Dart and Flutter standards",
+      "files": ["architecture", "code-style"],
+      "frameworks": {
+        "flutter": {
+          "name": "Flutter",
+          "file": "flutter",
+          "category": "UI Framework",
+          "description": "Cross-platform UI framework",
+          "recommended": true,
+          "structures": {
+            "feature": {
+              "name": "Feature-First",
+              "file": "flutter-feature",
+              "description": "Organized by feature/module",
+              "recommended": true
+            },
+            "layer": {
+              "name": "Layer-First",
+              "file": "flutter-layer",
+              "description": "Organized by technical layer"
+            },
+            "clean": {
+              "name": "Clean Architecture",
+              "file": "flutter-clean",
+              "description": "Domain-centric with strict boundaries"
+            }
+          }
+        },
+        "bloc": {
+          "name": "BLoC",
+          "file": "bloc",
+          "category": "State Management",
+          "description": "Business Logic Component pattern (use with Flutter)",
+          "recommended": true
+        },
+        "riverpod": {
+          "name": "Riverpod",
+          "file": "riverpod",
+          "category": "State Management",
+          "description": "Reactive state management (use with Flutter)"
+        },
+        "getx": {
+          "name": "GetX",
+          "file": "getx",
+          "category": "State Management",
+          "description": "State, routing, and DI (use with Flutter)"
+        }
+      }
+    },
+    "dotnet": {
+      "name": ".NET/C#",
+      "globs": "*.cs,*.csproj,*.razor",
+      "alwaysApply": false,
+      "description": ".NET and C# standards",
+      "files": ["architecture", "code-style"],
+      "frameworks": {
+        "aspnetcore": {
+          "name": "ASP.NET Core",
+          "file": "aspnetcore",
+          "category": "Web Framework",
+          "description": "Web APIs and MVC applications",
+          "recommended": true,
+          "structures": {
+            "clean": {
+              "name": "Clean Architecture",
+              "file": "aspnetcore-clean",
+              "description": "Domain-centric with clear layer boundaries",
+              "recommended": true
+            },
+            "vertical": {
+              "name": "Vertical Slices",
+              "file": "aspnetcore-vertical",
+              "description": "Feature-based, each slice = full stack"
+            },
+            "traditional": {
+              "name": "Traditional/N-Tier",
+              "file": "aspnetcore-traditional",
+              "description": "Standard layered architecture"
+            }
+          }
+        },
+        "blazor": {
+          "name": "Blazor",
+          "file": "blazor",
+          "category": "UI Framework",
+          "description": "Web UI framework with C#"
+        },
+        "maui": {
+          "name": ".NET MAUI",
+          "file": "maui",
+          "category": "UI Framework",
+          "description": "Cross-platform native apps"
+        },
+        "efcore": {
+          "name": "Entity Framework Core",
+          "file": "efcore",
+          "category": "ORM",
+          "description": "ORM (use with any .NET project)",
+          "recommended": true
+        },
+        "dapper": {
+          "name": "Dapper",
+          "file": "dapper",
+          "category": "ORM",
+          "description": "Micro ORM (use with any .NET project)"
+        },
+        "mediatr": {
+          "name": "MediatR",
+          "file": "mediatr",
+          "category": "Pattern",
+          "description": "CQRS pattern (use with any .NET project)",
+          "recommended": true
+        }
+      }
+    },
+    "processes": {
+      "name": "Processes & Workflows",
+      "globs": "",
+      "alwaysApply": false,
+      "description": "Procedural workflow guides (not auto-applied)",
+      "files": ["dotnet-testing"]
+    },
+    "typescript": {
+      "name": "TypeScript",
+      "globs": "*.ts,*.tsx",
+      "alwaysApply": false,
+      "description": "TypeScript standards",
+      "files": ["architecture", "code-style"],
+      "frameworks": {
+        "react": {
+          "name": "React",
+          "file": "react",
+          "category": "UI Framework",
+          "description": "UI library for user interfaces",
+          "recommended": true,
+          "structures": {
+            "modular": {
+              "name": "Modular/Feature-based",
+              "file": "react-modular",
+              "description": "Organized by feature (auth/, users/)",
+              "recommended": true
+            },
+            "layered": {
+              "name": "Layered/Traditional",
+              "file": "react-layered",
+              "description": "Organized by type (components/, hooks/)"
+            },
+            "atomic": {
+              "name": "Atomic Design",
+              "file": "react-atomic",
+              "description": "Atoms, molecules, organisms, templates"
+            }
+          }
+        },
+        "nextjs": {
+          "name": "Next.js",
+          "file": "nextjs",
+          "category": "Full-Stack Framework",
+          "description": "React framework with SSR/SSG",
+          "recommended": true
+        },
+        "vue": {
+          "name": "Vue.js",
+          "file": "vue",
+          "category": "UI Framework",
+          "description": "Progressive frontend framework"
+        },
+        "svelte": {
+          "name": "Svelte/SvelteKit",
+          "file": "svelte",
+          "category": "Full-Stack Framework",
+          "description": "Compiler-based framework"
+        },
+        "angular": {
+          "name": "Angular",
+          "file": "angular",
+          "category": "UI Framework",
+          "description": "Full-featured frontend framework",
+          "structures": {
+            "modular": {
+              "name": "Modular/NgModule",
+              "file": "angular-modular",
+              "description": "Feature modules with lazy loading"
+            },
+            "standalone": {
+              "name": "Standalone Components",
+              "file": "angular-standalone",
+              "description": "Angular 14+ without NgModules",
+              "recommended": true
+            }
+          }
+        },
+        "nestjs": {
+          "name": "NestJS",
+          "file": "nestjs",
+          "category": "Backend Framework",
+          "description": "Backend framework for Node.js",
+          "recommended": true,
+          "structures": {
+            "modular": {
+              "name": "Modular/Domain",
+              "file": "nestjs-modular",
+              "description": "Domain-driven module organization",
+              "recommended": true
+            },
+            "layered": {
+              "name": "Layered/Flat",
+              "file": "nestjs-layered",
+              "description": "Flat structure by technical layer"
+            }
+          }
+        },
+        "express": {
+          "name": "Express.js",
+          "file": "express",
+          "category": "Backend Framework",
+          "description": "Minimalist web framework"
+        },
+        "prisma": {
+          "name": "Prisma",
+          "file": "prisma",
+          "category": "ORM",
+          "description": "Type-safe ORM (use with any TS backend)",
+          "recommended": true
+        }
+      }
+    },
+    "php": {
+      "name": "PHP",
+      "globs": "*.php",
+      "alwaysApply": false,
+      "description": "PHP standards",
+      "files": ["architecture", "code-style"],
+      "frameworks": {
+        "laravel": {
+          "name": "Laravel",
+          "file": "laravel",
+          "category": "Full-Stack Framework",
+          "description": "Full-stack PHP framework (includes Eloquent ORM)",
+          "recommended": true,
+          "structures": {
+            "modular": {
+              "name": "Modular",
+              "file": "laravel-modular",
+              "description": "Domain modules with service providers",
+              "recommended": true
+            },
+            "traditional": {
+              "name": "Traditional",
+              "file": "laravel-traditional",
+              "description": "Standard Laravel conventions"
+            },
+            "ddd": {
+              "name": "Domain-Driven Design",
+              "file": "laravel-ddd",
+              "description": "DDD with actions and DTOs"
+            }
+          }
+        },
+        "symfony": {
+          "name": "Symfony",
+          "file": "symfony",
+          "category": "Full-Stack Framework",
+          "description": "Enterprise PHP framework",
+          "recommended": true
+        },
+        "slim": {
+          "name": "Slim",
+          "file": "slim",
+          "category": "Micro Framework",
+          "description": "PHP micro-framework (add Doctrine for ORM)"
+        },
+        "wordpress": {
+          "name": "WordPress",
+          "file": "wordpress",
+          "category": "CMS",
+          "description": "Theme and plugin development"
+        },
+        "doctrine": {
+          "name": "Doctrine",
+          "file": "doctrine",
+          "category": "ORM",
+          "description": "ORM (use with Symfony, Slim, Laminas, or standalone)",
+          "recommended": true
+        },
+        "laminas-mvc": {
+          "name": "Laminas MVC",
+          "file": "laminas-mvc",
+          "category": "Full-Stack Framework",
+          "description": "Enterprise MVC framework (successor to Zend)"
+        },
+        "laminas-mezzio": {
+          "name": "Laminas Mezzio",
+          "file": "laminas-mezzio",
+          "category": "Micro Framework",
+          "description": "PSR-15 middleware framework"
+        }
+      }
+    }
+  }
+}
