@@ -68,12 +68,114 @@ check_dependencies() {
 }
 
 # ============================================================================
+# Input Validation
+# ============================================================================
+
+validate_selection() {
+    local prompt="$1"
+    local max_value="$2"
+    local allow_skip="${3:-false}"
+    local -n result_ref="$4"
+    
+    while true; do
+        read -rp "$prompt: " input
+        
+        result_ref=()
+        local is_valid=true
+        
+        # Check for 'all'
+        if [[ "$input" == "a" || "$input" == "A" ]]; then
+            return 0  # Caller should handle 'all' case
+        fi
+        
+        # Check for 'skip' (if allowed)
+        if [[ ("$input" == "s" || "$input" == "S") && "$allow_skip" == "true" ]]; then
+            return 0  # Return empty array for skip
+        fi
+        
+        # Check for empty input
+        if [[ -z "$input" ]]; then
+            echo ""
+            print_error "No selection made."
+            local skip_msg=""
+            [[ "$allow_skip" == "true" ]] && skip_msg=", 's' to skip,"
+            echo -e "${YELLOW}Please enter at least one number$skip_msg or 'a' for all.${NC}"
+            echo ""
+            continue
+        fi
+        
+        # Validate each number
+        for num in $input; do
+            # Check if it's a number
+            if ! [[ "$num" =~ ^[0-9]+$ ]]; then
+                echo ""
+                print_error "Invalid input: '$num'"
+                local skip_msg=""
+                [[ "$allow_skip" == "true" ]] && skip_msg=", 's' to skip,"
+                echo -e "${YELLOW}Please enter numbers only (e.g., 1 2 3)$skip_msg or 'a' for all.${NC}"
+                echo ""
+                is_valid=false
+                break
+            fi
+            
+            # Check if number is in range
+            if [[ $num -lt 1 || $num -gt $max_value ]]; then
+                echo ""
+                print_error "Invalid choice: $num"
+                echo -e "${YELLOW}Please enter a number between 1 and $max_value.${NC}"
+                echo ""
+                is_valid=false
+                break
+            fi
+            
+            result_ref+=("$num")
+        done
+        
+        # Break if valid and has selections
+        if [[ "$is_valid" == "true" && ${#result_ref[@]} -gt 0 ]]; then
+            return 0
+        elif [[ "$is_valid" == "true" && ${#result_ref[@]} -eq 0 ]]; then
+            echo ""
+            print_error "No valid items selected."
+            echo -e "${YELLOW}Please enter at least one valid number.${NC}"
+            echo ""
+        fi
+    done
+}
+
+# ============================================================================
 # Configuration Loading
 # ============================================================================
 
 load_config() {
     if [[ ! -f "$CONFIG_FILE" ]]; then
-        die "Config file not found: $CONFIG_FILE"
+        print_error "Config file not found: $CONFIG_FILE"
+        echo ""
+        echo -e "${YELLOW}This usually means you're running the script from the wrong directory.${NC}"
+        echo ""
+        echo -e "${CYAN}Solution:${NC}"
+        echo -e "  ${NC}1. Navigate to your project root directory${NC}"
+        echo -e "  ${NC}2. Run: cd \"$PROJECT_ROOT\"${NC}"
+        echo -e "  ${NC}3. Then run: ./.ai-iap/setup.sh${NC}"
+        echo ""
+        exit 1
+    fi
+    
+    # Validate JSON
+    if ! jq empty "$CONFIG_FILE" 2>/dev/null; then
+        print_error "Failed to parse config file: $CONFIG_FILE"
+        echo ""
+        echo -e "${YELLOW}The config.json file exists but contains invalid JSON.${NC}"
+        echo ""
+        echo -e "${CYAN}Solution:${NC}"
+        echo -e "  ${NC}1. Validate JSON syntax: jq empty \"$CONFIG_FILE\"${NC}"
+        echo -e "  ${NC}2. Check for common issues:${NC}"
+        echo -e "     ${NC}- Missing or extra commas${NC}"
+        echo -e "     ${NC}- Unmatched brackets/braces${NC}"
+        echo -e "     ${NC}- Missing quotes around strings${NC}"
+        echo -e "  ${NC}3. Or restore from git: git checkout $CONFIG_FILE${NC}"
+        echo ""
+        exit 1
     fi
 }
 
@@ -175,20 +277,57 @@ select_tools_simple() {
     echo "  a. All tools"
     echo ""
     
-    read -rp "Enter choices (e.g., 1 3 or 'a' for all): " input
-    
     SELECTED_TOOLS=()
     
-    if [[ "$input" == "a" || "$input" == "A" ]]; then
-        SELECTED_TOOLS=("${tool_keys[@]}")
-    else
+    while true; do
+        read -rp "Enter choices (e.g., 1 3 or 'a' for all): " input
+        
+        if [[ "$input" == "a" || "$input" == "A" ]]; then
+            SELECTED_TOOLS=("${tool_keys[@]}")
+            break
+        elif [[ -z "$input" ]]; then
+            echo ""
+            print_error "No tools selected."
+            echo -e "${YELLOW}Please enter at least one tool number (e.g., 1) or 'a' for all.${NC}"
+            echo ""
+            continue
+        fi
+        
+        local is_valid=true
+        local temp_tools=()
+        
         for num in $input; do
-            local idx=$((num - 1))
-            if [[ $idx -ge 0 && $idx -lt ${#tool_keys[@]} ]]; then
-                SELECTED_TOOLS+=("${tool_keys[$idx]}")
+            if ! [[ "$num" =~ ^[0-9]+$ ]]; then
+                echo ""
+                print_error "Invalid input: '$num'"
+                echo -e "${YELLOW}Please enter numbers only (e.g., 1 2 3) or 'a' for all.${NC}"
+                echo ""
+                is_valid=false
+                break
             fi
+            
+            local idx=$((num - 1))
+            if [[ $idx -lt 0 || $idx -ge ${#tool_keys[@]} ]]; then
+                echo ""
+                print_error "Invalid choice: $num"
+                echo -e "${YELLOW}Please enter a number between 1 and ${#tool_keys[@]}.${NC}"
+                echo ""
+                is_valid=false
+                break
+            fi
+            temp_tools+=("${tool_keys[$idx]}")
         done
-    fi
+        
+        if [[ "$is_valid" == "true" && ${#temp_tools[@]} -gt 0 ]]; then
+            SELECTED_TOOLS=("${temp_tools[@]}")
+            break
+        elif [[ "$is_valid" == "true" ]]; then
+            echo ""
+            print_error "No valid tools selected."
+            echo -e "${YELLOW}Please enter at least one valid number.${NC}"
+            echo ""
+        fi
+    done
 }
 
 select_languages_simple() {

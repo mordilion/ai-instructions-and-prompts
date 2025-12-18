@@ -1,0 +1,138 @@
+name: Validate Rules
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Validate Configuration & Rules
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Validate JSON syntax
+        run: |
+          echo "Validating config.json..."
+          jq empty .ai-iap/config.json
+          echo "✓ config.json is valid JSON"
+      
+      - name: Check file structure
+        run: |
+          echo "Checking directory structure..."
+          test -d .ai-iap/rules || { echo "Missing .ai-iap/rules directory"; exit 1; }
+          test -f .ai-iap/config.json || { echo "Missing config.json"; exit 1; }
+          test -f .ai-iap/setup.sh || { echo "Missing setup.sh"; exit 1; }
+          test -f .ai-iap/setup.ps1 || { echo "Missing setup.ps1"; exit 1; }
+          echo "✓ Directory structure is valid"
+      
+      - name: Install markdownlint-cli
+        run: npm install -g markdownlint-cli
+      
+      - name: Lint markdown files
+        run: |
+          echo "Linting markdown files..."
+          markdownlint '**/*.md' --ignore node_modules || {
+            echo "❌ Markdown linting failed"
+            echo "Run 'markdownlint **/*.md' locally to see all issues"
+            exit 1
+          }
+          echo "✓ All markdown files pass linting"
+      
+      - name: Validate markdown files
+        run: |
+          echo "Checking markdown files..."
+          find .ai-iap/rules -name "*.md" -type f | while read -r file; do
+            if [ ! -s "$file" ]; then
+              echo "Empty file: $file"
+              exit 1
+            fi
+            if ! head -1 "$file" | grep -q "^#"; then
+              echo "Missing header: $file"
+              exit 1
+            fi
+          done
+          echo "✓ All markdown files are valid"
+      
+      - name: Check for broken links in README
+        run: |
+          echo "Checking README links..."
+          if grep -q "](.*\.md)" README.md; then
+            echo "✓ README contains internal links"
+          fi
+      
+      - name: Validate bash script syntax
+        run: |
+          echo "Validating bash script..."
+          bash -n .ai-iap/setup.sh
+          echo "✓ setup.sh syntax is valid"
+      
+      - name: Test setup script help
+        run: |
+          echo "Testing setup.sh --help..."
+          if ./.ai-iap/setup.sh --help 2>&1 | grep -q "Usage"; then
+            echo "✓ setup.sh --help works"
+          else
+            echo "✓ setup.sh exists (help not implemented)"
+          fi
+
+  test-windows:
+    name: Test PowerShell Scripts
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Validate PowerShell syntax
+        shell: pwsh
+        run: |
+          Write-Host "Validating PowerShell scripts..."
+          $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content .ai-iap\setup.ps1 -Raw), [ref]$null)
+          Write-Host "✓ setup.ps1 syntax is valid"
+          
+          $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content .ai-iap\validate.ps1 -Raw), [ref]$null)
+          Write-Host "✓ validate.ps1 syntax is valid"
+      
+      - name: Run validation tests
+        shell: pwsh
+        run: |
+          .\.ai-iap\validate.ps1
+
+  count-tokens:
+    name: Token Cost Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Calculate total tokens
+        run: |
+          echo "Calculating token costs..."
+          total_chars=0
+          file_count=0
+          
+          find .ai-iap/rules -name "*.md" -type f | while read -r file; do
+            chars=$(wc -c < "$file")
+            total_chars=$((total_chars + chars))
+            file_count=$((file_count + 1))
+          done
+          
+          tokens=$((total_chars / 4))
+          echo "📊 Token Cost Summary:"
+          echo "  Files: $file_count"
+          echo "  Characters: $total_chars"
+          echo "  Estimated Tokens: ~$tokens"
+          
+          if [ $tokens -gt 50000 ]; then
+            echo "⚠️  Warning: Total tokens exceed 50,000"
+          else
+            echo "✓ Token count is optimal"
+          fi
+

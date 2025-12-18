@@ -29,7 +29,7 @@ Your Rules (one source) → Setup Script → All AI Tools Configured
 ## ✨ Features
 
 - **🔧 Multi-Tool Support** – Cursor, Claude CLI, GitHub Copilot, Windsurf, Aider
-- **🌍 Multi-Language** – Dart/Flutter, .NET/C#, TypeScript, PHP
+- **🌍 Multi-Language** – JavaScript, TypeScript, Dart/Flutter, .NET/C#, PHP
 - **📦 Framework-Specific** – React, Next.js, Laravel, ASP.NET Core, and 20+ more
 - **🏗️ Structure Templates** – Clean Architecture, Vertical Slices, Feature-First, and more
 - **⚡ Interactive Setup** – Wizard guides you through configuration
@@ -93,6 +93,27 @@ That's it! Your AI tools are now configured with consistent coding standards.
 
 ## 🌐 Supported Languages & Frameworks
 
+### JavaScript (Browser)
+| Category | Frameworks |
+|----------|------------|
+| UI Framework | React ⭐, Vue.js, Preact |
+| Full-Stack | Svelte/SvelteKit |
+| Lightweight | Alpine.js |
+| Legacy | jQuery |
+
+### TypeScript (Browser)
+| Category | Frameworks |
+|----------|------------|
+| UI Framework | React ⭐, Vue.js, Angular |
+| Full-Stack | Next.js ⭐, Svelte/SvelteKit |
+| Backend | NestJS ⭐ (TypeScript-first) |
+| ORM | Prisma ⭐ |
+
+### Node.js (JS or TS)
+| Category | Frameworks |
+|----------|------------|
+| Backend | Express.js ⭐, Fastify, Koa, Hapi |
+
 ### Dart/Flutter
 | Category | Frameworks |
 |----------|------------|
@@ -106,14 +127,6 @@ That's it! Your AI tools are now configured with consistent coding standards.
 | UI Framework | Blazor, .NET MAUI |
 | ORM | Entity Framework Core ⭐, Dapper |
 | Pattern | MediatR ⭐ |
-
-### TypeScript
-| Category | Frameworks |
-|----------|------------|
-| UI Framework | React ⭐, Vue.js, Angular |
-| Full-Stack | Next.js ⭐, Svelte/SvelteKit |
-| Backend | NestJS ⭐, Express.js |
-| ORM | Prisma ⭐ |
 
 ### PHP
 | Category | Frameworks |
@@ -134,7 +147,7 @@ For supported frameworks, choose how you want to organize your code:
 | Framework | Available Structures |
 |-----------|---------------------|
 | **Flutter** | Feature-First ⭐, Layer-First, Clean Architecture |
-| **React** | Modular ⭐, Layered, Atomic Design |
+| **React (JS/TS)** | Modular ⭐, Layered, Atomic Design |
 | **Angular** | Modular, Standalone ⭐ |
 | **NestJS** | Modular ⭐, Layered |
 | **ASP.NET Core** | Clean Architecture ⭐, Vertical Slices, N-Tier |
@@ -151,9 +164,11 @@ For supported frameworks, choose how you want to organize your code:
 │   │   ├── persona.md          # AI behavior & personality
 │   │   ├── architecture.md     # Code structure guidelines
 │   │   └── code-style.md       # Coding conventions
+│   ├── javascript/             # JavaScript-specific rules
+│   ├── typescript/             # TypeScript-specific rules
+│   ├── nodejs/                 # Node.js backend (shared JS/TS)
 │   ├── dart/                   # Dart-specific rules
 │   ├── dotnet/                 # .NET-specific rules
-│   ├── typescript/             # TypeScript-specific rules
 │   └── php/                    # PHP-specific rules
 ├── processes/                  # Step-by-step workflow guides
 ├── config.json                 # Tool & language definitions
@@ -192,6 +207,44 @@ TypeScript:  React + Prisma
 PHP:         Symfony + Doctrine
              Laravel (includes Eloquent)
 ```
+
+---
+
+## 📊 Token Cost Analysis
+
+Understanding how many tokens your rule selection consumes helps optimize AI context window usage.
+
+### Total Available Tokens by Language
+
+| Language | Base | Frameworks | Structures | Total |
+|----------|------|------------|------------|-------|
+| **General** (always loaded) | 1,075 | – | – | **1,075** |
+| **JavaScript** | 1,012 | 4,596 | 1,162 | **6,770** |
+| **TypeScript** | 852 | 6,729 | 3,227 | **10,808** |
+| **Node.js** | – | 2,879 | – | **2,879** |
+| **Dart** | 823 | 3,535 | 1,595 | **5,953** |
+| **.NET** | 844 | 5,008 | 1,356 | **7,208** |
+| **PHP** | 860 | 5,158 | 1,553 | **7,571** |
+| **Grand Total** | | | | **~42,000** |
+
+### Typical Selection Examples
+
+| Stack | Components | Tokens |
+|-------|------------|--------|
+| **React (TS)** | General + TypeScript + React + Modular | ~3,070 |
+| **React (JS) + Express** | General + JavaScript + React + Node.js Express | ~3,770 |
+| **Next.js + Prisma** | General + TypeScript + Next.js + Prisma | ~4,150 |
+| **.NET Full Stack** | General + .NET + ASP.NET Core + EF Core + MediatR + Clean | ~4,465 |
+| **Laravel + Doctrine** | General + PHP + Laravel + Doctrine + DDD | ~3,960 |
+| **Flutter + BLoC** | General + Dart + Flutter + BLoC + Feature-First | ~3,510 |
+
+> **Note**: Token estimates based on ~4 characters per token. Actual usage may vary by AI tool.
+
+### Cost Optimization Tips
+
+- **Select only what you need** – Don't include unused frameworks
+- **Choose one structure** – Pick the best fit, not all options
+- **Node.js is shared** – Using Express with both JS/TS adds it only once
 
 ---
 
@@ -270,6 +323,28 @@ Commit the `.ai-iap/` folder. Each team member runs setup after cloning.
 | **macOS** | `jq` – Install with `brew install jq` |
 | **Linux** | `jq` – Install with `apt install jq` or `yum install jq` |
 
+**Having issues?** See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for common problems and solutions.
+
+---
+
+## 🔍 Quality Assurance
+
+This project includes comprehensive validation and testing:
+
+- **Validation Scripts**: `.ai-iap/validate.ps1` (Windows) and `.ai-iap/validate.sh` (Linux/macOS)
+- **CI/CD Pipeline**: GitHub Actions workflow validates every commit
+- **Expert Analysis**: See [EXPERT_ANALYSIS.md](EXPERT_ANALYSIS.md) for detailed review
+- **JSON Schema**: `config.schema.json` validates configuration structure
+
+**Run validation locally**:
+```bash
+# Windows
+.\.ai-iap\validate.ps1
+
+# macOS/Linux
+./.ai-iap/validate.sh
+```
+
 ---
 
 ## 🤝 Contributing
@@ -282,6 +357,11 @@ Contributions are welcome! Here's how you can help:
 - **Fix bugs** – Issues with setup scripts or configurations
 
 Please read the existing rules to understand the style and format before contributing.
+
+**Before submitting**:
+1. Run validation: `.ai-iap/validate.ps1` or `.ai-iap/validate.sh`
+2. Ensure all tests pass
+3. Update token cost table if adding new rules
 
 ---
 

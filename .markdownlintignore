@@ -1,0 +1,15 @@
+# Markdown Lint Ignore
+
+# Node modules (if any)
+node_modules/
+
+# Generated AI tool configs
+.cursor/
+CLAUDE.md
+.github/copilot-instructions.md
+.windsurfrules
+CONVENTIONS.md
+
+# Git
+.git/
+

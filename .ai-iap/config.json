@@ -85,19 +85,22 @@
           "file": "bloc",
           "category": "State Management",
           "description": "Business Logic Component pattern (use with Flutter)",
-          "recommended": true
+          "recommended": true,
+          "requires": ["flutter"]
         },
         "riverpod": {
           "name": "Riverpod",
           "file": "riverpod",
           "category": "State Management",
-          "description": "Reactive state management (use with Flutter)"
+          "description": "Reactive state management (use with Flutter)",
+          "requires": ["flutter"]
         },
         "getx": {
           "name": "GetX",
           "file": "getx",
           "category": "State Management",
-          "description": "State, routing, and DI (use with Flutter)"
+          "description": "State, routing, and DI (use with Flutter)",
+          "requires": ["flutter"]
         }
       }
     },
@@ -174,6 +177,70 @@
       "description": "Procedural workflow guides (not auto-applied)",
       "files": ["dotnet-testing"]
     },
+    "javascript": {
+      "name": "JavaScript",
+      "globs": "*.js,*.jsx,*.mjs,*.cjs",
+      "alwaysApply": false,
+      "description": "JavaScript standards (browser & Node.js)",
+      "files": ["architecture", "code-style"],
+      "frameworks": {
+        "react": {
+          "name": "React",
+          "file": "react",
+          "category": "UI Framework",
+          "description": "UI library with PropTypes",
+          "recommended": true,
+          "structures": {
+            "modular": {
+              "name": "Modular/Feature-based",
+              "file": "react-modular",
+              "description": "Organized by feature (auth/, users/)",
+              "recommended": true
+            },
+            "layered": {
+              "name": "Layered/Traditional",
+              "file": "react-layered",
+              "description": "Organized by type (components/, hooks/)"
+            },
+            "atomic": {
+              "name": "Atomic Design",
+              "file": "react-atomic",
+              "description": "Atoms, molecules, organisms, templates"
+            }
+          }
+        },
+        "vue": {
+          "name": "Vue.js",
+          "file": "vue",
+          "category": "UI Framework",
+          "description": "Progressive frontend framework"
+        },
+        "svelte": {
+          "name": "Svelte/SvelteKit",
+          "file": "svelte",
+          "category": "Full-Stack Framework",
+          "description": "Compiler-based framework"
+        },
+        "alpine": {
+          "name": "Alpine.js",
+          "file": "alpine",
+          "category": "Lightweight",
+          "description": "Minimal framework for sprinkles of interactivity"
+        },
+        "preact": {
+          "name": "Preact",
+          "file": "preact",
+          "category": "UI Framework",
+          "description": "Lightweight (3kB) React alternative"
+        },
+        "jquery": {
+          "name": "jQuery",
+          "file": "jquery",
+          "category": "Legacy",
+          "description": "DOM manipulation (consider modern alternatives)"
+        }
+      }
+    },
     "typescript": {
       "name": "TypeScript",
       "globs": "*.ts,*.tsx",
@@ -248,7 +315,7 @@
           "name": "NestJS",
           "file": "nestjs",
           "category": "Backend Framework",
-          "description": "Backend framework for Node.js",
+          "description": "Backend framework for Node.js (TypeScript-first)",
           "recommended": true,
           "structures": {
             "modular": {
@@ -264,18 +331,46 @@
             }
           }
         },
-        "express": {
-          "name": "Express.js",
-          "file": "express",
-          "category": "Backend Framework",
-          "description": "Minimalist web framework"
-        },
         "prisma": {
           "name": "Prisma",
           "file": "prisma",
           "category": "ORM",
           "description": "Type-safe ORM (use with any TS backend)",
           "recommended": true
+        }
+      }
+    },
+    "nodejs": {
+      "name": "Node.js",
+      "globs": "*.js,*.ts,*.mjs,*.cjs",
+      "alwaysApply": false,
+      "description": "Node.js backend frameworks (works with JS or TS)",
+      "files": [],
+      "frameworks": {
+        "express": {
+          "name": "Express.js",
+          "file": "express",
+          "category": "Backend Framework",
+          "description": "Minimalist web framework",
+          "recommended": true
+        },
+        "fastify": {
+          "name": "Fastify",
+          "file": "fastify",
+          "category": "Backend Framework",
+          "description": "Fast, low-overhead framework with schema validation"
+        },
+        "koa": {
+          "name": "Koa",
+          "file": "koa",
+          "category": "Backend Framework",
+          "description": "Next-gen framework by Express team"
+        },
+        "hapi": {
+          "name": "Hapi",
+          "file": "hapi",
+          "category": "Backend Framework",
+          "description": "Enterprise-grade framework with Joi validation"
         }
       }
     },

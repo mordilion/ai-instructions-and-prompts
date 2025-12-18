@@ -62,16 +62,115 @@ function Write-InfoMessage {
 
 function Get-Configuration {
     if (-not (Test-Path $Script:ConfigFile)) {
-        throw "Config file not found: $Script:ConfigFile"
+        Write-ErrorMessage "Config file not found: $Script:ConfigFile"
+        Write-Host ""
+        Write-Host "This usually means you're running the script from the wrong directory." -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "Solution:" -ForegroundColor Cyan
+        Write-Host "  1. Navigate to your project root directory" -ForegroundColor White
+        Write-Host "  2. Run: cd `"$Script:ProjectRoot`"" -ForegroundColor White
+        Write-Host "  3. Then run: .\`".ai-iap\setup.ps1`"" -ForegroundColor White
+        Write-Host ""
+        exit 1
     }
     
-    $config = Get-Content $Script:ConfigFile -Raw | ConvertFrom-Json
-    return $config
+    try {
+        $config = Get-Content $Script:ConfigFile -Raw | ConvertFrom-Json
+        return $config
+    } catch {
+        Write-ErrorMessage "Failed to parse config file: $Script:ConfigFile"
+        Write-Host ""
+        Write-Host "The config.json file exists but contains invalid JSON." -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "Solution:" -ForegroundColor Cyan
+        Write-Host "  1. Validate JSON syntax: jq empty `"$Script:ConfigFile`"" -ForegroundColor White
+        Write-Host "  2. Check for common issues:" -ForegroundColor White
+        Write-Host "     - Missing or extra commas" -ForegroundColor White
+        Write-Host "     - Unmatched brackets/braces" -ForegroundColor White
+        Write-Host "     - Missing quotes around strings" -ForegroundColor White
+        Write-Host "  3. Or restore from git: git checkout $Script:ConfigFile" -ForegroundColor White
+        Write-Host ""
+        Write-Host "Error details: $($_.Exception.Message)" -ForegroundColor DarkGray
+        Write-Host ""
+        exit 1
+    }
 }
 
 # ============================================================================
 # Selection UI
 # ============================================================================
+
+function Get-ValidatedSelection {
+    param(
+        [string]$Prompt,
+        [array]$Options,
+        [int]$MaxValue,
+        [bool]$AllowEmpty = $false,
+        [bool]$AllowSkip = $false
+    )
+    
+    while ($true) {
+        $input = Read-Host $Prompt
+        
+        $selected = @()
+        $isValid = $true
+        
+        if ($input -eq 'a' -or $input -eq 'A') {
+            $selected = $Options
+            break
+        } elseif (($input -eq 's' -or $input -eq 'S') -and $AllowSkip) {
+            # Return empty array for skip
+            break
+        } elseif ([string]::IsNullOrWhiteSpace($input)) {
+            if ($AllowEmpty -or $AllowSkip) {
+                break
+            }
+            Write-Host ""
+            Write-ErrorMessage "No selection made."
+            $skipMsg = if ($AllowSkip) { ", 's' to skip," } else { "" }
+            Write-Host "Please enter at least one number$skipMsg or 'a' for all." -ForegroundColor Yellow
+            Write-Host ""
+            continue
+        } else {
+            $choices = $input -split '\s+' | Where-Object { $_ -ne '' }
+            foreach ($num in $choices) {
+                if ($num -notmatch '^\d+$') {
+                    Write-Host ""
+                    Write-ErrorMessage "Invalid input: '$num'"
+                    $skipMsg = if ($AllowSkip) { ", 's' to skip," } else { "" }
+                    Write-Host "Please enter numbers only (e.g., 1 2 3)$skipMsg or 'a' for all." -ForegroundColor Yellow
+                    Write-Host ""
+                    $isValid = $false
+                    break
+                }
+                
+                $idx = [int]$num - 1
+                if ($idx -lt 0 -or $idx -ge $MaxValue) {
+                    Write-Host ""
+                    Write-ErrorMessage "Invalid choice: $num"
+                    Write-Host "Please enter a number between 1 and $MaxValue." -ForegroundColor Yellow
+                    Write-Host ""
+                    $isValid = $false
+                    break
+                }
+                $selected += $Options[$idx]
+            }
+            
+            if ($isValid -and $selected.Count -gt 0) {
+                break
+            } elseif ($isValid -and ($AllowEmpty -or $AllowSkip)) {
+                break
+            } elseif ($selected.Count -eq 0 -and $isValid) {
+                Write-Host ""
+                Write-ErrorMessage "No valid items selected."
+                Write-Host "Please enter at least one valid number." -ForegroundColor Yellow
+                Write-Host ""
+            }
+        }
+    }
+    
+    return $selected
+}
 
 function Select-Tools {
     param([PSCustomObject]$Config)
@@ -99,22 +198,11 @@ function Select-Tools {
     Write-Host "  a. All tools"
     Write-Host ""
     
-    $input = Read-Host "Enter choices (e.g., 1 3 or 'a' for all)"
-    
-    $selectedTools = @()
-    
-    if ($input -eq 'a' -or $input -eq 'A') {
-        $selectedTools = $toolKeys
-    }
-    else {
-        $choices = $input -split '\s+'
-        foreach ($num in $choices) {
-            $idx = [int]$num - 1
-            if ($idx -ge 0 -and $idx -lt $toolKeys.Count) {
-                $selectedTools += $toolKeys[$idx]
-            }
-        }
-    }
+    $selectedTools = Get-ValidatedSelection `
+        -Prompt "Enter choices (e.g., 1 3 or 'a' for all)" `
+        -Options $toolKeys `
+        -MaxValue $toolKeys.Count `
+        -AllowEmpty $false
     
     return $selectedTools
 }
@@ -150,22 +238,11 @@ function Select-Languages {
     Write-Host "  a. All languages"
     Write-Host ""
     
-    $input = Read-Host "Enter choices (e.g., 1 2 4 or 'a' for all)"
-    
-    $selectedLanguages = @()
-    
-    if ($input -eq 'a' -or $input -eq 'A') {
-        $selectedLanguages = $langKeys
-    }
-    else {
-        $choices = $input -split '\s+'
-        foreach ($num in $choices) {
-            $idx = [int]$num - 1
-            if ($idx -ge 0 -and $idx -lt $langKeys.Count) {
-                $selectedLanguages += $langKeys[$idx]
-            }
-        }
-    }
+    $selectedLanguages = Get-ValidatedSelection `
+        -Prompt "Enter choices (e.g., 1 2 4 or 'a' for all)" `
+        -Options $langKeys `
+        -MaxValue $langKeys.Count `
+        -AllowEmpty $false
     
     # Always include languages with alwaysApply: true
     foreach ($alwaysLang in $alwaysApplyLangs) {
@@ -238,25 +315,12 @@ function Select-Frameworks {
         Write-Host "  a. All frameworks"
         Write-Host ""
         
-        $input = Read-Host "Enter choices (e.g., 1 3 5 or 'a' for all, 's' to skip)"
-        
-        $langFrameworks = @()
-        
-        if ($input -eq 's' -or $input -eq 'S') {
-            # Skip - no frameworks for this language
-        }
-        elseif ($input -eq 'a' -or $input -eq 'A') {
-            $langFrameworks = $frameworkKeys
-        }
-        else {
-            $choices = $input -split '\s+'
-            foreach ($num in $choices) {
-                $idx = [int]$num - 1
-                if ($idx -ge 0 -and $idx -lt $frameworkKeys.Count) {
-                    $langFrameworks += $frameworkKeys[$idx]
-                }
-            }
-        }
+        $langFrameworks = Get-ValidatedSelection `
+            -Prompt "Enter choices (e.g., 1 3 5 or 'a' for all, 's' to skip)" `
+            -Options $frameworkKeys `
+            -MaxValue $frameworkKeys.Count `
+            -AllowEmpty $false `
+            -AllowSkip $true
         
         if ($langFrameworks.Count -gt 0) {
             $selectedFrameworks[$lang] = $langFrameworks

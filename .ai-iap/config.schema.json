@@ -1,0 +1,101 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AI Instructions & Prompts Configuration",
+  "description": "Schema for config.json - validates tools, languages, frameworks, and structures",
+  "type": "object",
+  "required": ["version", "tools", "languages"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version (e.g., 1.0.0)"
+    },
+    "tools": {
+      "type": "object",
+      "description": "AI coding assistant tools configuration",
+      "patternProperties": {
+        "^[a-z-]+$": {
+          "type": "object",
+          "required": ["name"],
+          "properties": {
+            "name": { "type": "string" },
+            "outputDir": { "type": "string" },
+            "outputFile": { "type": "string" },
+            "fileExtension": { "type": "string" },
+            "useFrontmatter": { "type": "boolean" },
+            "supportsGlobs": { "type": "boolean" },
+            "supportsSubfolders": { "type": "boolean" },
+            "concatenate": { "type": "boolean" },
+            "recommended": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "languages": {
+      "type": "object",
+      "description": "Programming languages and their frameworks",
+      "patternProperties": {
+        "^[a-z-]+$": {
+          "type": "object",
+          "required": ["name", "globs", "alwaysApply", "description", "files"],
+          "properties": {
+            "name": { "type": "string" },
+            "globs": { "type": "string" },
+            "alwaysApply": { "type": "boolean" },
+            "description": { "type": "string" },
+            "files": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "frameworks": {
+              "type": "object",
+              "patternProperties": {
+                "^[a-z-]+$": {
+                  "type": "object",
+                  "required": ["name", "file", "category", "description"],
+                  "properties": {
+                    "name": { "type": "string" },
+                    "file": { "type": "string" },
+                    "category": { "type": "string" },
+                    "description": { "type": "string" },
+                    "recommended": { "type": "boolean" },
+                    "requires": {
+                      "type": "array",
+                      "items": { "type": "string" },
+                      "description": "Array of framework keys this framework depends on"
+                    },
+                    "structures": {
+                      "type": "object",
+                      "patternProperties": {
+                        "^[a-z-]+$": {
+                          "type": "object",
+                          "required": ["name", "file", "description"],
+                          "properties": {
+                            "name": { "type": "string" },
+                            "file": { "type": "string" },
+                            "description": { "type": "string" },
+                            "recommended": { "type": "boolean" }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
+
