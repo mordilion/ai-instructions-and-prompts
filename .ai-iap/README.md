@@ -114,6 +114,14 @@ That's it! Your AI tools are now configured with consistent coding standards.
 |----------|------------|
 | Backend | Express.js ⭐, Fastify, Koa, Hapi |
 
+### Java
+| Category | Frameworks |
+|----------|------------|
+| Backend | Spring Boot ⭐ |
+| Mobile | Android ⭐ |
+| ORM | Hibernate/JPA ⭐ |
+| Testing | JUnit |
+
 ### Python
 | Category | Frameworks |
 |----------|------------|
@@ -163,6 +171,8 @@ For supported frameworks, choose how you want to organize your code:
 | **Laravel** | Modular ⭐, Traditional, DDD |
 | **Django** | Traditional ⭐, Modular, DDD |
 | **FastAPI** | Modular ⭐, Layered, Clean Architecture |
+| **Spring Boot** | Clean Architecture ⭐, Modular, Layered |
+| **Android** | MVVM ⭐, MVI, Clean Architecture |
 
 ---
 
@@ -178,6 +188,7 @@ For supported frameworks, choose how you want to organize your code:
 │   ├── javascript/             # JavaScript-specific rules
 │   ├── typescript/             # TypeScript-specific rules
 │   ├── nodejs/                 # Node.js backend (shared JS/TS)
+│   ├── java/                   # Java-specific rules
 │   ├── python/                 # Python-specific rules
 │   ├── dart/                   # Dart-specific rules
 │   ├── dotnet/                 # .NET-specific rules
@@ -234,11 +245,12 @@ Understanding how many tokens your rule selection consumes helps optimize AI con
 | **JavaScript** | 1,012 | 4,596 | 1,162 | **6,770** |
 | **TypeScript** | 852 | 6,729 | 3,227 | **10,808** |
 | **Node.js** | – | 2,879 | – | **2,879** |
+| **Java** | 1,662 | 10,011 | 4,910 | **16,583** |
 | **Python** | 1,746 | 9,686 | 10,060 | **21,492** |
 | **Dart** | 823 | 3,535 | 1,595 | **5,953** |
 | **.NET** | 844 | 5,008 | 1,356 | **7,208** |
 | **PHP** | 860 | 5,158 | 1,553 | **7,571** |
-| **Grand Total** | | | | **~63,800** |
+| **Grand Total** | | | | **~80,400** |
 
 ### Typical Selection Examples
 
@@ -247,6 +259,8 @@ Understanding how many tokens your rule selection consumes helps optimize AI con
 | **React (TS)** | General + TypeScript + React + Modular | ~3,070 |
 | **React (JS) + Express** | General + JavaScript + React + Node.js Express | ~3,770 |
 | **Next.js + Prisma** | General + TypeScript + Next.js + Prisma | ~4,150 |
+| **Spring Boot API** | General + Java + Spring Boot + Hibernate + Clean | ~5,390 |
+| **Android MVVM** | General + Java + Android + MVVM | ~3,740 |
 | **Django REST API** | General + Python + Django + SQLAlchemy + Traditional | ~4,326 |
 | **FastAPI + Pydantic** | General + Python + FastAPI + Pydantic + Modular | ~5,854 |
 | **.NET Full Stack** | General + .NET + ASP.NET Core + EF Core + MediatR + Clean | ~4,465 |

@@ -374,6 +374,78 @@
         }
       }
     },
+    "java": {
+      "name": "Java",
+      "globs": "*.java",
+      "alwaysApply": false,
+      "description": "Java standards",
+      "files": ["architecture", "code-style"],
+      "frameworks": {
+        "spring-boot": {
+          "name": "Spring Boot",
+          "file": "spring-boot",
+          "category": "Backend Framework",
+          "description": "Enterprise web framework with Spring ecosystem",
+          "recommended": true,
+          "structures": {
+            "clean": {
+              "name": "Clean Architecture",
+              "file": "spring-boot-clean",
+              "description": "Domain-centric with strict layer boundaries",
+              "recommended": true
+            },
+            "modular": {
+              "name": "Modular/Feature-based",
+              "file": "spring-boot-modular",
+              "description": "Package by feature/domain"
+            },
+            "layered": {
+              "name": "Traditional/Layered",
+              "file": "spring-boot-layered",
+              "description": "Standard N-tier architecture"
+            }
+          }
+        },
+        "android": {
+          "name": "Android",
+          "file": "android",
+          "category": "Mobile Framework",
+          "description": "Native Android app development",
+          "recommended": true,
+          "structures": {
+            "mvvm": {
+              "name": "MVVM",
+              "file": "android-mvvm",
+              "description": "Model-View-ViewModel pattern",
+              "recommended": true
+            },
+            "mvi": {
+              "name": "MVI",
+              "file": "android-mvi",
+              "description": "Model-View-Intent (unidirectional flow)"
+            },
+            "clean": {
+              "name": "Clean Architecture",
+              "file": "android-clean",
+              "description": "Domain-centric Android architecture"
+            }
+          }
+        },
+        "hibernate": {
+          "name": "Hibernate/JPA",
+          "file": "hibernate",
+          "category": "ORM",
+          "description": "Java Persistence API and Hibernate ORM",
+          "recommended": true
+        },
+        "junit": {
+          "name": "JUnit",
+          "file": "junit",
+          "category": "Testing",
+          "description": "Unit testing framework (JUnit 5)"
+        }
+      }
+    },
     "python": {
       "name": "Python",
       "globs": "*.py",
