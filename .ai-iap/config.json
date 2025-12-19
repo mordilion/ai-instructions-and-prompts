@@ -374,6 +374,85 @@
         }
       }
     },
+    "python": {
+      "name": "Python",
+      "globs": "*.py",
+      "alwaysApply": false,
+      "description": "Python standards",
+      "files": ["architecture", "code-style"],
+      "frameworks": {
+        "django": {
+          "name": "Django",
+          "file": "django",
+          "category": "Full-Stack Framework",
+          "description": "Full-stack web framework with ORM and admin",
+          "recommended": true,
+          "structures": {
+            "traditional": {
+              "name": "Traditional/Apps",
+              "file": "django-traditional",
+              "description": "Standard Django app structure",
+              "recommended": true
+            },
+            "modular": {
+              "name": "Modular/Services",
+              "file": "django-modular",
+              "description": "Service layer with repositories"
+            },
+            "ddd": {
+              "name": "Domain-Driven Design",
+              "file": "django-ddd",
+              "description": "DDD with domain/application/infrastructure layers"
+            }
+          }
+        },
+        "fastapi": {
+          "name": "FastAPI",
+          "file": "fastapi",
+          "category": "Backend Framework",
+          "description": "Modern async API framework with automatic docs",
+          "recommended": true,
+          "structures": {
+            "modular": {
+              "name": "Modular/Feature-based",
+              "file": "fastapi-modular",
+              "description": "Organized by domain module",
+              "recommended": true
+            },
+            "layered": {
+              "name": "Layered/Technical",
+              "file": "fastapi-layered",
+              "description": "Organized by technical layer (api/services/repos)"
+            },
+            "clean": {
+              "name": "Clean Architecture",
+              "file": "fastapi-clean",
+              "description": "Domain-centric with strict boundaries"
+            }
+          }
+        },
+        "flask": {
+          "name": "Flask",
+          "file": "flask",
+          "category": "Micro Framework",
+          "description": "Lightweight web framework with blueprints"
+        },
+        "sqlalchemy": {
+          "name": "SQLAlchemy",
+          "file": "sqlalchemy",
+          "category": "ORM",
+          "description": "SQL toolkit and ORM (use with any Python framework)",
+          "recommended": true
+        },
+        "pydantic": {
+          "name": "Pydantic",
+          "file": "pydantic",
+          "category": "Validation",
+          "description": "Data validation using Python type hints",
+          "recommended": true
+        }
+      }
+    },
     "php": {
       "name": "PHP",
       "globs": "*.php",
