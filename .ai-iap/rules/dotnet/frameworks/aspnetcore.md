@@ -1,6 +1,23 @@
 # ASP.NET Core Framework
 
-> **Scope**: Apply these rules when working with ASP.NET Core web APIs and MVC applications.
+> **Scope**: Apply these rules when working with ASP.NET Core web APIs and MVC applications
+> **Applies to**: *.cs files in ASP.NET Core projects
+> **Extends**: dotnet/architecture.md, dotnet/code-style.md
+> **Precedence**: Framework rules OVERRIDE C# rules for ASP.NET Core-specific patterns
+
+## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
+
+> **ALWAYS**: Use constructor injection (NOT property injection)
+> **ALWAYS**: Return ActionResult<T> for type-safe API responses
+> **ALWAYS**: Use DTOs for API contracts (NEVER expose entities)
+> **ALWAYS**: Use async/await for I/O operations
+> **ALWAYS**: Register services in layer-specific extension methods
+> 
+> **NEVER**: Use Singleton lifetime for DbContext (causes threading issues)
+> **NEVER**: Return entities from controllers (causes lazy loading errors)
+> **NEVER**: Put business logic in controllers (belongs in services)
+> **NEVER**: Use try-catch in controllers (use middleware for exceptions)
+> **NEVER**: Access database directly from controllers
 
 ## Overview
 
@@ -339,6 +356,196 @@ public async Task<ActionResult<List<UserDto>>> GetUsers()
         .ToListAsync();
 }
 ```
+
+## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
+
+### Mistake 1: Wrong DbContext Lifetime ⚠️ CRITICAL
+```csharp
+// ❌ WRONG - Singleton DbContext (CAUSES THREADING BUGS)
+services.AddSingleton<AppDbContext>();  // ← NOT THREAD-SAFE!
+// Problem: DbContext is NOT thread-safe, will crash under load
+
+// ❌ WRONG - Manual lifetime management
+services.AddTransient<AppDbContext>();  // ← Wrong lifetime
+
+// ✅ CORRECT - Scoped DbContext (REQUIRED)
+services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(connectionString));  // ← Scoped by default, one per request
+```
+**Why wrong**: DbContext not thread-safe, singleton causes concurrency bugs  
+**Why critical**: Production crashes under load, data corruption  
+**How to fix**: ALWAYS use AddDbContext (scoped by default)
+
+### Mistake 2: Exposing Entities from Controllers ⚠️ CRITICAL
+```csharp
+// ❌ WRONG - Returning entity (COMMON AI ERROR)
+[HttpGet]
+public async Task<List<User>> GetUsers() {
+    return await _context.Users.ToListAsync();  // ← Exposes entity!
+    // Problems: Lazy loading errors, circular refs, security risk
+}
+
+// ❌ WRONG - Accepting entity in request
+[HttpPost]
+public async Task<User> CreateUser(User user) {  // ← Entity as input
+    _context.Users.Add(user);
+    await _context.SaveChangesAsync();
+    return user;
+}
+
+// ✅ CORRECT - Use DTOs (REQUIRED)
+[HttpGet]
+public async Task<ActionResult<List<UserDto>>> GetUsers() {
+    return await _context.Users
+        .Select(u => new UserDto(u.Id, u.Name, u.Email))  // ← Map to DTO
+        .ToListAsync();
+}
+
+[HttpPost]
+public async Task<ActionResult<UserDto>> CreateUser(CreateUserRequest request) {
+    var user = await _userService.CreateAsync(request);  // ← Service handles mapping
+    return CreatedAtAction(nameof(GetUser), new { id = user.Id }, user);
+}
+```
+**Why wrong**: Lazy loading exceptions, exposes DB structure, security risk  
+**Why critical**: Most common ASP.NET Core mistake  
+**How to fix**: ALWAYS use DTOs for API contracts
+
+### Mistake 3: Business Logic in Controllers
+```csharp
+// ❌ WRONG - Business logic in controller (COMMON ERROR)
+[HttpPost]
+public async Task<IActionResult> CreateUser(CreateUserRequest req) {
+    // Validation in controller ← WRONG
+    if (string.IsNullOrEmpty(req.Email)) 
+        return BadRequest("Email required");
+    
+    // Business logic in controller ← WRONG
+    var user = new User {
+        Email = req.Email,
+        PasswordHash = BCrypt.HashPassword(req.Password),
+        CreatedAt = DateTime.UtcNow
+    };
+    
+    // Database access in controller ← WRONG
+    _context.Users.Add(user);
+    await _context.SaveChangesAsync();
+    
+    return Ok(user);  // ← And exposing entity!
+}
+
+// ✅ CORRECT - Thin controller (REQUIRED)
+[HttpPost]
+public async Task<ActionResult<UserDto>> CreateUser(CreateUserRequest req) {
+    var user = await _userService.CreateAsync(req);  // ← All logic in service
+    return CreatedAtAction(nameof(GetUser), new { id = user.Id }, user);
+}
+
+// Service handles all business logic
+public class UserService {
+    private readonly AppDbContext _context;
+    
+    public UserService(AppDbContext context) {
+        _context = context;
+    }
+    
+    public async Task<UserDto> CreateAsync(CreateUserRequest req) {
+        var user = new User {
+            Email = req.Email,
+            PasswordHash = BCrypt.HashPassword(req.Password),
+            CreatedAt = DateTime.UtcNow
+        };
+        
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+        
+        return new UserDto(user.Id, user.Name, user.Email);
+    }
+}
+```
+**Why wrong**: Violates separation of concerns, untestable, not reusable  
+**Why critical**: Controllers become bloated, code unmaintainable  
+**How to fix**: Controllers only validate input and call services
+
+### Mistake 4: Wrong Middleware Order
+```csharp
+// ❌ WRONG - Middleware in wrong order (CAUSES SECURITY ISSUES)
+app.UseAuthorization();  // ← Authorization BEFORE authentication!
+app.UseAuthentication();  // ← Too late, already authorized!
+app.UseExceptionHandler("/error");  // ← Exception handler should be FIRST
+
+// ✅ CORRECT - Proper middleware order (REQUIRED)
+app.UseExceptionHandler("/error");  // 1. Exception handling FIRST
+app.UseCors();  // 2. CORS before auth
+app.UseAuthentication();  // 3. Authentication before authorization
+app.UseAuthorization();  // 4. Authorization after authentication
+app.MapControllers();  // 5. Endpoints LAST
+```
+**Why wrong**: Security bypass, exceptions not caught, CORS issues  
+**Why critical**: Production security vulnerability  
+**How to fix**: Follow strict order - exception→CORS→auth→authz→endpoints
+
+### Mistake 5: Try-Catch in Controllers
+```csharp
+// ❌ WRONG - Try-catch in controller (REPEATED CODE)
+[HttpGet("{id}")]
+public async Task<IActionResult> GetUser(int id) {
+    try {
+        var user = await _userService.GetAsync(id);
+        return Ok(user);
+    } catch (NotFoundException) {
+        return NotFound();  // ← Repeated in EVERY action
+    } catch (Exception ex) {
+        return StatusCode(500, ex.Message);
+    }
+}
+
+// ✅ CORRECT - Global exception middleware (REQUIRED)
+// In Program.cs
+app.UseExceptionHandler(errorApp => {
+    errorApp.Run(async context => {
+        var exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+        
+        var problemDetails = exception switch {
+            NotFoundException => new ProblemDetails {
+                Status = 404,
+                Title = "Not Found",
+                Detail = exception.Message
+            },
+            _ => new ProblemDetails {
+                Status = 500,
+                Title = "Internal Server Error"
+            }
+        };
+        
+        context.Response.StatusCode = problemDetails.Status ?? 500;
+        await context.Response.WriteAsJsonAsync(problemDetails);
+    });
+});
+
+// Controller - clean, no try-catch needed
+[HttpGet("{id}")]
+public async Task<ActionResult<UserDto>> GetUser(int id) {
+    return await _userService.GetAsync(id);  // ← Exceptions handled by middleware
+}
+```
+**Why wrong**: Code duplication, inconsistent error responses  
+**Why critical**: Maintenance nightmare, error handling inconsistent  
+**How to fix**: Use global exception middleware, NO try-catch in controllers
+
+## AI Self-Check (Verify BEFORE generating ASP.NET Core code)
+
+Before generating any ASP.NET Core class, verify:
+- [ ] Constructor injection? (NOT property injection)
+- [ ] ActionResult<T> return type? (Type-safe responses)
+- [ ] Returns DTO? (NOT entity - entities forbidden in controllers)
+- [ ] Async/await for I/O? (All database/API calls must be async)
+- [ ] DbContext is scoped? (NEVER Singleton - not thread-safe)
+- [ ] Business logic in service? (NOT in controller)
+- [ ] Middleware in correct order? (Exception→CORS→Auth→Authz→Endpoints)
+- [ ] No try-catch in controller? (Use global exception middleware)
+
+**If ANY checkbox is unchecked, DO NOT generate code. Fix the issue first.**
 
 ## 7. Minimal APIs (Alternative)
 - Use for simple CRUD or microservices

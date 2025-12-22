@@ -1,6 +1,23 @@
 # Next.js Framework
 
-> **Scope**: Apply these rules when working with Next.js applications (App Router preferred).
+> **Scope**: Apply these rules when working with Next.js applications (App Router preferred)
+> **Applies to**: *.tsx files in Next.js projects (v13+)
+> **Extends**: typescript/frameworks/react.md
+> **Precedence**: Next.js rules OVERRIDE React rules for SSR/RSC patterns
+
+## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
+
+> **ALWAYS**: Use App Router (app/ directory) for new projects (Pages Router deprecated)
+> **ALWAYS**: Default to Server Components (only add 'use client' when needed)
+> **ALWAYS**: Use async/await in Server Components for data fetching
+> **ALWAYS**: Keep client components small and leaf-level
+> **ALWAYS**: Use Server Actions for mutations
+> 
+> **NEVER**: Use 'use client' unless component needs hooks/interactivity
+> **NEVER**: Fetch data in Client Components (use Server Components or Server Actions)
+> **NEVER**: Import Server Components into Client Components (breaks hydration)
+> **NEVER**: Use useEffect for data fetching (use Server Components instead)
+> **NEVER**: Mix Pages Router and App Router patterns
 
 ## Overview
 

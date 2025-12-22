@@ -1,5 +1,24 @@
 # FastAPI Framework
 
+> **Scope**: Apply these rules when working with FastAPI applications
+> **Applies to**: Python files in FastAPI projects
+> **Extends**: python/architecture.md, python/code-style.md
+> **Precedence**: Framework rules OVERRIDE Python rules for FastAPI-specific patterns
+
+## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
+
+> **ALWAYS**: Use async/await for all I/O operations (database, external APIs)
+> **ALWAYS**: Use Pydantic models for request/response validation
+> **ALWAYS**: Use dependency injection with Depends() for services
+> **ALWAYS**: Use type hints everywhere (FastAPI requires them)
+> **ALWAYS**: Return response_model in route decorators
+> 
+> **NEVER**: Return ORM models directly (use Pydantic schemas)
+> **NEVER**: Use sync functions for I/O (blocks event loop)
+> **NEVER**: Skip type hints (FastAPI can't generate docs without them)
+> **NEVER**: Put business logic in route handlers (belongs in services)
+> **NEVER**: Handle exceptions in routes (use exception handlers)
+
 ## Overview
 FastAPI: modern, high-performance Python web framework built on Starlette and Pydantic.
 Automatic OpenAPI (Swagger) documentation, data validation, and async support out of the box.
