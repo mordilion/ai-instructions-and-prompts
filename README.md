@@ -13,8 +13,8 @@ Define your coding standards once, generate configurations for **Cursor, Claude 
 ## ✨ Features
 
 - 🔧 **Multi-Tool** – One source, all AI tools configured
-- 🌍 **Multi-Language** – Java, Python, JavaScript, TypeScript, Dart/Flutter, .NET/C#, PHP, Node.js
-- 📦 **40+ Frameworks** – Spring Boot, Android, Django, FastAPI, React, Next.js, Laravel, ASP.NET Core
+- 🌍 **Multi-Language** – Kotlin, Java, Python, JavaScript, TypeScript, Dart/Flutter, .NET/C#, PHP, Node.js
+- 📦 **45+ Frameworks** – Spring Boot, Android, Ktor, Django, FastAPI, React, Next.js, Laravel, ASP.NET Core
 - 🏗️ **Structure Templates** – Clean Architecture, MVVM, MVI, Vertical Slices, Feature-First, DDD
 - ⚡ **Interactive Setup** – Wizard guides you through configuration
 

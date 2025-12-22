@@ -596,6 +596,92 @@
           "description": "PSR-15 middleware framework"
         }
       }
+    },
+    "kotlin": {
+      "name": "Kotlin",
+      "description": "Modern, expressive language for JVM, Android, and multiplatform",
+      "enabled": true,
+      "frameworks": {
+        "android": {
+          "name": "Android",
+          "file": "android",
+          "category": "Mobile Framework",
+          "description": "Official Android development with Kotlin",
+          "recommended": true,
+          "structures": {
+            "mvvm": {
+              "name": "MVVM",
+              "file": "android-mvvm",
+              "description": "Model-View-ViewModel pattern"
+            },
+            "mvi": {
+              "name": "MVI",
+              "file": "android-mvi",
+              "description": "Model-View-Intent (unidirectional data flow)"
+            },
+            "clean": {
+              "name": "Clean Architecture",
+              "file": "android-clean",
+              "description": "Clean Architecture with domain-data-presentation layers"
+            }
+          }
+        },
+        "spring-boot": {
+          "name": "Spring Boot",
+          "file": "spring-boot",
+          "category": "Backend Framework",
+          "description": "Enterprise-grade backend framework",
+          "recommended": true,
+          "structures": {
+            "clean": {
+              "name": "Clean Architecture",
+              "file": "spring-boot-clean",
+              "description": "Clean Architecture with domain-data-presentation layers"
+            },
+            "modular": {
+              "name": "Modular (Feature-First)",
+              "file": "spring-boot-modular",
+              "description": "Feature-based modular structure"
+            },
+            "layered": {
+              "name": "Layered (Traditional)",
+              "file": "spring-boot-layered",
+              "description": "Traditional layered architecture"
+            }
+          }
+        },
+        "ktor": {
+          "name": "Ktor",
+          "file": "ktor",
+          "category": "Backend Framework",
+          "description": "Kotlin-native asynchronous web framework",
+          "recommended": true,
+          "structures": {
+            "modular": {
+              "name": "Modular (Feature-First)",
+              "file": "ktor-modular",
+              "description": "Feature-based modular structure"
+            },
+            "layered": {
+              "name": "Layered (Traditional)",
+              "file": "ktor-layered",
+              "description": "Traditional layered architecture"
+            },
+            "clean": {
+              "name": "Clean Architecture",
+              "file": "ktor-clean",
+              "description": "Clean Architecture with domain-data-presentation layers"
+            }
+          }
+        },
+        "exposed": {
+          "name": "Exposed",
+          "file": "exposed",
+          "category": "ORM",
+          "description": "Kotlin SQL framework (DSL and DAO)",
+          "recommended": true
+        }
+      }
     }
   }
 }

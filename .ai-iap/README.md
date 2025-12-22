@@ -29,7 +29,7 @@ Your Rules (one source) → Setup Script → All AI Tools Configured
 ## ✨ Features
 
 - **🔧 Multi-Tool Support** – Cursor, Claude CLI, GitHub Copilot, Windsurf, Aider
-- **🌍 Multi-Language** – JavaScript, TypeScript, Dart/Flutter, .NET/C#, PHP
+- **🌍 Multi-Language** – Kotlin, JavaScript, TypeScript, Java, Python, Dart/Flutter, .NET/C#, PHP
 - **📦 Framework-Specific** – React, Next.js, Laravel, ASP.NET Core, and 20+ more
 - **🏗️ Structure Templates** – Clean Architecture, Vertical Slices, Feature-First, and more
 - **⚡ Interactive Setup** – Wizard guides you through configuration
@@ -122,6 +122,13 @@ That's it! Your AI tools are now configured with consistent coding standards.
 | ORM | Hibernate/JPA ⭐ |
 | Testing | JUnit |
 
+### Kotlin
+| Category | Frameworks |
+|----------|------------|
+| Mobile | Android ⭐ |
+| Backend | Spring Boot ⭐, Ktor ⭐ |
+| ORM | Exposed ⭐ |
+
 ### Python
 | Category | Frameworks |
 |----------|------------|
@@ -171,8 +178,11 @@ For supported frameworks, choose how you want to organize your code:
 | **Laravel** | Modular ⭐, Traditional, DDD |
 | **Django** | Traditional ⭐, Modular, DDD |
 | **FastAPI** | Modular ⭐, Layered, Clean Architecture |
-| **Spring Boot** | Clean Architecture ⭐, Modular, Layered |
-| **Android** | MVVM ⭐, MVI, Clean Architecture |
+| **Spring Boot (Java)** | Clean Architecture ⭐, Modular, Layered |
+| **Spring Boot (Kotlin)** | Clean Architecture ⭐, Modular, Layered |
+| **Android (Java)** | MVVM ⭐, MVI, Clean Architecture |
+| **Android (Kotlin)** | MVVM ⭐, MVI, Clean Architecture |
+| **Ktor** | Modular ⭐, Layered, Clean Architecture |
 
 ---
 
@@ -190,6 +200,7 @@ For supported frameworks, choose how you want to organize your code:
 │   ├── nodejs/                 # Node.js backend (shared JS/TS)
 │   ├── java/                   # Java-specific rules
 │   ├── python/                 # Python-specific rules
+│   ├── kotlin/                 # Kotlin-specific rules
 │   ├── dart/                   # Dart-specific rules
 │   ├── dotnet/                 # .NET-specific rules
 │   └── php/                    # PHP-specific rules
@@ -247,10 +258,11 @@ Understanding how many tokens your rule selection consumes helps optimize AI con
 | **Node.js** | – | 2,879 | – | **2,879** |
 | **Java** | 1,662 | 10,011 | 4,910 | **16,583** |
 | **Python** | 1,746 | 9,686 | 10,060 | **21,492** |
+| **Kotlin** | 2,671 | 16,354 | 25,815 | **44,840** |
 | **Dart** | 823 | 3,535 | 1,595 | **5,953** |
 | **.NET** | 844 | 5,008 | 1,356 | **7,208** |
 | **PHP** | 860 | 5,158 | 1,553 | **7,571** |
-| **Grand Total** | | | | **~80,400** |
+| **Grand Total** | | | | **~125,200** |
 
 ### Typical Selection Examples
 
@@ -259,8 +271,11 @@ Understanding how many tokens your rule selection consumes helps optimize AI con
 | **React (TS)** | General + TypeScript + React + Modular | ~3,070 |
 | **React (JS) + Express** | General + JavaScript + React + Node.js Express | ~3,770 |
 | **Next.js + Prisma** | General + TypeScript + Next.js + Prisma | ~4,150 |
-| **Spring Boot API** | General + Java + Spring Boot + Hibernate + Clean | ~5,390 |
-| **Android MVVM** | General + Java + Android + MVVM | ~3,740 |
+| **Spring Boot API (Java)** | General + Java + Spring Boot + Hibernate + Clean | ~5,390 |
+| **Android MVVM (Java)** | General + Java + Android + MVVM | ~3,740 |
+| **Spring Boot API (Kotlin)** | General + Kotlin + Spring Boot + Exposed + Clean | ~6,930 |
+| **Android MVVM (Kotlin)** | General + Kotlin + Android + MVVM | ~5,530 |
+| **Ktor + Exposed** | General + Kotlin + Ktor + Exposed + Modular | ~6,690 |
 | **Django REST API** | General + Python + Django + SQLAlchemy + Traditional | ~4,326 |
 | **FastAPI + Pydantic** | General + Python + FastAPI + Pydantic + Modular | ~5,854 |
 | **.NET Full Stack** | General + .NET + ASP.NET Core + EF Core + MediatR + Clean | ~4,465 |
