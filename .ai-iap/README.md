@@ -122,6 +122,14 @@ That's it! Your AI tools are now configured with consistent coding standards.
 | ORM | Hibernate/JPA ⭐ |
 | Testing | JUnit |
 
+### Swift
+| Category | Frameworks |
+|----------|------------|
+| Mobile | iOS (UIKit) ⭐, SwiftUI ⭐ |
+| Backend | Vapor ⭐ |
+| Persistence | Core Data ⭐ |
+| Reactive | Combine ⭐ |
+
 ### Kotlin
 | Category | Frameworks |
 |----------|------------|
@@ -178,6 +186,9 @@ For supported frameworks, choose how you want to organize your code:
 | **Laravel** | Modular ⭐, Traditional, DDD |
 | **Django** | Traditional ⭐, Modular, DDD |
 | **FastAPI** | Modular ⭐, Layered, Clean Architecture |
+| **iOS (UIKit)** | MVVM ⭐, MVI, Clean Architecture |
+| **SwiftUI** | MVVM ⭐, MVI, Clean Architecture |
+| **Vapor** | Modular ⭐, Layered, Clean Architecture |
 | **Spring Boot (Java)** | Clean Architecture ⭐, Modular, Layered |
 | **Spring Boot (Kotlin)** | Clean Architecture ⭐, Modular, Layered |
 | **Android (Java)** | MVVM ⭐, MVI, Clean Architecture |
@@ -198,9 +209,10 @@ For supported frameworks, choose how you want to organize your code:
 │   ├── javascript/             # JavaScript-specific rules
 │   ├── typescript/             # TypeScript-specific rules
 │   ├── nodejs/                 # Node.js backend (shared JS/TS)
+│   ├── swift/                  # Swift-specific rules
+│   ├── kotlin/                 # Kotlin-specific rules
 │   ├── java/                   # Java-specific rules
 │   ├── python/                 # Python-specific rules
-│   ├── kotlin/                 # Kotlin-specific rules
 │   ├── dart/                   # Dart-specific rules
 │   ├── dotnet/                 # .NET-specific rules
 │   └── php/                    # PHP-specific rules
@@ -259,10 +271,11 @@ Understanding how many tokens your rule selection consumes helps optimize AI con
 | **Java** | 1,662 | 10,011 | 4,910 | **16,583** |
 | **Python** | 1,746 | 9,686 | 10,060 | **21,492** |
 | **Kotlin** | 2,671 | 16,354 | 25,815 | **44,840** |
+| **Swift** | 4,015 | 16,862 | 3,885 | **24,762** |
 | **Dart** | 823 | 3,535 | 1,595 | **5,953** |
 | **.NET** | 844 | 5,008 | 1,356 | **7,208** |
 | **PHP** | 860 | 5,158 | 1,553 | **7,571** |
-| **Grand Total** | | | | **~125,200** |
+| **Grand Total** | | | | **~150,000** |
 
 ### Typical Selection Examples
 
@@ -273,6 +286,9 @@ Understanding how many tokens your rule selection consumes helps optimize AI con
 | **Next.js + Prisma** | General + TypeScript + Next.js + Prisma | ~4,150 |
 | **Spring Boot API (Java)** | General + Java + Spring Boot + Hibernate + Clean | ~5,390 |
 | **Android MVVM (Java)** | General + Java + Android + MVVM | ~3,740 |
+| **iOS MVVM (UIKit)** | General + Swift + iOS + Core Data + MVVM | ~5,810 |
+| **SwiftUI + Combine** | General + Swift + SwiftUI + Combine + MVVM | ~5,665 |
+| **Vapor API** | General + Swift + Vapor + Modular | ~5,235 |
 | **Spring Boot API (Kotlin)** | General + Kotlin + Spring Boot + Exposed + Clean | ~6,930 |
 | **Android MVVM (Kotlin)** | General + Kotlin + Android + MVVM | ~5,530 |
 | **Ktor + Exposed** | General + Kotlin + Ktor + Exposed + Modular | ~6,690 |

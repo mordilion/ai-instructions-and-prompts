@@ -682,6 +682,99 @@
           "recommended": true
         }
       }
+    },
+    "swift": {
+      "name": "Swift",
+      "description": "Apple's modern, type-safe language for iOS, macOS, and server-side development",
+      "enabled": true,
+      "frameworks": {
+        "ios": {
+          "name": "iOS (UIKit)",
+          "file": "ios",
+          "category": "Mobile Framework",
+          "description": "iOS development with UIKit",
+          "recommended": true,
+          "structures": {
+            "mvvm": {
+              "name": "MVVM",
+              "file": "ios-mvvm",
+              "description": "Model-View-ViewModel pattern"
+            },
+            "mvi": {
+              "name": "MVI",
+              "file": "ios-mvi",
+              "description": "Model-View-Intent (unidirectional data flow)"
+            },
+            "clean": {
+              "name": "Clean Architecture",
+              "file": "ios-clean",
+              "description": "Clean Architecture with domain-data-presentation layers"
+            }
+          }
+        },
+        "swiftui": {
+          "name": "SwiftUI",
+          "file": "swiftui",
+          "category": "UI Framework",
+          "description": "Apple's declarative UI framework",
+          "recommended": true,
+          "structures": {
+            "mvvm": {
+              "name": "MVVM",
+              "file": "swiftui-mvvm",
+              "description": "MVVM optimized for SwiftUI"
+            },
+            "mvi": {
+              "name": "MVI",
+              "file": "swiftui-mvi",
+              "description": "MVI with SwiftUI"
+            },
+            "clean": {
+              "name": "Clean Architecture",
+              "file": "swiftui-clean",
+              "description": "Clean Architecture for SwiftUI"
+            }
+          }
+        },
+        "vapor": {
+          "name": "Vapor",
+          "file": "vapor",
+          "category": "Backend Framework",
+          "description": "Server-side Swift web framework",
+          "recommended": true,
+          "structures": {
+            "modular": {
+              "name": "Modular (Feature-First)",
+              "file": "vapor-modular",
+              "description": "Feature-based modular structure"
+            },
+            "layered": {
+              "name": "Layered (Traditional)",
+              "file": "vapor-layered",
+              "description": "Traditional layered architecture"
+            },
+            "clean": {
+              "name": "Clean Architecture",
+              "file": "vapor-clean",
+              "description": "Clean Architecture with domain-data-presentation layers"
+            }
+          }
+        },
+        "coredata": {
+          "name": "Core Data",
+          "file": "coredata",
+          "category": "Persistence",
+          "description": "Apple's object graph and persistence framework",
+          "recommended": true
+        },
+        "combine": {
+          "name": "Combine",
+          "file": "combine",
+          "category": "Reactive Programming",
+          "description": "Apple's framework for processing values over time",
+          "recommended": true
+        }
+      }
     }
   }
 }
