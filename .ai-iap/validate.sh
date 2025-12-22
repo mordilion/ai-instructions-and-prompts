@@ -44,10 +44,17 @@ else
 fi
 
 # Test 2: Config file is valid JSON
-if jq empty "$CONFIG_FILE" 2>/dev/null; then
+if ! command -v jq &> /dev/null; then
+    test_result "Config file is valid JSON" "false" "jq not installed"
+    exit 1
+fi
+
+jq_output=$(jq empty "$CONFIG_FILE" 2>&1)
+jq_exit_code=$?
+if [[ $jq_exit_code -eq 0 ]]; then
     test_result "Config file is valid JSON" "true"
 else
-    test_result "Config file is valid JSON" "false" "Invalid JSON syntax"
+    test_result "Config file is valid JSON" "false" "Invalid JSON syntax: $jq_output"
     exit 1
 fi
 
