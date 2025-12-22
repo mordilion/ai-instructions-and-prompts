@@ -65,21 +65,28 @@ jobs:
           if grep -q "](.*\.md)" README.md; then
             echo "✓ README contains internal links"
           fi
+
+  test-linux:
+    name: Test Bash Scripts
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       
-      - name: Validate bash script syntax
+      - name: Validate bash syntax
         run: |
-          echo "Validating bash script..."
+          echo "Validating bash scripts..."
           bash -n .ai-iap/setup.sh
           echo "✓ setup.sh syntax is valid"
+          
+          bash -n .ai-iap/validate.sh
+          echo "✓ validate.sh syntax is valid"
       
-      - name: Test setup script help
+      - name: Run validation tests
         run: |
-          echo "Testing setup.sh --help..."
-          if ./.ai-iap/setup.sh --help 2>&1 | grep -q "Usage"; then
-            echo "✓ setup.sh --help works"
-          else
-            echo "✓ setup.sh exists (help not implemented)"
-          fi
+          chmod +x .ai-iap/validate.sh
+          ./.ai-iap/validate.sh
 
   test-windows:
     name: Test PowerShell Scripts
