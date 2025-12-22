@@ -2,6 +2,29 @@
 
 > **Scope**: Apply these rules when working with Vue.js 3 applications using JavaScript.
 
+## Overview
+
+Vue.js JavaScript version - uses Composition API without TypeScript. For TypeScript, see `typescript/frameworks/vue.md`.
+
+## Best Practices
+
+**MUST**:
+- Use Composition API with `<script setup>`
+- Use defineProps and defineEmits  
+- Use .value for refs
+- Use :key in v-for loops
+
+**SHOULD**:
+- Use composables for reusable logic
+- Use computed for derived state
+- Use Pinia for state management
+
+**AVOID**:
+- Options API (use Composition API)
+- Mutating props
+- Missing .value on refs
+- Index as key in v-for
+
 ## 1. Project Structure
 ```
 src/

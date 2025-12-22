@@ -1,15 +1,15 @@
 # iOS Development with UIKit
 
 ## Overview
-iOS development with UIKit provides a mature, imperative UI framework for building iOS applications.
+UIKit: Apple's mature, imperative UI framework for iOS (2008-present), still widely used in production apps.
+Event-driven with manual view lifecycle management and imperative UI updates.
+Best for maintaining existing iOS apps, complex UI animations, or when targeting iOS 12 and below.
 
 ## View Controllers
 
-### Lifecycle Management
+### Lifecycle
 ```swift
-// ✅ Good - proper lifecycle methods
 class UserViewController: UIViewController {
-    
     private let viewModel: UserViewModel
     
     init(viewModel: UserViewModel) {
@@ -18,7 +18,7 @@ class UserViewController: UIViewController {
     }
     
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        fatalError("init(coder:) not implemented")
     }
     
     override func viewDidLoad() {
@@ -27,44 +27,22 @@ class UserViewController: UIViewController {
         setupConstraints()
         setupBindings()
     }
-    
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        viewModel.loadData()
-    }
-    
-    private func setupUI() {
-        view.backgroundColor = .systemBackground
-        // Add subviews
-    }
-    
-    private func setupConstraints() {
-        // Layout constraints
-    }
-    
-    private func setupBindings() {
-        // Bind to view model
-    }
 }
 ```
 
-### Keep View Controllers Lightweight
+### Keep Lightweight
 ```swift
-// ✅ Good - extracted responsibilities
 class UserViewController: UIViewController {
     private let viewModel: UserViewModel
-    private lazy var tableViewDataSource = UserTableViewDataSource()
-    private lazy var tableViewDelegate = UserTableViewDelegate()
+    private lazy var dataSource = UserTableViewDataSource()
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        tableView.dataSource = tableViewDataSource
-        tableView.delegate = tableViewDelegate
+        tableView.dataSource = dataSource
+        tableView.delegate = self
     }
 }
 
-// Separate data source
 class UserTableViewDataSource: NSObject, UITableViewDataSource {
     var users: [User] = []
     
@@ -80,9 +58,7 @@ class UserTableViewDataSource: NSObject, UITableViewDataSource {
 
 ## Auto Layout
 
-### Programmatic Constraints
 ```swift
-// ✅ Good - clear constraint setup
 private func setupConstraints() {
     label.translatesAutoresizingMaskIntoConstraints = false
     
@@ -93,13 +69,10 @@ private func setupConstraints() {
     ])
 }
 
-// ✅ Good - constraint extension
 extension UIView {
     func pinToSuperview(insets: UIEdgeInsets = .zero) {
         guard let superview = superview else { return }
-        
         translatesAutoresizingMaskIntoConstraints = false
-        
         NSLayoutConstraint.activate([
             topAnchor.constraint(equalTo: superview.topAnchor, constant: insets.top),
             leadingAnchor.constraint(equalTo: superview.leadingAnchor, constant: insets.left),
@@ -112,15 +85,10 @@ extension UIView {
 
 ## UITableView & UICollectionView
 
-### Modern Data Sources
+### Diffable Data Source
 ```swift
-// ✅ Good - diffable data source
 class UserListViewController: UIViewController {
-    
-    private enum Section {
-        case main
-    }
-    
+    private enum Section { case main }
     private var dataSource: UITableViewDiffableDataSource<Section, User>!
     private let tableView = UITableView()
     
@@ -130,77 +98,56 @@ class UserListViewController: UIViewController {
     }
     
     private func configureDataSource() {
-        dataSource = UITableViewDiffableDataSource<Section, User>(
-            tableView: tableView
-        ) { tableView, indexPath, user in
-            let cell = tableView.dequeueReusableCell(
-                withIdentifier: UserCell.reuseIdentifier,
-                for: indexPath
-            ) as! UserCell
+        dataSource = UITableViewDiffableDataSource<Section, User>(tableView: tableView) { 
+            tableView, indexPath, user in
+            let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! UserCell
             cell.configure(with: user)
             return cell
         }
     }
     
-    private func applySnapshot(users: [User], animatingDifferences: Bool = true) {
+    private func applySnapshot(users: [User]) {
         var snapshot = NSDiffableDataSourceSnapshot<Section, User>()
         snapshot.appendSections([.main])
         snapshot.appendItems(users)
-        dataSource.apply(snapshot, animatingDifferences: animatingDifferences)
+        dataSource.apply(snapshot, animatingDifferences: true)
     }
 }
 ```
 
 ### Custom Cells
 ```swift
-// ✅ Good - reusable cell
 class UserCell: UITableViewCell {
     static let reuseIdentifier = "UserCell"
     
     private let nameLabel = UILabel()
     private let emailLabel = UILabel()
-    private let avatarImageView = UIImageView()
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupUI()
-        setupConstraints()
     }
     
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        fatalError()
     }
     
     func configure(with user: User) {
         nameLabel.text = user.name
         emailLabel.text = user.email
-        // Load avatar image
-    }
-    
-    private func setupUI() {
-        contentView.addSubview(nameLabel)
-        contentView.addSubview(emailLabel)
-        contentView.addSubview(avatarImageView)
-    }
-    
-    private func setupConstraints() {
-        // Layout code
     }
     
     override func prepareForReuse() {
         super.prepareForReuse()
         nameLabel.text = nil
         emailLabel.text = nil
-        avatarImageView.image = nil
     }
 }
 ```
 
 ## Delegation Pattern
 
-### Protocol Delegates
 ```swift
-// ✅ Good - protocol-based delegation
 protocol UserSelectionDelegate: AnyObject {
     func userViewController(_ controller: UserViewController, didSelect user: User)
 }
@@ -208,15 +155,8 @@ protocol UserSelectionDelegate: AnyObject {
 class UserViewController: UIViewController {
     weak var delegate: UserSelectionDelegate?
     
-    private func handleUserSelection(_ user: User) {
+    private func handleSelection(_ user: User) {
         delegate?.userViewController(self, didSelect: user)
-    }
-}
-
-// Usage
-class ParentViewController: UIViewController, UserSelectionDelegate {
-    func userViewController(_ controller: UserViewController, didSelect user: User) {
-        // Handle selection
     }
 }
 ```
@@ -225,7 +165,6 @@ class ParentViewController: UIViewController, UserSelectionDelegate {
 
 ### Coordinator Pattern
 ```swift
-// ✅ Good - coordinator for navigation
 protocol Coordinator: AnyObject {
     var navigationController: UINavigationController { get }
     func start()
@@ -241,41 +180,24 @@ class UserCoordinator: Coordinator {
     func start() {
         let viewModel = UserViewModel()
         let viewController = UserViewController(viewModel: viewModel)
-        viewController.coordinator = self
         navigationController.pushViewController(viewController, animated: true)
-    }
-    
-    func showUserDetail(user: User) {
-        let detailViewModel = UserDetailViewModel(user: user)
-        let detailViewController = UserDetailViewController(viewModel: detailViewModel)
-        navigationController.pushViewController(detailViewController, animated: true)
     }
 }
 ```
 
 ## Networking
 
-### URLSession
 ```swift
-// ✅ Good - protocol-based networking
 protocol NetworkService {
-    func fetch<T: Decodable>(
-        _ endpoint: String
-    ) async throws -> T
+    func fetch<T: Decodable>(_ endpoint: String) async throws -> T
 }
 
 class URLSessionNetworkService: NetworkService {
     private let baseURL: URL
-    private let session: URLSession
-    
-    init(baseURL: URL, session: URLSession = .shared) {
-        self.baseURL = baseURL
-        self.session = session
-    }
     
     func fetch<T: Decodable>(_ endpoint: String) async throws -> T {
         let url = baseURL.appendingPathComponent(endpoint)
-        let (data, response) = try await session.data(from: url)
+        let (data, response) = try await URLSession.shared.data(from: url)
         
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode) else {
@@ -285,71 +207,26 @@ class URLSessionNetworkService: NetworkService {
         return try JSONDecoder().decode(T.self, from: data)
     }
 }
-
-enum NetworkError: Error {
-    case invalidURL
-    case invalidResponse
-    case decodingError
-}
 ```
 
 ## Data Persistence
 
 ### UserDefaults
 ```swift
-// ✅ Good - type-safe UserDefaults wrapper
 @propertyWrapper
 struct UserDefault<T> {
     let key: String
     let defaultValue: T
     
     var wrappedValue: T {
-        get {
-            UserDefaults.standard.object(forKey: key) as? T ?? defaultValue
-        }
-        set {
-            UserDefaults.standard.set(newValue, forKey: key)
-        }
+        get { UserDefaults.standard.object(forKey: key) as? T ?? defaultValue }
+        set { UserDefaults.standard.set(newValue, forKey: key) }
     }
 }
 
 struct Settings {
     @UserDefault(key: "isDarkMode", defaultValue: false)
     static var isDarkMode: Bool
-    
-    @UserDefault(key: "notificationsEnabled", defaultValue: true)
-    static var notificationsEnabled: Bool
-}
-```
-
-### File System
-```swift
-// ✅ Good - file management
-class FileManager {
-    static let shared = FileManager()
-    
-    private let fileManager = Foundation.FileManager.default
-    
-    func save<T: Codable>(_ object: T, to filename: String) throws {
-        let url = try getDocumentsDirectory().appendingPathComponent(filename)
-        let data = try JSONEncoder().encode(object)
-        try data.write(to: url)
-    }
-    
-    func load<T: Codable>(_ type: T.Type, from filename: String) throws -> T {
-        let url = try getDocumentsDirectory().appendingPathComponent(filename)
-        let data = try Data(contentsOf: url)
-        return try JSONDecoder().decode(T.self, from: data)
-    }
-    
-    private func getDocumentsDirectory() throws -> URL {
-        try fileManager.url(
-            for: .documentDirectory,
-            in: .userDomainMask,
-            appropriateFor: nil,
-            create: false
-        )
-    }
 }
 ```
 
@@ -357,9 +234,7 @@ class FileManager {
 
 ### Unit Tests
 ```swift
-// ✅ Good - view model tests
 class UserViewModelTests: XCTestCase {
-    
     var sut: UserViewModel!
     var mockService: MockUserService!
     
@@ -369,60 +244,20 @@ class UserViewModelTests: XCTestCase {
         sut = UserViewModel(service: mockService)
     }
     
-    override func tearDown() {
-        sut = nil
-        mockService = nil
-        super.tearDown()
-    }
-    
     func testLoadUsers_Success() async throws {
-        // Given
-        let expectedUsers = [User(id: 1, name: "John", email: "john@example.com")]
-        mockService.usersToReturn = expectedUsers
+        mockService.usersToReturn = [User(id: 1, name: "John", email: "john@test.com")]
         
-        // When
         try await sut.loadUsers()
         
-        // Then
-        XCTAssertEqual(sut.users, expectedUsers)
+        XCTAssertEqual(sut.users.count, 1)
         XCTAssertFalse(sut.isLoading)
-        XCTAssertNil(sut.error)
-    }
-    
-    func testLoadUsers_Failure() async {
-        // Given
-        mockService.shouldFail = true
-        
-        // When
-        do {
-            try await sut.loadUsers()
-            XCTFail("Expected error to be thrown")
-        } catch {
-            // Then
-            XCTAssertTrue(sut.users.isEmpty)
-            XCTAssertNotNil(sut.error)
-        }
-    }
-}
-
-class MockUserService: UserServiceProtocol {
-    var usersToReturn: [User] = []
-    var shouldFail = false
-    
-    func fetchUsers() async throws -> [User] {
-        if shouldFail {
-            throw NetworkError.invalidResponse
-        }
-        return usersToReturn
     }
 }
 ```
 
 ### UI Tests
 ```swift
-// ✅ Good - UI tests
 class UserListUITests: XCTestCase {
-    
     var app: XCUIApplication!
     
     override func setUp() {
@@ -433,32 +268,41 @@ class UserListUITests: XCTestCase {
     }
     
     func testUserListDisplaysUsers() {
-        // Given
-        app.launchArguments = ["UI-Testing"]
-        
-        // When
         let tableView = app.tables["UserTableView"]
-        
-        // Then
         XCTAssertTrue(tableView.exists)
         XCTAssertTrue(tableView.cells.count > 0)
-    }
-    
-    func testSelectingUserNavigatesToDetail() {
-        // When
-        app.tables.cells.element(boundBy: 0).tap()
-        
-        // Then
-        XCTAssertTrue(app.navigationBars["User Detail"].exists)
     }
 }
 ```
 
 ## Best Practices
 
-### 1. Use Dependency Injection
+**MUST**:
+- Use dependency injection via initializers (NOT singletons)
+- Use [weak self] in closures to prevent retain cycles
+- Clean up observers/delegates in deinit or viewDidDisappear
+- Respect safe area for modern iOS devices (notch, Dynamic Island)
+- Use Auto Layout (NOT frame-based layout)
+
+**SHOULD**:
+- Use diffable data sources for UITableView/UICollectionView
+- Use async/await for modern iOS apps (iOS 13+)
+- Use Coordinator pattern for navigation in complex apps
+- Implement required init?(coder:) with fatalError (if not using storyboards)
+- Use private for internal view properties
+
+**AVOID**:
+- Retain cycles in closures (always use [weak self])
+- Force unwrapping (use guard let or if let)
+- Business logic in view controllers (move to ViewModels)
+- Singletons (makes testing difficult)
+- Massive view controllers (split into smaller VCs or extract logic)
+
+## Common Patterns
+
+### Dependency Injection
 ```swift
-// ✅ Good - inject dependencies
+// ✅ GOOD: Constructor injection
 class UserViewController: UIViewController {
     private let viewModel: UserViewModel
     
@@ -466,35 +310,40 @@ class UserViewController: UIViewController {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) not implemented")
+    }
+}
+
+// ❌ BAD: Singleton
+class UserViewController: UIViewController {
+    private let viewModel = UserViewModel.shared  // Hard to test, global state
 }
 ```
 
-### 2. Weak Self in Closures
+### Memory Management
 ```swift
-// ✅ Good - avoid retain cycles
+// ✅ GOOD: [weak self] prevents retain cycle
 viewModel.onUsersChanged = { [weak self] users in
     guard let self = self else { return }
     self.updateUI(with: users)
 }
-```
 
-### 3. Use Type-Safe Identifiers
-```swift
-// ✅ Good - avoid stringly-typed code
-extension UITableView {
-    func dequeueReusableCell<T: UITableViewCell>(
-        for indexPath: IndexPath
-    ) -> T where T: ReusableView {
-        guard let cell = dequeueReusableCell(
-            withIdentifier: T.reuseIdentifier,
-            for: indexPath
-        ) as? T else {
-            fatalError("Could not dequeue cell with identifier: \(T.reuseIdentifier)")
-        }
-        return cell
-    }
+// ❌ BAD: Retain cycle
+viewModel.onUsersChanged = { users in
+    self.updateUI(with: users)  // ViewController -> closure -> self -> ViewController
 }
 
+// ✅ GOOD: Unsubscribe in deinit
+deinit {
+    NotificationCenter.default.removeObserver(self)
+}
+```
+
+### Type-Safe Identifiers
+```swift
+// ✅ GOOD: Protocol-based reuse identifiers
 protocol ReusableView {
     static var reuseIdentifier: String { get }
 }
@@ -504,29 +353,44 @@ extension ReusableView {
         String(describing: self)
     }
 }
+
+extension UserCell: ReusableView {}
+
+// Usage
+tableView.register(UserCell.self, forCellReuseIdentifier: UserCell.reuseIdentifier)
+let cell = tableView.dequeueReusableCell(withIdentifier: UserCell.reuseIdentifier)
+
+// ❌ BAD: String literals
+tableView.register(UserCell.self, forCellReuseIdentifier: "UserCell")  // Typo-prone
 ```
 
-### 4. Handle Errors Gracefully
+### Async/Await Error Handling
 ```swift
-// ✅ Good - user-friendly error handling
+// ✅ GOOD: Specific error handling
 func loadData() async {
     do {
         let users = try await service.fetchUsers()
         updateUI(with: users)
     } catch NetworkError.notConnected {
-        showAlert(title: "No Connection", message: "Please check your internet connection")
+        showAlert(title: "No Connection", message: "Check your internet")
+    } catch NetworkError.unauthorized {
+        showLogin()
     } catch {
-        showAlert(title: "Error", message: "Failed to load data")
+        showAlert(title: "Error", message: "Failed to load")
     }
 }
 ```
 
-### 5. Use Safe Area Layout Guide
+### Safe Area
 ```swift
-// ✅ Good - respect safe areas
+// ✅ GOOD: Respect safe area
 NSLayoutConstraint.activate([
     view.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
     view.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
 ])
-```
 
+// ❌ BAD: Hardcoded offsets (breaks on notch devices)
+NSLayoutConstraint.activate([
+    view.topAnchor.constraint(equalTo: view.topAnchor, constant: 20)  // Wrong!
+])
+```

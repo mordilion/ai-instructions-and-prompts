@@ -1,275 +1,318 @@
 # Flask Framework
 
-> **Scope**: Apply these rules when working with Flask applications.
+## Overview
+Flask: lightweight, flexible Python web microframework with minimalist core.
+Philosophy: provide basics (routing, requests), you choose extensions (database, auth, etc.).
+Best for small to medium applications, APIs, and when you need maximum flexibility.
 
-## 1. Application Factory
-- **Factory Pattern**: Use application factory for flexibility.
-- **Blueprints**: Organize routes with blueprints.
-- **Configuration**: Load config from environment or files.
-
-```python
-# app/__init__.py
-from flask import Flask
-from .config import Config
-
-def create_app(config_class=Config):
-    app = Flask(__name__)
-    app.config.from_object(config_class)
-    
-    from .users import bp as users_bp
-    app.register_blueprint(users_bp, url_prefix='/users')
-    
-    from .posts import bp as posts_bp
-    app.register_blueprint(posts_bp, url_prefix='/posts')
-    
-    return app
-```
-
-## 2. Blueprints
-- **Modular Routes**: Group related routes in blueprints.
-- **URL Prefixes**: Use prefixes for organization.
-- **Blueprint Structure**: Each blueprint in its own module.
+## Basic Application
 
 ```python
-# app/users/routes.py
-from flask import Blueprint, jsonify, request
-from .services import UserService
+from flask import Flask, request, jsonify
+from werkzeug.exceptions import NotFound
 
-bp = Blueprint('users', __name__)
-user_service = UserService()
+app = Flask(__name__)
 
-@bp.route('/', methods=['GET'])
-def list_users():
-    users = user_service.get_all_users()
+@app.route("/users", methods=["GET"])
+def get_users():
+    users = user_service.get_all()
     return jsonify([user.to_dict() for user in users])
 
-@bp.route('/', methods=['POST'])
+@app.route("/users/<int:user_id>", methods=["GET"])
+def get_user(user_id):
+    user = user_service.get_by_id(user_id)
+    if not user:
+        raise NotFound("User not found")
+    return jsonify(user.to_dict())
+
+@app.route("/users", methods=["POST"])
 def create_user():
     data = request.get_json()
-    user = user_service.create_user(data)
+    user = user_service.create(data)
     return jsonify(user.to_dict()), 201
+
+if __name__ == "__main__":
+    app.run(debug=True)
 ```
 
-## 3. Request Handling
-- **Request Object**: Access data via `request.get_json()`, `request.args`, `request.form`.
-- **Validation**: Validate input data before processing.
-- **Error Handling**: Use error handlers for consistent responses.
+## Flask-SQLAlchemy
 
 ```python
-from flask import request, jsonify
-from marshmallow import ValidationError
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 
-@bp.route('/users/', methods=['POST'])
-def create_user():
-    try:
-        data = request.get_json()
-        user = user_service.create_user(data)
-        return jsonify(user.to_dict()), 201
-    except ValidationError as e:
-        return jsonify({'errors': e.messages}), 400
-    except ValueError as e:
-        return jsonify({'error': str(e)}), 400
+db = SQLAlchemy()
+
+class User(db.Model):
+    __tablename__ = "users"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    posts = db.relationship("Post", backref="user", lazy="dynamic")
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "email": self.email
+        }
+
+# Initialize
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://user:pass@localhost/db"
+db.init_app(app)
+
+with app.app_context():
+    db.create_all()
 ```
 
-## 4. Serialization (Marshmallow)
-- **Schemas**: Use Marshmallow for serialization/validation.
-- **Nested Schemas**: For related objects.
-- **Validation**: Define validation rules in schemas.
+## Blueprints
+
+```python
+from flask import Blueprint
+
+users_bp = Blueprint("users", __name__, url_prefix="/api/users")
+
+@users_bp.route("", methods=["GET"])
+def get_users():
+    return jsonify([])
+
+@users_bp.route("/<int:user_id>", methods=["GET"])
+def get_user(user_id):
+    return jsonify({})
+
+# Register
+app.register_blueprint(users_bp)
+```
+
+## Request Validation (Marshmallow)
 
 ```python
 from marshmallow import Schema, fields, validate, ValidationError
 
 class UserSchema(Schema):
     id = fields.Int(dump_only=True)
+    name = fields.Str(required=True, validate=validate.Length(min=2, max=100))
     email = fields.Email(required=True)
-    full_name = fields.Str(required=True, validate=validate.Length(min=1, max=100))
-    password = fields.Str(load_only=True, required=True, validate=validate.Length(min=8))
-    is_active = fields.Bool(dump_only=True)
-    created_at = fields.DateTime(dump_only=True)
 
 user_schema = UserSchema()
 users_schema = UserSchema(many=True)
 
-# Usage
-@bp.route('/', methods=['POST'])
+@app.route("/users", methods=["POST"])
 def create_user():
     try:
         data = user_schema.load(request.get_json())
-        user = user_service.create_user(data)
-        return user_schema.dump(user), 201
-    except ValidationError as e:
-        return {'errors': e.messages}, 400
+    except ValidationError as err:
+        return jsonify(err.messages), 400
+    
+    user = user_service.create(data)
+    return jsonify(user_schema.dump(user)), 201
 ```
 
-## 5. Database (Flask-SQLAlchemy)
-- **ORM**: Use Flask-SQLAlchemy for database operations.
-- **Models**: Define models with SQLAlchemy.
-- **Sessions**: Use `db.session` for transactions.
-- **Migrations**: Use Flask-Migrate (Alembic) for migrations.
+## Error Handling
 
 ```python
-# app/models.py
-from app import db
-from datetime import datetime
+from werkzeug.exceptions import HTTPException
 
-class User(db.Model):
-    __tablename__ = 'users'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    full_name = db.Column(db.String(100), nullable=False)
-    hashed_password = db.Column(db.String(255), nullable=False)
-    is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'email': self.email,
-            'full_name': self.full_name,
-            'is_active': self.is_active,
-            'created_at': self.created_at.isoformat()
-        }
-```
-
-## 6. Service Layer
-- **Business Logic**: Move complex logic to service classes.
-- **Thin Routes**: Routes should validate and delegate to services.
-- **Transactions**: Use context managers for transactions.
-
-```python
-# app/users/services.py
-from app import db
-from app.models import User
-from werkzeug.security import generate_password_hash
-
-class UserService:
-    def create_user(self, data: dict) -> User:
-        user = User(
-            email=data['email'],
-            full_name=data['full_name'],
-            hashed_password=generate_password_hash(data['password'])
-        )
-        db.session.add(user)
-        db.session.commit()
-        return user
-    
-    def get_user(self, user_id: int) -> User | None:
-        return User.query.get(user_id)
-    
-    def get_all_users(self) -> list[User]:
-        return User.query.filter_by(is_active=True).all()
-```
-
-## 7. Error Handling
-- **Error Handlers**: Register global error handlers.
-- **Custom Exceptions**: Create domain-specific exceptions.
-- **Consistent Responses**: Return consistent error format.
-
-```python
-# app/__init__.py
-@app.errorhandler(404)
-def not_found(error):
-    return jsonify({'error': 'Resource not found'}), 404
-
-@app.errorhandler(500)
-def internal_error(error):
-    db.session.rollback()
-    return jsonify({'error': 'Internal server error'}), 500
-
-# Custom exception
 class UserNotFoundException(Exception):
     pass
 
 @app.errorhandler(UserNotFoundException)
-def handle_user_not_found(error):
-    return jsonify({'error': str(error)}), 404
+def handle_user_not_found(e):
+    return jsonify({"error": str(e)}), 404
+
+@app.errorhandler(ValidationError)
+def handle_validation_error(e):
+    return jsonify({"errors": e.messages}), 400
+
+@app.errorhandler(HTTPException)
+def handle_http_exception(e):
+    return jsonify({"error": e.description}), e.code
 ```
 
-## 8. Configuration
-- **Config Classes**: Use classes for different environments.
-- **Environment Variables**: Load sensitive data from env vars.
-- **Config Object**: Access via `app.config`.
+## Authentication (Flask-JWT-Extended)
 
 ```python
-# app/config.py
-import os
+from flask_jwt_extended import (
+    JWTManager, create_access_token,
+    jwt_required, get_jwt_identity
+)
 
-class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key'
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
-
-class DevelopmentConfig(Config):
-    DEBUG = True
-
-class ProductionConfig(Config):
-    DEBUG = False
-```
-
-## 9. Authentication (Flask-JWT-Extended)
-- **JWT Tokens**: Use Flask-JWT-Extended for auth.
-- **Protected Routes**: Use `@jwt_required()` decorator.
-- **Current User**: Access via `get_jwt_identity()`.
-
-```python
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
-
+app.config["JWT_SECRET_KEY"] = "secret"
 jwt = JWTManager(app)
 
-@bp.route('/login', methods=['POST'])
+@app.route("/login", methods=["POST"])
 def login():
     data = request.get_json()
-    user = user_service.authenticate(data['email'], data['password'])
+    user = user_service.authenticate(data["email"], data["password"])
     if not user:
-        return {'error': 'Invalid credentials'}, 401
+        return jsonify({"error": "Invalid credentials"}), 401
     
     access_token = create_access_token(identity=user.id)
-    return {'access_token': access_token}, 200
+    return jsonify({"access_token": access_token})
 
-@bp.route('/profile', methods=['GET'])
+@app.route("/profile", methods=["GET"])
 @jwt_required()
-def get_profile():
+def profile():
     user_id = get_jwt_identity()
-    user = user_service.get_user(user_id)
-    return user_schema.dump(user)
+    user = user_service.get_by_id(user_id)
+    return jsonify(user_schema.dump(user))
 ```
 
-## 10. Testing
-- **Test Client**: Use Flask's test client.
-- **Fixtures**: Use pytest fixtures for setup.
-- **Database**: Use separate test database.
+## Configuration
 
 ```python
-# tests/test_users.py
+class Config:
+    SECRET_KEY = os.getenv("SECRET_KEY", "dev")
+    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+app.config.from_object(Config)
+
+# Or from file
+app.config.from_pyfile("config.py")
+```
+
+## Middleware
+
+```python
+@app.before_request
+def log_request():
+    app.logger.info(f"{request.method} {request.path}")
+
+@app.after_request
+def add_header(response):
+    response.headers["X-Custom-Header"] = "value"
+    return response
+```
+
+## Testing
+
+```python
 import pytest
-from app import create_app, db
-from app.models import User
 
 @pytest.fixture
 def client():
-    app = create_app('testing')
+    app.config["TESTING"] = True
     with app.test_client() as client:
-        with app.app_context():
-            db.create_all()
-            yield client
-            db.drop_all()
+        yield client
+
+def test_get_users(client):
+    response = client.get("/users")
+    assert response.status_code == 200
+    assert isinstance(response.get_json(), list)
 
 def test_create_user(client):
-    response = client.post('/users/', json={
-        'email': 'test@example.com',
-        'password': 'Secure123',
-        'full_name': 'Test User'
+    response = client.post("/users", json={
+        "name": "John",
+        "email": "john@test.com"
     })
     assert response.status_code == 201
-    assert response.json['email'] == 'test@example.com'
 ```
 
-## 11. Anti-Patterns (MUST avoid)
-- **Logic in Routes**: Keep routes thin, move logic to services.
-  - ❌ Bad: `@bp.route('/') def index(): user = User(...); db.session.add(user); ...`
-  - ✅ Good: `@bp.route('/') def index(): return user_service.create_user(data)`
-- **Global DB Session**: Use `db.session`, not global sessions.
-- **Missing Validation**: Always validate input data.
-- **Hardcoded Config**: Use environment variables for secrets.
+## Best Practices
 
+**MUST**:
+- Use Blueprints for applications with 3+ routes (modularity)
+- Use Flask-SQLAlchemy for database operations
+- Validate ALL input (use Marshmallow or Pydantic)
+- Use application factory pattern for testing/multiple configs
+- Register error handlers for consistent error responses
+
+**SHOULD**:
+- Use Flask-JWT-Extended for authentication (NOT custom JWT)
+- Use `current_app` instead of global `app` in modules
+- Use `g` object for request-scoped data
+- Use environment variables for config (`.env` file)
+- Use context managers for database sessions
+
+**AVOID**:
+- Global state (use application factory)
+- Manual SQL queries (use ORM)
+- Returning different error formats (use error handlers)
+- Storing secrets in code (use environment variables)
+- Direct access to `request.form` without validation
+
+## Pattern Selection
+
+### Function-Based vs Class-Based Views
+**Use function-based views when**:
+- Simple logic (< 30 lines)
+- Single endpoint
+- Quick prototypes
+
+**Use class-based views (MethodView) when**:
+- Multiple HTTP methods
+- Shared logic between methods
+- Need inheritance
+
+```python
+# Function-based (simple)
+@app.route('/users', methods=['GET'])
+def get_users():
+    return jsonify(User.query.all())
+
+# Class-based (multiple methods)
+from flask.views import MethodView
+
+class UserAPI(MethodView):
+    def get(self, user_id):
+        return jsonify(User.query.get_or_404(user_id))
+    
+    def put(self, user_id):
+        user = User.query.get_or_404(user_id)
+        user.name = request.json['name']
+        db.session.commit()
+        return jsonify(user)
+
+app.add_url_rule('/users/<int:user_id>', view_func=UserAPI.as_view('user_api'))
+```
+
+## Application Factory Pattern
+
+```python
+# app/__init__.py
+def create_app(config_name='default'):
+    app = Flask(__name__)
+    app.config.from_object(config[config_name])  # Load config
+    
+    # Initialize extensions
+    db.init_app(app)
+    jwt.init_app(app)
+    
+    # Register blueprints
+    from .api import api_bp
+    app.register_blueprint(api_bp, url_prefix='/api')
+    
+    # Register error handlers
+    register_error_handlers(app)
+    
+    return app
+
+# Usage
+app = create_app(os.getenv('FLASK_ENV', 'development'))
+```
+
+## Common Patterns
+
+### Request Lifecycle
+```python
+@app.before_request
+def before_request():
+    g.start_time = time.time()  # Store in request context
+    g.user = get_current_user()  # Auth check
+
+@app.after_request
+def after_request(response):
+    duration = time.time() - g.start_time
+    response.headers['X-Process-Time'] = str(duration)
+    return response
+
+@app.teardown_appcontext
+def teardown_db(exception):
+    db = g.pop('db', None)  # Clean up database connection
+    if db is not None:
+        db.close()
+```

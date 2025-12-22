@@ -1,93 +1,87 @@
-# Android Framework
+# Android Development with Java
 
-> **Scope**: Apply these rules when working with Android applications.
+## Overview
+Android development with Java: Google's original Android development language before Kotlin.
+While Kotlin is now recommended, Java remains widely used in legacy apps and enterprise projects.
+Use for maintaining existing Java Android apps or when team expertise is primarily in Java.
 
-## 1. Activities & Fragments
-- **Single Responsibility**: One screen = one Activity/Fragment.
-- **ViewBinding**: Use View Binding, NOT `findViewById()`.
-- **Lifecycle Awareness**: Handle lifecycle properly with `ViewModel` and `LiveData`.
+## Activities
 
 ```java
-// ✅ Good - Activity with ViewBinding and ViewModel
-public class UserActivity extends AppCompatActivity {
-    private ActivityUserBinding binding;
+public class MainActivity extends AppCompatActivity {
+    private ActivityMainBinding binding;
     private UserViewModel viewModel;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        binding = ActivityUserBinding.inflate(getLayoutInflater());
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         
         viewModel = new ViewModelProvider(this).get(UserViewModel.class);
-        
-        observeViewModel();
-        setupListeners();
+        setupObservers();
     }
     
-    private void observeViewModel() {
-        viewModel.getUser().observe(this, user -> {
-            binding.userName.setText(user.getName());
-            binding.userEmail.setText(user.getEmail());
+    private void setupObservers() {
+        viewModel.getUsers().observe(this, users -> {
+            // Update UI
         });
-    }
-    
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        binding = null;
-    }
-}
-
-// ❌ Bad - findViewById and business logic in Activity
-public class UserActivity extends AppCompatActivity {
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_user);
-        
-        TextView name = findViewById(R.id.user_name);  // Bad: findViewById
-        User user = database.getUser(1);  // Bad: Direct DB access
-        name.setText(user.getName());
     }
 }
 ```
 
-## 2. ViewModel
-- **UI Logic**: ViewModel holds UI state and business logic.
-- **Lifecycle Independent**: ViewModel survives configuration changes.
-- **No Android Framework**: ViewModel should NOT reference View/Activity/Fragment.
+## Fragments
+
+```java
+public class UserFragment extends Fragment {
+    private FragmentUserBinding binding;
+    private UserViewModel viewModel;
+    
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        binding = FragmentUserBinding.inflate(inflater, container, false);
+        return binding.getRoot();
+    }
+    
+    @Override
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        viewModel = new ViewModelProvider(requireActivity()).get(UserViewModel.class);
+        setupRecyclerView();
+    }
+    
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
+    }
+}
+```
+
+## ViewModels
 
 ```java
 public class UserViewModel extends ViewModel {
+    private final MutableLiveData<List<User>> users = new MutableLiveData<>();
     private final UserRepository repository;
-    private final MutableLiveData<User> user = new MutableLiveData<>();
-    private final MutableLiveData<Boolean> loading = new MutableLiveData<>();
     
-    public UserViewModel(final UserRepository repository) {
+    public UserViewModel(UserRepository repository) {
         this.repository = repository;
     }
     
-    public LiveData<User> getUser() {
-        return user;
+    public LiveData<List<User>> getUsers() {
+        return users;
     }
     
-    public LiveData<Boolean> isLoading() {
-        return loading;
-    }
-    
-    public void loadUser(final long userId) {
-        loading.setValue(true);
-        repository.getUser(userId, new Callback<User>() {
+    public void loadUsers() {
+        repository.getUsers(new Callback<List<User>>() {
             @Override
-            public void onSuccess(User result) {
-                user.setValue(result);
-                loading.setValue(false);
+            public void onSuccess(List<User> result) {
+                users.postValue(result);
             }
             
             @Override
             public void onError(Exception e) {
-                loading.setValue(false);
                 // Handle error
             }
         });
@@ -95,84 +89,45 @@ public class UserViewModel extends ViewModel {
 }
 ```
 
-## 3. Repository Pattern
-- **Data Source Abstraction**: Repository abstracts data sources (API, Database, Cache).
-- **Single Source of Truth**: Coordinate between remote and local data.
+## Room Database
 
 ```java
-public class UserRepository {
-    private final UserApiService apiService;
-    private final UserDao userDao;
-    
-    public UserRepository(UserApiService apiService, UserDao userDao) {
-        this.apiService = apiService;
-        this.userDao = userDao;
-    }
-    
-    public LiveData<User> getUser(long userId) {
-        // Return cached data immediately
-        LiveData<User> cached = userDao.getUserById(userId);
-        
-        // Fetch fresh data in background
-        apiService.getUser(userId).enqueue(new Callback<User>() {
-            @Override
-            public void onResponse(Call<User> call, Response<User> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    userDao.insert(response.body());  // Update cache
-                }
-            }
-            
-            @Override
-            public void onFailure(Call<User> call, Throwable t) {
-                // Handle error
-            }
-        });
-        
-        return cached;
-    }
-}
-```
-
-## 4. Room Database
-- **Entities**: Define database tables.
-- **DAO**: Data Access Objects for queries.
-- **Database**: Database holder and main access point.
-
-```java
-// Entity
 @Entity(tableName = "users")
-public class User {
-    @PrimaryKey
+public class UserEntity {
+    @PrimaryKey(autoGenerate = true)
+    private long id;
+    
+    @ColumnInfo(name = "name")
     @NonNull
-    public long id;
+    private String name;
     
     @ColumnInfo(name = "email")
-    public String email;
-    
-    public String name;
+    @NonNull
+    private String email;
 }
 
-// DAO
 @Dao
 public interface UserDao {
-    @Query("SELECT * FROM users WHERE id = :userId")
-    LiveData<User> getUserById(long userId);
+    @Query("SELECT * FROM users")
+    LiveData<List<UserEntity>> getAll();
+    
+    @Query("SELECT * FROM users WHERE id = :id")
+    UserEntity getById(long id);
     
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void insert(User user);
+    void insert(UserEntity user);
     
-    @Query("DELETE FROM users WHERE id = :userId")
-    void deleteById(long userId);
+    @Delete
+    void delete(UserEntity user);
 }
 
-// Database
-@Database(entities = {User.class}, version = 1)
+@Database(entities = {UserEntity.class}, version = 1)
 public abstract class AppDatabase extends RoomDatabase {
     public abstract UserDao userDao();
     
     private static volatile AppDatabase INSTANCE;
     
-    public static AppDatabase getDatabase(final Context context) {
+    public static AppDatabase getInstance(Context context) {
         if (INSTANCE == null) {
             synchronized (AppDatabase.class) {
                 if (INSTANCE == null) {
@@ -189,40 +144,20 @@ public abstract class AppDatabase extends RoomDatabase {
 }
 ```
 
-## 5. Dependency Injection (Hilt/Dagger)
-- **@Inject**: Constructor injection for dependencies.
-- **Modules**: Provide dependencies that can't be constructor-injected.
+## Dependency Injection (Dagger Hilt)
 
 ```java
-// Application class
 @HiltAndroidApp
-public class MyApplication extends Application {}
-
-// Activity
-@AndroidEntryPoint
-public class UserActivity extends AppCompatActivity {
-    @Inject
-    UserViewModel.Factory viewModelFactory;
-    
-    private UserViewModel viewModel;
-    
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        viewModel = new ViewModelProvider(this, viewModelFactory)
-            .get(UserViewModel.class);
-    }
+public class MyApplication extends Application {
 }
 
-// Module
 @Module
 @InstallIn(SingletonComponent.class)
-public class DatabaseModule {
-    
+public class AppModule {
     @Provides
     @Singleton
     public AppDatabase provideDatabase(@ApplicationContext Context context) {
-        return Room.databaseBuilder(context, AppDatabase.class, "app_db").build();
+        return AppDatabase.getInstance(context);
     }
     
     @Provides
@@ -230,64 +165,74 @@ public class DatabaseModule {
         return database.userDao();
     }
 }
+
+@HiltViewModel
+public class UserViewModel extends ViewModel {
+    @Inject
+    public UserViewModel(UserRepository repository) {
+        // ...
+    }
+}
 ```
 
-## 6. RecyclerView & Adapters
-- **ViewHolder Pattern**: Use ViewHolder for efficient scrolling.
-- **DiffUtil**: Use DiffUtil for efficient list updates.
+## RecyclerView
 
 ```java
-public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder> {
-    private List<User> users = new ArrayList<>();
+public class UserAdapter extends RecyclerView.Adapter<UserAdapter.ViewHolder> {
+    private final List<User> users;
     private final OnUserClickListener listener;
     
-    public void submitList(List<User> newUsers) {
-        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(
-            new UserDiffCallback(users, newUsers)
-        );
-        users = newUsers;
-        diffResult.dispatchUpdatesTo(this);
-    }
-    
+    @NonNull
     @Override
-    public UserViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         ItemUserBinding binding = ItemUserBinding.inflate(
             LayoutInflater.from(parent.getContext()), parent, false
         );
-        return new UserViewHolder(binding);
+        return new ViewHolder(binding);
     }
     
     @Override
-    public void onBindViewHolder(UserViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         holder.bind(users.get(position));
     }
     
-    class UserViewHolder extends RecyclerView.ViewHolder {
+    @Override
+    public int getItemCount() {
+        return users.size();
+    }
+    
+    class ViewHolder extends RecyclerView.ViewHolder {
         private final ItemUserBinding binding;
         
-        UserViewHolder(ItemUserBinding binding) {
+        ViewHolder(ItemUserBinding binding) {
             super(binding.getRoot());
             this.binding = binding;
         }
         
         void bind(User user) {
-            binding.userName.setText(user.getName());
-            binding.userEmail.setText(user.getEmail());
+            binding.textName.setText(user.getName());
             binding.getRoot().setOnClickListener(v -> listener.onUserClick(user));
         }
     }
 }
 ```
 
-## 7. Coroutines (Kotlin interop)
-- For Java projects using Kotlin coroutines, handle properly.
-
-## 8. Testing
-- **Unit Tests**: Test ViewModels and business logic.
-- **UI Tests**: Use Espresso for UI testing.
+## Navigation
 
 ```java
-// ViewModel test
+// Navigation Component
+@Override
+public void onUserClick(User user) {
+    Bundle bundle = new Bundle();
+    bundle.putLong("userId", user.getId());
+    NavHostFragment.findNavController(this)
+        .navigate(R.id.action_list_to_detail, bundle);
+}
+```
+
+## Testing
+
+```java
 @ExtendWith(MockitoExtension.class)
 public class UserViewModelTest {
     @Mock
@@ -301,25 +246,105 @@ public class UserViewModelTest {
     }
     
     @Test
-    public void loadUser_success_updatesLiveData() {
-        // Given
-        User user = new User(1, "test@example.com", "Test");
-        when(repository.getUser(1)).thenReturn(LiveDataTestUtil.getValue(user));
+    public void loadUsers_Success_UpdatesLiveData() {
+        List<User> users = Arrays.asList(new User(1, "John", "john@test.com"));
+        when(repository.getUsers()).thenReturn(users);
         
-        // When
-        viewModel.loadUser(1);
+        viewModel.loadUsers();
         
-        // Then
-        assertEquals(user, viewModel.getUser().getValue());
+        assertEquals(users, viewModel.getUsers().getValue());
     }
 }
 ```
 
-## 9. Anti-Patterns (MUST avoid)
-- **findViewById**: Use View Binding or Data Binding.
-- **Business Logic in Activity/Fragment**: Use ViewModel.
-- **Memory Leaks**: Avoid holding Activity/Context references in background tasks.
-- **Main Thread Network**: NEVER do network calls on main thread.
-  - ❌ Bad: `User user = apiService.getUser(1).execute().body();`
-  - ✅ Good: Use Repository with LiveData or Coroutines
+## Pattern Selection
 
+### ViewBinding vs DataBinding
+**Use ViewBinding (RECOMMENDED)**:
+- Type-safe view access
+- Null-safe
+- Faster compile time than DataBinding
+
+**Use DataBinding when**:
+- Need two-way binding
+- Complex UI logic in XML
+- Legacy codebase already uses it
+
+## Best Practices
+
+**MUST**:
+- Use ViewBinding (NOT findViewById)
+- Use ViewModel for UI data (survives configuration changes)
+- Use LiveData or StateFlow for observable data
+- Clean up observers in onDestroy()
+- Use @NonNull and @Nullable annotations everywhere
+
+**SHOULD**:
+- Use Room for local persistence (NOT raw SQLite)
+- Use Hilt for dependency injection (NOT manual DI)
+- Use Jetpack Navigation for multi-screen apps
+- Use coroutines for async operations (NOT AsyncTask)
+
+**AVOID**:
+- findViewById() (use ViewBinding)
+- Storing data in Activity/Fragment (use ViewModel)
+- Memory leaks from observers (clean up properly)
+- AsyncTask (deprecated - use coroutines or RxJava)
+- Manual lifecycle management (use lifecycle-aware components)
+
+## Common Patterns
+
+### ViewModel Lifecycle
+```java
+// ✅ GOOD: ViewModel survives configuration changes
+public class UserViewModel extends ViewModel {
+    private final MutableLiveData<List<User>> users = new MutableLiveData<>();
+    
+    public void loadUsers() {
+        // Data persists through rotation
+        repository.getUsers(new Callback<List<User>>() {
+            @Override
+            public void onSuccess(List<User> result) {
+                users.postValue(result);
+            }
+        });
+    }
+}
+
+// ❌ BAD: Storing data in Activity
+public class UserActivity extends AppCompatActivity {
+    private List<User> users;  // LOST on rotation!
+    
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        loadUsers();  // Re-fetches on every rotation
+    }
+}
+```
+
+### Memory Leak Prevention
+```java
+// ❌ BAD: Observer not cleaned up
+public class UserActivity extends AppCompatActivity {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        viewModel.getUsers().observe(this, users -> {
+            // Observer lives forever if Activity destroyed abnormally
+        });
+    }
+}
+
+// ✅ GOOD: Lifecycle-aware observation
+public class UserActivity extends AppCompatActivity {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // 'this' as LifecycleOwner - auto cleanup
+        viewModel.getUsers().observe(this, users -> {
+            updateUI(users);
+        });
+    }
+}
+```

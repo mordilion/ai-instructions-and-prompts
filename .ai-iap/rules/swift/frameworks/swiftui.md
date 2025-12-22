@@ -1,32 +1,28 @@
 # SwiftUI Development
 
 ## Overview
-SwiftUI is Apple's modern, declarative UI framework for building user interfaces across all Apple platforms.
+SwiftUI: Apple's declarative UI framework introduced in 2019, replacing UIKit for all Apple platforms (iOS, macOS, watchOS, tvOS).
+Data-driven with automatic UI updates when state changes. Compiles to native views on each platform.
+Best for new iOS 13+ projects, cross-platform Apple apps, and when you want modern declarative UI.
 
 ## Views
 
-### Basic View Structure
+### Basic Structure
 ```swift
-// ✅ Good - simple, focused view
 struct UserView: View {
     let user: User
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(user.name)
-                .font(.headline)
-            Text(user.email)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-        }
-        .padding()
+            Text(user.name).font(.headline)
+            Text(user.email).font(.subheadline).foregroundColor(.secondary)
+        }.padding()
     }
 }
 ```
 
 ### Extract Subviews
 ```swift
-// ✅ Good - extract complex views
 struct UserDetailView: View {
     let user: User
     
@@ -35,32 +31,6 @@ struct UserDetailView: View {
             VStack(spacing: 20) {
                 UserHeaderView(user: user)
                 UserStatsView(user: user)
-                UserPostsView(user: user)
-            }
-        }
-    }
-}
-
-// Extracted subview
-private struct UserHeaderView: View {
-    let user: User
-    
-    var body: some View {
-        HStack {
-            AsyncImage(url: user.avatarURL) { image in
-                image.resizable()
-            } placeholder: {
-                ProgressView()
-            }
-            .frame(width: 80, height: 80)
-            .clipShape(Circle())
-            
-            VStack(alignment: .leading) {
-                Text(user.name)
-                    .font(.title)
-                Text(user.bio)
-                    .font(.body)
-                    .foregroundColor(.secondary)
             }
         }
     }
@@ -69,26 +39,22 @@ private struct UserHeaderView: View {
 
 ## State Management
 
-### @State for Local State
+### @State
 ```swift
-// ✅ Good - @State for view-local state
 struct CounterView: View {
     @State private var count = 0
     
     var body: some View {
         VStack {
             Text("Count: \(count)")
-            Button("Increment") {
-                count += 1
-            }
+            Button("Increment") { count += 1 }
         }
     }
 }
 ```
 
-### @StateObject for View Models
+### @StateObject
 ```swift
-// ✅ Good - @StateObject for owned view models
 struct UserListView: View {
     @StateObject private var viewModel = UserListViewModel()
     
@@ -96,9 +62,7 @@ struct UserListView: View {
         List(viewModel.users) { user in
             UserRow(user: user)
         }
-        .task {
-            await viewModel.loadUsers()
-        }
+        .task { await viewModel.loadUsers() }
     }
 }
 
@@ -106,103 +70,43 @@ struct UserListView: View {
 class UserListViewModel: ObservableObject {
     @Published var users: [User] = []
     @Published var isLoading = false
-    @Published var error: Error?
-    
-    private let service: UserService
-    
-    init(service: UserService = UserService()) {
-        self.service = service
-    }
     
     func loadUsers() async {
         isLoading = true
         defer { isLoading = false }
-        
         do {
             users = try await service.fetchUsers()
         } catch {
-            self.error = error
+            print(error)
         }
     }
 }
 ```
 
-### @ObservedObject for Passed View Models
+### @ObservedObject & @EnvironmentObject
 ```swift
-// ✅ Good - @ObservedObject when passed from parent
 struct UserDetailView: View {
     @ObservedObject var viewModel: UserDetailViewModel
-    
-    var body: some View {
-        VStack {
-            Text(viewModel.user.name)
-        }
-    }
-}
-```
-
-### @EnvironmentObject for Shared State
-```swift
-// ✅ Good - @EnvironmentObject for shared dependencies
-struct ContentView: View {
-    @StateObject private var authManager = AuthManager()
-    
-    var body: some View {
-        NavigationStack {
-            if authManager.isAuthenticated {
-                HomeView()
-            } else {
-                LoginView()
-            }
-        }
-        .environmentObject(authManager)
-    }
-}
-
-struct HomeView: View {
     @EnvironmentObject var authManager: AuthManager
-    
-    var body: some View {
-        VStack {
-            Text("Welcome, \(authManager.currentUser?.name ?? "")")
-            Button("Logout") {
-                authManager.logout()
-            }
-        }
-    }
 }
 ```
 
-### @Binding for Two-Way Communication
+### @Binding
 ```swift
-// ✅ Good - @Binding for parent-child communication
-struct SearchView: View {
-    @State private var searchText = ""
-    
-    var body: some View {
-        VStack {
-            SearchBar(text: $searchText)
-            ResultsList(query: searchText)
-        }
-    }
-}
-
 struct SearchBar: View {
     @Binding var text: String
     
     var body: some View {
         TextField("Search", text: $text)
             .textFieldStyle(.roundedBorder)
-            .padding()
     }
 }
 ```
 
 ## Lists & Collections
 
-### List with ForEach
+### List
 ```swift
-// ✅ Good - List with identifiable items
 struct UserListView: View {
     let users: [User]
     
@@ -217,32 +121,20 @@ struct UserListView: View {
         }
     }
 }
-
-// Make model Identifiable
-struct User: Identifiable, Hashable {
-    let id: UUID
-    let name: String
-    let email: String
-}
 ```
 
-### LazyVGrid for Grids
+### LazyVGrid
 ```swift
-// ✅ Good - LazyVGrid for grid layouts
 struct PhotoGridView: View {
     let photos: [Photo]
-    
-    private let columns = [
-        GridItem(.adaptive(minimum: 100))
-    ]
+    private let columns = [GridItem(.adaptive(minimum: 100))]
     
     var body: some View {
         ScrollView {
             LazyVGrid(columns: columns, spacing: 10) {
                 ForEach(photos) { photo in
                     AsyncImage(url: photo.url) { image in
-                        image.resizable()
-                            .aspectRatio(contentMode: .fill)
+                        image.resizable().aspectRatio(contentMode: .fill)
                     } placeholder: {
                         ProgressView()
                     }
@@ -250,7 +142,6 @@ struct PhotoGridView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
             }
-            .padding()
         }
     }
 }
@@ -258,54 +149,29 @@ struct PhotoGridView: View {
 
 ## Navigation
 
-### NavigationStack (iOS 16+)
+### NavigationStack
 ```swift
-// ✅ Good - modern navigation with NavigationStack
 struct AppRootView: View {
     @State private var path = NavigationPath()
     
     var body: some View {
         NavigationStack(path: $path) {
             UserListView()
-                .navigationDestination(for: User.self) { user in
-                    UserDetailView(user: user)
-                }
-                .navigationDestination(for: Post.self) { post in
-                    PostDetailView(post: post)
-                }
+                .navigationDestination(for: User.self) { UserDetailView(user: $0) }
+                .navigationDestination(for: Post.self) { PostDetailView(post: $0) }
         }
     }
 }
 ```
 
-### Sheets & Modals
+### Sheets
 ```swift
-// ✅ Good - sheets for modals
-struct ContentView: View {
-    @State private var showingSheet = false
-    @State private var selectedUser: User?
-    
-    var body: some View {
-        Button("Show User") {
-            showingSheet = true
-        }
-        .sheet(isPresented: $showingSheet) {
-            if let user = selectedUser {
-                UserDetailView(user: user)
-            }
-        }
-    }
-}
-
-// ✅ Good - item-based sheets
 struct ContentView: View {
     @State private var selectedUser: User?
     
     var body: some View {
         List(users) { user in
-            Button(user.name) {
-                selectedUser = user
-            }
+            Button(user.name) { selectedUser = user }
         }
         .sheet(item: $selectedUser) { user in
             UserDetailView(user: user)
@@ -318,54 +184,36 @@ struct ContentView: View {
 
 ### Task Modifier
 ```swift
-// ✅ Good - use .task for async work
 struct UserDetailView: View {
     @StateObject private var viewModel: UserDetailViewModel
     
     var body: some View {
-        VStack {
-            if viewModel.isLoading {
-                ProgressView()
-            } else if let user = viewModel.user {
-                UserContentView(user: user)
-            }
-        }
-        .task {
-            await viewModel.loadUser()
-        }
+        content
+            .task { await viewModel.loadUser() }
     }
 }
 ```
 
 ### Refreshable
 ```swift
-// ✅ Good - pull-to-refresh with refreshable
-struct UserListView: View {
-    @StateObject private var viewModel = UserListViewModel()
-    
-    var body: some View {
-        List(viewModel.users) { user in
-            UserRow(user: user)
-        }
-        .refreshable {
-            await viewModel.refresh()
-        }
-    }
+List(viewModel.users) { user in
+    UserRow(user: user)
+}
+.refreshable {
+    await viewModel.refresh()
 }
 ```
 
 ## Custom View Modifiers
 
-### Reusable Modifiers
 ```swift
-// ✅ Good - custom view modifiers
 struct CardStyle: ViewModifier {
     func body(content: Content) -> some View {
         content
             .padding()
             .background(Color(.systemBackground))
             .cornerRadius(12)
-            .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+            .shadow(color: .black.opacity(0.1), radius: 5)
     }
 }
 
@@ -374,17 +222,11 @@ extension View {
         modifier(CardStyle())
     }
 }
-
-// Usage
-Text("Hello")
-    .cardStyle()
 ```
 
 ## Environment Values
 
-### Custom Environment Keys
 ```swift
-// ✅ Good - custom environment values
 private struct ThemeKey: EnvironmentKey {
     static let defaultValue: Theme = .light
 }
@@ -396,140 +238,118 @@ extension EnvironmentValues {
     }
 }
 
-// Usage
-struct ContentView: View {
-    @State private var theme: Theme = .light
-    
-    var body: some View {
-        HomeView()
-            .environment(\.theme, theme)
-    }
-}
-
 struct HomeView: View {
     @Environment(\.theme) var theme
     
     var body: some View {
-        Text("Hello")
-            .foregroundColor(theme.primaryColor)
-    }
-}
-```
-
-## Preference Keys
-
-### Child-to-Parent Communication
-```swift
-// ✅ Good - PreferenceKey for child-to-parent data flow
-struct SizePreferenceKey: PreferenceKey {
-    static var defaultValue: CGSize = .zero
-    
-    static func reduce(value: inout CGSize, nextValue: () -> CGSize) {
-        value = nextValue()
-    }
-}
-
-struct MeasureView<Content: View>: View {
-    let content: Content
-    @State private var size: CGSize = .zero
-    
-    var body: some View {
-        content
-            .background(
-                GeometryReader { geometry in
-                    Color.clear.preference(
-                        key: SizePreferenceKey.self,
-                        value: geometry.size
-                    )
-                }
-            )
-            .onPreferenceChange(SizePreferenceKey.self) { newSize in
-                size = newSize
-            }
+        Text("Hello").foregroundColor(theme.primaryColor)
     }
 }
 ```
 
 ## Testing
 
-### View Testing
 ```swift
-// ✅ Good - test view logic
 @MainActor
 class UserListViewModelTests: XCTestCase {
-    
     func testLoadUsers_Success() async throws {
-        // Given
         let mockService = MockUserService()
-        mockService.usersToReturn = [
-            User(id: UUID(), name: "John", email: "john@example.com")
-        ]
+        mockService.usersToReturn = [User(id: UUID(), name: "John", email: "john@test.com")]
         let viewModel = UserListViewModel(service: mockService)
         
-        // When
         await viewModel.loadUsers()
         
-        // Then
         XCTAssertEqual(viewModel.users.count, 1)
-        XCTAssertEqual(viewModel.users.first?.name, "John")
         XCTAssertFalse(viewModel.isLoading)
-    }
-    
-    func testLoadUsers_Failure() async {
-        // Given
-        let mockService = MockUserService()
-        mockService.shouldFail = true
-        let viewModel = UserListViewModel(service: mockService)
-        
-        // When
-        await viewModel.loadUsers()
-        
-        // Then
-        XCTAssertTrue(viewModel.users.isEmpty)
-        XCTAssertNotNil(viewModel.error)
     }
 }
 ```
 
 ### Preview Providers
 ```swift
-// ✅ Good - useful previews
 struct UserView_Previews: PreviewProvider {
     static var previews: some View {
         Group {
             UserView(user: User.sample)
-                .previewDisplayName("Default")
-            
-            UserView(user: User.sampleWithLongName)
-                .previewDisplayName("Long Name")
-            
-            UserView(user: User.sample)
-                .preferredColorScheme(.dark)
-                .previewDisplayName("Dark Mode")
+            UserView(user: User.sample).preferredColorScheme(.dark)
         }
     }
 }
-
-extension User {
-    static let sample = User(
-        id: UUID(),
-        name: "John Doe",
-        email: "john@example.com"
-    )
-    
-    static let sampleWithLongName = User(
-        id: UUID(),
-        name: "John Jacob Jingleheimer Schmidt",
-        email: "john@example.com"
-    )
-}
 ```
+
+## Pattern Selection
+
+### State Management
+**Use @State when**:
+- Local view state (counter, toggle, text field value)
+- State doesn't need to persist across view recreation
+- Simple value types
+
+**Use @StateObject when**:
+- Creating ViewModel instance owned by the view
+- Need ObservableObject with @Published properties
+- State should survive view updates
+
+**Use @ObservedObject when**:
+- ViewModel passed from parent
+- Not responsible for creating the object
+- Observing external object
+
+**Use @EnvironmentObject when**:
+- Sharing data across many views
+- Avoiding prop drilling
+- App-wide state (theme, auth, settings)
 
 ## Best Practices
 
-### 1. Keep Views Small
+**MUST**:
+- Use @StateObject for ViewModels (NOT @ObservedObject for owned objects)
+- Mark ViewModels with @MainActor (UI updates must be on main thread)
+- Keep views small (< 200 lines - extract subviews)
+- Use PreviewProvider for all views (design-time feedback)
+- Handle all states (loading, success, error, empty)
+
+**SHOULD**:
+- Use Equatable protocol on views with expensive rendering
+- Extract computed properties to avoid recalculation
+- Use `.task` modifier for async operations (auto-cancellation)
+- Use private for view properties and subviews
+- Use @Binding for two-way communication with parent
+
+**AVOID**:
+- Heavy computation in body (use @State with .onChange)
+- @StateObject in subviews receiving ViewModel (use @ObservedObject)
+- Force unwrapping (use optional binding or nil coalescing)
+- Complex logic in views (move to ViewModel)
+- God views (split if >200 lines)
+
+## Common Patterns
+
+### StateObject vs ObservedObject
 ```swift
-// ✅ Good - extract complex logic
+// ✅ GOOD: @StateObject in parent (creates and owns)
+struct UserListView: View {
+    @StateObject private var viewModel = UserListViewModel()  // Created here
+    
+    var body: some View {
+        UserDetailView(viewModel: viewModel)  // Pass to child
+    }
+}
+
+// ✅ GOOD: @ObservedObject in child (receives from parent)
+struct UserDetailView: View {
+    @ObservedObject var viewModel: UserListViewModel  // Passed in, not owned
+}
+
+// ❌ BAD: @StateObject in child
+struct UserDetailView: View {
+    @StateObject var viewModel: UserListViewModel  // WRONG: Creates new instance!
+}
+```
+
+### Keep Views Small
+```swift
+// ✅ GOOD: Extracted subviews
 struct UserProfileView: View {
     let user: User
     
@@ -544,124 +364,96 @@ struct UserProfileView: View {
     }
     
     private var headerView: some View {
-        HStack {
-            // Header content
+        VStack {
+            AsyncImage(url: user.avatarURL)
+            Text(user.name).font(.title)
         }
     }
     
-    private var statsView: some View {
-        HStack {
-            // Stats content
-        }
-    }
-    
-    private var postsView: some View {
-        LazyVStack {
-            // Posts content
+    private var statsView: some View { /* ... */ }
+    private var postsView: some View { /* ... */ }
+}
+
+// ❌ BAD: God view
+struct UserProfileView: View {
+    var body: some View {
+        ScrollView {
+            VStack {
+                // 500 lines of UI code...
+            }
         }
     }
 }
 ```
 
-### 2. Use @MainActor for View Models
+### MainActor for ViewModels
 ```swift
-// ✅ Good - ensure UI updates on main thread
+// ✅ GOOD: @MainActor ensures UI updates on main thread
 @MainActor
 class UserViewModel: ObservableObject {
     @Published var users: [User] = []
     
-    func loadUsers() async {
-        // Automatically on MainActor
+    func loadUsers() async {  // Automatically on MainActor
         users = try await service.fetchUsers()
+        // No need for DispatchQueue.main.async
+    }
+}
+
+// ❌ BAD: Not @MainActor
+class UserViewModel: ObservableObject {
+    @Published var users: [User] = []
+    
+    func loadUsers() async {
+        let fetchedUsers = try await service.fetchUsers()
+        DispatchQueue.main.async {  // Manual dispatch needed!
+            self.users = fetchedUsers
+        }
     }
 }
 ```
 
-### 3. Avoid Heavy Computation in Body
+### Performance with Equatable
 ```swift
-// ❌ Avoid - expensive computation in body
-var body: some View {
-    let sortedUsers = users.sorted { $0.name < $1.name }  // Recomputes every render
-    // ...
-}
-
-// ✅ Good - compute once
-@State private var sortedUsers: [User] = []
-
-var body: some View {
-    List(sortedUsers) { user in
-        // ...
-    }
-    .onChange(of: users) { newUsers in
-        sortedUsers = newUsers.sorted { $0.name < $1.name }
-    }
-}
-```
-
-### 4. Use Equatable for Performance
-```swift
-// ✅ Good - conform to Equatable for efficient updates
-struct UserView: View, Equatable {
+// ✅ GOOD: Equatable prevents unnecessary redraws
+struct UserRow: View, Equatable {
     let user: User
     
-    var body: some View {
-        Text(user.name)
+    static func == (lhs: UserRow, rhs: UserRow) -> Bool {
+        lhs.user.id == rhs.user.id  // Only redraw if ID changes
     }
     
-    static func == (lhs: UserView, rhs: UserView) -> Bool {
-        lhs.user.id == rhs.user.id
+    var body: some View {
+        // Complex rendering...
     }
+}
+
+// Usage
+ForEach(users) { user in
+    UserRow(user: user)
+        .equatable()  // Enable equatable optimization
 }
 ```
 
-### 5. Handle Loading & Error States
+### State Handling
 ```swift
-// ✅ Good - proper state handling
-struct ContentView: View {
-    @StateObject private var viewModel = ViewModel()
-    
-    var body: some View {
-        Group {
-            switch viewModel.state {
-            case .idle:
-                EmptyView()
-            case .loading:
-                ProgressView()
-            case .loaded(let users):
-                UserList(users: users)
-            case .error(let message):
-                ErrorView(message: message) {
-                    Task {
-                        await viewModel.retry()
-                    }
-                }
-            }
-        }
-        .task {
-            await viewModel.loadData()
-        }
-    }
-}
-
+// ✅ GOOD: Exhaustive state handling
 enum LoadingState<T> {
     case idle
     case loading
     case loaded(T)
     case error(String)
 }
-```
-
-### 6. Use Animation Wisely
-```swift
-// ✅ Good - explicit animations
-@State private var isExpanded = false
 
 var body: some View {
-    VStack {
-        // ...
+    switch viewModel.state {
+    case .idle:
+        EmptyStateView()
+    case .loading:
+        ProgressView()
+    case .loaded(let users):
+        UserList(users: users)
+    case .error(let message):
+        ErrorView(message: message)
     }
-    .frame(height: isExpanded ? 200 : 100)
-    .animation(.spring(), value: isExpanded)
 }
 ```
-

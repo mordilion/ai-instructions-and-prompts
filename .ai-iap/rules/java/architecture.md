@@ -1,52 +1,82 @@
 # Java Architecture
 
-> **Scope**: Apply these rules ONLY when working with `.java` files. These extend the general architecture guidelines.
+## Overview
+Clean Java architecture with immutability, dependency injection, and SOLID principles.
 
-## 1. Core Principles
-- **Modularity**: Small classes (<300 lines). Single responsibility principle.
-- **Interface Segregation**: Small, focused interfaces. Avoid god interfaces.
-- **Dependency Injection**: Use constructor injection (Spring, Dagger, CDI).
+## Core Principles
 
-## 2. Project Structure
-- **Feature-First**: Organize by feature/domain, NOT by type (controllers/, services/).
-- **Package by Feature**: `com.company.users`, `com.company.orders` (NOT `controllers/`, `services/`).
-- **Shared Code**: Common utilities in `common` or `core` package.
-- **Note**: See structure files for specific folder layouts (Spring Boot, Android, etc.).
+### Immutability
+```java
+public record User(Long id, String name, String email) {}
 
-## 3. Naming Conventions
-- **Classes**: `PascalCase` (e.g., `UserService`, `OrderRepository`).
-- **Methods/Variables**: `camelCase` (e.g., `getUser`, `userId`).
-- **Constants**: `UPPER_SNAKE_CASE` (e.g., `MAX_RETRY_COUNT`).
-- **Packages**: lowercase, no underscores (e.g., `com.company.users`).
-- **Interfaces**: NO `I` prefix (e.g., `UserRepository`, not `IUserRepository`).
-- **Implementations**: Descriptive names (e.g., `JpaUserRepository implements UserRepository`).
+// Or with final fields
+public final class User {
+    private final Long id;
+    private final String name;
+    
+    public User(Long id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+}
+```
 
-## 4. Package Organization
-- **Package by Feature**: Group related classes together.
-  - ✅ Good: `com.company.users` (User, UserService, UserRepository)
-  - ❌ Bad: `com.company.services` (all services), `com.company.repositories` (all repos)
-- **Sub-packages**: Use for large features.
-  - Example: `com.company.users.domain`, `com.company.users.api`
+### Dependency Injection
+```java
+public interface UserRepository {
+    Optional<User> findById(Long id);
+    User save(User user);
+}
 
-## 5. Design Patterns
-- **Repository Pattern**: Abstract data access behind interfaces.
-- **Service Layer**: Business logic in service classes, NOT in controllers.
-- **Dependency Injection**: Constructor injection, NOT field injection.
-- **DTOs**: Separate request/response objects from entities.
+public class UserService {
+    private final UserRepository repository;
+    
+    public UserService(UserRepository repository) {
+        this.repository = repository;
+    }
+}
+```
 
-## 6. Data Layer
-- **Entities**: JPA entities for persistence, NOT for API responses.
-- **DTOs**: NEVER return raw entities. Always map to DTOs.
-- **Repositories**: Use Spring Data JPA or custom repositories.
+### Optional for Nullability
+```java
+public Optional<User> findUser(Long id) {
+    return repository.findById(id);
+}
 
-## 7. Anti-Patterns (MUST avoid)
-- **God Classes**: Classes >300 lines = refactor into smaller classes.
-- **Field Injection**: NEVER use `@Autowired` on fields.
-  - ❌ Bad: `@Autowired private UserService userService;`
-  - ✅ Good: `private final UserService userService; @Autowired public UserController(UserService userService) { this.userService = userService; }`
-- **Business Logic in Controllers**: Controllers should delegate to services.
-  - ❌ Bad: `@GetMapping("/users") User getUser() { User user = userRepo.findById(1); user.setActive(true); return user; }`
-  - ✅ Good: `@GetMapping("/users") UserDto getUser() { return userService.getUser(1); }`
-- **Cyclic Dependencies**: Avoid circular package dependencies.
-- **Package by Layer**: Don't organize by technical layer (controllers/, services/).
+User user = findUser(id)
+    .orElseThrow(() -> new UserNotFoundException(id));
+```
 
+## Error Handling
+
+```java
+public class UserNotFoundException extends RuntimeException {
+    public UserNotFoundException(Long id) {
+        super("User " + id + " not found");
+    }
+}
+```
+
+## Best Practices
+
+### Stream API
+```java
+List<String> names = users.stream()
+    .filter(u -> u.isActive())
+    .map(User::getName)
+    .collect(Collectors.toList());
+```
+
+### Try-with-Resources
+```java
+try (var reader = new BufferedReader(new FileReader(file))) {
+    return reader.readLine();
+}
+```
+
+### Sealed Classes (Java 17+)
+```java
+public sealed interface Result<T> permits Success, Failure {}
+record Success<T>(T data) implements Result<T> {}
+record Failure<T>(String error) implements Result<T> {}
+```

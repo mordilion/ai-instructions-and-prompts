@@ -1,51 +1,65 @@
-# ASP.NET Core Traditional/Layered Structure
+# ASP.NET Core Traditional Structure
 
-> **Scope**: Use this structure for standard .NET web apps with N-tier architecture.
-> **Precedence**: When loaded, this structure overrides any default folder organization from the base ASP.NET Core rules.
+> Standard layered architecture with Controllers, Services, and Data folders. Best for traditional MVC/API applications.
 
-## Project Structure
+## Directory Structure
+
 ```
 src/
-├── MyApp.Api/                  # Web API project
-│   ├── Controllers/
-│   │   ├── AuthController.cs
-│   │   └── UsersController.cs
-│   ├── Filters/
-│   ├── Middleware/
-│   └── Program.cs
-├── MyApp.Core/                 # Business logic
-│   ├── Services/
-│   │   ├── IUserService.cs
-│   │   └── UserService.cs
-│   ├── Models/
-│   │   └── User.cs
-│   └── DTOs/
-│       ├── CreateUserDto.cs
-│       └── UserDto.cs
-├── MyApp.Data/                 # Data access
-│   ├── AppDbContext.cs
-│   ├── Repositories/
-│   │   ├── IUserRepository.cs
-│   │   └── UserRepository.cs
-│   └── Entities/
-│       └── UserEntity.cs
-└── MyApp.sln
+├── Controllers/UserController.cs
+├── Services/UserService.cs
+├── Repositories/UserRepository.cs
+├── Models/User.cs
+└── DTOs/
+    ├── UserDto.cs
+    └── CreateUserRequest.cs
 ```
 
-## Layer Dependencies
-```
-Api → Core → Data
-```
+## Implementation
 
-## Rules
-- **Controller → Service → Repository**: Clear dependency chain
-- **Interfaces**: Define in Core, implement in Data
-- **DTOs**: Separate from entities
-- **No Business Logic in Controllers**: Delegate to services
+```csharp
+// Models/User.cs
+public class User {
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+}
+
+// Repositories/UserRepository.cs
+public interface IUserRepository {
+    Task<User?> GetByIdAsync(int id);
+}
+
+// Services/UserService.cs
+public class UserService {
+    private readonly IUserRepository _repository;
+    
+    public UserService(IUserRepository repository) {
+        _repository = repository;
+    }
+    
+    public async Task<UserDto> GetUserAsync(int id) {
+        var user = await _repository.GetByIdAsync(id);
+        return user != null ? MapToDto(user) : throw new UserNotFoundException(id);
+    }
+}
+
+// Controllers/UserController.cs
+[ApiController]
+[Route("api/users")]
+public class UserController : ControllerBase {
+    private readonly UserService _service;
+    
+    public UserController(UserService service) {
+        _service = service;
+    }
+    
+    [HttpGet("{id}")]
+    public async Task<UserDto> GetUser(int id) {
+        return await _service.GetUserAsync(id);
+    }
+}
+```
 
 ## When to Use
-- Small to medium applications
-- Standard CRUD operations
-- Teams familiar with N-tier
-- Quick prototypes
-
+- Traditional enterprise apps
+- CRUD-focused applications

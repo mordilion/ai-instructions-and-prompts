@@ -2,6 +2,29 @@
 
 > **Scope**: Apply these rules for Fastify applications (JavaScript or TypeScript).
 
+## Overview
+
+Fastify is a fast Node.js framework focused on performance and developer experience with built-in schema validation.
+
+## Best Practices
+
+**MUST**:
+- Use schema validation for all routes
+- Use plugins for modularity
+- Use async/await
+- Register plugins before routes
+
+**SHOULD**:
+- Use JSON Schema for validation
+- Use TypeScript for type safety
+- Use decorators for DI
+- Enable logging
+
+**AVOID**:
+- Missing schema validation
+- Synchronous operations
+- Direct database access in routes
+
 ## Project Structure
 ```
 src/

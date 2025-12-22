@@ -2,6 +2,29 @@
 
 > **Scope**: Apply these rules for Hapi applications (JavaScript or TypeScript).
 
+## Overview
+
+Hapi is a configuration-centric Node.js framework with built-in input validation, auth, and caching.
+
+## Best Practices
+
+**MUST**:
+- Use Joi for validation
+- Use plugins for modularity
+- Define routes as objects
+- Use async handlers
+
+**SHOULD**:
+- Use @hapi plugins for features
+- Use pre/post handlers for middleware
+- Use server methods for shared logic
+- Configure via options
+
+**AVOID**:
+- Missing validation schemas
+- Logic in route definitions
+- Synchronous operations
+
 ## Project Structure
 ```
 src/

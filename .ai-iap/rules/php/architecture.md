@@ -1,37 +1,104 @@
 # PHP Architecture
 
-> **Scope**: Apply these rules ONLY when working with `.php` files. These extend the general architecture guidelines.
+## Overview
+Modern PHP with clean architecture, type safety, and best practices.
 
-## 1. Core Principles
-- **Domain-Driven**: Domain layer has ZERO external dependencies.
-- **Rich Models**: Business logic goes IN entities. Anemic models only for DTOs.
+## Core Principles
 
-## 2. Project Structure
+### Type Safety (PHP 8+)
+```php
+class User {
+    public function __construct(
+        public readonly int $id,
+        public readonly string $name,
+        public readonly string $email,
+    ) {}
+}
+
+function getUser(int $id): ?User {
+    return $repository->findById($id);
+}
 ```
-Domain/         # Entities, Value Objects, Repository Interfaces
-Application/    # Use Cases, Services, Command/Query Handlers
-Infrastructure/ # Doctrine Repos, API Clients, Framework Bindings
-UI/Http/        # Controllers, Requests, Resources
+
+### Immutability
+```php
+final readonly class User {
+    public function __construct(
+        public int $id,
+        public string $name,
+        public string $email,
+    ) {}
+    
+    public function withName(string $name): self {
+        return new self($this->id, $name, $this->email);
+    }
+}
 ```
-- **Feature-First**: Organize by feature, NOT by type.
 
-## 3. Naming Conventions
-- **Interfaces**: NO `I` prefix (e.g., `UserRepository`).
-- **Implementations**: `DoctrineUserRepository implements UserRepository`.
-- **DTOs**: Suffix with `Dto`, `Request`, `Response` (e.g., `UserDto`).
+### Dependency Injection
+```php
+interface UserRepository {
+    public function findById(int $id): ?User;
+    public function save(User $user): void;
+}
 
-## 4. Design Patterns
-- **Repository Pattern**: Isolate data fetching from business logic.
-- **Value Objects**: Use for Money, Email, Address, UserId. MUST encapsulate validation.
-- **Dependency Injection**: Constructor injection ONLY.
+class UserService {
+    public function __construct(
+        private readonly UserRepository $repository
+    ) {}
+    
+    public function getUser(int $id): User {
+        $user = $this->repository->findById($id);
+        if (!$user) {
+            throw new UserNotFoundException($id);
+        }
+        return $user;
+    }
+}
+```
 
-## 5. DTOs & Mapping
-- NEVER expose Doctrine entities in API responses. Always map to DTOs.
-- Use explicit mapping methods or libraries like AutoMapper.
+## Error Handling
 
-## 6. Anti-Patterns (MUST avoid)
-- **Generic Exceptions**: NEVER throw `Exception` or `LogicException` from domain.
-  - ✅ Good: `throw new UserNotFoundException($userId);`
-  - ❌ Bad: `throw new Exception("User not found");`
-- **Fat Controllers**: Controllers only validate and delegate to services.
-- **Static Dependencies**: NEVER use static methods for business logic.
+```php
+class UserNotFoundException extends \Exception {
+    public function __construct(int $id) {
+        parent::__construct("User {$id} not found");
+    }
+}
+
+try {
+    $user = $service->getUser($id);
+} catch (UserNotFoundException $e) {
+    // Handle
+}
+```
+
+## Best Practices
+
+### Use Enums (PHP 8.1+)
+```php
+enum UserRole: string {
+    case Admin = 'admin';
+    case User = 'user';
+    case Guest = 'guest';
+}
+```
+
+### Strict Types
+```php
+declare(strict_types=1);
+```
+
+### Named Arguments
+```php
+$user = new User(
+    id: 1,
+    name: 'John',
+    email: 'john@test.com'
+);
+```
+
+### Null Safety
+```php
+$email = $user?->profile?->email ?? 'default@example.com';
+```

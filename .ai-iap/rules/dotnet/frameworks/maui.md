@@ -2,6 +2,40 @@
 
 > **Scope**: Apply these rules when working with .NET MAUI cross-platform applications.
 
+## Overview
+
+.NET MAUI (Multi-platform App UI) is a cross-platform framework for creating native mobile and desktop apps with C# and XAML. Single codebase runs on Android, iOS, macOS, and Windows.
+
+**Key Capabilities**:
+- **Cross-Platform**: One codebase, multiple platforms
+- **Native Performance**: Compiles to native code
+- **MVVM Pattern**: Built-in data binding
+- **Hot Reload**: Fast development cycle
+- **Platform-Specific**: Access platform APIs
+
+## Best Practices
+
+**MUST**:
+- Use MVVM pattern (ViewModels separate from Views)
+- Use CommunityToolkit.Mvvm for boilerplate reduction
+- Use dependency injection for services
+- Handle platform differences gracefully
+- Test on all target platforms
+
+**SHOULD**:
+- Use Shell for navigation
+- Use data binding (NO code-behind logic)
+- Use converters for UI transformations
+- Use async/await for operations
+- Use platform-specific code when needed
+
+**AVOID**:
+- Logic in code-behind (use ViewModels)
+- Blocking UI thread
+- Platform-specific code in shared layer
+- Static state
+- Memory leaks (unsubscribe events)
+
 ## 1. Project Structure
 ```
 MyApp/

@@ -2,6 +2,28 @@
 
 > **Scope**: Apply these rules when working with Alpine.js for lightweight JavaScript interactivity.
 
+## Overview
+
+Alpine.js is a lightweight (15KB) JavaScript framework for adding interactivity to server-rendered HTML. Think of it as "Tailwind for JavaScript".
+
+## Best Practices
+
+**MUST**:
+- Use x-data for component state
+- Use x-cloak to hide elements until Alpine loads
+- Use @ and : shorthand
+- Keep components small and focused
+
+**SHOULD**:
+- Use Alpine.data() for reusable components
+- Use Alpine.store() for global state
+- Use modifiers (.prevent, .stop, .outside)
+
+**AVOID**:
+- Complex SPAs (use Vue/React instead)
+- Business logic in HTML
+- Missing x-cloak styles
+
 ## 1. When to Use Alpine
 - **Progressive Enhancement**: Adding interactivity to server-rendered HTML.
 - **Simple Interactions**: Dropdowns, modals, tabs, accordions.

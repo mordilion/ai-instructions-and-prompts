@@ -1,63 +1,56 @@
 # Laravel Traditional Structure
 
-> **Scope**: Use this structure for standard Laravel apps with default conventions.
-> **Precedence**: When loaded, this structure overrides any default folder organization from the base Laravel rules.
+> Laravel's conventional MVC structure with models, controllers, and views organized by type. Best for standard CRUD applications.
 
-## Project Structure
+## Directory Structure
+
 ```
 app/
-├── Console/
-├── Exceptions/
-├── Http/
-│   ├── Controllers/
-│   │   ├── Auth/
-│   │   │   └── LoginController.php
-│   │   ├── Api/
-│   │   │   └── UserController.php
-│   │   └── Web/
-│   │       └── DashboardController.php
-│   ├── Middleware/
-│   ├── Requests/
-│   │   ├── StoreUserRequest.php
-│   │   └── UpdateUserRequest.php
-│   └── Resources/
-│       └── UserResource.php
-├── Models/
-│   ├── User.php
-│   └── Order.php
-├── Services/                   # Business logic (optional)
-│   └── UserService.php
-├── Repositories/               # Data access (optional)
-│   └── UserRepository.php
-├── Events/
-├── Listeners/
-├── Jobs/
-├── Mail/
-├── Notifications/
-└── Policies/
-routes/
-├── api.php
-├── web.php
-└── console.php
+├── Http/Controllers/UserController.php
+├── Models/User.php
+├── Services/UserService.php
+└── Repositories/UserRepository.php
 ```
 
-## Controller Organization
-```
-Controllers/
-├── Auth/           # Authentication controllers
-├── Api/            # API controllers (versioned: Api/V1/)
-└── Web/            # Web/blade controllers
-```
+## Implementation
 
-## Rules
-- **Follow Laravel Conventions**: Use default folders
-- **Thin Controllers**: Move logic to Services or Actions
-- **Form Requests**: Validation in dedicated classes
-- **API Resources**: Transform models for API responses
+```php
+// Models/User.php
+class User extends Model {
+    protected $fillable = ['name', 'email'];
+}
+
+// Repositories/UserRepository.php
+class UserRepository {
+    public function findById(int $id): ?User {
+        return User::find($id);
+    }
+}
+
+// Services/UserService.php
+class UserService {
+    public function __construct(
+        private readonly UserRepository $repository
+    ) {}
+    
+    public function getUser(int $id): User {
+        return $this->repository->findById($id) 
+            ?? throw new UserNotFoundException($id);
+    }
+}
+
+// Http/Controllers/UserController.php
+class UserController extends Controller {
+    public function __construct(
+        private readonly UserService $service
+    ) {}
+    
+    public function show(int $id) {
+        return response()->json($this->service->getUser($id));
+    }
+}
+```
 
 ## When to Use
-- Small to medium applications
-- Standard CRUD operations
-- Solo developers
-- Rapid development
-
+- Traditional Laravel apps
+- CRUD-focused applications

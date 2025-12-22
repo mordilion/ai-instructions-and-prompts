@@ -2,6 +2,38 @@
 
 > **Scope**: Apply these rules when working with Slim PHP micro-framework.
 
+## Overview
+
+Slim is a PHP micro-framework for building web applications and APIs. It provides routing, middleware, and dependency injection while staying lightweight and PSR-compliant.
+
+**Key Capabilities**:
+- **Micro-Framework**: Minimal core, add what you need
+- **PSR-7/PSR-15**: Standard HTTP messages and middleware
+- **Dependency Injection**: PHP-DI container
+- **Fast**: Minimal overhead
+- **RESTful**: Perfect for APIs
+
+## Best Practices
+
+**MUST**:
+- Use single-action classes (NO traditional controllers)
+- Use PSR-7 Request/Response (NO echo/print)
+- Use middleware for cross-cutting concerns
+- Use DI container for dependencies
+- Return Response objects
+
+**SHOULD**:
+- Use route groups for organization
+- Use middleware for authentication
+- Validate input (Respect, Rakit)
+- Use services for business logic
+
+**AVOID**:
+- Logic in actions (use services)
+- Direct database access in actions
+- Echo/print (return Response)
+- Fat actions (delegate to services)
+
 ## 1. Project Structure
 ```
 src/

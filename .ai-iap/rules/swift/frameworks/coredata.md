@@ -1,23 +1,19 @@
 # Core Data Framework
 
 ## Overview
-Core Data is Apple's object graph and persistence framework for iOS, macOS, and other Apple platforms.
+Core Data: Apple's object graph and persistence framework.
 
 ## Stack Setup
 
-### Core Data Stack
 ```swift
-// ✅ Good - Core Data stack
 class CoreDataStack {
     static let shared = CoreDataStack()
     
-    private init() { }
-    
     lazy var persistentContainer: NSPersistentContainer = {
         let container = NSPersistentContainer(name: "Model")
-        container.loadPersistentStores { description, error in
+        container.loadPersistentStores { _, error in
             if let error = error {
-                fatalError("Unable to load persistent stores: \(error)")
+                fatalError("Unable to load stores: \(error)")
             }
         }
         container.viewContext.automaticallyMergesChangesFromParent = true
@@ -31,12 +27,7 @@ class CoreDataStack {
     func saveContext() {
         let context = persistentContainer.viewContext
         if context.hasChanges {
-            do {
-                try context.save()
-            } catch {
-                let nserror = error as NSError
-                fatalError("Unresolved error \(nserror), \(nserror.userInfo)")
-            }
+            try? context.save()
         }
     }
 }
@@ -44,175 +35,68 @@ class CoreDataStack {
 
 ## Entity Management
 
-### Create Entity
+### CRUD Operations
 ```swift
-// ✅ Good - create entity
 func createUser(name: String, email: String) -> User? {
     let context = CoreDataStack.shared.context
     let user = User(context: context)
     user.id = UUID()
     user.name = name
     user.email = email
-    user.createdAt = Date()
-    
-    do {
-        try context.save()
-        return user
-    } catch {
-        print("Failed to create user: \(error)")
-        return nil
-    }
+    try? context.save()
+    return user
 }
-```
 
-### Fetch Entities
-```swift
-// ✅ Good - fetch with predicate
 func fetchUsers(matching query: String) -> [User] {
     let context = CoreDataStack.shared.context
     let fetchRequest: NSFetchRequest<User> = User.fetchRequest()
     
     if !query.isEmpty {
-        fetchRequest.predicate = NSPredicate(
-            format: "name CONTAINS[cd] %@ OR email CONTAINS[cd] %@",
-            query,
-            query
-        )
+        fetchRequest.predicate = NSPredicate(format: "name CONTAINS[cd] %@", query)
     }
+    fetchRequest.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: false)]
     
-    fetchRequest.sortDescriptors = [
-        NSSortDescriptor(key: "createdAt", ascending: false)
-    ]
-    
-    do {
-        return try context.fetch(fetchRequest)
-    } catch {
-        print("Failed to fetch users: \(error)")
-        return []
-    }
+    return (try? context.fetch(fetchRequest)) ?? []
 }
-```
 
-### Update Entity
-```swift
-// ✅ Good - update entity
 func updateUser(_ user: User, name: String, email: String) -> Bool {
-    let context = CoreDataStack.shared.context
     user.name = name
     user.email = email
-    user.updatedAt = Date()
-    
-    do {
-        try context.save()
-        return true
-    } catch {
-        print("Failed to update user: \(error)")
-        return false
-    }
+    return (try? user.managedObjectContext?.save()) != nil
 }
-```
 
-### Delete Entity
-```swift
-// ✅ Good - delete entity
 func deleteUser(_ user: User) -> Bool {
-    let context = CoreDataStack.shared.context
+    guard let context = user.managedObjectContext else { return false }
     context.delete(user)
-    
-    do {
-        try context.save()
-        return true
-    } catch {
-        print("Failed to delete user: \(error)")
-        return false
-    }
-}
-```
-
-## Relationships
-
-### One-to-Many
-```swift
-// User has many Posts
-// ✅ Good - fetch with relationship
-func fetchUserWithPosts(id: UUID) -> User? {
-    let context = CoreDataStack.shared.context
-    let fetchRequest: NSFetchRequest<User> = User.fetchRequest()
-    fetchRequest.predicate = NSPredicate(format: "id == %@", id as CVarArg)
-    fetchRequest.relationshipKeyPathsForPrefetching = ["posts"]
-    
-    do {
-        return try context.fetch(fetchRequest).first
-    } catch {
-        print("Failed to fetch user: \(error)")
-        return nil
-    }
+    return (try? context.save()) != nil
 }
 ```
 
 ## Batch Operations
 
-### Batch Update
 ```swift
-// ✅ Good - batch update
 func markAllPostsAsRead() {
-    let context = CoreDataStack.shared.context
     let batchUpdate = NSBatchUpdateRequest(entityName: "Post")
     batchUpdate.propertiesToUpdate = ["isRead": true]
     batchUpdate.resultType = .updatedObjectIDsResultType
     
-    do {
-        let result = try context.execute(batchUpdate) as? NSBatchUpdateResult
-        if let objectIDs = result?.result as? [NSManagedObjectID] {
-            NSManagedObjectContext.mergeChanges(
-                fromRemoteContextSave: [NSUpdatedObjectsKey: objectIDs],
-                into: [context]
-            )
-        }
-    } catch {
-        print("Failed to batch update: \(error)")
+    if let result = try? context.execute(batchUpdate) as? NSBatchUpdateResult,
+       let objectIDs = result.result as? [NSManagedObjectID] {
+        NSManagedObjectContext.mergeChanges(
+            fromRemoteContextSave: [NSUpdatedObjectsKey: objectIDs],
+            into: [context]
+        )
     }
 }
 ```
 
-### Batch Delete
-```swift
-// ✅ Good - batch delete
-func deleteOldPosts(olderThan days: Int) {
-    let context = CoreDataStack.shared.context
-    let fetchRequest: NSFetchRequest<NSFetchRequestResult> = Post.fetchRequest()
-    let date = Calendar.current.date(byAdding: .day, value: -days, to: Date())!
-    fetchRequest.predicate = NSPredicate(format: "createdAt < %@", date as CVarArg)
-    
-    let batchDelete = NSBatchDeleteRequest(fetchRequest: fetchRequest)
-    batchDelete.resultType = .resultTypeObjectIDs
-    
-    do {
-        let result = try context.execute(batchDelete) as? NSBatchDeleteResult
-        if let objectIDs = result?.result as? [NSManagedObjectID] {
-            NSManagedObjectContext.mergeChanges(
-                fromRemoteContextSave: [NSDeletedObjectsKey: objectIDs],
-                into: [context]
-            )
-        }
-    } catch {
-        print("Failed to batch delete: \(error)")
-    }
-}
-```
+## Fetched Results Controller
 
-## Fetched Results Controller (UIKit)
-
-### Table View Integration
 ```swift
-// ✅ Good - NSFetchedResultsController
 class UserListViewController: UITableViewController, NSFetchedResultsControllerDelegate {
-    
     private lazy var fetchedResultsController: NSFetchedResultsController<User> = {
         let fetchRequest: NSFetchRequest<User> = User.fetchRequest()
-        fetchRequest.sortDescriptors = [
-            NSSortDescriptor(key: "createdAt", ascending: false)
-        ]
+        fetchRequest.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: false)]
         
         let controller = NSFetchedResultsController(
             fetchRequest: fetchRequest,
@@ -226,41 +110,18 @@ class UserListViewController: UITableViewController, NSFetchedResultsControllerD
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        do {
-            try fetchedResultsController.performFetch()
-        } catch {
-            print("Failed to fetch: \(error)")
-        }
+        try? fetchedResultsController.performFetch()
     }
-    
-    // MARK: - Table View Data Source
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         fetchedResultsController.sections?[section].numberOfObjects ?? 0
     }
     
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "UserCell", for: indexPath)
-        let user = fetchedResultsController.object(at: indexPath)
-        cell.textLabel?.text = user.name
-        cell.detailTextLabel?.text = user.email
-        return cell
-    }
-    
-    // MARK: - NSFetchedResultsControllerDelegate
-    
-    func controllerWillChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
-        tableView.beginUpdates()
-    }
-    
-    func controller(
-        _ controller: NSFetchedResultsController<NSFetchRequestResult>,
-        didChange anObject: Any,
-        at indexPath: IndexPath?,
-        for type: NSFetchedResultsChangeType,
-        newIndexPath: IndexPath?
-    ) {
+    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>,
+                   didChange anObject: Any,
+                   at indexPath: IndexPath?,
+                   for type: NSFetchedResultsChangeType,
+                   newIndexPath: IndexPath?) {
         switch type {
         case .insert:
             if let indexPath = newIndexPath {
@@ -282,22 +143,15 @@ class UserListViewController: UITableViewController, NSFetchedResultsControllerD
             break
         }
     }
-    
-    func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
-        tableView.endUpdates()
-    }
 }
 ```
 
 ## SwiftUI Integration
 
-### @FetchRequest
 ```swift
-// ✅ Good - SwiftUI with Core Data
 struct UserListView: View {
     @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \User.createdAt, ascending: false)],
-        animation: .default
+        sortDescriptors: [NSSortDescriptor(keyPath: \User.createdAt, ascending: false)]
     )
     private var users: FetchedResults<User>
     
@@ -306,32 +160,19 @@ struct UserListView: View {
     var body: some View {
         List {
             ForEach(users) { user in
-                NavigationLink(value: user) {
-                    VStack(alignment: .leading) {
-                        Text(user.name ?? "")
-                            .font(.headline)
-                        Text(user.email ?? "")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
+                VStack(alignment: .leading) {
+                    Text(user.name ?? "")
+                    Text(user.email ?? "").font(.subheadline)
                 }
             }
             .onDelete(perform: deleteUsers)
-        }
-        .navigationDestination(for: User.self) { user in
-            UserDetailView(user: user)
         }
     }
     
     private func deleteUsers(offsets: IndexSet) {
         withAnimation {
             offsets.map { users[$0] }.forEach(viewContext.delete)
-            
-            do {
-                try viewContext.save()
-            } catch {
-                print("Error deleting: \(error)")
-            }
+            try? viewContext.save()
         }
     }
 }
@@ -339,9 +180,7 @@ struct UserListView: View {
 
 ## Background Context
 
-### Concurrent Operations
 ```swift
-// ✅ Good - background context
 func importLargeDataset(_ data: [UserData]) async {
     await CoreDataStack.shared.persistentContainer.performBackgroundTask { context in
         for userData in data {
@@ -349,23 +188,15 @@ func importLargeDataset(_ data: [UserData]) async {
             user.id = UUID()
             user.name = userData.name
             user.email = userData.email
-            user.createdAt = Date()
         }
-        
-        do {
-            try context.save()
-        } catch {
-            print("Failed to save: \(error)")
-        }
+        try? context.save()
     }
 }
 ```
 
 ## Migrations
 
-### Lightweight Migration
 ```swift
-// ✅ Good - enable lightweight migration
 lazy var persistentContainer: NSPersistentContainer = {
     let container = NSPersistentContainer(name: "Model")
     
@@ -373,57 +204,105 @@ lazy var persistentContainer: NSPersistentContainer = {
     storeDescription?.shouldMigrateStoreAutomatically = true
     storeDescription?.shouldInferMappingModelAutomatically = true
     
-    container.loadPersistentStores { description, error in
+    container.loadPersistentStores { _, error in
         if let error = error {
-            fatalError("Unable to load persistent stores: \(error)")
+            fatalError("Unable to load: \(error)")
         }
     }
-    
     return container
 }()
 ```
 
 ## Best Practices
 
-### 1. Use Property Wrappers (SwiftUI)
+**MUST**:
+- Use `NSManagedObjectContext.perform` or `performAndWait` for thread safety
+- Save context after changes (Core Data doesn't auto-save)
+- Use fetch request limits for large datasets (pagination)
+- Use predicates for filtering (NOT fetching all then filtering in code)
+- Configure merge policy for conflict resolution
+
+**SHOULD**:
+- Use background context for heavy operations (import, batch updates)
+- Use `@FetchRequest` in SwiftUI for automatic updates
+- Use batch operations for multiple inserts/updates
+- Enable automatic migration for development
+- Use fetch batch size for memory efficiency
+
+**AVOID**:
+- Accessing Core Data from multiple threads without proper context
+- Forgetting to save context (changes lost)
+- Fetching all objects then filtering in memory (slow)
+- Using main context for heavy operations (UI freezes)
+- Ignoring Core Data threading rules (crashes)
+
+## Common Patterns
+
+### Property Wrappers (SwiftUI)
 ```swift
-// ✅ Good - fetch request property wrapper
+// ✅ GOOD: @FetchRequest with filtering
 @FetchRequest(
     sortDescriptors: [NSSortDescriptor(keyPath: \User.name, ascending: true)],
     predicate: NSPredicate(format: "isActive == true")
 )
 private var activeUsers: FetchedResults<User>
-```
 
-### 2. Save on Background Context
-```swift
-// ✅ Good - save heavy operations on background
-Task {
-    await context.perform {
-        // Heavy work here
-        try? context.save()
+var body: some View {
+    List(activeUsers) { user in
+        Text(user.name)  // Automatically updates when data changes
+    }
+}
+
+// ❌ BAD: Fetching all then filtering
+@FetchRequest(sortDescriptors: [])
+private var allUsers: FetchedResults<User>
+
+var body: some View {
+    List(allUsers.filter { $0.isActive }) { user in  // Inefficient!
+        Text(user.name)
     }
 }
 ```
 
-### 3. Use Unique Constraints
+### Background Context (Thread Safety)
 ```swift
-// ✅ Good - define unique constraint in model
-// In .xcdatamodeld: Set constraint on "id" field
+// ✅ GOOD: Background context for heavy work
+func importUsers(_ usersData: [UserData]) async {
+    await persistentContainer.performBackgroundTask { context in
+        for userData in usersData {
+            let user = User(context: context)
+            user.name = userData.name
+            user.email = userData.email
+        }
+        try? context.save()  // Save on background thread
+    }
+}
+
+// ❌ BAD: Heavy work on main context
+func importUsers(_ usersData: [UserData]) {
+    for userData in usersData {
+        let user = User(context: viewContext)  // Blocks UI!
+        user.name = userData.name
+    }
+    try? viewContext.save()
+}
 ```
 
-### 4. Fetch Limits
+### Fetch Limits (Performance)
 ```swift
-// ✅ Good - limit fetch results
-fetchRequest.fetchLimit = 50
-fetchRequest.fetchBatchSize = 20
-```
+// ✅ GOOD: Paginated fetch with limits
+func fetchUsers(page: Int, pageSize: Int = 50) -> [User] {
+    let fetchRequest: NSFetchRequest<User> = User.fetchRequest()
+    fetchRequest.fetchLimit = pageSize
+    fetchRequest.fetchOffset = page * pageSize
+    fetchRequest.fetchBatchSize = 20  // Load in batches
+    
+    return (try? context.fetch(fetchRequest)) ?? []
+}
 
-### 5. Delete Rules
-```swift
-// ✅ Good - set delete rules in relationships
-// Cascade: Delete related objects
-// Nullify: Set relationship to nil
-// Deny: Prevent deletion if relationship exists
+// ❌ BAD: Fetching all objects
+func fetchUsers() -> [User] {
+    let fetchRequest: NSFetchRequest<User> = User.fetchRequest()
+    return (try? context.fetch(fetchRequest)) ?? []  // Could be thousands!
+}
 ```
-

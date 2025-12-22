@@ -2,6 +2,27 @@
 
 > **Scope**: Apply these rules when working with jQuery for DOM manipulation and AJAX. Consider modern alternatives (vanilla JS, Alpine.js) for new projects.
 
+## Overview
+
+jQuery simplifies DOM manipulation and AJAX. Use for legacy projects only - consider vanilla JS or Alpine.js for new projects.
+
+## Best Practices
+
+**MUST**:
+- Cache selectors (store in variables)
+- Use event delegation for dynamic content
+- Chain methods when possible
+
+**SHOULD**:
+- Namespace events for easy cleanup
+- Use $.ajax() promises
+- Consider vanilla JS for simple tasks
+
+**AVOID**:
+- jQuery for new projects (use modern alternatives)
+- Repeated DOM queries
+- $.each for arrays (use native forEach)
+
 ## 1. When to Use jQuery
 - **Legacy Projects**: Maintaining existing jQuery codebases.
 - **Quick Prototypes**: Rapid DOM manipulation.

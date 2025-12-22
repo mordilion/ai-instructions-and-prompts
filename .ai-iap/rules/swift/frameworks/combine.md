@@ -1,151 +1,90 @@
 # Combine Framework
 
 ## Overview
-Combine is Apple's framework for processing values over time using declarative Swift code.
+Combine: Apple's framework for processing values over time.
 
 ## Publishers
 
 ### Basic Publishers
 ```swift
-// ✅ Good - create publishers
-import Combine
+// Just
+let just = Just(42)
 
-// Just - single value
-let justPublisher = Just(42)
-
-// Future - async value
-let futurePublisher = Future<String, Never> { promise in
+// Future
+let future = Future<String, Never> { promise in
     DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
         promise(.success("Hello"))
     }
 }
 
-// Subject - send values manually
+// Subject
 let passthroughSubject = PassthroughSubject<String, Never>()
 let currentValueSubject = CurrentValueSubject<Int, Never>(0)
-```
-
-### Custom Publishers
-```swift
-// ✅ Good - custom publisher
-struct UserPublisher: Publisher {
-    typealias Output = User
-    typealias Failure = NetworkError
-    
-    private let userID: Int
-    
-    init(userID: Int) {
-        self.userID = userID
-    }
-    
-    func receive<S>(subscriber: S) where S: Subscriber, Failure == S.Failure, Output == S.Input {
-        let subscription = UserSubscription(subscriber: subscriber, userID: userID)
-        subscriber.receive(subscription: subscription)
-    }
-}
 ```
 
 ## Operators
 
 ### Transformation
 ```swift
-// ✅ Good - map, flatMap, compactMap
-let numbers = [1, 2, 3, 4, 5].publisher
-
-numbers
+[1, 2, 3].publisher
     .map { $0 * 2 }
-    .sink { print($0) }  // 2, 4, 6, 8, 10
+    .sink { print($0) }
 
-// ✅ Good - flatMap for nested publishers
-let userIDs = [1, 2, 3].publisher
+// flatMap
+userIDs.publisher
+    .flatMap { id in fetchUser(id: id) }
+    .sink(receiveCompletion: { _ in }, receiveValue: { print($0) })
 
-userIDs
-    .flatMap { id in
-        fetchUser(id: id)
-    }
-    .sink(
-        receiveCompletion: { _ in },
-        receiveValue: { user in print(user) }
-    )
-
-// ✅ Good - compactMap to filter nils
-let optionalNumbers = [1, nil, 3, nil, 5].publisher
-
-optionalNumbers
+// compactMap
+[1, nil, 3].publisher
     .compactMap { $0 }
-    .sink { print($0) }  // 1, 3, 5
+    .sink { print($0) }
 ```
 
 ### Filtering
 ```swift
-// ✅ Good - filter, removeDuplicates
-numbers
+numbers.publisher
     .filter { $0 % 2 == 0 }
-    .sink { print($0) }  // Even numbers only
-
-let values = [1, 1, 2, 2, 3, 3].publisher
-values
     .removeDuplicates()
-    .sink { print($0) }  // 1, 2, 3
+    .sink { print($0) }
 ```
 
 ### Combining
 ```swift
-// ✅ Good - zip, combineLatest
-let publisher1 = [1, 2, 3].publisher
-let publisher2 = ["A", "B", "C"].publisher
-
 publisher1.zip(publisher2)
-    .sink { number, letter in
-        print("\(number)\(letter)")  // 1A, 2B, 3C
-    }
-
-// ✅ Good - combineLatest
-let temperature = PassthroughSubject<Double, Never>()
-let humidity = PassthroughSubject<Double, Never>()
+    .sink { number, letter in print("\(number)\(letter)") }
 
 temperature.combineLatest(humidity)
-    .sink { temp, hum in
-        print("Temp: \(temp)°, Humidity: \(hum)%")
-    }
+    .sink { temp, hum in print("Temp: \(temp)°, Humidity: \(hum)%") }
 ```
 
 ### Error Handling
 ```swift
-// ✅ Good - catch, retry
 func fetchData() -> AnyPublisher<Data, Error> {
     URLSession.shared.dataTaskPublisher(for: url)
         .map(\.data)
         .retry(3)
-        .catch { error -> Just<Data> in
-            print("Error: \(error)")
-            return Just(Data())
-        }
+        .catch { _ in Just(Data()) }
         .eraseToAnyPublisher()
 }
 ```
 
 ## Subscribers
 
-### Built-in Subscribers
 ```swift
-// ✅ Good - sink
+// sink
 let cancellable = publisher
     .sink(
         receiveCompletion: { completion in
             switch completion {
-            case .finished:
-                print("Finished")
-            case .failure(let error):
-                print("Error: \(error)")
+            case .finished: print("Done")
+            case .failure(let error): print("Error: \(error)")
             }
         },
-        receiveValue: { value in
-            print("Value: \(value)")
-        }
+        receiveValue: { print($0) }
     )
 
-// ✅ Good - assign
+// assign
 class ViewModel: ObservableObject {
     @Published var users: [User] = []
     private var cancellables = Set<AnyCancellable>()
@@ -162,7 +101,6 @@ class ViewModel: ObservableObject {
 
 ### PassthroughSubject
 ```swift
-// ✅ Good - event stream
 class EventManager {
     let eventPublisher = PassthroughSubject<Event, Never>()
     
@@ -170,33 +108,21 @@ class EventManager {
         eventPublisher.send(event)
     }
 }
-
-let manager = EventManager()
-let cancellable = manager.eventPublisher
-    .sink { event in
-        print("Received event: \(event)")
-    }
 ```
 
 ### CurrentValueSubject
 ```swift
-// ✅ Good - state management
 class UserViewModel: ObservableObject {
     let state = CurrentValueSubject<ViewState, Never>(.idle)
     
     func loadData() {
         state.send(.loading)
-        
         fetchData()
             .sink(
-                receiveCompletion: { [weak self] completion in
-                    if case .failure = completion {
-                        self?.state.send(.error)
-                    }
+                receiveCompletion: { [weak self] in
+                    if case .failure = $0 { self?.state.send(.error) }
                 },
-                receiveValue: { [weak self] data in
-                    self?.state.send(.loaded(data))
-                }
+                receiveValue: { [weak self] in self?.state.send(.loaded($0)) }
             )
     }
 }
@@ -204,9 +130,7 @@ class UserViewModel: ObservableObject {
 
 ## Memory Management
 
-### Store Cancellables
 ```swift
-// ✅ Good - store cancellables
 class ViewController: UIViewController {
     private var cancellables = Set<AnyCancellable>()
     
@@ -214,175 +138,98 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         
         viewModel.userPublisher
-            .sink { [weak self] user in
-                self?.updateUI(with: user)
-            }
+            .sink { [weak self] in self?.updateUI(with: $0) }
             .store(in: &cancellables)
     }
-}
-```
-
-### AnyCancellable
-```swift
-// ✅ Good - manual cancellation
-var cancellable: AnyCancellable?
-
-func startListening() {
-    cancellable = publisher.sink { value in
-        print(value)
-    }
-}
-
-func stopListening() {
-    cancellable?.cancel()
-    cancellable = nil
 }
 ```
 
 ## Schedulers
 
-### Dispatch Queue Scheduler
 ```swift
-// ✅ Good - specify scheduler
 fetchData()
-    .subscribe(on: DispatchQueue.global())  // Work on background
-    .receive(on: DispatchQueue.main)        // Receive on main
-    .sink { data in
-        updateUI(with: data)
-    }
-```
+    .subscribe(on: DispatchQueue.global())
+    .receive(on: DispatchQueue.main)
+    .sink { updateUI(with: $0) }
 
-### Debounce & Throttle
-```swift
-// ✅ Good - search debouncing
-searchTextField.textPublisher
+// Debounce & Throttle
+searchField.textPublisher
     .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
     .removeDuplicates()
-    .sink { query in
-        performSearch(query)
-    }
+    .sink { performSearch($0) }
 
-// ✅ Good - button throttling
 button.tapPublisher
     .throttle(for: .seconds(1), scheduler: DispatchQueue.main, latest: false)
-    .sink { _ in
-        handleButtonTap()
-    }
+    .sink { handleTap() }
 ```
 
-## Networking with Combine
+## Networking
 
-### URLSession Publisher
 ```swift
-// ✅ Good - network request
 func fetchUsers() -> AnyPublisher<[User], Error> {
-    let url = URL(string: "https://api.example.com/users")!
-    
-    return URLSession.shared.dataTaskPublisher(for: url)
+    URLSession.shared.dataTaskPublisher(for: URL(string: "https://api.example.com/users")!)
         .map(\.data)
         .decode(type: [User].self, decoder: JSONDecoder())
         .receive(on: DispatchQueue.main)
         .eraseToAnyPublisher()
 }
-
-// Usage
-fetchUsers()
-    .sink(
-        receiveCompletion: { completion in
-            if case .failure(let error) = completion {
-                print("Error: \(error)")
-            }
-        },
-        receiveValue: { users in
-            print("Received \(users.count) users")
-        }
-    )
-    .store(in: &cancellables)
 ```
 
 ## SwiftUI Integration
 
-### @Published Property
 ```swift
-// ✅ Good - observable object
 class UserViewModel: ObservableObject {
     @Published var users: [User] = []
     @Published var isLoading = false
-    @Published var errorMessage: String?
-    
     private var cancellables = Set<AnyCancellable>()
     
     func loadUsers() {
         isLoading = true
-        
         fetchUsers()
             .sink(
-                receiveCompletion: { [weak self] completion in
+                receiveCompletion: { [weak self] in
                     self?.isLoading = false
-                    if case .failure(let error) = completion {
+                    if case .failure(let error) = $0 {
                         self?.errorMessage = error.localizedDescription
                     }
                 },
-                receiveValue: { [weak self] users in
-                    self?.users = users
-                }
+                receiveValue: { [weak self] in self?.users = $0 }
             )
             .store(in: &cancellables)
     }
 }
-```
 
-### onReceive Modifier
-```swift
-// ✅ Good - observe publisher in SwiftUI
 struct ContentView: View {
     @StateObject private var viewModel = ViewModel()
-    
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     
     var body: some View {
         Text("Time: \(currentTime)")
-            .onReceive(timer) { _ in
-                updateTime()
-            }
+            .onReceive(timer) { _ in updateTime() }
     }
 }
 ```
 
 ## Testing
 
-### Test Scheduler
 ```swift
-// ✅ Good - test with TestScheduler
-import XCTest
-@testable import MyApp
-
 class ViewModelTests: XCTestCase {
     var sut: ViewModel!
     var cancellables: Set<AnyCancellable>!
     
-    override func setUp() {
-        sut = ViewModel()
-        cancellables = []
-    }
-    
     func testLoadUsers() {
-        // Given
-        let expectation = XCTestExpectation(description: "Load users")
+        let expectation = XCTestExpectation()
         var receivedUsers: [User] = []
         
-        // When
         sut.$users
-            .dropFirst()  // Skip initial value
-            .sink { users in
-                receivedUsers = users
+            .dropFirst()
+            .sink {
+                receivedUsers = $0
                 expectation.fulfill()
             }
             .store(in: &cancellables)
         
         sut.loadUsers()
-        
-        // Then
         wait(for: [expectation], timeout: 2.0)
         XCTAssertFalse(receivedUsers.isEmpty)
     }
@@ -391,66 +238,110 @@ class ViewModelTests: XCTestCase {
 
 ## Best Practices
 
-### 1. Use eraseToAnyPublisher
+**MUST**:
+- Store cancellables in `Set<AnyCancellable>` or use `.store(in:)`
+- Use `[weak self]` in sink closures to prevent retain cycles
+- Handle completion (`.finished` and `.failure`) explicitly
+- Use `.receive(on: DispatchQueue.main)` for UI updates
+- Cancel subscriptions when done (automatic with stored cancellables)
+
+**SHOULD**:
+- Use `eraseToAnyPublisher()` for public APIs (hide implementation)
+- Use `@Published` for observable properties in ObservableObject
+- Use operators (map, filter, etc.) over manual subscription logic
+- Use `PassthroughSubject` for events, `CurrentValueSubject` for state
+- Use `.assign(to:)` for simple property updates
+
+**AVOID**:
+- Not storing cancellables (subscriptions immediately cancelled)
+- Retain cycles in closures (use `[weak self]`)
+- Complex logic in operators (move to separate functions)
+- Ignoring errors (handle with `.catch` or completion)
+- Using Combine for simple one-time async calls (use async/await)
+
+## Common Patterns
+
+### Type Erasure (Public APIs)
 ```swift
-// ✅ Good - type erasure for clean APIs
+// ✅ GOOD: Hide implementation details
 func fetchData() -> AnyPublisher<Data, Error> {
     URLSession.shared.dataTaskPublisher(for: url)
         .map(\.data)
-        .eraseToAnyPublisher()
+        .eraseToAnyPublisher()  // Type erasure
+}
+
+// ❌ BAD: Exposing implementation
+func fetchData() -> URLSession.DataTaskPublisher {
+    URLSession.shared.dataTaskPublisher(for: url)  // Leaks implementation
 }
 ```
 
-### 2. Avoid Retain Cycles
+### Memory Management
 ```swift
-// ✅ Good - use [weak self]
-publisher
-    .sink { [weak self] value in
-        self?.handle(value)
+// ✅ GOOD: [weak self] + stored cancellable
+class ViewModel: ObservableObject {
+    private var cancellables = Set<AnyCancellable>()
+    
+    func loadData() {
+        publisher
+            .sink(receiveValue: { [weak self] value in
+                self?.updateUI(value)
+            })
+            .store(in: &cancellables)  // Stored = cleaned up with ViewModel
     }
+}
+
+// ❌ BAD: Retain cycle + not stored
+class ViewModel: ObservableObject {
+    func loadData() {
+        publisher
+            .sink(receiveValue: { value in
+                self.updateUI(value)  // Retain cycle!
+            })
+        // Not stored = immediately cancelled!
+    }
+}
+```
+
+### Completion Handling
+```swift
+// ✅ GOOD: Explicit completion handling
+publisher.sink(
+    receiveCompletion: { completion in
+        switch completion {
+        case .finished:
+            print("Stream completed successfully")
+        case .failure(let error):
+            print("Error: \(error)")
+            // Handle error (show alert, retry, etc.)
+        }
+    },
+    receiveValue: { value in
+        print("Received: \(value)")
+    }
+)
+.store(in: &cancellables)
+
+// ❌ BAD: Ignoring completion
+publisher
+    .sink { value in print(value) }  // What if it fails?
     .store(in: &cancellables)
 ```
 
-### 3. Handle Completion
+### Operator Chaining
 ```swift
-// ✅ Good - always handle completion
-publisher
-    .sink(
-        receiveCompletion: { completion in
-            switch completion {
-            case .finished:
-                print("Done")
-            case .failure(let error):
-                print("Error: \(error)")
-            }
-        },
-        receiveValue: { value in
-            print(value)
-        }
-    )
-```
-
-### 4. Use Operators Wisely
-```swift
-// ✅ Good - chain operators efficiently
-publisher
-    .filter { $0 > 0 }
-    .map { $0 * 2 }
-    .removeDuplicates()
-    .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
-    .sink { value in
-        print(value)
+// ✅ GOOD: Clean operator chain
+searchField.textPublisher
+    .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)  // Wait for typing pause
+    .removeDuplicates()  // Skip duplicates
+    .filter { !$0.isEmpty }  // Ignore empty
+    .flatMap { query in
+        searchService.search(query)  // Async search
+            .catch { _ in Just([]) }  // Handle errors gracefully
     }
+    .receive(on: DispatchQueue.main)  // UI updates on main thread
+    .sink { [weak self] results in
+        self?.displayResults(results)
+    }
+    .store(in: &cancellables)
 ```
-
-### 5. Store Cancellables Properly
-```swift
-// ✅ Good - use Set<AnyCancellable>
-private var cancellables = Set<AnyCancellable>()
-
-func setupBindings() {
-    publisher1.sink { }.store(in: &cancellables)
-    publisher2.sink { }.store(in: &cancellables)
-}
-```
-

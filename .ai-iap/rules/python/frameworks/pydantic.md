@@ -1,286 +1,322 @@
 # Pydantic
 
-> **Scope**: Apply these rules when using Pydantic for data validation (with FastAPI, standalone, or other frameworks).
+## Overview
+Pydantic: data validation using Python type annotations with automatic type coercion and validation.
+Pydantic v2+ offers significant performance improvements over v1. Use for API request/response models, 
+configuration management, and data serialization. Integrates seamlessly with FastAPI.
 
-## 1. Models
-- **BaseModel**: Inherit from `BaseModel` for all models.
-- **Type Hints**: Use type hints for all fields.
-- **Field Validation**: Use `Field()` for constraints and metadata.
-- **Immutability**: Use `frozen=True` for immutable models.
+## Pattern Selection
 
-```python
-from pydantic import BaseModel, Field, EmailStr, ConfigDict
+### Field-Level Validation
+**Use `Field()` constraints when**:
+- Simple validation (length, range, regex)
+- No custom logic needed
+- Example: `age: int = Field(ge=0, le=150)`
 
-class UserCreate(BaseModel):
-    email: EmailStr
-    password: str = Field(..., min_length=8, max_length=100)
-    full_name: str = Field(..., min_length=1, max_length=100)
-    age: int = Field(..., ge=18, le=120)
+**Use `@field_validator` when**:
+- Business logic required
+- Need to transform/normalize values
+- Example: Password strength, email normalization
 
-class UserResponse(BaseModel):
-    id: int
-    email: str
-    full_name: str
-    is_active: bool
-    
-    model_config = ConfigDict(from_attributes=True)
-```
+### Model-Level Validation
+**Use `@model_validator` when**:
+- Validating relationships between fields
+- Cross-field dependencies
+- Example: Password confirmation, date range validation
 
-## 2. Field Validation
-- **Built-in Validators**: Use Pydantic's built-in field types (`EmailStr`, `HttpUrl`, etc.).
-- **Field Constraints**: Use `Field()` for min/max, regex, etc.
-- **Custom Validators**: Use `@field_validator` for complex validation.
+## Basic Models
 
 ```python
-from pydantic import BaseModel, Field, field_validator
-import re
+from pydantic import BaseModel, Field, EmailStr, field_validator
+from typing import Optional
+from datetime import datetime
 
 class User(BaseModel):
-    username: str = Field(..., min_length=3, max_length=20, pattern=r'^[a-zA-Z0-9_]+$')
-    email: EmailStr
-    password: str = Field(..., min_length=8)
-    
-    @field_validator('password')
-    @classmethod
-    def validate_password(cls, v: str) -> str:
-        if not any(c.isupper() for c in v):
-            raise ValueError('Password must contain at least one uppercase letter')
-        if not any(c.isdigit() for c in v):
-            raise ValueError('Password must contain at least one digit')
-        return v
-    
-    @field_validator('username')
-    @classmethod
-    def validate_username(cls, v: str) -> str:
-        if v.lower() in ['admin', 'root', 'system']:
-            raise ValueError('Username is reserved')
-        return v
-```
-
-## 3. Model Configuration
-- **ConfigDict**: Use `model_config` for model settings.
-- **from_attributes**: Enable ORM mode for SQLAlchemy models.
-- **Strict Mode**: Enable strict type checking.
-- **Alias**: Define field aliases for serialization.
-
-```python
-from pydantic import BaseModel, Field, ConfigDict
-
-class UserResponse(BaseModel):
     id: int
-    email: str
-    full_name: str = Field(..., alias='fullName')
-    is_active: bool = Field(..., alias='isActive')
+    name: str = Field(..., min_length=2, max_length=100)  # Field() for simple constraints
+    email: EmailStr  # Built-in email validation
+    age: int = Field(..., ge=0, le=150)  # ge = greater than or equal
+    created_at: datetime = Field(default_factory=datetime.utcnow)  # Use factory for mutable defaults
     
-    model_config = ConfigDict(
-        from_attributes=True,
-        populate_by_name=True,  # Allow both 'full_name' and 'fullName'
-        str_strip_whitespace=True,
-        validate_assignment=True
-    )
+    class Config:
+        from_attributes = True  # Enable ORM mode (SQLAlchemy, etc.)
+
+# Create instance - Pydantic validates automatically
+user = User(id=1, name="John", email="john@test.com", age=30)
+print(user.model_dump())  # Convert to dict (v2 method)
+print(user.model_dump_json())  # Convert to JSON string
 ```
 
-## 4. Nested Models
-- **Composition**: Use nested models for complex structures.
-- **Lists**: Use `list[Model]` for collections.
-- **Optional**: Use `Model | None` for optional nested models.
+## Validation
 
 ```python
-from pydantic import BaseModel
+class CreateUserRequest(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+    
+    # Use @field_validator (Pydantic v2) for business logic
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v):
+        if len(v) < 8:
+            raise ValueError("Password must be at least 8 characters")
+        if not any(c.isupper() for c in v):
+            raise ValueError("Password must contain uppercase letter")
+        return v
+    
+    # Validators can transform values
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v):
+        return v.strip().title()  # Normalize: remove whitespace, capitalize
 
+# Use Field() for simple validation (preferred for basic constraints)
+class Product(BaseModel):
+    name: str = Field(..., min_length=1)  # Not empty
+    price: float = Field(..., gt=0)  # Greater than 0
+    quantity: int = Field(default=0, ge=0)  # Greater than or equal to 0
+```
+
+## Nested Models
+
+```python
 class Address(BaseModel):
     street: str
     city: str
     country: str
-    postal_code: str
 
 class User(BaseModel):
-    id: int
-    email: str
-    address: Address | None = None
-    tags: list[str] = []
+    name: str
+    email: EmailStr
+    address: Optional[Address] = None
 
-# Usage
 user = User(
-    id=1,
-    email='test@example.com',
-    address={'street': '123 Main St', 'city': 'NYC', 'country': 'USA', 'postal_code': '10001'},
-    tags=['premium', 'verified']
+    name="John",
+    email="john@test.com",
+    address={"street": "123 Main", "city": "NYC", "country": "USA"}
 )
 ```
 
-## 5. Model Methods
-- **Serialization**: Use `model_dump()` to convert to dict.
-- **JSON**: Use `model_dump_json()` for JSON string.
-- **Parsing**: Use `model_validate()` to parse data.
-- **Copy**: Use `model_copy()` to create a copy with updates.
+## Lists & Collections
 
 ```python
-user = User(id=1, email='test@example.com', full_name='Test User')
+from typing import List
 
-# To dict
-user_dict = user.model_dump()
+class UserList(BaseModel):
+    users: List[User]
+    total: int
 
-# To JSON
-user_json = user.model_dump_json()
+class Tag(BaseModel):
+    name: str
 
-# Parse from dict
-user = User.model_validate({'id': 1, 'email': 'test@example.com', 'full_name': 'Test'})
-
-# Copy with updates
-updated_user = user.model_copy(update={'full_name': 'Updated Name'})
+class Post(BaseModel):
+    title: str
+    tags: List[Tag]
 ```
 
-## 6. Custom Types
-- **Constrained Types**: Use `constr`, `conint`, `confloat` for constraints.
-- **Custom Validators**: Create reusable custom types.
-- **Annotated**: Use `Annotated` for type metadata.
+## Aliases & Computed Fields
 
 ```python
-from pydantic import BaseModel, constr, conint
-from typing import Annotated
-
-# Constrained types
-Username = Annotated[str, constr(min_length=3, max_length=20, pattern=r'^[a-zA-Z0-9_]+$')]
-Age = Annotated[int, conint(ge=0, le=120)]
+from pydantic import Field, computed_field
 
 class User(BaseModel):
-    username: Username
-    age: Age
-```
-
-## 7. Settings Management
-- **BaseSettings**: Use `BaseSettings` for configuration.
-- **Environment Variables**: Automatically load from `.env`.
-- **Validation**: Pydantic validates settings on startup.
-
-```python
-from pydantic_settings import BaseSettings, SettingsConfigDict
-
-class Settings(BaseSettings):
-    app_name: str = "My App"
-    database_url: str
-    secret_key: str
-    debug: bool = False
-    max_connections: int = 10
-    
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=False
-    )
-
-settings = Settings()
-```
-
-## 8. Discriminated Unions
-- **Type Discrimination**: Use discriminated unions for polymorphic data.
-- **Field Discriminator**: Use `Field(discriminator='type')`.
-
-```python
-from pydantic import BaseModel, Field
-from typing import Literal
-
-class Cat(BaseModel):
-    type: Literal['cat']
-    meow: str
-
-class Dog(BaseModel):
-    type: Literal['dog']
-    bark: str
-
-class Animal(BaseModel):
-    animal: Cat | Dog = Field(..., discriminator='type')
-
-# Usage
-cat = Animal(animal={'type': 'cat', 'meow': 'meow'})
-dog = Animal(animal={'type': 'dog', 'bark': 'woof'})
-```
-
-## 9. Computed Fields
-- **Computed Properties**: Use `@computed_field` for derived fields.
-- **Read-Only**: Computed fields are read-only.
-
-```python
-from pydantic import BaseModel, computed_field
-
-class User(BaseModel):
-    first_name: str
-    last_name: str
+    id: int
+    first_name: str = Field(..., alias="firstName")
+    last_name: str = Field(..., alias="lastName")
     
     @computed_field
     @property
     def full_name(self) -> str:
         return f"{self.first_name} {self.last_name}"
 
-user = User(first_name='John', last_name='Doe')
+user = User(id=1, firstName="John", lastName="Doe")
 print(user.full_name)  # "John Doe"
 ```
 
-## 10. Error Handling
-- **ValidationError**: Catch `ValidationError` for validation failures.
-- **Error Messages**: Access detailed error messages.
-- **Custom Errors**: Raise `ValueError` in validators.
+## Custom Validators
 
 ```python
-from pydantic import BaseModel, ValidationError
+from pydantic import field_validator, model_validator
 
 class User(BaseModel):
     email: str
-    age: int
+    confirm_email: str
+    password: str
+    confirm_password: str
+    
+    # Field validator: validates single field
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v):
+        if "@" not in v:
+            raise ValueError("Invalid email")
+        return v
+    
+    # Model validator (mode="after"): validates after all fields parsed
+    # Use for cross-field validation
+    @model_validator(mode="after")
+    def validate_passwords_match(self):
+        if self.password != self.confirm_password:
+            raise ValueError("Passwords do not match")
+        if self.email != self.confirm_email:
+            raise ValueError("Emails do not match")
+        return self  # Must return self
+```
+
+## Settings Management
+
+```python
+from pydantic_settings import BaseSettings
+
+class Settings(BaseSettings):
+    app_name: str = "My App"
+    database_url: str
+    secret_key: str
+    debug: bool = False
+    
+    class Config:
+        env_file = ".env"
+        case_sensitive = False
+
+settings = Settings()
+```
+
+## JSON Schema
+
+```python
+from pydantic import BaseModel
+
+class User(BaseModel):
+    id: int
+    name: str
+    email: EmailStr
+
+print(User.model_json_schema())
+```
+
+## ORM Integration
+
+```python
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
+
+Base = declarative_base()
+
+class UserORM(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    email = Column(String)
+
+class UserSchema(BaseModel):
+    id: int
+    name: str
+    email: str
+    
+    class Config:
+        from_attributes = True
+
+# Convert ORM to Pydantic
+user_orm = session.query(UserORM).first()
+user_pydantic = UserSchema.from_orm(user_orm)
+```
+
+## Generic Models
+
+```python
+from typing import Generic, TypeVar
+from pydantic import BaseModel
+
+T = TypeVar("T")
+
+class Response(BaseModel, Generic[T]):
+    data: T
+    message: str
+    success: bool
+
+class User(BaseModel):
+    name: str
+    email: str
+
+response = Response[User](
+    data=User(name="John", email="john@test.com"),
+    message="Success",
+    success=True
+)
+```
+
+## Error Handling
+
+```python
+from pydantic import ValidationError
 
 try:
-    user = User(email='invalid', age='not a number')
+    user = User(id=1, name="Jo", email="invalid", age=-5)
 except ValidationError as e:
     print(e.errors())
     # [
-    #   {'type': 'string_type', 'loc': ('email',), 'msg': 'Input should be a valid string'},
-    #   {'type': 'int_parsing', 'loc': ('age',), 'msg': 'Input should be a valid integer'}
+    #   {'loc': ('name',), 'msg': 'ensure this value has at least 2 characters', 'type': 'value_error.any_str.min_length'},
+    #   {'loc': ('email',), 'msg': 'value is not a valid email address', 'type': 'value_error.email'},
+    #   {'loc': ('age',), 'msg': 'ensure this value is greater than or equal to 0', 'type': 'value_error.number.not_ge'}
     # ]
 ```
 
-## 11. Best Practices
-- **Separate Models**: Use separate models for request/response/database.
-- **Reuse**: Create base models for common fields.
-- **Validation**: Validate early at API boundaries.
-- **Immutability**: Use `frozen=True` for value objects.
+## Best Practices
 
+**MUST**:
+- Use Pydantic v2 syntax (`@field_validator`, `model_dump()`, not v1 `@validator`, `dict()`)
+- Use `EmailStr`, `HttpUrl`, `HttpsUrl` for validated string types
+- Enable `from_attributes=True` in Config when converting from ORMs
+- Use `Field()` with `default_factory` for mutable defaults (lists, dicts, datetime)
+- Always use type hints - Pydantic relies on them
+
+**SHOULD**:
+- Use `Field()` constraints for simple validation (length, range, regex)
+- Use `@field_validator` for business logic and transformations
+- Use `@model_validator(mode="after")` for cross-field validation
+- Use `ConfigDict` instead of `Config` class (v2+ style)
+- Use nested models for complex data structures
+
+**AVOID**:
+- Mixing Pydantic v1 and v2 APIs (use v2 consistently)
+- Using `@validator` decorator (deprecated in v2, use `@field_validator`)
+- Complex logic in `Field()` constraints (use validators instead)
+- Mutable defaults without `default_factory` (causes shared state bugs)
+- Using `dict()` method (v1 style - use `model_dump()` in v2)
+
+## Common Patterns
+
+### API Request/Response Models
 ```python
-# Base model
-class UserBase(BaseModel):
+# Request: Accept flexible input
+class CreateUserRequest(BaseModel):
+    name: str
     email: EmailStr
-    full_name: str
+    age: Optional[int] = None  # Optional fields
 
-# Request model
-class UserCreate(UserBase):
-    password: str = Field(..., min_length=8)
-
-# Response model
-class UserResponse(UserBase):
+# Response: Include computed fields
+class UserResponse(BaseModel):
     id: int
-    is_active: bool
-    created_at: datetime
+    name: str
+    email: EmailStr
     
-    model_config = ConfigDict(from_attributes=True)
-
-# Database model (SQLAlchemy)
-class UserModel(Base):
-    __tablename__ = 'users'
-    id = Column(Integer, primary_key=True)
-    email = Column(String, unique=True)
-    full_name = Column(String)
-    hashed_password = Column(String)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    @computed_field  # Computed field (not stored)
+    @property
+    def display_name(self) -> str:
+        return f"{self.name} ({self.email})"
 ```
 
-## 12. Anti-Patterns (MUST avoid)
-- **Mixing Concerns**: Don't use same model for request/response/database.
-  - ❌ Bad: One `User` model for everything
-  - ✅ Good: `UserCreate`, `UserResponse`, `UserModel` (SQLAlchemy)
-- **Missing Validation**: Always validate input data.
-- **Mutable Defaults**: Use `Field(default_factory=list)` for mutable defaults.
-  - ❌ Bad: `tags: list[str] = []`
-  - ✅ Good: `tags: list[str] = Field(default_factory=list)`
-- **Ignoring Errors**: Always handle `ValidationError`.
+### ORM Integration
+```python
+# Enable from_attributes to work with SQLAlchemy
+class UserSchema(BaseModel):
+    id: int
+    name: str
+    
+    model_config = ConfigDict(from_attributes=True)  # v2 style
 
+# Convert ORM to Pydantic
+user_orm = db.query(UserORM).first()
+user_pydantic = UserSchema.model_validate(user_orm)  # v2 method
+```

@@ -1,36 +1,78 @@
 # .NET Architecture
 
-> **Scope**: Apply these rules ONLY when working with `.cs`, `.csproj`, or `.razor` files. These extend the general architecture guidelines.
+## Overview
+Modern .NET with clean architecture, dependency injection, and async patterns.
 
-## 1. Core Principles
-- **Clean Architecture**: Core depends on nothing. Infrastructure depends on Core.
-- **CQRS**: Separate Command (Write) and Query (Read) models when >3 write operations.
+## Core Principles
 
-## 2. Project Structure
+### Async/Await
+```csharp
+public async Task<User> GetUserAsync(int id)
+{
+    var user = await _repository.GetByIdAsync(id);
+    return user ?? throw new UserNotFoundException(id);
+}
 ```
-src/
-├── Core/           # Domain Entities, Interfaces, Value Objects
-├── Application/    # Use Cases, DTOs, Validators, Handlers
-├── Infrastructure/ # EF Core, External Services, Repository Implementations
-└── API/            # Controllers, Middleware, Startup
+
+### Dependency Injection
+```csharp
+public interface IUserRepository
+{
+    Task<User?> GetByIdAsync(int id);
+    Task SaveAsync(User user);
+}
+
+public class UserService
+{
+    private readonly IUserRepository _repository;
+    
+    public UserService(IUserRepository repository)
+    {
+        _repository = repository;
+    }
+}
 ```
-- **Feature-First**: Organize by feature, NOT by type.
 
-## 3. Naming Conventions
-- **Interfaces**: MUST prefix `I` (e.g., `IUserRepository`).
-- **Implementations**: `UserRepository` implements `IUserRepository`.
-- **DTOs**: Suffix with `Dto`, `Request`, `Response` (e.g., `UserDto`).
+### Record Types
+```csharp
+public record User(int Id, string Name, string Email);
 
-## 4. Design Patterns
-- **Service Layer**: Use services or handlers for business logic. Controllers only delegate.
-- **Repository Pattern**: Abstract data access behind interfaces.
-- **Dependency Injection**: One `DependencyInjection.cs` per layer. Constructor injection only.
+public record CreateUserRequest(string Name, string Email);
+```
 
-## 5. DTOs & Mapping
-- NEVER expose EF entities in API responses. Always map to DTOs.
-- Use AutoMapper OR explicit mapping extension methods.
+## Error Handling
 
-## 6. Anti-Patterns (MUST avoid)
-- **Async Blocking**: NEVER use `.Result` or `.Wait()`. Async all the way.
-- **Fat Controllers**: Controllers only validate input and delegate to services/handlers.
-- **Anemic Domain**: Business logic belongs in Domain, not Application layer.
+```csharp
+public class UserNotFoundException : Exception
+{
+    public UserNotFoundException(int id) 
+        : base($"User {id} not found") { }
+}
+```
+
+## Best Practices
+
+### Nullable Reference Types
+```csharp
+#nullable enable
+
+public User? FindUser(int id) => _users.Find(id);
+```
+
+### Pattern Matching
+```csharp
+var result = user switch
+{
+    { Role: "Admin" } => "Administrator",
+    { Role: "User" } => "Regular User",
+    _ => "Guest"
+};
+```
+
+### LINQ
+```csharp
+var admins = users
+    .Where(u => u.Role == "Admin")
+    .Select(u => u.Name)
+    .ToList();
+```

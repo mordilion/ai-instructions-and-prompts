@@ -2,6 +2,30 @@
 
 > **Scope**: Apply these rules for Express.js applications (JavaScript or TypeScript).
 
+## Overview
+
+Express is the most popular Node.js web framework - minimal, flexible, with a large ecosystem.
+
+## Best Practices
+
+**MUST**:
+- Use async/await (NO callbacks)
+- Use middleware for cross-cutting concerns
+- Use error handling middleware (must be last)
+- Return responses (res.json, res.send)
+
+**SHOULD**:
+- Use Router for modular routes
+- Use controllers for request handling
+- Use services for business logic
+- Use helmet for security headers
+
+**AVOID**:
+- Business logic in routes
+- Callback hell (use async/await)
+- Missing error handling
+- Synchronous operations
+
 ## Project Structure
 ```
 src/

@@ -2,6 +2,38 @@
 
 > **Scope**: Apply these rules when working with Laminas Mezzio (PSR-15 middleware).
 
+## Overview
+
+Laminas Mezzio is a PSR-15 middleware microframework. It's lightweight, standards-compliant, and perfect for APIs and microservices.
+
+**Key Capabilities**:
+- **PSR-15 Middleware**: Standard middleware pattern
+- **PSR-7 HTTP Messages**: Immutable request/response
+- **Micro-Framework**: Minimal, flexible
+- **DI Container**: Multiple container support
+- **Pipeline Architecture**: Layered middleware processing
+
+## Best Practices
+
+**MUST**:
+- Use RequestHandlerInterface for handlers
+- Use MiddlewareInterface for middleware
+- Return ResponseInterface (NO echo/print)
+- Use factories for ALL dependencies
+- Use immutable request attributes
+
+**SHOULD**:
+- One handler per endpoint
+- Use pipeline for global middleware
+- Use ConfigProvider for DI
+- Use route-specific middleware
+
+**AVOID**:
+- Mutable request modifications
+- Logic in handlers (use services)
+- Direct instantiation (use factories)
+- Bypassing middleware pipeline
+
 ## 1. Project Structure
 ```
 src/App/

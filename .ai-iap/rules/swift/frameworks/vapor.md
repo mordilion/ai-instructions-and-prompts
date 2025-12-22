@@ -1,71 +1,49 @@
 # Vapor Framework
 
 ## Overview
-Vapor is a server-side Swift web framework for building APIs and web applications.
+Vapor: server-side Swift web framework for building APIs.
 
 ## Application Setup
 
-### Main Entry Point
 ```swift
-// ✅ Good - configure application
-import Vapor
-
 @main
 enum Entrypoint {
     static func main() async throws {
         var env = try Environment.detect()
-        try LoggingSystem.bootstrap(from: &env)
-        
         let app = Application(env)
         defer { app.shutdown() }
-        
         try configure(app)
         try app.run()
     }
 }
 
-// configure.swift
 func configure(_ app: Application) throws {
     app.middleware.use(ErrorMiddleware.default(environment: app.environment))
-    app.middleware.use(CORSMiddleware())
     
-    // Register routes
     try routes(app)
     
-    // Configure database
     app.databases.use(.postgres(
         hostname: Environment.get("DATABASE_HOST") ?? "localhost",
-        port: Environment.get("DATABASE_PORT").flatMap(Int.init(_:)) ?? 5432,
-        username: Environment.get("DATABASE_USERNAME") ?? "vapor",
-        password: Environment.get("DATABASE_PASSWORD") ?? "password",
-        database: Environment.get("DATABASE_NAME") ?? "vapor"
+        username: "vapor",
+        password: "password",
+        database: "vapor"
     ), as: .psql)
     
-    // Migrations
     app.migrations.add(CreateUser())
 }
 ```
 
 ## Routing
 
-### Route Definitions
 ```swift
-// ✅ Good - organized routes
 func routes(_ app: Application) throws {
-    app.get { req async in
-        "Server is running"
-    }
-    
     let api = app.grouped("api")
     try api.register(collection: UserController())
-    try api.register(collection: AuthController())
 }
 
-// UserController.swift
 struct UserController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
         let users = routes.grouped("users")
-        
         users.get(use: index)
         users.get(":id", use: show)
         users.post(use: create)
@@ -74,72 +52,29 @@ struct UserController: RouteCollection {
     }
     
     func index(req: Request) async throws -> [UserDTO] {
-        try await User.query(on: req.db)
-            .all()
-            .map { $0.toDTO() }
+        try await User.query(on: req.db).all().map { $0.toDTO() }
     }
     
     func show(req: Request) async throws -> UserDTO {
-        guard let id = req.parameters.get("id", as: UUID.self) else {
-            throw Abort(.badRequest)
-        }
-        
-        guard let user = try await User.find(id, on: req.db) else {
+        guard let id = req.parameters.get("id", as: UUID.self),
+              let user = try await User.find(id, on: req.db) else {
             throw Abort(.notFound)
         }
-        
         return user.toDTO()
     }
     
     func create(req: Request) async throws -> UserDTO {
         let input = try req.content.decode(CreateUserRequest.self)
-        
-        let user = User(
-            name: input.name,
-            email: input.email
-        )
-        
+        let user = User(name: input.name, email: input.email)
         try await user.save(on: req.db)
         return user.toDTO()
-    }
-    
-    func update(req: Request) async throws -> UserDTO {
-        guard let id = req.parameters.get("id", as: UUID.self) else {
-            throw Abort(.badRequest)
-        }
-        
-        guard let user = try await User.find(id, on: req.db) else {
-            throw Abort(.notFound)
-        }
-        
-        let input = try req.content.decode(UpdateUserRequest.self)
-        user.name = input.name ?? user.name
-        user.email = input.email ?? user.email
-        
-        try await user.save(on: req.db)
-        return user.toDTO()
-    }
-    
-    func delete(req: Request) async throws -> HTTPStatus {
-        guard let id = req.parameters.get("id", as: UUID.self) else {
-            throw Abort(.badRequest)
-        }
-        
-        guard let user = try await User.find(id, on: req.db) else {
-            throw Abort(.notFound)
-        }
-        
-        try await user.delete(on: req.db)
-        return .noContent
     }
 }
 ```
 
 ## Models (Fluent ORM)
 
-### Model Definition
 ```swift
-// ✅ Good - Fluent model
 final class User: Model, Content {
     static let schema = "users"
     
@@ -155,9 +90,6 @@ final class User: Model, Content {
     @Timestamp(key: "created_at", on: .create)
     var createdAt: Date?
     
-    @Timestamp(key: "updated_at", on: .update)
-    var updatedAt: Date?
-    
     init() { }
     
     init(id: UUID? = nil, name: String, email: String) {
@@ -167,30 +99,22 @@ final class User: Model, Content {
     }
 }
 
-// DTO
 struct UserDTO: Content {
     let id: UUID
     let name: String
     let email: String
-    let createdAt: Date?
 }
 
 extension User {
     func toDTO() -> UserDTO {
-        UserDTO(
-            id: id!,
-            name: name,
-            email: email,
-            createdAt: createdAt
-        )
+        UserDTO(id: id!, name: name, email: email)
     }
 }
 ```
 
 ### Relationships
 ```swift
-// ✅ Good - model relationships
-final class Post: Model, Content {
+final class Post: Model {
     static let schema = "posts"
     
     @ID(key: .id)
@@ -199,39 +123,17 @@ final class Post: Model, Content {
     @Field(key: "title")
     var title: String
     
-    @Field(key: "content")
-    var content: String
-    
     @Parent(key: "user_id")
     var user: User
     
     @Children(for: \.$post)
     var comments: [Comment]
-    
-    init() { }
-}
-
-final class Comment: Model, Content {
-    static let schema = "comments"
-    
-    @ID(key: .id)
-    var id: UUID?
-    
-    @Field(key: "content")
-    var content: String
-    
-    @Parent(key: "post_id")
-    var post: Post
-    
-    init() { }
 }
 ```
 
 ## Migrations
 
-### Create Migration
 ```swift
-// ✅ Good - migration
 struct CreateUser: AsyncMigration {
     func prepare(on database: Database) async throws {
         try await database.schema(User.schema)
@@ -239,7 +141,6 @@ struct CreateUser: AsyncMigration {
             .field("name", .string, .required)
             .field("email", .string, .required)
             .field("created_at", .datetime)
-            .field("updated_at", .datetime)
             .unique(on: "email")
             .create()
     }
@@ -252,44 +153,27 @@ struct CreateUser: AsyncMigration {
 
 ## Middleware
 
-### Custom Middleware
 ```swift
-// ✅ Good - custom middleware
 struct RateLimitMiddleware: AsyncMiddleware {
     func respond(to request: Request, chainingTo next: AsyncResponder) async throws -> Response {
         let key = "rate_limit:\(request.remoteAddress?.description ?? "unknown")"
-        
         let count = try await request.application.redis.get(key, as: Int.self) ?? 0
         
-        if count >= 100 {
-            throw Abort(.tooManyRequests)
-        }
+        if count >= 100 { throw Abort(.tooManyRequests) }
         
         try await request.application.redis.increment(key)
-        try await request.application.redis.expire(key, after: 60)
-        
         return try await next.respond(to: request)
     }
 }
-
-// Register middleware
-app.middleware.use(RateLimitMiddleware())
 ```
 
 ## Authentication
 
-### JWT Authentication
+### JWT
 ```swift
-// ✅ Good - JWT authentication
 import JWT
 
 struct UserPayload: JWTPayload {
-    enum CodingKeys: String, CodingKey {
-        case subject = "sub"
-        case expiration = "exp"
-        case email
-    }
-    
     var subject: SubjectClaim
     var expiration: ExpirationClaim
     var email: String
@@ -299,17 +183,13 @@ struct UserPayload: JWTPayload {
     }
 }
 
-// Login route
 func login(req: Request) async throws -> TokenResponse {
     let credentials = try req.content.decode(LoginRequest.self)
     
     guard let user = try await User.query(on: req.db)
         .filter(\.$email == credentials.email)
-        .first() else {
-        throw Abort(.unauthorized)
-    }
-    
-    guard try Bcrypt.verify(credentials.password, created: user.passwordHash) else {
+        .first(),
+          try Bcrypt.verify(credentials.password, created: user.passwordHash) else {
         throw Abort(.unauthorized)
     }
     
@@ -319,13 +199,10 @@ func login(req: Request) async throws -> TokenResponse {
         email: user.email
     )
     
-    let token = try req.jwt.sign(payload)
-    
-    return TokenResponse(token: token)
+    return TokenResponse(token: try req.jwt.sign(payload))
 }
 
-// Protected routes
-let protected = app.grouped(UserPayload.authenticator(), UserPayload.guardMiddleware())
+let protected = app.grouped(UserPayload.authenticator())
 protected.get("profile") { req async throws -> UserDTO in
     let payload = try req.auth.require(UserPayload.self)
     // ...
@@ -334,9 +211,7 @@ protected.get("profile") { req async throws -> UserDTO in
 
 ## Validation
 
-### Request Validation
 ```swift
-// ✅ Good - validated input
 struct CreateUserRequest: Content, Validatable {
     let name: String
     let email: String
@@ -349,7 +224,6 @@ struct CreateUserRequest: Content, Validatable {
     }
 }
 
-// Use in controller
 func create(req: Request) async throws -> UserDTO {
     try CreateUserRequest.validate(content: req)
     let input = try req.content.decode(CreateUserRequest.self)
@@ -359,35 +233,22 @@ func create(req: Request) async throws -> UserDTO {
 
 ## Error Handling
 
-### Custom Errors
 ```swift
-// ✅ Good - custom error types
-enum UserError: Error {
+enum UserError: Error, AbortError {
     case notFound
     case emailExists
-    case invalidCredentials
-}
-
-extension UserError: AbortError {
+    
     var status: HTTPResponseStatus {
         switch self {
-        case .notFound:
-            return .notFound
-        case .emailExists:
-            return .conflict
-        case .invalidCredentials:
-            return .unauthorized
+        case .notFound: return .notFound
+        case .emailExists: return .conflict
         }
     }
     
     var reason: String {
         switch self {
-        case .notFound:
-            return "User not found"
-        case .emailExists:
-            return "Email already exists"
-        case .invalidCredentials:
-            return "Invalid credentials"
+        case .notFound: return "User not found"
+        case .emailExists: return "Email already exists"
         }
     }
 }
@@ -395,9 +256,7 @@ extension UserError: AbortError {
 
 ## Testing
 
-### Application Testing
 ```swift
-// ✅ Good - integration tests
 @testable import App
 import XCTVapor
 
@@ -416,47 +275,13 @@ final class UserControllerTests: XCTestCase {
     }
     
     func testGetUsers() async throws {
-        // Given
-        let user = User(name: "John", email: "john@example.com")
+        let user = User(name: "John", email: "john@test.com")
         try await user.save(on: app.db)
         
-        // When
         try app.test(.GET, "/api/users") { res in
-            // Then
             XCTAssertEqual(res.status, .ok)
-            
             let users = try res.content.decode([UserDTO].self)
             XCTAssertEqual(users.count, 1)
-            XCTAssertEqual(users.first?.name, "John")
-        }
-    }
-    
-    func testCreateUser() async throws {
-        // Given
-        let input = CreateUserRequest(
-            name: "Jane",
-            email: "jane@example.com",
-            password: "password123"
-        )
-        
-        // When
-        try app.test(.POST, "/api/users", beforeRequest: { req in
-            try req.content.encode(input)
-        }, afterResponse: { res in
-            // Then
-            XCTAssertEqual(res.status, .ok)
-            
-            let user = try res.content.decode(UserDTO.self)
-            XCTAssertEqual(user.name, "Jane")
-            XCTAssertEqual(user.email, "jane@example.com")
-        })
-    }
-    
-    func testGetUser_NotFound() async throws {
-        // When
-        try app.test(.GET, "/api/users/\(UUID())") { res in
-            // Then
-            XCTAssertEqual(res.status, .notFound)
         }
     }
 }
@@ -464,108 +289,105 @@ final class UserControllerTests: XCTestCase {
 
 ## Best Practices
 
-### 1. Use Dependency Injection
-```swift
-// ✅ Good - inject dependencies
-struct UserService {
-    let database: Database
-    let redis: RedisClient
-    
-    func createUser(_ input: CreateUserRequest) async throws -> User {
-        // Check cache
-        if let cached = try await redis.get("user:\(input.email)", as: User.self) {
-            throw UserError.emailExists
-        }
-        
-        // Create user
-        let user = User(name: input.name, email: input.email)
-        try await user.save(on: database)
-        
-        // Cache
-        try await redis.set("user:\(user.id!)", to: user)
-        
-        return user
-    }
-}
-```
+**MUST**:
+- Use `async`/`await` (Vapor 4+ is fully async)
+- Use Fluent ORM for database operations (NOT raw SQL)
+- Validate all input using `Validatable` protocol
+- Use middleware for cross-cutting concerns (auth, logging, CORS)
+- Use environment variables for configuration (NO hardcoded secrets)
 
-### 2. Use Repository Pattern
+**SHOULD**:
+- Use repository pattern for complex data access
+- Use `Content` protocol for request/response types
+- Use `@Middleware` for reusable route logic
+- Use Vapor's built-in JWT support (NOT custom implementations)
+- Structure routes with `RouteCollection`
+
+**AVOID**:
+- Blocking operations in routes (use async/await)
+- Exposing Fluent models directly (use DTOs)
+- Hardcoded configuration (use environment variables)
+- Manual JSON parsing (use `Content` protocol)
+- Not validating input (security risk)
+
+## Common Patterns
+
+### Repository Pattern
 ```swift
-// ✅ Good - repository pattern
+// ✅ GOOD: Repository for testability
 protocol UserRepository {
+    func getAll() async throws -> [User]
     func find(_ id: UUID) async throws -> User?
-    func findByEmail(_ email: String) async throws -> User?
-    func create(_ user: User) async throws
-    func update(_ user: User) async throws
-    func delete(_ id: UUID) async throws
+    func create(_ user: User) async throws -> User
 }
 
 struct DatabaseUserRepository: UserRepository {
     let database: Database
     
-    func find(_ id: UUID) async throws -> User? {
-        try await User.find(id, on: database)
+    func getAll() async throws -> [User] {
+        try await User.query(on: database).all()
     }
-    
-    func findByEmail(_ email: String) async throws -> User? {
-        try await User.query(on: database)
-            .filter(\.$email == email)
-            .first()
+}
+
+// Usage in route
+func boot(routes: RoutesBuilder) throws {
+    let repo: UserRepository = DatabaseUserRepository(database: app.db)
+    routes.get("users") { req async throws in
+        try await repo.getAll()
     }
-    
-    func create(_ user: User) async throws {
-        try await user.save(on: database)
-    }
-    
-    func update(_ user: User) async throws {
-        try await user.save(on: database)
-    }
-    
-    func delete(_ id: UUID) async throws {
-        guard let user = try await find(id) else {
-            throw UserError.notFound
-        }
-        try await user.delete(on: database)
-    }
+}
+
+// ❌ BAD: Direct database access in routes
+routes.get("users") { req async throws in
+    try await User.query(on: req.db).all()  // Hard to test, tightly coupled
 }
 ```
 
-### 3. Environment Configuration
+### Environment Configuration
 ```swift
-// ✅ Good - environment-based config
-extension Application {
-    var config: AppConfig {
+// ✅ GOOD: Environment-based config
+struct AppConfig {
+    let jwtSecret: String
+    let databaseURL: String
+    
+    static func load() -> AppConfig {
         AppConfig(
-            jwtSecret: Environment.get("JWT_SECRET") ?? "secret",
-            databaseURL: Environment.get("DATABASE_URL") ?? "postgres://localhost/vapor",
-            redisURL: Environment.get("REDIS_URL") ?? "redis://localhost:6379"
+            jwtSecret: Environment.get("JWT_SECRET") ?? fatalError("JWT_SECRET required"),
+            databaseURL: Environment.get("DATABASE_URL") ?? fatalError("DATABASE_URL required")
         )
     }
 }
 
-struct AppConfig {
-    let jwtSecret: String
-    let databaseURL: String
-    let redisURL: String
+extension Application {
+    var config: AppConfig {
+        AppConfig.load()
+    }
 }
+
+// ❌ BAD: Hardcoded secrets
+let jwtSecret = "hardcoded-secret-key"  // NEVER do this!
 ```
 
-### 4. Use Content Protocol
+### Content Protocol (Type-Safe JSON)
 ```swift
-// ✅ Good - conform to Content for automatic encoding/decoding
+// ✅ GOOD: Use Content for automatic encoding/decoding
 struct UserResponse: Content {
     let id: UUID
     let name: String
     let email: String
 }
-```
 
-### 5. Async/Await Throughout
-```swift
-// ✅ Good - use async/await for all async operations
-func getAllUsers(req: Request) async throws -> [UserDTO] {
-    let users = try await User.query(on: req.db).all()
-    return users.map { $0.toDTO() }
+routes.get("users", ":id") { req async throws -> UserResponse in
+    guard let id = req.parameters.get("id", as: UUID.self) else {
+        throw Abort(.badRequest)
+    }
+    let user = try await User.find(id, on: req.db)
+    return UserResponse(user)  // Automatically encoded to JSON
+}
+
+// ❌ BAD: Manual JSON encoding
+routes.get("users", ":id") { req async throws -> Response in
+    let json = try JSONEncoder().encode(user)  // Manual, error-prone
+    return Response(body: .init(data: json))
 }
 ```
-

@@ -2,6 +2,40 @@
 
 > **Scope**: Apply these rules when developing WordPress themes and plugins.
 
+## Overview
+
+WordPress is a PHP CMS powering 43% of websites. When developing plugins/themes, follow WordPress coding standards and security best practices.
+
+**Key Capabilities**:
+- **Hooks System**: Actions and filters for extensibility
+- **Custom Post Types**: Extend content types
+- **REST API**: Built-in API endpoints
+- **Plugin/Theme Architecture**: Modular extensions
+- **wpdb**: Database abstraction layer
+
+## Best Practices
+
+**MUST**:
+- Check `ABSPATH` constant (security)
+- Use `$wpdb->prepare()` for ALL SQL queries
+- Verify nonces for form submissions
+- Check user capabilities before sensitive operations
+- Escape ALL output (esc_html, esc_url, esc_attr)
+
+**SHOULD**:
+- Use WordPress coding standards
+- Prefix all functions/classes
+- Use translation functions (__(), _e())
+- Enqueue scripts/styles properly
+- Use custom post types over custom tables
+
+**AVOID**:
+- Direct SQL without prepare (SQL injection!)
+- Missing nonce checks (CSRF vulnerability)
+- Missing capability checks (privilege escalation)
+- Echoing unescaped user input (XSS)
+- Global namespace pollution (use prefixes)
+
 ## 1. Plugin Structure
 ```
 my-plugin/

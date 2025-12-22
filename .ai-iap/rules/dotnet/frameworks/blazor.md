@@ -2,6 +2,43 @@
 
 > **Scope**: Apply these rules when working with Blazor WebAssembly or Blazor Server applications.
 
+## Overview
+
+Blazor enables building interactive web UIs using C# instead of JavaScript. Blazor WebAssembly runs in browser via WebAssembly; Blazor Server runs on server with SignalR connection.
+
+**Key Capabilities**:
+- **C# for Web**: Write frontend in C#/.NET
+- **Component-Based**: Reusable Razor components
+- **Two Hosting Models**: WebAssembly (client) or Server (SignalR)
+- **Full .NET**: Access entire .NET ecosystem
+- **Hot Reload**: Fast development cycle
+
+## Pattern Selection
+
+### Hosting Model
+**Use Blazor WebAssembly when**:
+- Need offline capability
+- Want client-side execution
+- Can accept larger download size
+
+**Use Blazor Server when**:
+- Need small download size
+- Want server-side execution
+- Need direct database access
+
+### State Management
+**Use Component State when**:
+- UI-only state (form input)
+- Local to component
+
+**Use Cascading Parameters when**:
+- Shared UI state (theme, auth)
+- Deep component trees
+
+**Use Services when**:
+- Application state
+- Shared across pages
+
 ## 1. Component Design
 - **Single Responsibility**: One component, one purpose.
 - **Parameters**: Use `[Parameter]` for parent-to-child data.
@@ -89,8 +126,31 @@ private static List<User> _users = new();
 | **Authentication** | Server-side | Token-based |
 | **Offline** | No | Yes (PWA) |
 
+## Best Practices
+
+**MUST**:
+- Use `[Parameter]` for component inputs
+- Use `EventCallback` for component outputs  
+- Use async Task (NO async void)
+- Use dependency injection for services
+- Implement `IAsyncDisposable` for cleanup
+
+**SHOULD**:
+- Use CommunityToolkit.Mvvm for MVVM
+- Use EditForm for forms with validation
+- Override ShouldRender for performance
+- Use Virtualize for large lists
+- Use cascading parameters sparingly
+
+**AVOID**:
+- Static state (use services)
+- Async void event handlers
+- Forgetting to call StateHasChanged
+- Too many components in one file
+- Exposing implementation details
+
 ## 8. JavaScript Interop
-- **IJSRuntime**: For JS calls from C#.
-- **Minimize Interop**: Keep in C# when possible.
-- **Dispose**: Implement `IAsyncDisposable` for JS references.
+- **IJSRuntime**: For JS calls from C#
+- **Minimize Interop**: Keep in C# when possible
+- **Dispose**: Implement `IAsyncDisposable` for JS references
 

@@ -2,6 +2,29 @@
 
 > **Scope**: Apply these rules when working with Svelte or SvelteKit applications using JavaScript.
 
+## Overview
+
+Svelte JavaScript version - no virtual DOM, compiles to vanilla JS. For TypeScript, see `typescript/frameworks/svelte.md`.
+
+## Best Practices
+
+**MUST**:
+- Use Runes ($state, $derived, $effect) in Svelte 5
+- Use (item.id) keys in {#each} loops
+- Use +page.server.js for server-side data
+- Use form actions for mutations
+
+**SHOULD**:
+- Use stores for shared state
+- Use load functions for data fetching
+- Use $lib alias for imports
+
+**AVOID**:
+- Legacy syntax (use Runes)
+- Client-side data fetching (use load functions)
+- Missing keys in loops
+- Exposing secrets to client
+
 ## 1. Project Structure (SvelteKit)
 ```
 src/

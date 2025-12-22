@@ -1,58 +1,63 @@
-# React Modular/Feature-Based Structure
+# React Modular Structure
 
-> **Scope**: Use this structure for large React applications organized by feature/domain.
-> **Precedence**: When loaded, this structure overrides any default folder organization from the base React rules.
+> Organize by feature/module with co-located concerns. Best for medium to large apps where features are relatively independent.
 
-## Project Structure
+## Directory Structure
+
 ```
-src/
-├── app/                    # App-level setup
-│   ├── App.tsx
-│   ├── routes.tsx
-│   └── providers.tsx
-├── features/               # Feature modules
-│   ├── auth/
-│   │   ├── components/
-│   │   │   ├── LoginForm.tsx
-│   │   │   └── RegisterForm.tsx
-│   │   ├── hooks/
-│   │   │   └── useAuth.ts
-│   │   ├── api/
-│   │   │   └── authApi.ts
-│   │   ├── types/
-│   │   │   └── auth.types.ts
-│   │   └── index.ts        # Public exports
-│   ├── users/
-│   │   ├── components/
-│   │   ├── hooks/
-│   │   ├── api/
-│   │   └── index.ts
-│   └── dashboard/
-├── shared/                 # Shared across features
-│   ├── components/         # Generic UI (Button, Modal)
-│   ├── hooks/              # Generic hooks
-│   ├── utils/
-│   └── types/
-└── main.tsx
+src/features/user/
+├── components/
+│   ├── UserList.tsx
+│   └── UserDetail.tsx
+├── hooks/
+│   └── useUsers.ts
+├── services/
+│   └── userService.ts
+├── types/
+│   └── User.ts
+└── index.ts
 ```
 
-## Rules
-- **Feature Isolation**: Each feature is self-contained with its own components, hooks, API
-- **Public API**: Export only public interface via `index.ts`
-- **No Cross-Feature Imports**: Features communicate via shared state or events
-- **Shared Only Generic**: Only truly reusable code goes in `shared/`
+## Implementation
 
-## Import Pattern
 ```typescript
-// ✅ Good - Import from feature's public API
-import { LoginForm, useAuth } from '@/features/auth';
+// types/User.ts
+export interface User {
+  id: string;
+  name: string;
+}
 
-// ❌ Bad - Direct import into feature internals
-import { LoginForm } from '@/features/auth/components/LoginForm';
+// services/userService.ts
+export const userService = {
+  async getUsers(): Promise<User[]> {
+    const res = await fetch('/api/users');
+    return res.json();
+  }
+};
+
+// hooks/useUsers.ts
+export function useUsers() {
+  const [users, setUsers] = useState<User[]>([]);
+  
+  useEffect(() => {
+    userService.getUsers().then(setUsers);
+  }, []);
+  
+  return users;
+}
+
+// components/UserList.tsx
+export function UserList() {
+  const users = useUsers();
+  
+  return (
+    <ul>
+      {users.map(u => <li key={u.id}>{u.name}</li>)}
+    </ul>
+  );
+}
 ```
 
 ## When to Use
-- Large applications with multiple domains
-- Team-based development (team per feature)
-- Features that may become separate apps/packages
-
+- Medium to large apps
+- Feature-focused development

@@ -2,6 +2,56 @@
 
 > **Scope**: Apply these rules when working with Svelte and SvelteKit applications.
 
+## Overview
+
+Svelte is a component framework that compiles components to highly efficient JavaScript at build time. SvelteKit is the official full-stack framework built on top of Svelte, providing routing, server-side rendering, and API routes.
+
+**Key Capabilities**:
+- **No Virtual DOM**: Compiles to vanilla JS (smaller bundles, faster runtime)
+- **Runes (Svelte 5)**: Modern reactivity with `$state`, `$derived`, `$effect`
+- **Full-Stack**: Server load functions, form actions, API routes
+- **TypeScript-First**: Full type safety with generated types
+- **Progressive Enhancement**: Forms work without JavaScript
+
+## Pattern Selection
+
+### Component Type
+**Use Runes (Svelte 5) when**:
+- New projects
+- Want better TypeScript support
+- More explicit reactivity
+
+**AVOID Legacy Syntax**:
+- `let count = 0` for reactive state (use `$state` instead)
+- `$:` for reactive statements (use `$derived` instead)
+- `createEventDispatcher` (use callback props instead)
+
+### Data Loading Strategy
+**Use +page.server.ts when**:
+- Need database access
+- Need environment secrets
+- Server-only data
+
+**Use +page.ts when**:
+- Can run on client or server
+- Fetching from public APIs
+- Want client-side navigation
+
+**Use Form Actions when**:
+- Form submissions
+- Mutations
+- Progressive enhancement needed
+
+### Store vs Component State
+**Use Component State ($state) when**:
+- Local to single component
+- Not shared
+
+**Use Stores when**:
+- Shared across multiple components
+- Need subscriptions outside components
+- Complex derived state
+
 ## 1. Project Structure (SvelteKit)
 ```
 src/
@@ -191,9 +241,274 @@ export const POST: RequestHandler = async ({ request }) => {
 {/await}
 ```
 
+## Best Practices
+
+**MUST**:
+- Use Runes (`$state`, `$derived`, `$effect`) in Svelte 5 (NO legacy syntax)
+- Use `<script lang="ts">` for ALL components
+- Use callback props (NO `createEventDispatcher`)
+- Use `(item.id)` key in `{#each}` loops
+- Return data from load functions (NO throwing errors without fail())
+
+**SHOULD**:
+- Use `+page.server.ts` for server-side data loading
+- Use form actions for mutations
+- Use `$lib` alias for imports
+- Use hooks.server.ts for auth/middleware
+- Run `svelte-kit sync` after schema changes
+
+**AVOID**:
+- Legacy reactivity (`let count = 0`, `$:`)
+- Client-side data fetching in components (use load functions)
+- Exposing secrets to client
+- Missing type annotations
+- Direct database access in `+page.ts` (use `+page.server.ts`)
+
+## Common Patterns
+
+### Runes (Svelte 5)
+```svelte
+<!-- ✅ GOOD: Runes for reactivity -->
+<script lang="ts">
+  interface Props {
+    initialCount?: number
+    onUpdate?: (count: number) => void
+  }
+
+  let { initialCount = 0, onUpdate }: Props = $props()
+  
+  let count = $state(initialCount)  // Reactive state
+  let doubled = $derived(count * 2)  // Computed state
+  
+  $effect(() => {
+    console.log('Count changed:', count)  // Side effect
+  })
+  
+  function increment() {
+    count++
+    onUpdate?.(count)
+  }
+</script>
+
+<button onclick={increment}>
+  {count} (doubled: {doubled})
+</button>
+
+<!-- ❌ BAD: Legacy syntax -->
+<script lang="ts">
+  let count = 0  // NOT reactive in Svelte 5
+  $: doubled = count * 2  // Old syntax
+  
+  $: {
+    console.log('Count changed:', count)  // Use $effect instead
+  }
+</script>
+```
+
+### Load Functions
+```typescript
+// ✅ GOOD: Server load function with types
+// routes/users/[id]/+page.server.ts
+import type { PageServerLoad } from './$types'
+import { error } from '@sveltejs/kit'
+
+export const load: PageServerLoad = async ({ params, locals }) => {
+  const user = await db.user.findUnique({
+    where: { id: params.id }
+  })
+  
+  if (!user) {
+    throw error(404, 'User not found')
+  }
+  
+  return {
+    user,
+    currentUser: locals.user  // From hooks.server.ts
+  }
+}
+
+// routes/users/[id]/+page.svelte
+<script lang="ts">
+  import type { PageData } from './$types'
+  
+  let { data }: { data: PageData } = $props()
+</script>
+
+<h1>{data.user.name}</h1>
+
+// ❌ BAD: Client-side fetching
+<script lang="ts">
+  import { onMount } from 'svelte'
+  
+  let user = $state(null)
+  
+  onMount(async () => {
+    const response = await fetch(`/api/users/${id}`)
+    user = await response.json()  // Slower, no SSR
+  })
+</script>
+```
+
+### Form Actions
+```typescript
+// ✅ GOOD: Form action with validation
+// routes/login/+page.server.ts
+import type { Actions } from './$types'
+import { fail, redirect } from '@sveltejs/kit'
+
+export const actions: Actions = {
+  default: async ({ request, cookies }) => {
+    const data = await request.formData()
+    const email = data.get('email')?.toString()
+    const password = data.get('password')?.toString()
+
+    // Validation
+    if (!email || !password) {
+      return fail(400, { 
+        email, 
+        error: 'Email and password required' 
+      })
+    }
+
+    // Authentication
+    const user = await auth.login(email, password)
+    if (!user) {
+      return fail(401, { 
+        email, 
+        error: 'Invalid credentials' 
+      })
+    }
+
+    // Set session
+    cookies.set('session', user.token, { 
+      path: '/',
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict'
+    })
+
+    throw redirect(303, '/dashboard')
+  }
+}
+
+// routes/login/+page.svelte
+<script lang="ts">
+  import { enhance } from '$app/forms'
+  import type { ActionData } from './$types'
+  
+  let { form }: { form: ActionData } = $props()
+</script>
+
+<form method="POST" use:enhance>
+  <input name="email" type="email" required />
+  <input name="password" type="password" required />
+  {#if form?.error}
+    <p class="error">{form.error}</p>
+  {/if}
+  <button type="submit">Login</button>
+</form>
+
+// ❌ BAD: Client-side form submission
+<script>
+  async function handleSubmit(e) {
+    e.preventDefault()
+    await fetch('/api/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password })
+    })  // No progressive enhancement, extra API route
+  }
+</script>
+
+<form onsubmit={handleSubmit}>
+  <!-- ... -->
+</form>
+```
+
+### Stores
+```typescript
+// ✅ GOOD: Custom store with methods
+// stores/cart.ts
+import { writable, derived } from 'svelte/store'
+
+interface CartItem {
+  id: string
+  name: string
+  price: number
+  quantity: number
+}
+
+function createCartStore() {
+  const { subscribe, set, update } = writable<CartItem[]>([])
+
+  return {
+    subscribe,
+    addItem: (item: CartItem) => {
+      update(items => {
+        const existing = items.find(i => i.id === item.id)
+        if (existing) {
+          existing.quantity += item.quantity
+          return items
+        }
+        return [...items, item]
+      })
+    },
+    removeItem: (id: string) => {
+      update(items => items.filter(i => i.id !== id))
+    },
+    clear: () => set([])
+  }
+}
+
+export const cart = createCartStore()
+export const cartTotal = derived(
+  cart, 
+  $cart => $cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
+)
+
+// Usage in component
+<script lang="ts">
+  import { cart, cartTotal } from '$lib/stores/cart'
+</script>
+
+<p>Total: ${$cartTotal}</p>
+{#each $cart as item (item.id)}
+  <div>{item.name} x {item.quantity}</div>
+{/each}
+```
+
+## Common Anti-Patterns
+
+**❌ Missing keys in loops**:
+```svelte
+<!-- BAD -->
+{#each items as item}
+  <li>{item.name}</li>
+{/each}
+```
+
+**✅ Always use keys**:
+```svelte
+<!-- GOOD -->
+{#each items as item (item.id)}
+  <li>{item.name}</li>
+{/each}
+```
+
+**❌ Exposing secrets to client**:
+```typescript
+// BAD - In +page.ts (runs on client)
+import { API_SECRET_KEY } from '$env/static/private'  // ERROR
+```
+
+**✅ Use server-only files**:
+```typescript
+// GOOD - In +page.server.ts (server only)
+import { API_SECRET_KEY } from '$env/static/private'  // Safe
+```
+
 ## 8. Best Practices
-- **$lib alias**: Import from `$lib/` for lib folder.
-- **Type Generation**: Run `svelte-kit sync` for types.
-- **Hooks**: Use `hooks.server.ts` for auth, logging.
-- **Environment**: Use `$env/static/private` for secrets.
+- **$lib alias**: Import from `$lib/` for lib folder
+- **Type Generation**: Run `svelte-kit sync` for types
+- **Hooks**: Use `hooks.server.ts` for auth, logging
+- **Environment**: Use `$env/static/private` for secrets (server-only)
 

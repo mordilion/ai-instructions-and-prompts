@@ -1,28 +1,50 @@
 # Android Development with Kotlin
 
 ## Overview
-Kotlin is the recommended language for Android development, offering null safety, concise syntax, and excellent tooling support.
+Kotlin: Google's recommended language for Android development since 2019, offering null safety, concise syntax, and coroutines.
+Interoperable with Java, but provides modern language features that prevent common Android bugs (null pointer exceptions).
+Best for all new Android projects and when modernizing Java Android apps.
 
 ## Core Components
 
+## Pattern Selection
+
+### ViewBinding Patterns
+**Activities: Use `lateinit`**
+- ViewBinding initialized in onCreate, never null after
+- No cleanup needed (Activity destroyed = binding destroyed)
+
+**Fragments: Use nullable + cleanup**
+- Fragment view can be destroyed while Fragment lives (memory leak risk)
+- MUST set to null in onDestroyView
+
+### State Management
+**Use StateFlow when**:
+- Building new apps (modern, Kotlin-first)
+- Need coroutine support
+- Want cold streams (no initial value needed)
+
+**Use LiveData when**:
+- Working with Java code
+- Need lifecycle awareness out of the box
+- Existing codebase uses LiveData
+
 ### Activities
 ```kotlin
-// ✅ Good - lifecycle-aware, use ViewBinding
+// Activity: lateinit is safe (onCreate always runs before access)
 class MainActivity : AppCompatActivity() {
-    private lateinit var binding: ActivityMainBinding
-    private val viewModel: MainViewModel by viewModels()
+    private lateinit var binding: ActivityMainBinding  // lateinit: initialized in onCreate
+    private val viewModel: MainViewModel by viewModels()  // Lazy delegate: survives rotation
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
+        binding = ActivityMainBinding.inflate(layoutInflater)  // Must initialize before use
         setContentView(binding.root)
-        
         setupObservers()
-        setupListeners()
     }
     
     private fun setupObservers() {
-        viewModel.state.observe(this) { state ->
+        viewModel.state.observe(this) { state ->  // 'this' = LifecycleOwner (auto cleanup)
             when (state) {
                 is UiState.Loading -> showLoading()
                 is UiState.Success -> showData(state.data)
@@ -30,93 +52,54 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-    
-    private fun setupListeners() {
-        binding.button.setOnClickListener {
-            viewModel.onButtonClicked()
-        }
-    }
 }
 ```
 
 ### Fragments
 ```kotlin
-// ✅ Good - use Fragment KTX, ViewBinding
+// Fragment: MUST use nullable binding pattern (memory leak prevention)
 class UserFragment : Fragment(R.layout.fragment_user) {
-    private var _binding: FragmentUserBinding? = null
-    private val binding get() = _binding!!
-    
+    private var _binding: FragmentUserBinding? = null  // Nullable: view destroyed before fragment
+    private val binding get() = _binding!!  // Safe: only accessed between onCreateView-onDestroyView
     private val viewModel: UserViewModel by viewModels()
     
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        _binding = FragmentUserBinding.bind(view)
-        
+        _binding = FragmentUserBinding.bind(view)  // Create binding
         setupUI()
-        observeViewModel()
     }
     
     override fun onDestroyView() {
         super.onDestroyView()
-        _binding = null  // Prevent memory leaks
-    }
-    
-    private fun setupUI() {
-        binding.recyclerView.apply {
-            layoutManager = LinearLayoutManager(context)
-            adapter = UserAdapter()
-        }
+        _binding = null  // CRITICAL: Release view reference to prevent memory leak
+        // Fragment instance may live, but view is destroyed (e.g., in ViewPager, back stack)
     }
 }
 ```
 
 ### ViewModels
 ```kotlin
-// ✅ Good - use StateFlow, handle loading states
-class UserViewModel(
-    private val repository: UserRepository
-) : ViewModel() {
-    
+// ViewModel: Survives configuration changes (rotation, etc.)
+class UserViewModel(private val repository: UserRepository) : ViewModel() {
+    // Backing property pattern: private mutable, public immutable
     private val _state = MutableStateFlow<UiState<User>>(UiState.Loading)
-    val state: StateFlow<UiState<User>> = _state.asStateFlow()
-    
-    private val _events = MutableSharedFlow<UserEvent>()
-    val events: SharedFlow<UserEvent> = _events.asSharedFlow()
-    
-    init {
-        loadUser()
-    }
+    val state: StateFlow<UiState<User>> = _state.asStateFlow()  // Read-only for UI
     
     fun loadUser() {
-        viewModelScope.launch {
+        viewModelScope.launch {  // Cancelled when ViewModel cleared
             _state.value = UiState.Loading
             repository.getUser()
-                .onSuccess { user ->
-                    _state.value = UiState.Success(user)
-                }
-                .onFailure { error ->
-                    _state.value = UiState.Error(error.message ?: "Unknown error")
-                    _events.emit(UserEvent.ShowError)
-                }
+                .onSuccess { _state.value = UiState.Success(it) }
+                .onFailure { _state.value = UiState.Error(it.message ?: "") }
         }
-    }
-    
-    fun onRetryClicked() {
-        loadUser()
     }
 }
 
-// UI State
+// Sealed class: Type-safe state representation (exhaustive when expressions)
 sealed class UiState<out T> {
     data object Loading : UiState<Nothing>()
     data class Success<T>(val data: T) : UiState<T>()
     data class Error(val message: String) : UiState<Nothing>()
-}
-
-// Events
-sealed class UserEvent {
-    data object ShowError : UserEvent()
-    data object NavigateBack : UserEvent()
 }
 ```
 
@@ -124,79 +107,41 @@ sealed class UserEvent {
 
 ### Composables
 ```kotlin
-// ✅ Good - composable functions, state hoisting
 @Composable
-fun UserScreen(
-    viewModel: UserViewModel = viewModel()
-) {
+fun UserScreen(viewModel: UserViewModel = viewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     
-    UserScreenContent(
-        state = state,
-        onRetry = viewModel::onRetryClicked
-    )
-}
-
-@Composable
-private fun UserScreenContent(
-    state: UiState<User>,
-    onRetry: () -> Unit
-) {
     when (state) {
         is UiState.Loading -> LoadingIndicator()
-        is UiState.Success -> UserDetails(user = state.data)
-        is UiState.Error -> ErrorView(
-            message = state.message,
-            onRetry = onRetry
-        )
+        is UiState.Success -> UserDetails((state as UiState.Success).data)
+        is UiState.Error -> ErrorView((state as UiState.Error).message)
     }
 }
 
 @Composable
 private fun UserDetails(user: User) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Text(
-            text = user.name,
-            style = MaterialTheme.typography.headlineMedium
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = user.email,
-            style = MaterialTheme.typography.bodyMedium
-        )
+    Column(Modifier.padding(16.dp)) {
+        Text(user.name, style = MaterialTheme.typography.headlineMedium)
+        Text(user.email, style = MaterialTheme.typography.bodyMedium)
     }
 }
 ```
 
-### State Management in Compose
+### State Management
 ```kotlin
-// ✅ Good - remember state, side effects
 @Composable
 fun SearchScreen() {
     var query by remember { mutableStateOf("") }
-    val results by viewModel.searchResults.collectAsStateWithLifecycle()
+    val results by viewModel.results.collectAsStateWithLifecycle()
     
-    // Side effect for analytics
     LaunchedEffect(query) {
-        if (query.isNotEmpty()) {
-            analyticsTracker.trackSearch(query)
-        }
+        if (query.isNotEmpty()) viewModel.search(query)
     }
     
     Column {
-        SearchBar(
-            query = query,
-            onQueryChange = { query = it }
-        )
-        
+        SearchBar(query = query, onQueryChange = { query = it })
         LazyColumn {
-            items(results) { item ->
-                SearchResultItem(item)
-            }
+            items(results) { SearchResultItem(it) }
         }
     }
 }
@@ -204,51 +149,34 @@ fun SearchScreen() {
 
 ## Room Database
 
-### Entity
+### Entity & DAO
 ```kotlin
-// ✅ Good - immutable entity, proper annotations
 @Entity(tableName = "users")
 data class UserEntity(
     @PrimaryKey val id: Long,
     @ColumnInfo(name = "name") val name: String,
-    @ColumnInfo(name = "email") val email: String,
-    @ColumnInfo(name = "created_at") val createdAt: Long
+    @ColumnInfo(name = "email") val email: String
 )
-```
 
-### DAO
-```kotlin
-// ✅ Good - suspend functions, Flow for observation
 @Dao
 interface UserDao {
-    @Query("SELECT * FROM users WHERE id = :id")
-    suspend fun getUserById(id: Long): UserEntity?
+    @Query("SELECT * FROM users")
+    suspend fun getAll(): List<UserEntity>
     
-    @Query("SELECT * FROM users ORDER BY name ASC")
-    fun observeUsers(): Flow<List<UserEntity>>
+    @Query("SELECT * FROM users WHERE id = :id")
+    suspend fun getById(id: Long): UserEntity?
     
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertUser(user: UserEntity)
-    
-    @Update
-    suspend fun updateUser(user: UserEntity)
+    suspend fun insert(user: UserEntity)
     
     @Delete
-    suspend fun deleteUser(user: UserEntity)
-    
-    @Query("DELETE FROM users WHERE id = :id")
-    suspend fun deleteUserById(id: Long)
+    suspend fun delete(user: UserEntity)
 }
 ```
 
 ### Database
 ```kotlin
-// ✅ Good - singleton pattern, migration
-@Database(
-    entities = [UserEntity::class],
-    version = 1,
-    exportSchema = true
-)
+@Database(entities = [UserEntity::class], version = 1)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
     
@@ -256,216 +184,90 @@ abstract class AppDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: AppDatabase? = null
         
-        fun getInstance(context: Context): AppDatabase {
-            return INSTANCE ?: synchronized(this) {
-                INSTANCE ?: buildDatabase(context).also { INSTANCE = it }
+        fun getInstance(context: Context): AppDatabase =
+            INSTANCE ?: synchronized(this) {
+                INSTANCE ?: Room.databaseBuilder(
+                    context.applicationContext,
+                    AppDatabase::class.java,
+                    "app_database"
+                ).build().also { INSTANCE = it }
             }
-        }
-        
-        private fun buildDatabase(context: Context): AppDatabase {
-            return Room.databaseBuilder(
-                context.applicationContext,
-                AppDatabase::class.java,
-                "app_database"
-            )
-                .addMigrations(MIGRATION_1_2)
-                .build()
-        }
-        
-        private val MIGRATION_1_2 = object : Migration(1, 2) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE users ADD COLUMN age INTEGER DEFAULT 0 NOT NULL")
-            }
-        }
     }
 }
 ```
 
 ## Dependency Injection (Hilt)
 
-### Application
+### Setup
 ```kotlin
-// ✅ Good - Hilt application
 @HiltAndroidApp
 class MyApplication : Application()
-```
-
-### Module
-```kotlin
-// ✅ Good - provide dependencies
-@Module
-@InstallIn(SingletonComponent::class)
-object DatabaseModule {
-    
-    @Provides
-    @Singleton
-    fun provideDatabase(
-        @ApplicationContext context: Context
-    ): AppDatabase = AppDatabase.getInstance(context)
-    
-    @Provides
-    fun provideUserDao(database: AppDatabase): UserDao =
-        database.userDao()
-}
 
 @Module
 @InstallIn(SingletonComponent::class)
-object NetworkModule {
-    
+object AppModule {
     @Provides
     @Singleton
-    fun provideRetrofit(): Retrofit {
-        return Retrofit.Builder()
-            .baseUrl("https://api.example.com")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-    }
+    fun provideDatabase(@ApplicationContext context: Context) =
+        AppDatabase.getInstance(context)
     
     @Provides
-    @Singleton
-    fun provideUserApi(retrofit: Retrofit): UserApi =
-        retrofit.create(UserApi::class.java)
+    fun provideUserDao(db: AppDatabase) = db.userDao()
 }
-```
 
-### ViewModel Injection
-```kotlin
-// ✅ Good - constructor injection
 @HiltViewModel
 class UserViewModel @Inject constructor(
-    private val repository: UserRepository,
-    private val analyticsTracker: AnalyticsTracker
-) : ViewModel() {
-    // ...
-}
+    private val repository: UserRepository
+) : ViewModel()
 ```
 
 ## Navigation
 
 ### Navigation Component
 ```kotlin
-// ✅ Good - type-safe navigation with Kotlin DSL
 @Composable
 fun AppNavigation(navController: NavHostController) {
-    NavHost(
-        navController = navController,
-        startDestination = "home"
-    ) {
+    NavHost(navController, startDestination = "home") {
         composable("home") {
-            HomeScreen(
-                onNavigateToDetail = { userId ->
-                    navController.navigate("detail/$userId")
-                }
-            )
+            HomeScreen(onNavigateToDetail = { id ->
+                navController.navigate("detail/$id")
+            })
         }
-        
-        composable(
-            route = "detail/{userId}",
-            arguments = listOf(
-                navArgument("userId") { type = NavType.LongType }
-            )
-        ) { backStackEntry ->
+        composable("detail/{userId}") { backStackEntry ->
             val userId = backStackEntry.arguments?.getLong("userId")
-            DetailScreen(userId = userId)
+            DetailScreen(userId)
         }
     }
 }
 ```
 
-## RecyclerView (View System)
+## RecyclerView
 
-### Adapter
+### Adapter with DiffUtil
 ```kotlin
-// ✅ Good - ListAdapter with DiffUtil
 class UserAdapter(
     private val onItemClick: (User) -> Unit
-) : ListAdapter<User, UserAdapter.ViewHolder>(UserDiffCallback()) {
+) : ListAdapter<User, UserAdapter.ViewHolder>(DiffCallback()) {
     
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val binding = ItemUserBinding.inflate(
-            LayoutInflater.from(parent.context),
-            parent,
-            false
-        )
-        return ViewHolder(binding, onItemClick)
-    }
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
+        ViewHolder(ItemUserBinding.inflate(LayoutInflater.from(parent.context), parent, false))
     
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.bind(getItem(position))
     }
     
-    class ViewHolder(
-        private val binding: ItemUserBinding,
-        private val onItemClick: (User) -> Unit
-    ) : RecyclerView.ViewHolder(binding.root) {
-        
+    inner class ViewHolder(private val binding: ItemUserBinding) : 
+        RecyclerView.ViewHolder(binding.root) {
         fun bind(user: User) {
-            binding.apply {
-                textName.text = user.name
-                textEmail.text = user.email
-                root.setOnClickListener { onItemClick(user) }
-            }
+            binding.textName.text = user.name
+            binding.root.setOnClickListener { onItemClick(user) }
         }
     }
     
-    private class UserDiffCallback : DiffUtil.ItemCallback<User>() {
-        override fun areItemsTheSame(oldItem: User, newItem: User): Boolean =
-            oldItem.id == newItem.id
-        
-        override fun areContentsTheSame(oldItem: User, newItem: User): Boolean =
-            oldItem == newItem
+    class DiffCallback : DiffUtil.ItemCallback<User>() {
+        override fun areItemsTheSame(old: User, new: User) = old.id == new.id
+        override fun areContentsTheSame(old: User, new: User) = old == new
     }
-}
-```
-
-## WorkManager
-
-### Worker
-```kotlin
-// ✅ Good - coroutine worker
-class DataSyncWorker(
-    context: Context,
-    params: WorkerParameters,
-    private val repository: DataRepository
-) : CoroutineWorker(context, params) {
-    
-    override suspend fun doWork(): Result {
-        return try {
-            val data = inputData.getString(KEY_DATA_ID)
-            requireNotNull(data) { "Data ID is required" }
-            
-            repository.syncData(data)
-            
-            Result.success()
-        } catch (e: Exception) {
-            if (runAttemptCount < MAX_RETRIES) {
-                Result.retry()
-            } else {
-                Result.failure()
-            }
-        }
-    }
-    
-    companion object {
-        private const val KEY_DATA_ID = "data_id"
-        private const val MAX_RETRIES = 3
-    }
-}
-
-// Schedule work
-fun scheduleDataSync(context: Context, dataId: String) {
-    val inputData = workDataOf(KEY_DATA_ID to dataId)
-    
-    val request = OneTimeWorkRequestBuilder<DataSyncWorker>()
-        .setInputData(inputData)
-        .setConstraints(
-            Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.CONNECTED)
-                .build()
-        )
-        .build()
-    
-    WorkManager.getInstance(context).enqueue(request)
 }
 ```
 
@@ -473,18 +275,13 @@ fun scheduleDataSync(context: Context, dataId: String) {
 
 ### Unit Tests
 ```kotlin
-// ✅ Good - coroutine test, mock dependencies
 @ExperimentalCoroutinesApi
 class UserViewModelTest {
-    
-    @get:Rule
-    val instantExecutorRule = InstantTaskExecutorRule()
-    
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
     
-    private lateinit var viewModel: UserViewModel
     private lateinit var repository: FakeUserRepository
+    private lateinit var viewModel: UserViewModel
     
     @Before
     fun setup() {
@@ -493,180 +290,121 @@ class UserViewModelTest {
     }
     
     @Test
-    fun `when loadUser succeeds, state is Success`() = runTest {
-        // Given
-        val user = User(id = 1, name = "John", email = "john@example.com")
-        repository.setUser(user)
-        
-        // When
+    fun `loadUser succeeds updates state`() = runTest {
+        repository.setUser(User(1, "John", "john@test.com"))
         viewModel.loadUser()
         advanceUntilIdle()
         
-        // Then
         val state = viewModel.state.value
         assertThat(state).isInstanceOf(UiState.Success::class.java)
-        assertThat((state as UiState.Success).data).isEqualTo(user)
-    }
-    
-    @Test
-    fun `when loadUser fails, state is Error`() = runTest {
-        // Given
-        repository.setShouldFail(true)
-        
-        // When
-        viewModel.loadUser()
-        advanceUntilIdle()
-        
-        // Then
-        assertThat(viewModel.state.value).isInstanceOf(UiState.Error::class.java)
     }
 }
 ```
 
 ### UI Tests (Compose)
 ```kotlin
-// ✅ Good - Compose UI tests
-@RunWith(AndroidJUnit4::class)
 class UserScreenTest {
-    
     @get:Rule
     val composeTestRule = createComposeRule()
     
     @Test
-    fun whenLoading_showsLoadingIndicator() {
-        composeTestRule.setContent {
-            UserScreenContent(
-                state = UiState.Loading,
-                onRetry = {}
-            )
-        }
-        
-        composeTestRule
-            .onNodeWithContentDescription("Loading")
-            .assertIsDisplayed()
-    }
-    
-    @Test
     fun whenSuccess_showsUserDetails() {
-        val user = User(id = 1, name = "John Doe", email = "john@example.com")
-        
         composeTestRule.setContent {
-            UserScreenContent(
-                state = UiState.Success(user),
-                onRetry = {}
-            )
+            UserScreenContent(state = UiState.Success(User(1, "John", "john@test.com")))
         }
         
-        composeTestRule
-            .onNodeWithText("John Doe")
-            .assertIsDisplayed()
-        
-        composeTestRule
-            .onNodeWithText("john@example.com")
-            .assertIsDisplayed()
-    }
-    
-    @Test
-    fun whenError_clickingRetryCallsCallback() {
-        var retryClicked = false
-        
-        composeTestRule.setContent {
-            UserScreenContent(
-                state = UiState.Error("Network error"),
-                onRetry = { retryClicked = true }
-            )
-        }
-        
-        composeTestRule
-            .onNodeWithText("Retry")
-            .performClick()
-        
-        assertThat(retryClicked).isTrue()
+        composeTestRule.onNodeWithText("John").assertIsDisplayed()
+        composeTestRule.onNodeWithText("john@test.com").assertIsDisplayed()
     }
 }
 ```
 
 ## Best Practices
 
-### 1. Use Kotlin Extensions
+**MUST**:
+- Use ViewBinding (NOT findViewById or Kotlin synthetics)
+- Use `by viewModels()` delegation (NOT manual ViewModelProvider)
+- Clean up Fragment bindings in `onDestroyView` (memory leak prevention)
+- Use `lifecycleScope` for coroutines in UI components (auto-cancellation)
+- Use StateFlow or LiveData for reactive UI updates
+
+**SHOULD**:
+- Use Hilt for dependency injection
+- Use Room for local database
+- Use Jetpack Navigation for multi-screen apps
+- Use sealed classes for state representation
+- Use data classes for models
+
+**AVOID**:
+- `lateinit` in Fragments for ViewBinding (causes memory leaks)
+- Manual ViewModel creation (use delegation)
+- `findViewById()` (use ViewBinding)
+- Leaked observers (use lifecycle-aware observation)
+- Blocking operations on main thread
+
+## Common Patterns
+
+### Memory Leak Prevention
 ```kotlin
-// ✅ Good - Android KTX extensions
-fun Fragment.showToast(message: String) {
-    Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+// ❌ BAD: Memory leak in Fragment
+class UserFragment : Fragment() {
+    private lateinit var binding: FragmentUserBinding  // WRONG for Fragments!
+    // Problem: Fragment kept in memory when view destroyed (ViewPager, back stack)
 }
 
-// Usage
-showToast("User saved")
-```
-
-### 2. Lifecycle Awareness
-```kotlin
-// ✅ Good - use lifecycle-aware components
-lifecycleScope.launch {
-    viewModel.events.collect { event ->
-        handleEvent(event)
+// ✅ GOOD: Proper cleanup
+class UserFragment : Fragment() {
+    private var _binding: FragmentUserBinding? = null
+    private val binding get() = _binding!!
+    
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null  // Release view reference
     }
 }
+```
 
-// ✅ Good - collect with lifecycle
-viewLifecycleOwner.lifecycleScope.launch {
-    viewModel.state.collectLatest { state ->
+### ViewModel Scope Selection
+```kotlin
+// ❌ WRONG: Activity-scoped ViewModel in Fragment (unless sharing data)
+private val viewModel: MainViewModel by activityViewModels()  // Shares with Activity
+
+// ✅ CORRECT: Fragment-scoped ViewModel
+private val viewModel: UserViewModel by viewModels()  // Scoped to this Fragment
+
+// ✅ CORRECT: Shared between Fragments
+private val sharedViewModel: SharedViewModel by activityViewModels()  // Explicit sharing
+```
+
+### Lifecycle-Aware Coroutines
+```kotlin
+// ❌ BAD: Not lifecycle-aware
+GlobalScope.launch {  // Never cancelled!
+    val data = fetchData()
+    updateUI(data)  // Crash if Activity destroyed
+}
+
+// ✅ GOOD: Lifecycle-aware
+lifecycleScope.launch {  // Cancelled when lifecycle destroyed
+    val data = fetchData()
+    updateUI(data)  // Safe: cancelled if Activity destroyed
+}
+
+// ✅ GOOD: Collect flows safely
+viewLifecycleOwner.lifecycleScope.launch {  // Use viewLifecycleOwner in Fragments
+    viewModel.state.collect { state ->
         updateUI(state)
     }
 }
 ```
 
-### 3. Resource Management
+### Kotlin Extensions (Use Sparingly)
 ```kotlin
-// ✅ Good - use resources safely
-val color = ContextCompat.getColor(context, R.color.primary)
-val drawable = ContextCompat.getDrawable(context, R.drawable.icon)
-val string = getString(R.string.welcome_message)
+// ✅ GOOD: Useful extension
+fun Fragment.showToast(message: String) {
+    Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+}
+
+// ❌ AVOID: Too generic (pollution)
+fun Any.log() { println(this) }  // Adds to every class!
 ```
-
-### 4. Permissions
-```kotlin
-// ✅ Good - modern permission handling
-val requestPermissionLauncher = registerForActivityResult(
-    ActivityResultContracts.RequestPermission()
-) { isGranted ->
-    if (isGranted) {
-        performAction()
-    } else {
-        showPermissionRationale()
-    }
-}
-
-fun checkAndRequestPermission() {
-    when {
-        ContextCompat.checkSelfPermission(
-            this,
-            Manifest.permission.CAMERA
-        ) == PackageManager.PERMISSION_GRANTED -> {
-            performAction()
-        }
-        shouldShowRequestPermissionRationale(Manifest.permission.CAMERA) -> {
-            showPermissionRationale()
-        }
-        else -> {
-            requestPermissionLauncher.launch(Manifest.permission.CAMERA)
-        }
-    }
-}
-```
-
-### 5. Memory Leaks Prevention
-```kotlin
-// ✅ Good - clean up in fragments
-override fun onDestroyView() {
-    super.onDestroyView()
-    _binding = null  // Prevent memory leak
-}
-
-// ✅ Good - cancel jobs in ViewModels
-override fun onCleared() {
-    super.onCleared()
-    // viewModelScope automatically cancels
-}
-```
-

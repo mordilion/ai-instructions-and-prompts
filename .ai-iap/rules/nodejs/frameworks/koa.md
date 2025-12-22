@@ -2,6 +2,29 @@
 
 > **Scope**: Apply these rules for Koa applications (JavaScript or TypeScript).
 
+## Overview
+
+Koa is a modern Node.js framework from Express creators - smaller, more expressive, with async/await throughout.
+
+## Best Practices
+
+**MUST**:
+- Use async/await (NO callbacks)
+- Use ctx (context) for request/response
+- Understand onion model (middleware order)
+- Use try-catch in middleware
+
+**SHOULD**:
+- Use @koa/router for routing
+- Use koa-bodyparser for JSON
+- Place error handler first
+- Use ctx.throw for errors
+
+**AVOID**:
+- Callback-based code
+- Missing error handling
+- Business logic in routes
+
 ## Project Structure
 ```
 src/

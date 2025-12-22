@@ -2,6 +2,40 @@
 
 > **Scope**: Apply these rules when working with Flutter projects (`.dart` files with Flutter imports).
 
+## Overview
+
+Flutter is Google's UI framework for building natively compiled applications from a single codebase for mobile, web, and desktop.
+
+**Key Capabilities**:
+- **Hot Reload**: Instant UI updates
+- **Widget Composition**: Everything is a widget
+- **Native Performance**: Compiled to native code
+- **Rich Widgets**: Material and Cupertino designs
+- **Cross-Platform**: iOS, Android, Web, Desktop
+
+## Best Practices
+
+**MUST**:
+- Use const constructors (performance optimization)
+- Use StatelessWidget when possible
+- Dispose controllers in dispose()
+- Use ListView.builder for long lists
+- Use keys for stateful widgets in lists
+
+**SHOULD**:
+- Use BLoC/Riverpod for state management
+- Use GoRouter for navigation
+- Use dependency injection (GetIt/Riverpod)
+- Extract widgets (keep build methods small)
+- Use MediaQuery.of(context) sparingly
+
+**AVOID**:
+- setState in loops
+- Direct Navigator.push (use named routes)
+- Services instantiated in widgets
+- Column with List.map (use ListView.builder)
+- Missing const on stateless widgets
+
 ## 1. Widget Structure
 - **Composition over Inheritance**: Build complex UIs by composing small widgets.
 - **Const Constructors**: ALWAYS use `const` for stateless widgets to optimize rebuilds.

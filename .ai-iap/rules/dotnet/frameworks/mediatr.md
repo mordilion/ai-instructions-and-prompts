@@ -2,6 +2,40 @@
 
 > **Scope**: Apply these rules when using MediatR for CQRS in .NET.
 
+## Overview
+
+MediatR implements the Mediator pattern, enabling CQRS (Command Query Responsibility Segregation) in .NET applications. It decouples request handling from business logic.
+
+**Key Capabilities**:
+- **CQRS**: Separate commands (write) from queries (read)
+- **Mediator Pattern**: Decoupled request/response
+- **Pipeline Behaviors**: Cross-cutting concerns (validation, logging)
+- **Single Responsibility**: One handler per request
+- **Testability**: Easy to unit test handlers
+
+## Best Practices
+
+**MUST**:
+- Use records for commands/queries (immutable)
+- One handler per request type
+- Return DTOs from queries (NEVER entities)
+- Use pipeline behaviors for validation
+- Use FluentValidation with validation behavior
+
+**SHOULD**:
+- Organize by feature (vertical slices)
+- Use Result pattern for error handling
+- Use cancellation tokens
+- Keep handlers thin (delegate to services)
+- Use IRequest<T> for type safety
+
+**AVOID**:
+- Logic in controllers (use MediatR)
+- Mutable command/query objects
+- Exposing entities from queries
+- Missing validation
+- Fat handlers (delegate to domain services)
+
 ## 1. Project Structure
 ```
 Application/

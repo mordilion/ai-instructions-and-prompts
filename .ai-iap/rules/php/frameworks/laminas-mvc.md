@@ -2,6 +2,38 @@
 
 > **Scope**: Apply these rules when working with Laminas MVC applications.
 
+## Overview
+
+Laminas MVC (formerly Zend Framework) is an enterprise PHP framework with a modular architecture. It provides comprehensive components for large-scale applications.
+
+**Key Capabilities**:
+- **Modular Architecture**: Feature-based modules
+- **Service Manager**: Powerful DI container
+- **Event-Driven**: EventManager for decoupling
+- **Enterprise**: Battle-tested for large apps
+- **Component Library**: 60+ reusable components
+
+## Best Practices
+
+**MUST**:
+- Use factories for ALL dependencies (NO new in controllers)
+- Use Input Filters for validation
+- Return ViewModel from controllers
+- Use modules for organization
+- Use Table Gateway for database
+
+**SHOULD**:
+- Use event manager for cross-cutting concerns
+- Use view helpers for reusable template logic
+- Use forms for complex validation
+- Configure via module.config.php
+
+**AVOID**:
+- Direct instantiation (use factories)
+- Logic in controllers (use services)
+- Missing input validation
+- Bypassing service manager
+
 ## 1. Project Structure
 ```
 module/Application/

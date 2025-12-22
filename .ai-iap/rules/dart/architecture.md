@@ -1,35 +1,109 @@
-# Dart & Flutter Architecture
+# Dart Architecture
 
-> **Scope**: Apply these rules ONLY when working with `.dart` files. These extend the general architecture guidelines.
+## Overview
+Clean, maintainable Dart with null safety and immutability.
 
-## 1. Core Principles
-- **Separation of Concerns**: UI (Widgets) must be "dumb". Logic belongs in State Management layers (BLoC, Cubit, Providers).
-- **Unidirectional Data Flow**: State flows down, Events/Callbacks flow up.
+## Core Principles
 
-## 2. Project Structure
+### Null Safety
+```dart
+String? findUser(int id) {
+  return users[id]; // May return null
+}
+
+String getUser(int id) {
+  return users[id]!; // Throws if null
+}
+
+// Null-aware operators
+final name = user?.name ?? 'Anonymous';
 ```
-features/
-└── auth/
-    ├── presentation/   # Widgets, Pages, State Managers (Blocs)
-    ├── domain/         # Entities, Repository Interfaces, Usecases
-    └── data/           # Repository Implementations, Data Sources, DTOs
+
+### Immutability
+```dart
+@immutable
+class User {
+  const User({required this.id, required this.name});
+  
+  final int id;
+  final String name;
+  
+  User copyWith({int? id, String? name}) {
+    return User(
+      id: id ?? this.id,
+      name: name ?? this.name,
+    );
+  }
+}
 ```
-- **Feature-First**: Organize by feature, NOT by type.
 
-## 3. Naming Conventions
-- **State Management**: `UserBloc`, `AuthCubit`, `ThemeNotifier` (suffix with pattern).
-- **Repositories**: `UserRepository` (Interface) → `UserRepositoryImpl` (Implementation).
-- **DTOs**: Suffix with `Dto` or `Model` (e.g., `UserDto`).
+### Dependency Injection
+```dart
+abstract class UserRepository {
+  Future<User?> findById(int id);
+  Future<void> save(User user);
+}
 
-## 4. Design Patterns
-- **Repository Pattern**: Isolate data fetching from business logic.
-- **Dependency Injection**: Use `GetIt` or `Provider/Riverpod`. NEVER instantiate services inside Widgets.
+class UserService {
+  UserService(this._repository);
+  
+  final UserRepository _repository;
+  
+  Future<User> getUser(int id) async {
+    final user = await _repository.findById(id);
+    if (user == null) throw UserNotFoundException(id);
+    return user;
+  }
+}
+```
 
-## 5. DTOs & Mapping
-- NEVER expose data layer models to UI. Always map to domain entities.
-- Use `freezed` or `json_serializable` for DTOs.
+## Error Handling
 
-## 6. Anti-Patterns (MUST avoid)
-- **God Build Methods**: `build()` method >50 lines = refactor into smaller widgets.
-- **Logic in UI**: NEVER make HTTP/DB calls inside Widgets.
-- **Prop Drilling**: >2 layers of passing props = use Provider/InheritedWidget.
+```dart
+class UserNotFoundException implements Exception {
+  UserNotFoundException(this.id);
+  final int id;
+  
+  @override
+  String toString() => 'User $id not found';
+}
+
+try {
+  final user = await service.getUser(id);
+} on UserNotFoundException catch (e) {
+  // Handle
+}
+```
+
+## Best Practices
+
+### Use Extension Methods
+```dart
+extension StringExtensions on String {
+  String capitalize() => '${this[0].toUpperCase()}${substring(1)}';
+}
+```
+
+### Enums
+```dart
+enum UserRole {
+  admin,
+  user,
+  guest;
+  
+  bool get isAdmin => this == UserRole.admin;
+}
+```
+
+### Sealed Classes (Dart 3.0+)
+```dart
+sealed class Result<T> {}
+class Success<T> extends Result<T> {
+  Success(this.data);
+  final T data;
+}
+class Failure<T> extends Result<T> {
+  Failure(this.error);
+  final String error;
+}
+```

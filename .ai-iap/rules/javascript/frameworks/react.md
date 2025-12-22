@@ -2,6 +2,37 @@
 
 > **Scope**: Apply these rules when working with React applications using JavaScript (`.jsx` files).
 
+## Overview
+
+React is a JavaScript library for building user interfaces. This is the JavaScript version - for TypeScript, see `typescript/frameworks/react.md`.
+
+**Key Points**:
+- Functional components with hooks
+- PropTypes for runtime validation
+- Same patterns as TypeScript React but without types
+
+## Best Practices
+
+**MUST**:
+- Use functional components (NO class components)
+- Define PropTypes for all props
+- Use hooks (useState, useEffect, etc.)
+- Extract event handlers to named functions
+- Use key prop in lists
+
+**SHOULD**:
+- Use custom hooks for reusable logic
+- Use React.memo for expensive renders
+- Use useMemo/useCallback appropriately
+- Keep components small (<200 lines)
+
+**AVOID**:
+- Class components
+- Missing PropTypes
+- Inline functions in JSX
+- Missing dependency arrays
+- Mutating state directly
+
 ## 1. Component Design
 - **Functional Only**: No class components.
 - **Single Responsibility**: One component, one purpose.

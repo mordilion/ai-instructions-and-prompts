@@ -2,6 +2,26 @@
 
 > **Scope**: Apply these rules when working with Preact, the lightweight (3kB) React alternative.
 
+## Overview
+
+Preact is a fast 3kB React alternative with the same API. Use preact/compat for full React compatibility.
+
+## Best Practices
+
+**MUST**:
+- Use class and for (NOT className/htmlFor)
+- Use onInput for real-time updates (NOT onChange)
+- Import from preact/hooks (NOT react)
+
+**SHOULD**:
+- Use Signals for global state
+- Use preact/compat for React libraries
+- Use lazy loading for code splitting
+
+**AVOID**:
+- Assuming React behavior (check differences)
+- Large bundles (defeats purpose)
+
 ## 1. When to Use Preact
 - **Performance Critical**: Smaller bundle size than React.
 - **React Compatibility**: Drop-in replacement via `preact/compat`.

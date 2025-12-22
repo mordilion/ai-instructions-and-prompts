@@ -1,25 +1,23 @@
 # Spring Boot with Kotlin
 
 ## Overview
-Spring Boot provides first-class support for Kotlin, offering features like null safety, immutability, and extension functions.
+Spring Boot with first-class Kotlin support since Spring Framework 5.0, leveraging null safety, data classes, and coroutines.
+Kotlin eliminates boilerplate (no getters/setters needed) while maintaining full Java interoperability.
+Best for new Spring Boot projects when team prefers Kotlin's conciseness and safety features.
 
 ## Controllers
 
 ### REST Controllers
 ```kotlin
-// ✅ Good - idiomatic Kotlin, data classes
 @RestController
 @RequestMapping("/api/users")
-class UserController(
-    private val userService: UserService
-) {
+class UserController(private val userService: UserService) {
     
     @GetMapping
     fun getUsers(): List<UserDto> = userService.findAll()
     
     @GetMapping("/{id}")
-    fun getUser(@PathVariable id: Long): UserDto =
-        userService.findById(id)
+    fun getUser(@PathVariable id: Long): UserDto = userService.findById(id)
     
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -27,125 +25,69 @@ class UserController(
         userService.create(request)
     
     @PutMapping("/{id}")
-    fun updateUser(
-        @PathVariable id: Long,
-        @Valid @RequestBody request: UpdateUserRequest
-    ): UserDto = userService.update(id, request)
+    fun updateUser(@PathVariable id: Long, @Valid @RequestBody request: UpdateUserRequest): UserDto =
+        userService.update(id, request)
     
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    fun deleteUser(@PathVariable id: Long) {
-        userService.delete(id)
-    }
+    fun deleteUser(@PathVariable id: Long) = userService.delete(id)
 }
 ```
 
 ### Exception Handling
 ```kotlin
-// ✅ Good - global exception handler with sealed class
 sealed class AppException(message: String) : RuntimeException(message) {
     class UserNotFound(id: Long) : AppException("User not found: $id")
     class InvalidInput(message: String) : AppException(message)
-    class Unauthorized(message: String = "Unauthorized") : AppException(message)
 }
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
-    
     @ExceptionHandler(AppException.UserNotFound::class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    fun handleUserNotFound(ex: AppException.UserNotFound): ErrorResponse =
-        ErrorResponse(
-            status = HttpStatus.NOT_FOUND.value(),
-            message = ex.message ?: "Not found",
-            timestamp = Instant.now()
-        )
-    
-    @ExceptionHandler(AppException.InvalidInput::class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    fun handleInvalidInput(ex: AppException.InvalidInput): ErrorResponse =
-        ErrorResponse(
-            status = HttpStatus.BAD_REQUEST.value(),
-            message = ex.message ?: "Invalid input",
-            timestamp = Instant.now()
-        )
+    fun handleUserNotFound(ex: AppException.UserNotFound) =
+        ErrorResponse(HttpStatus.NOT_FOUND.value(), ex.message ?: "")
     
     @ExceptionHandler(MethodArgumentNotValidException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    fun handleValidationError(ex: MethodArgumentNotValidException): ErrorResponse =
+    fun handleValidationError(ex: MethodArgumentNotValidException) =
         ErrorResponse(
-            status = HttpStatus.BAD_REQUEST.value(),
-            message = ex.bindingResult.fieldErrors.joinToString(", ") {
-                "${it.field}: ${it.defaultMessage}"
-            },
-            timestamp = Instant.now()
+            HttpStatus.BAD_REQUEST.value(),
+            ex.bindingResult.fieldErrors.joinToString { "${it.field}: ${it.defaultMessage}" }
         )
 }
 
-data class ErrorResponse(
-    val status: Int,
-    val message: String,
-    val timestamp: Instant
-)
+data class ErrorResponse(val status: Int, val message: String, val timestamp: Instant = Instant.now())
 ```
 
 ## Services
 
-### Service Layer
 ```kotlin
-// ✅ Good - interface + implementation pattern
 interface UserService {
     suspend fun findAll(): List<UserDto>
     suspend fun findById(id: Long): UserDto
     suspend fun create(request: CreateUserRequest): UserDto
-    suspend fun update(id: Long, request: UpdateUserRequest): UserDto
-    suspend fun delete(id: Long)
 }
 
 @Service
 class UserServiceImpl(
-    private val userRepository: UserRepository,
-    private val userMapper: UserMapper
+    private val repository: UserRepository,
+    private val mapper: UserMapper
 ) : UserService {
     
     override suspend fun findAll(): List<UserDto> = withContext(Dispatchers.IO) {
-        userRepository.findAll()
-            .map { userMapper.toDto(it) }
+        repository.findAll().map { mapper.toDto(it) }
     }
     
     override suspend fun findById(id: Long): UserDto = withContext(Dispatchers.IO) {
-        val user = userRepository.findById(id)
+        repository.findById(id)
+            .map { mapper.toDto(it) }
             .orElseThrow { AppException.UserNotFound(id) }
-        userMapper.toDto(user)
     }
     
     override suspend fun create(request: CreateUserRequest): UserDto = withContext(Dispatchers.IO) {
-        val user = User(
-            name = request.name,
-            email = request.email
-        )
-        val saved = userRepository.save(user)
-        userMapper.toDto(saved)
-    }
-    
-    override suspend fun update(id: Long, request: UpdateUserRequest): UserDto = withContext(Dispatchers.IO) {
-        val user = userRepository.findById(id)
-            .orElseThrow { AppException.UserNotFound(id) }
-        
-        val updated = user.copy(
-            name = request.name ?: user.name,
-            email = request.email ?: user.email
-        )
-        
-        val saved = userRepository.save(updated)
-        userMapper.toDto(saved)
-    }
-    
-    override suspend fun delete(id: Long): Unit = withContext(Dispatchers.IO) {
-        if (!userRepository.existsById(id)) {
-            throw AppException.UserNotFound(id)
-        }
-        userRepository.deleteById(id)
+        val user = User(name = request.name, email = request.email)
+        mapper.toDto(repository.save(user))
     }
 }
 ```
@@ -154,134 +96,54 @@ class UserServiceImpl(
 
 ### Entities
 ```kotlin
-// ✅ Good - JPA entity with Kotlin
 @Entity
 @Table(name = "users")
 data class User(
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
-    
-    @Column(nullable = false)
-    val name: String,
-    
-    @Column(nullable = false, unique = true)
-    val email: String,
-    
-    @Column(name = "created_at", nullable = false, updatable = false)
-    val createdAt: Instant = Instant.now(),
-    
-    @Column(name = "updated_at", nullable = false)
-    val updatedAt: Instant = Instant.now()
+    @Column(nullable = false) val name: String,
+    @Column(nullable = false, unique = true) val email: String,
+    @Column(name = "created_at") val createdAt: Instant = Instant.now()
 )
 ```
 
 ### Repositories
 ```kotlin
-// ✅ Good - Spring Data JPA with Kotlin extensions
 interface UserRepository : JpaRepository<User, Long> {
-    
     fun findByEmail(email: String): User?
-    
     fun findByNameContainingIgnoreCase(name: String): List<User>
     
     @Query("SELECT u FROM User u WHERE u.createdAt > :date")
     fun findRecentUsers(@Param("date") date: Instant): List<User>
 }
-
-// Custom repository implementation
-interface UserRepositoryCustom {
-    fun searchUsers(criteria: SearchCriteria): List<User>
-}
-
-@Repository
-class UserRepositoryCustomImpl(
-    @PersistenceContext private val entityManager: EntityManager
-) : UserRepositoryCustom {
-    
-    override fun searchUsers(criteria: SearchCriteria): List<User> {
-        val cb = entityManager.criteriaBuilder
-        val query = cb.createQuery(User::class.java)
-        val root = query.from(User::class.java)
-        
-        val predicates = mutableListOf<Predicate>()
-        
-        criteria.name?.let {
-            predicates.add(cb.like(cb.lower(root.get("name")), "%${it.lowercase()}%"))
-        }
-        
-        criteria.email?.let {
-            predicates.add(cb.equal(root.get<String>("email"), it))
-        }
-        
-        query.where(*predicates.toTypedArray())
-        
-        return entityManager.createQuery(query).resultList
-    }
-}
 ```
 
-## DTOs and Validation
+## DTOs & Validation
 
-### Data Transfer Objects
 ```kotlin
-// ✅ Good - immutable DTOs with validation
-data class UserDto(
-    val id: Long,
-    val name: String,
-    val email: String,
-    val createdAt: Instant
-)
+data class UserDto(val id: Long, val name: String, val email: String)
 
 data class CreateUserRequest(
-    @field:NotBlank(message = "Name is required")
-    @field:Size(min = 2, max = 100, message = "Name must be between 2 and 100 characters")
-    val name: String,
-    
-    @field:NotBlank(message = "Email is required")
-    @field:Email(message = "Email must be valid")
-    val email: String
+    @field:NotBlank @field:Size(min = 2, max = 100) val name: String,
+    @field:NotBlank @field:Email val email: String
 )
 
 data class UpdateUserRequest(
-    @field:Size(min = 2, max = 100, message = "Name must be between 2 and 100 characters")
-    val name: String? = null,
-    
-    @field:Email(message = "Email must be valid")
-    val email: String? = null
+    @field:Size(min = 2, max = 100) val name: String? = null,
+    @field:Email val email: String? = null
 )
 
-data class SearchCriteria(
-    val name: String? = null,
-    val email: String? = null
-)
-```
-
-### Mappers
-```kotlin
-// ✅ Good - explicit mapping
 @Component
 class UserMapper {
-    
-    fun toDto(entity: User): UserDto = UserDto(
-        id = entity.id,
-        name = entity.name,
-        email = entity.email,
-        createdAt = entity.createdAt
-    )
-    
-    fun toEntity(dto: CreateUserRequest): User = User(
-        name = dto.name,
-        email = dto.email
-    )
+    fun toDto(entity: User) = UserDto(entity.id, entity.name, entity.email)
+    fun toEntity(dto: CreateUserRequest) = User(name = dto.name, email = dto.email)
 }
 ```
 
 ## Configuration
 
-### Application Configuration
+### Application Config
 ```kotlin
-// ✅ Good - type-safe configuration
 @Configuration
 @ConfigurationProperties(prefix = "app")
 data class AppProperties(
@@ -289,61 +151,26 @@ data class AppProperties(
     val version: String,
     val api: ApiProperties
 ) {
-    data class ApiProperties(
-        val baseUrl: String,
-        val timeout: Duration
-    )
+    data class ApiProperties(val baseUrl: String, val timeout: Duration)
 }
 
 @Configuration
 class WebConfig : WebMvcConfigurer {
-    
     override fun addCorsMappings(registry: CorsRegistry) {
         registry.addMapping("/api/**")
             .allowedOrigins("*")
             .allowedMethods("GET", "POST", "PUT", "DELETE")
-            .maxAge(3600)
-    }
-}
-```
-
-### Bean Configuration
-```kotlin
-// ✅ Good - functional bean DSL
-@Configuration
-class DatabaseConfig {
-    
-    @Bean
-    fun dataSource(): DataSource = HikariDataSource().apply {
-        jdbcUrl = "jdbc:postgresql://localhost:5432/mydb"
-        username = "user"
-        password = "password"
-        maximumPoolSize = 10
-    }
-    
-    @Bean
-    fun transactionManager(dataSource: DataSource): PlatformTransactionManager =
-        DataSourceTransactionManager(dataSource)
-}
-
-// ✅ Alternative - Kotlin DSL
-fun beans() = beans {
-    bean {
-        val dataSource = ref<DataSource>()
-        DataSourceTransactionManager(dataSource)
     }
 }
 ```
 
 ## Security
 
-### Security Configuration
+### Security Config
 ```kotlin
-// ✅ Good - Spring Security with Kotlin DSL
 @Configuration
 @EnableWebSecurity
 class SecurityConfig {
-    
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http {
@@ -354,57 +181,38 @@ class SecurityConfig {
                 authorize("/api/**", authenticated)
             }
             httpBasic { }
-            sessionManagement {
-                sessionCreationPolicy = SessionCreationPolicy.STATELESS
-            }
         }
         return http.build()
     }
     
     @Bean
-    fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
+    fun passwordEncoder() = BCryptPasswordEncoder()
 }
 ```
 
-### JWT Authentication
+### JWT
 ```kotlin
-// ✅ Good - JWT service
 @Service
 class JwtService(
     @Value("\${jwt.secret}") private val secret: String,
     @Value("\${jwt.expiration}") private val expiration: Long
 ) {
-    
-    private val key: SecretKey by lazy {
-        Keys.hmacShaKeyFor(secret.toByteArray())
-    }
+    private val key by lazy { Keys.hmacShaKeyFor(secret.toByteArray()) }
     
     fun generateToken(username: String): String =
         Jwts.builder()
             .setSubject(username)
-            .setIssuedAt(Date())
             .setExpiration(Date(System.currentTimeMillis() + expiration))
             .signWith(key)
             .compact()
     
     fun validateToken(token: String): Boolean =
         try {
-            Jwts.parserBuilder()
-                .setSigningKey(key)
-                .build()
-                .parseClaimsJws(token)
+            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token)
             true
         } catch (e: JwtException) {
             false
         }
-    
-    fun getUsernameFromToken(token: String): String =
-        Jwts.parserBuilder()
-            .setSigningKey(key)
-            .build()
-            .parseClaimsJws(token)
-            .body
-            .subject
 }
 ```
 
@@ -412,51 +220,23 @@ class JwtService(
 
 ### Controller Tests
 ```kotlin
-// ✅ Good - MockMvc with Kotlin DSL
 @WebMvcTest(UserController::class)
 class UserControllerTest {
-    
     @Autowired
     private lateinit var mockMvc: MockMvc
     
     @MockkBean
     private lateinit var userService: UserService
     
-    @Autowired
-    private lateinit var objectMapper: ObjectMapper
-    
     @Test
-    fun `GET users returns list of users`() {
-        // Given
-        val users = listOf(
-            UserDto(1, "John", "john@example.com", Instant.now())
+    fun `GET users returns list`() {
+        coEvery { userService.findAll() } returns listOf(
+            UserDto(1, "John", "john@test.com")
         )
-        coEvery { userService.findAll() } returns users
         
-        // When & Then
-        mockMvc.get("/api/users")
-            .andExpect {
-                status { isOk() }
-                content { contentType(MediaType.APPLICATION_JSON) }
-                jsonPath("$[0].name") { value("John") }
-            }
-    }
-    
-    @Test
-    fun `POST user creates new user`() {
-        // Given
-        val request = CreateUserRequest("John", "john@example.com")
-        val created = UserDto(1, "John", "john@example.com", Instant.now())
-        coEvery { userService.create(request) } returns created
-        
-        // When & Then
-        mockMvc.post("/api/users") {
-            contentType = MediaType.APPLICATION_JSON
-            content = objectMapper.writeValueAsString(request)
-        }.andExpect {
-            status { isCreated() }
-            jsonPath("$.id") { value(1) }
-            jsonPath("$.name") { value("John") }
+        mockMvc.get("/api/users").andExpect {
+            status { isOk() }
+            jsonPath("$[0].name") { value("John") }
         }
     }
 }
@@ -464,167 +244,134 @@ class UserControllerTest {
 
 ### Service Tests
 ```kotlin
-// ✅ Good - service layer tests with coroutines
 @ExtendWith(MockKExtension::class)
 class UserServiceTest {
-    
     @MockK
-    private lateinit var userRepository: UserRepository
-    
+    private lateinit var repository: UserRepository
     @MockK
-    private lateinit var userMapper: UserMapper
+    private lateinit var mapper: UserMapper
     
-    private lateinit var userService: UserService
+    private lateinit var service: UserService
     
     @BeforeEach
     fun setup() {
-        userService = UserServiceImpl(userRepository, userMapper)
+        service = UserServiceImpl(repository, mapper)
     }
     
     @Test
     fun `findById returns user when exists`() = runTest {
-        // Given
-        val userId = 1L
-        val user = User(id = userId, name = "John", email = "john@example.com")
-        val dto = UserDto(userId, "John", "john@example.com", Instant.now())
+        val user = User(1, "John", "john@test.com")
+        val dto = UserDto(1, "John", "john@test.com")
         
-        every { userRepository.findById(userId) } returns Optional.of(user)
-        every { userMapper.toDto(user) } returns dto
+        every { repository.findById(1) } returns Optional.of(user)
+        every { mapper.toDto(user) } returns dto
         
-        // When
-        val result = userService.findById(userId)
+        val result = service.findById(1)
         
-        // Then
-        assertThat(result).isEqualTo(dto)
-        verify { userRepository.findById(userId) }
-    }
-    
-    @Test
-    fun `findById throws exception when not found`() = runTest {
-        // Given
-        val userId = 999L
-        every { userRepository.findById(userId) } returns Optional.empty()
-        
-        // When & Then
-        assertThrows<AppException.UserNotFound> {
-            userService.findById(userId)
-        }
+        assertEquals(dto, result)
     }
 }
 ```
 
 ### Integration Tests
 ```kotlin
-// ✅ Good - full integration test
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = RANDOM_PORT)
 @AutoConfigureTestDatabase
 class UserIntegrationTest {
-    
     @Autowired
     private lateinit var restTemplate: TestRestTemplate
     
     @Autowired
-    private lateinit var userRepository: UserRepository
+    private lateinit var repository: UserRepository
     
     @BeforeEach
-    fun cleanup() {
-        userRepository.deleteAll()
-    }
+    fun cleanup() = repository.deleteAll()
     
     @Test
     fun `create and retrieve user`() {
-        // Given
-        val request = CreateUserRequest("John", "john@example.com")
+        val request = CreateUserRequest("John", "john@test.com")
         
-        // When - Create
-        val createResponse = restTemplate.postForEntity(
-            "/api/users",
-            request,
-            UserDto::class.java
-        )
+        val created = restTemplate.postForEntity("/api/users", request, UserDto::class.java)
         
-        // Then
-        assertThat(createResponse.statusCode).isEqualTo(HttpStatus.CREATED)
-        val created = createResponse.body!!
-        assertThat(created.name).isEqualTo("John")
-        
-        // When - Retrieve
-        val getResponse = restTemplate.getForEntity(
-            "/api/users/${created.id}",
-            UserDto::class.java
-        )
-        
-        // Then
-        assertThat(getResponse.statusCode).isEqualTo(HttpStatus.OK)
-        assertThat(getResponse.body).isEqualTo(created)
+        assertEquals(HttpStatus.CREATED, created.statusCode)
+        assertEquals("John", created.body?.name)
     }
 }
 ```
 
 ## Best Practices
 
-### 1. Use Kotlin Coroutines
+**MUST**:
+- Use constructor injection with `private val` properties (NOT `@Autowired`)
+- Use `suspend` functions for I/O operations with coroutines
+- Use data classes for DTOs (automatic equals/hashCode/copy)
+- Use `@Transactional` for write operations
+- Handle nullable types explicitly (`?` suffix)
+
+**SHOULD**:
+- Use `@RestController` with `@RequiredArgsConstructor` pattern
+- Use Kotlin coroutines instead of reactive (WebFlux) when possible
+- Use sealed classes for type-safe state/result handling
+- Use extension functions to enhance Spring APIs
+- Use default parameters instead of multiple constructors
+
+**AVOID**:
+- Field injection (`@Autowired` on properties)
+- Returning nullable entities (use DTOs)
+- Platform types (Java types without null annotation)
+- Mixing coroutines and blocking calls
+- Using `!!` operator (forces non-null, crashes if null)
+
+## Common Patterns
+
+### Coroutines for Async Operations
 ```kotlin
-// ✅ Good - suspend functions for async operations
-@Service
-class AsyncUserService(
-    private val userRepository: UserRepository,
-    private val emailService: EmailService
-) {
+// ✅ GOOD: Parallel execution with coroutines
+suspend fun registerUser(request: CreateUserRequest): UserDto = coroutineScope {
+    val userDeferred = async { createUser(request) }
+    val emailDeferred = async { sendWelcomeEmail(request.email) }
     
-    suspend fun registerUser(request: CreateUserRequest): UserDto = coroutineScope {
-        val user = createUser(request)
-        
-        // Parallel operations
-        val emailJob = async { emailService.sendWelcomeEmail(user.email) }
-        val profileJob = async { createUserProfile(user) }
-        
-        emailJob.await()
-        profileJob.await()
-        
-        userMapper.toDto(user)
-    }
+    userDeferred.await()  // Wait for user creation
+    emailDeferred.await()  // Wait for email
+    userMapper.toDto(userDeferred.await())
+}
+
+// ❌ BAD: Sequential blocking calls
+fun registerUser(request: CreateUserRequest): UserDto {
+    val user = createUser(request)  // Blocks
+    sendWelcomeEmail(request.email)  // Blocks
+    return userMapper.toDto(user)
 }
 ```
 
-### 2. Extension Functions
+### Null Safety
 ```kotlin
-// ✅ Good - extend Spring types
-fun ResponseEntity.BodyBuilder.json(body: Any): ResponseEntity<Any> =
+// ✅ GOOD: Explicit null handling
+fun findUser(id: Long): UserDto? =
+    userRepository.findById(id)
+        .map { userMapper.toDto(it) }
+        .orElse(null)  // Explicit nullable return
+
+// ✅ GOOD: Elvis operator for defaults
+fun getUser(id: Long): UserDto =
+    userRepository.findById(id)
+        .map { userMapper.toDto(it) }
+        .orElse(null) ?: throw UserNotFoundException(id)
+
+// ❌ BAD: Using !! (crashes if null)
+fun getUser(id: Long): UserDto =
+    userMapper.toDto(userRepository.findById(id).get()!!)  // Crash if not found!
+```
+
+### Extension Functions (Use Sparingly)
+```kotlin
+// ✅ GOOD: Useful extension
+fun ResponseEntity.BodyBuilder.json(body: Any) =
     contentType(MediaType.APPLICATION_JSON).body(body)
 
 // Usage
 return ResponseEntity.ok().json(userDto)
+
+// ❌ AVOID: Too broad scope
+fun Any.toJson() = objectMapper.writeValueAsString(this)  // Pollutes all classes
 ```
-
-### 3. Null Safety
-```kotlin
-// ✅ Good - handle optionals safely
-fun findUser(id: Long): UserDto? =
-    userRepository.findById(id)
-        .map { userMapper.toDto(it) }
-        .orElse(null)
-```
-
-### 4. DSL-Style Builders
-```kotlin
-// ✅ Good - builder pattern
-fun buildQuery(block: QueryBuilder.() -> Unit): Query =
-    QueryBuilder().apply(block).build()
-
-class QueryBuilder {
-    private var table: String = ""
-    private val conditions = mutableListOf<String>()
-    
-    fun from(table: String) {
-        this.table = table
-    }
-    
-    fun where(condition: String) {
-        conditions.add(condition)
-    }
-    
-    fun build(): Query = Query(table, conditions)
-}
-```
-

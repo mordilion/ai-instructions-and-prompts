@@ -2,6 +2,36 @@
 
 > **Scope**: Apply these rules when using Dapper for database access in .NET.
 
+## Overview
+
+Dapper is a lightweight micro-ORM for .NET providing fast, simple database access. It extends IDbConnection with query methods while maintaining raw SQL control.
+
+**Key Capabilities**:
+- **High Performance**: Fastest .NET ORM
+- **Simple**: Minimal abstraction over ADO.NET
+- **Flexible**: Full SQL control
+- **Async**: Full async/await support
+
+## Best Practices
+
+**MUST**:
+- Use parameterized queries (NO string concatenation)
+- Use `using` statements for connections
+- Use async methods (QueryAsync, ExecuteAsync)
+- Use transactions for multi-statement operations
+
+**SHOULD**:
+- Use repository pattern
+- Use connection factory/context
+- Use stored procedures for complex logic
+- Use multi-mapping for joins
+
+**AVOID**:
+- SQL injection (use parameters)
+- Leaking connections (use using)
+- Synchronous methods in web apps
+- Exposing IDbConnection outside repositories
+
 ## 1. Connection Factory
 ```csharp
 public class DapperContext

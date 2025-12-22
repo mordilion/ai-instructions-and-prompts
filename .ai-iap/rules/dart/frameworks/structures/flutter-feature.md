@@ -1,57 +1,54 @@
 # Flutter Feature-First Structure
 
-> **Scope**: Use this structure for Flutter apps organized by feature/module.
-> **Precedence**: When loaded, this structure overrides any default folder organization from the base Flutter rules.
+> Organize Flutter app by feature/domain with all related files co-located. Best for medium to large apps with clear feature boundaries.
 
-## Project Structure
+## Directory Structure
+
 ```
-lib/
-├── app/                        # App-level setup
-│   ├── app.dart                # MaterialApp/CupertinoApp
-│   ├── routes.dart             # Route definitions
-│   └── theme.dart
-├── features/                   # Feature modules
-│   ├── auth/
-│   │   ├── data/
-│   │   │   ├── repositories/
-│   │   │   └── datasources/
-│   │   ├── domain/
-│   │   │   ├── entities/
-│   │   │   └── usecases/
-│   │   ├── presentation/
-│   │   │   ├── screens/
-│   │   │   ├── widgets/
-│   │   │   └── bloc/           # or providers/controllers
-│   │   └── auth.dart           # Barrel export
-│   ├── home/
-│   └── settings/
-├── core/                       # Shared utilities
-│   ├── constants/
-│   ├── errors/
-│   ├── network/
-│   └── utils/
-├── shared/                     # Shared widgets
-│   └── widgets/
-└── main.dart
+lib/features/user/
+├── models/user.dart
+├── repositories/user_repository.dart
+├── services/user_service.dart
+├── widgets/
+│   ├── user_list.dart
+│   └── user_detail.dart
+└── screens/
+    ├── user_list_screen.dart
+    └── user_detail_screen.dart
 ```
 
-## Rules
-- **Feature Isolation**: Each feature has its own data, domain, presentation
-- **Barrel Exports**: Export public API via feature's main file
-- **No Cross-Feature Imports**: Use core/shared for common code
-- **Feature Independence**: Features can be extracted into packages
+## Implementation
 
-## Import Pattern
 ```dart
-// ✅ Good - Import from feature barrel
-import 'package:app/features/auth/auth.dart';
+// models/user.dart
+class User {
+  final int id;
+  final String name;
+  
+  User({required this.id, required this.name});
+}
 
-// ❌ Bad - Deep import into feature
-import 'package:app/features/auth/presentation/screens/login_screen.dart';
+// repositories/user_repository.dart
+abstract class UserRepository {
+  Future<List<User>> getUsers();
+}
+
+// widgets/user_list.dart
+class UserList extends StatelessWidget {
+  final List<User> users;
+  
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      itemCount: users.length,
+      itemBuilder: (context, index) {
+        return ListTile(title: Text(users[index].name));
+      },
+    );
+  }
+}
 ```
 
 ## When to Use
-- Medium to large applications
-- Multiple developers/teams
-- Features that may become separate packages
-
+- Medium to large Flutter apps
+- Feature-focused development

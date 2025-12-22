@@ -2,6 +2,40 @@
 
 > **Scope**: Apply these rules when using Riverpod for state management in Flutter.
 
+## Overview
+
+Riverpod is a reactive caching and data-binding framework for Flutter and Dart. It's a complete rewrite of Provider with improved safety, testability, and features.
+
+**Key Capabilities**:
+- **Compile-Safe**: No BuildContext required
+- **Testable**: Easy to mock and test
+- **Code Generation**: Type-safe providers (@riverpod)
+- **Auto-Dispose**: Automatic cleanup
+- **Dev Tools**: State inspection and time travel
+
+## Best Practices
+
+**MUST**:
+- Use @riverpod code generation (NOT manual providers)
+- Use ref.watch in build (NO ref.read)
+- Use ref.read for event handlers/callbacks
+- Use AsyncValue for async operations
+- Wrap app with ProviderScope
+
+**SHOULD**:
+- Use Notifier/AsyncNotifier (Riverpod 2.0+)
+- Use freezed for state classes
+- Use family for parameterized providers
+- Use autoDispose for temporary state
+- Keep providers small and focused
+
+**AVOID**:
+- Provider hell (too many providers)
+- ref.read in build methods
+- Manual StateNotifier (use code generation)
+- Mutable state
+- Global state when not needed
+
 ## 1. Provider Types
 | Provider | Use Case |
 |----------|----------|

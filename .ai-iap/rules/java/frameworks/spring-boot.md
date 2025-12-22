@@ -1,186 +1,189 @@
 # Spring Boot Framework
 
-> **Scope**: Apply these rules when working with Spring Boot applications.
+## Overview
+Spring Boot: opinionated framework for building production-grade Spring applications with minimal configuration.
+Auto-configuration, embedded servers, and production-ready features (metrics, health checks) out of the box.
+Best for enterprise applications, microservices, and when you need the Spring ecosystem.
 
-## 1. Controllers
-- **Thin Controllers**: Validate input, delegate to services, return response.
-- **REST Controllers**: Use `@RestController` for REST APIs.
-- **Response DTOs**: NEVER return entities directly. Use DTOs.
-- **HTTP Methods**: Use appropriate annotations (`@GetMapping`, `@PostMapping`, etc.).
+## Pattern Selection
+
+### Dependency Injection
+**Use Constructor Injection (REQUIRED)**:
+- Immutable dependencies (`final` fields)
+- Easier testing (can inject mocks)
+- Required dependencies are explicit
+
+**NEVER use Field Injection** (`@Autowired` on fields):
+- Cannot inject mocks in tests
+- Dependencies not visible
+- Breaks immutability
+
+### Response Patterns
+**Use `ResponseEntity` when**:
+- Creating resources (return 201)
+- Deleting resources (return 204)
+- Need custom headers or status codes
+
+**Return DTO directly when**:
+- Simple GET operations (200 OK)
+- Standard success response
+
+## Controllers
 
 ```java
-// ✅ Good - Thin controller with DTO
 @RestController
 @RequestMapping("/api/users")
-@RequiredArgsConstructor
+@RequiredArgsConstructor  // Lombok: generates constructor for final fields
 public class UserController {
-    private final UserService userService;
+    private final UserService userService;  // final = immutable, required dependency
     
+    // POST: Use ResponseEntity for 201 Created status
     @PostMapping
     public ResponseEntity<UserDto> createUser(@Valid @RequestBody CreateUserRequest request) {
-        final UserDto user = userService.createUser(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(request));
     }
     
+    // GET: Return DTO directly for simple 200 OK
     @GetMapping("/{id}")
-    public UserDto getUser(@PathVariable final Long id) {
-        return userService.getUser(id);
+    public UserDto getUser(@PathVariable Long id) {
+        return userService.getUser(id);  // Spring returns 200 automatically
     }
-}
-
-// ❌ Bad - Business logic in controller
-@PostMapping
-public User createUser(@RequestBody User user) {
-    user.setCreatedAt(LocalDateTime.now());
-    userRepository.save(user);
-    emailService.sendWelcome(user.getEmail());
-    return user;  // Returning entity
+    
+    @GetMapping
+    public List<UserDto> getAll() {
+        return userService.findAll();
+    }
 }
 ```
 
-## 2. Services
-- **Business Logic**: All business rules live in services.
-- **Transaction Management**: Use `@Transactional` for multi-step operations.
-- **Constructor Injection**: Use constructor injection with `final` fields.
+## Services
 
 ```java
 @Service
-@RequiredArgsConstructor
-@Transactional(readOnly = true)
+@RequiredArgsConstructor  // Constructor injection for all final fields
+@Transactional(readOnly = true)  // Default: read-only (optimization for reads)
 public class UserService {
-    private final UserRepository userRepository;
+    private final UserRepository userRepository;  // Required dependencies
     private final EmailService emailService;
     
-    @Transactional
-    public UserDto createUser(final CreateUserRequest request) {
-        final User user = User.builder()
+    @Transactional  // Override: enable write transaction
+    public UserDto createUser(CreateUserRequest request) {
+        User user = User.builder()  // Builder pattern for complex objects
             .email(request.email())
             .name(request.name())
             .build();
         
-        final User savedUser = userRepository.save(user);
-        emailService.sendWelcomeEmail(savedUser.getEmail());
+        User saved = userRepository.save(user);
+        emailService.sendWelcome(saved.getEmail());  // Side effect in same transaction
         
-        return UserMapper.toDto(savedUser);
+        return UserMapper.toDto(saved);  // NEVER return entity - always DTO
     }
     
-    public UserDto getUser(final Long userId) {
-        return userRepository.findById(userId)
-            .map(UserMapper::toDto)
-            .orElseThrow(() -> new UserNotFoundException(userId));
+    public UserDto getUser(Long id) {
+        return userRepository.findById(id)
+            .map(UserMapper::toDto)  // Map entity to DTO
+            .orElseThrow(() -> new UserNotFoundException(id));  // Throw domain exception
     }
 }
 ```
 
-## 3. Repositories
-- **Spring Data JPA**: Use Spring Data JPA repositories.
-- **Query Methods**: Leverage method name derivation.
-- **Custom Queries**: Use `@Query` for complex queries.
+## Repositories
 
 ```java
+@Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    // Method name derivation
     Optional<User> findByEmail(String email);
-    List<User> findByActiveTrue();
+    List<User> findByNameContainingIgnoreCase(String name);
     
-    // Custom query
     @Query("SELECT u FROM User u WHERE u.createdAt > :date")
     List<User> findRecentUsers(@Param("date") LocalDateTime date);
-    
-    // Native query
-    @Query(value = "SELECT * FROM users WHERE status = ?1", nativeQuery = true)
-    List<User> findByStatus(String status);
 }
 ```
 
-## 4. DTOs & Validation
-- **Records**: Use Java records for immutable DTOs.
-- **Validation**: Use Jakarta Bean Validation annotations.
-- **Mapping**: Create explicit mapper classes or use MapStruct.
+## Entities
 
 ```java
-// Request DTO
+@Entity
+@Table(name = "users")
+@Getter @Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(nullable = false)
+    private String name;
+    
+    @Column(nullable = false, unique = true)
+    private String email;
+    
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+    
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
+}
+```
+
+## DTOs & Validation
+
+```java
 public record CreateUserRequest(
-    @NotBlank @Email String email,
     @NotBlank @Size(min = 2, max = 100) String name,
-    @NotBlank @Size(min = 8) String password
+    @NotBlank @Email String email
 ) {}
 
-// Response DTO
-public record UserDto(
-    Long id,
-    String email,
-    String name,
-    boolean active,
-    LocalDateTime createdAt
-) {}
+public record UserDto(Long id, String name, String email) {}
 
-// Mapper
-public final class UserMapper {
-    private UserMapper() {}
-    
-    public static UserDto toDto(final User user) {
-        return new UserDto(
-            user.getId(),
-            user.getEmail(),
-            user.getName(),
-            user.isActive(),
-            user.getCreatedAt()
-        );
+@Component
+public class UserMapper {
+    public static UserDto toDto(User user) {
+        return new UserDto(user.getId(), user.getName(), user.getEmail());
     }
 }
 ```
 
-## 5. Exception Handling
-- **Global Exception Handler**: Use `@RestControllerAdvice`.
-- **Custom Exceptions**: Create domain-specific exceptions.
-- **Error Responses**: Return consistent error format.
+## Exception Handling
 
 ```java
-// Custom exception
 public class UserNotFoundException extends RuntimeException {
-    public UserNotFoundException(final Long userId) {
-        super("User not found: " + userId);
+    public UserNotFoundException(Long id) {
+        super("User not found: " + id);
     }
 }
 
-// Global exception handler
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     
     @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleUserNotFound(final UserNotFoundException ex) {
-        final ErrorResponse error = new ErrorResponse(
-            HttpStatus.NOT_FOUND.value(),
-            ex.getMessage(),
-            LocalDateTime.now()
-        );
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleUserNotFound(UserNotFoundException ex) {
+        return new ErrorResponse(HttpStatus.NOT_FOUND.value(), ex.getMessage());
     }
     
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidation(final MethodArgumentNotValidException ex) {
-        final List<String> errors = ex.getBindingResult()
-            .getFieldErrors()
-            .stream()
-            .map(FieldError::getDefaultMessage)
-            .toList();
-        
-        final ErrorResponse error = new ErrorResponse(
-            HttpStatus.BAD_REQUEST.value(),
-            "Validation failed",
-            errors,
-            LocalDateTime.now()
-        );
-        return ResponseEntity.badRequest().body(error);
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleValidation(MethodArgumentNotValidException ex) {
+        String errors = ex.getBindingResult().getFieldErrors().stream()
+            .map(e -> e.getField() + ": " + e.getDefaultMessage())
+            .collect(Collectors.joining(", "));
+        return new ErrorResponse(HttpStatus.BAD_REQUEST.value(), errors);
+    }
+}
+
+record ErrorResponse(int status, String message, LocalDateTime timestamp) {
+    public ErrorResponse(int status, String message) {
+        this(status, message, LocalDateTime.now());
     }
 }
 ```
 
-## 6. Configuration
-- **Application Properties**: Use `application.yml` or `application.properties`.
-- **Profiles**: Separate configs for dev/staging/prod.
-- **Configuration Classes**: Use `@ConfigurationProperties` for type-safe config.
+## Configuration
 
 ```java
 @Configuration
@@ -189,55 +192,44 @@ public class GlobalExceptionHandler {
 public class AppProperties {
     @NotBlank
     private String name;
+    private String version;
+    private ApiProperties api;
     
-    @Min(1) @Max(100)
-    private int maxConnections;
-    
-    // Getters and setters
+    public static class ApiProperties {
+        private String baseUrl;
+        private Duration timeout;
+    }
+}
+
+@Configuration
+public class WebConfig implements WebMvcConfigurer {
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/api/**")
+            .allowedOrigins("*")
+            .allowedMethods("GET", "POST", "PUT", "DELETE");
+    }
 }
 ```
 
-```yaml
-# application.yml
-app:
-  name: MyApp
-  max-connections: 10
-
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/mydb
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    properties:
-      hibernate:
-        format_sql: true
-```
-
-## 7. Security (Spring Security)
-- **Method Security**: Use `@PreAuthorize` for method-level security.
-- **JWT**: Use JWT for stateless authentication.
-- **Password Encoding**: Use BCrypt for password hashing.
+## Security
 
 ```java
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
 public class SecurityConfig {
     
     @Bean
-    public SecurityFilterChain filterChain(final HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
-                .anyRequest().authenticated()
+                .requestMatchers("/api/public/**").permitAll()
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/**").authenticated()
             )
-            .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            );
+            .httpBasic(Customizer.withDefaults());
+        
         return http.build();
     }
     
@@ -246,99 +238,164 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 }
-
-// In service
-@Service
-public class UserService {
-    @PreAuthorize("hasRole('ADMIN')")
-    public void deleteUser(final Long userId) {
-        userRepository.deleteById(userId);
-    }
-}
 ```
 
-## 8. Testing
-- **Unit Tests**: Use JUnit 5 and Mockito.
-- **Integration Tests**: Use `@SpringBootTest` for integration tests.
-- **Test Slices**: Use `@WebMvcTest`, `@DataJpaTest` for focused tests.
+## Testing
 
+### Controller Tests
 ```java
-// Unit test
-@ExtendWith(MockitoExtension.class)
-class UserServiceTest {
-    @Mock
-    private UserRepository userRepository;
-    
-    @InjectMocks
-    private UserService userService;
-    
-    @Test
-    void getUser_WhenUserExists_ReturnsUser() {
-        // Given
-        final User user = new User(1L, "test@example.com", "Test User");
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        
-        // When
-        final UserDto result = userService.getUser(1L);
-        
-        // Then
-        assertThat(result.email()).isEqualTo("test@example.com");
-        verify(userRepository).findById(1L);
-    }
-}
-
-// Integration test
-@SpringBootTest
-@AutoConfigureMockMvc
-class UserControllerIntegrationTest {
+@WebMvcTest(UserController.class)
+class UserControllerTest {
     @Autowired
     private MockMvc mockMvc;
     
-    @Test
-    void createUser_ValidRequest_ReturnsCreated() throws Exception {
-        mockMvc.perform(post("/api/users")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                    {
-                        "email": "test@example.com",
-                        "name": "Test User",
-                        "password": "Password123"
-                    }
-                    """))
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.email").value("test@example.com"));
-    }
-}
-```
-
-## 9. Actuator & Monitoring
-- **Endpoints**: Enable health, metrics, and info endpoints.
-- **Custom Health Indicators**: Create for external dependencies.
-
-```java
-@Component
-public class DatabaseHealthIndicator implements HealthIndicator {
-    private final UserRepository userRepository;
+    @MockBean
+    private UserService userService;
     
-    @Override
-    public Health health() {
-        try {
-            userRepository.count();
-            return Health.up().build();
-        } catch (Exception e) {
-            return Health.down().withException(e).build();
-        }
+    @Test
+    void getUser_ReturnsUser() throws Exception {
+        when(userService.getUser(1L)).thenReturn(
+            new UserDto(1L, "John", "john@test.com")
+        );
+        
+        mockMvc.perform(get("/api/users/1"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.name").value("John"));
     }
 }
 ```
 
-## 10. Anti-Patterns (MUST avoid)
-- **Service Layer Skipping**: Don't call repositories from controllers.
-  - ❌ Bad: `@GetMapping("/{id}") User get(@PathVariable Long id) { return userRepo.findById(id).get(); }`
-  - ✅ Good: `@GetMapping("/{id}") UserDto get(@PathVariable Long id) { return userService.getUser(id); }`
-- **N+1 Queries**: Use `@EntityGraph` or JOIN FETCH.
-  - ❌ Bad: `users.forEach(u -> u.getPosts().size());` (N+1 query)
-  - ✅ Good: `@EntityGraph(attributePaths = {"posts"}) List<User> findAll();`
-- **Transactions Everywhere**: Use `@Transactional(readOnly = true)` for read operations.
-- **Field Injection**: Use constructor injection, not field injection.
+### Service Tests
+```java
+@ExtendWith(MockitoExtension.class)
+class UserServiceTest {
+    @Mock
+    private UserRepository repository;
+    
+    @InjectMocks
+    private UserService service;
+    
+    @Test
+    void createUser_Success() {
+        User user = User.builder().name("John").email("john@test.com").build();
+        when(repository.save(any(User.class))).thenReturn(user);
+        
+        UserDto result = service.createUser(new CreateUserRequest("John", "john@test.com"));
+        
+        assertEquals("John", result.name());
+        verify(repository).save(any(User.class));
+    }
+}
+```
 
+### Integration Tests
+```java
+@SpringBootTest(webEnvironment = RANDOM_PORT)
+@AutoConfigureTestDatabase
+class UserIntegrationTest {
+    @Autowired
+    private TestRestTemplate restTemplate;
+    
+    @Test
+    void createAndRetrieveUser() {
+        CreateUserRequest request = new CreateUserRequest("John", "john@test.com");
+        
+        ResponseEntity<UserDto> response = restTemplate.postForEntity(
+            "/api/users", request, UserDto.class
+        );
+        
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertNotNull(response.getBody());
+    }
+}
+```
+
+## Best Practices
+
+**MUST**:
+- Use constructor injection with `@RequiredArgsConstructor` (NEVER `@Autowired` on fields)
+- Use `@Transactional(readOnly = true)` on service classes by default
+- Return DTOs from controllers, NEVER entities (prevents lazy loading issues)
+- Use `@Valid` on ALL request bodies for automatic validation
+- Use `final` fields for dependencies (immutability)
+
+**SHOULD**:
+- Use `ResponseEntity` when controlling status codes (POST, PUT, DELETE)
+- Return DTO directly for simple GET operations (200 OK)
+- Use Records (Java 17+) for DTOs and request objects
+- Use Builder pattern for entities with 3+ fields
+- Use `Optional` for potentially absent values
+
+**AVOID**:
+- `@Autowired` field injection (use constructor injection)
+- Returning entities from any layer above repository
+- Business logic in controllers (move to services)
+- Exposing JPA exceptions to controllers (wrap in custom exceptions)
+- Missing `@Transactional` on write operations
+
+## Common Patterns
+
+### Transaction Management
+```java
+@Service
+@Transactional(readOnly = true)  // All methods read-only by default
+public class UserService {
+    
+    // Read operation - uses class-level readOnly setting
+    public UserDto getUser(Long id) {
+        return repository.findById(id).map(UserMapper::toDto)
+            .orElseThrow(() -> new UserNotFoundException(id));
+    }
+    
+    // Write operation - override with write transaction
+    @Transactional  // Enables write operations
+    public UserDto createUser(CreateUserRequest request) {
+        User user = repository.save(mapper.toEntity(request));
+        emailService.sendWelcome(user.getEmail());  // In same transaction
+        return mapper.toDto(user);
+    }
+}
+```
+
+### Dependency Injection Anti-Patterns
+```java
+// ❌ BAD: Field injection
+@RestController
+public class UserController {
+    @Autowired  // Hard to test, mutable, dependencies not visible
+    private UserService service;
+}
+
+// ❌ BAD: Constructor without Lombok
+@RestController
+public class UserController {
+    private final UserService service;
+    
+    public UserController(UserService service) {  // Verbose boilerplate
+        this.service = service;
+    }
+}
+
+// ✅ GOOD: Constructor injection with Lombok
+@RestController
+@RequiredArgsConstructor  // Lombok generates constructor
+public class UserController {
+    private final UserService service;  // final = required, immutable
+}
+```
+
+### DTO vs Entity
+```java
+// ❌ BAD: Returning entity from controller
+@GetMapping("/{id}")
+public User getUser(@PathVariable Long id) {
+    return userRepository.findById(id).orElseThrow();  // WRONG: exposes entity
+    // Problems: Lazy loading issues, Jackson serialization problems, security risks
+}
+
+// ✅ GOOD: Return DTO
+@GetMapping("/{id}")
+public UserDto getUser(@PathVariable Long id) {
+    return userService.getUser(id);  // Service returns DTO, not entity
+}
+```

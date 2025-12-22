@@ -2,6 +2,40 @@
 
 > **Scope**: Apply these rules when using GetX for state management, routing, and DI in Flutter.
 
+## Overview
+
+GetX is a lightweight yet powerful Flutter framework providing state management, dependency injection, and route management in a single package.
+
+**Key Capabilities**:
+- **Reactive State**: .obs variables for reactivity
+- **Routing**: Named routes with parameters
+- **Dependency Injection**: Get.put, Get.lazyPut
+- **All-in-One**: State + Routes + DI + Utils
+- **Minimal Boilerplate**: Less code than BLoC/Provider
+
+## Best Practices
+
+**MUST**:
+- Use GetxController (NOT StatefulWidget)
+- Use .obs for reactive variables
+- Use bindings for dependency injection
+- Use Get.find() to access controllers
+- Dispose in onClose()
+
+**SHOULD**:
+- Use GetView for widgets with controllers
+- Use Get.to() for navigation (NOT Navigator.push)
+- Use Obx() or GetX() for reactive UI
+- Organize by features (modules)
+- Use GetMaterialApp as root
+
+**AVOID**:
+- Direct controller instantiation (use Get.put/Get.lazyPut)
+- StatefulWidget when using GetX
+- Missing onClose() cleanup
+- Overusing Get.find() (use GetView)
+- Global state when not needed
+
 ## 1. Project Structure
 ```
 lib/

@@ -1,61 +1,67 @@
 # NestJS Modular Structure
 
-> **Scope**: Use this structure for NestJS apps with domain-driven modules.
-> **Precedence**: When loaded, this structure overrides any default folder organization from the base NestJS rules.
+> Feature-based NestJS structure with separate modules per domain. Best for modular applications with clear bounded contexts.
 
-## Project Structure
+## Directory Structure
+
 ```
-src/
-├── common/                 # Shared utilities
-│   ├── decorators/
-│   ├── filters/
-│   ├── guards/
-│   ├── interceptors/
-│   └── pipes/
-├── config/                 # Configuration
-│   └── database.config.ts
-├── modules/                # Feature modules
-│   ├── auth/
-│   │   ├── dto/
-│   │   ├── entities/
-│   │   ├── guards/
-│   │   ├── strategies/
-│   │   ├── auth.controller.ts
-│   │   ├── auth.service.ts
-│   │   └── auth.module.ts
-│   ├── users/
-│   │   ├── dto/
-│   │   ├── entities/
-│   │   ├── users.controller.ts
-│   │   ├── users.service.ts
-│   │   ├── users.repository.ts
-│   │   └── users.module.ts
-│   └── orders/
-├── database/               # Database config, migrations
-│   └── migrations/
-├── app.module.ts
-└── main.ts
+src/user/
+├── user.controller.ts
+├── user.service.ts
+├── user.module.ts
+├── dto/
+│   ├── create-user.dto.ts
+│   └── user.dto.ts
+└── entities/
+    └── user.entity.ts
 ```
 
-## Module Structure
+## Implementation
+
 ```typescript
+// entities/user.entity.ts
+@Entity()
+export class User {
+  @PrimaryGeneratedColumn()
+  id: number;
+  
+  @Column()
+  name: string;
+}
+
+// user.service.ts
+@Injectable()
+export class UserService {
+  constructor(
+    @InjectRepository(User)
+    private repo: Repository<User>,
+  ) {}
+  
+  async findAll(): Promise<User[]> {
+    return this.repo.find();
+  }
+}
+
+// user.controller.ts
+@Controller('users')
+export class UserController {
+  constructor(private service: UserService) {}
+  
+  @Get()
+  findAll() {
+    return this.service.findAll();
+  }
+}
+
+// user.module.ts
 @Module({
   imports: [TypeOrmModule.forFeature([User])],
-  controllers: [UsersController],
-  providers: [UsersService, UsersRepository],
-  exports: [UsersService],  // Only export what other modules need
+  controllers: [UserController],
+  providers: [UserService],
 })
-export class UsersModule {}
+export class UserModule {}
 ```
 
-## Rules
-- **One Module Per Domain**: auth, users, orders, etc.
-- **Module Exports**: Only export services needed by other modules
-- **Common Module**: Shared guards, filters, pipes
-- **No Circular Dependencies**: Use forwardRef() if unavoidable
-
 ## When to Use
-- Medium to large APIs
-- Domain-driven design
-- Microservice preparation
-
+- Modular NestJS apps
+- Feature-based development
