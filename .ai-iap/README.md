@@ -29,11 +29,12 @@ Your Rules (one source) → Setup Script → All AI Tools Configured
 ## ✨ Features
 
 - **🔧 Multi-Tool Support** – Cursor, Claude CLI, GitHub Copilot, Windsurf, Aider
-- **🌍 Multi-Language** – Kotlin, JavaScript, TypeScript, Java, Python, Dart/Flutter, .NET/C#, PHP
-- **📦 Framework-Specific** – React, Next.js, Laravel, ASP.NET Core, and 20+ more
-- **🏗️ Structure Templates** – Clean Architecture, Vertical Slices, Feature-First, and more
+- **🌍 Multi-Language** – Kotlin, JavaScript, TypeScript, Java, Python, Dart/Flutter, .NET/C#, PHP, Swift, Node.js
+- **📦 Framework-Specific** – React, Next.js, NestJS, AdonisJS, Laravel, ASP.NET Core, Spring Boot, Django, FastAPI, and 50+ more
+- **🏗️ Structure Templates** – Clean Architecture, Vertical Slices, Feature-First, Modular, MVVM, MVI, DDD, and more
+- **🔄 Process Guides** – Step-by-step testing implementation workflows for existing projects (all languages)
 - **⚡ Interactive Setup** – Wizard guides you through configuration
-- **🎯 Recommended Defaults** – Best practices marked with `*`
+- **🎯 Recommended Defaults** – Best practices marked with `⭐`
 
 ---
 
@@ -101,12 +102,12 @@ That's it! Your AI tools are now configured with consistent coding standards.
 | Lightweight | Alpine.js |
 | Legacy | jQuery |
 
-### TypeScript (Browser)
+### TypeScript (Browser & Backend)
 | Category | Frameworks |
 |----------|------------|
 | UI Framework | React ⭐, Vue.js, Angular |
 | Full-Stack | Next.js ⭐, Svelte/SvelteKit |
-| Backend | NestJS ⭐ (TypeScript-first) |
+| Backend | NestJS ⭐, AdonisJS ⭐ (TypeScript-first MVC) |
 | ORM | Prisma ⭐ |
 
 ### Node.js (JS or TS)
@@ -182,6 +183,7 @@ For supported frameworks, choose how you want to organize your code:
 | **React (JS/TS)** | Modular ⭐, Layered, Atomic Design |
 | **Angular** | Modular, Standalone ⭐ |
 | **NestJS** | Modular ⭐, Layered |
+| **AdonisJS** | Modular/Domain ⭐, MVC/Traditional |
 | **ASP.NET Core** | Clean Architecture ⭐, Vertical Slices, N-Tier |
 | **Laravel** | Modular ⭐, Traditional, DDD |
 | **Django** | Traditional ⭐, Modular, DDD |
@@ -217,10 +219,69 @@ For supported frameworks, choose how you want to organize your code:
 │   ├── dotnet/                 # .NET-specific rules
 │   └── php/                    # PHP-specific rules
 ├── processes/                  # Step-by-step workflow guides
+│   ├── dotnet/                 # .NET processes
+│   │   └── test-implementation.md  # NUnit testing setup
+│   ├── typescript/             # TypeScript processes
+│   │   └── test-implementation.md  # Jest/Vitest setup
+│   ├── java/                   # Java processes
+│   │   └── test-implementation.md  # JUnit 5 setup
+│   ├── python/                 # Python processes
+│   │   └── test-implementation.md  # pytest setup
+│   ├── kotlin/                 # Kotlin processes
+│   │   └── test-implementation.md  # JUnit 5/Kotest setup
+│   ├── swift/                  # Swift processes
+│   │   └── test-implementation.md  # XCTest setup
+│   ├── php/                    # PHP processes
+│   │   └── test-implementation.md  # PHPUnit setup
+│   └── dart/                   # Dart processes
+│       └── test-implementation.md  # flutter_test setup
 ├── config.json                 # Tool & language definitions
 ├── setup.ps1                   # Windows setup script
 ├── setup.sh                    # macOS/Linux setup script
 └── README.md
+```
+
+---
+
+## 🔄 Process Guides
+
+In addition to coding rules, this system includes **step-by-step workflow guides** for common development tasks. These are optimized for AI assistants to follow and implement.
+
+### Available Processes
+
+| Language | Process | Framework | Description |
+|----------|---------|-----------|-------------|
+| **.NET** | `test-implementation` | NUnit | Establish NUnit testing in existing projects |
+| **TypeScript** | `test-implementation` | Jest/Vitest | Establish Jest or Vitest testing with React Testing Library |
+| **Java** | `test-implementation` | JUnit 5 | Establish JUnit 5, AssertJ, Mockito testing |
+| **Python** | `test-implementation` | pytest | Establish pytest with pytest-mock and pytest-cov |
+| **Kotlin** | `test-implementation` | JUnit 5/Kotest | Establish JUnit 5 or Kotest with MockK |
+| **Swift** | `test-implementation` | XCTest | Establish XCTest with ViewInspector for SwiftUI |
+| **PHP** | `test-implementation` | PHPUnit | Establish PHPUnit with Mockery |
+| **Dart** | `test-implementation` | flutter_test | Establish Flutter testing with mockito/mocktail |
+
+### How Processes Work
+
+1. **Phase-Based**: Each process is divided into clear phases (e.g., Setup, Unit Tests, Integration Tests)
+2. **Git Workflow**: One branch per phase, atomic commits for AI trackability
+3. **Token-Efficient**: 35-40% shorter than traditional documentation
+4. **AI-Optimized**: Explicit directives (ALWAYS/NEVER), self-check lists
+5. **Bug Handling**: Log bugs only, never fix production code during testing setup
+
+### Selecting Processes
+
+During setup, you'll be prompted to select processes for each language:
+
+```
+Select processes for .NET/C#:
+(Workflow guides for establishing infrastructure)
+
+  1. Testing Implementation - Establish NUnit testing in existing projects
+
+  s. Skip (no processes)
+  a. All processes
+
+Enter choices: 1
 ```
 
 ---
@@ -262,20 +323,20 @@ Understanding how many tokens your rule selection consumes helps optimize AI con
 
 ### Total Available Tokens by Language
 
-| Language | Base | Frameworks | Structures | Total |
-|----------|------|------------|------------|-------|
-| **General** (always loaded) | 1,075 | – | – | **1,075** |
-| **JavaScript** | 1,012 | 4,596 | 1,162 | **6,770** |
-| **TypeScript** | 852 | 6,729 | 3,227 | **10,808** |
-| **Node.js** | – | 2,879 | – | **2,879** |
-| **Java** | 1,662 | 10,011 | 4,910 | **16,583** |
-| **Python** | 1,746 | 9,686 | 10,060 | **21,492** |
-| **Kotlin** | 2,671 | 16,354 | 25,815 | **44,840** |
-| **Swift** | 4,015 | 16,862 | 3,885 | **24,762** |
-| **Dart** | 823 | 3,535 | 1,595 | **5,953** |
-| **.NET** | 844 | 5,008 | 1,356 | **7,208** |
-| **PHP** | 860 | 5,158 | 1,553 | **7,571** |
-| **Grand Total** | | | | **~150,000** |
+| Language | Base | Frameworks | Structures | Processes | Total |
+|----------|------|------------|------------|-----------|-------|
+| **General** (always loaded) | 1,075 | – | – | – | **1,075** |
+| **JavaScript** | 1,012 | 4,596 | 1,162 | – | **6,770** |
+| **TypeScript** | 852 | 11,000 | 5,800 | 1,650 | **19,300** |
+| **Node.js** | – | 2,879 | – | – | **2,879** |
+| **Java** | 1,662 | 10,011 | 4,910 | 1,850 | **18,433** |
+| **Python** | 1,746 | 9,686 | 10,060 | 1,700 | **23,192** |
+| **Kotlin** | 2,671 | 16,354 | 25,815 | 1,900 | **46,740** |
+| **Swift** | 4,015 | 16,862 | 3,885 | 1,800 | **26,562** |
+| **Dart** | 823 | 3,535 | 1,595 | 1,750 | **7,703** |
+| **.NET** | 844 | 5,008 | 1,356 | 1,650 | **8,858** |
+| **PHP** | 860 | 5,158 | 1,553 | 1,700 | **9,271** |
+| **Grand Total** | | | | | **~170,000** |
 
 ### Typical Selection Examples
 
@@ -284,6 +345,9 @@ Understanding how many tokens your rule selection consumes helps optimize AI con
 | **React (TS)** | General + TypeScript + React + Modular | ~3,070 |
 | **React (JS) + Express** | General + JavaScript + React + Node.js Express | ~3,770 |
 | **Next.js + Prisma** | General + TypeScript + Next.js + Prisma | ~4,150 |
+| **NestJS + Prisma** | General + TypeScript + NestJS + Prisma + Modular | ~5,200 |
+| **AdonisJS (Modular)** | General + TypeScript + AdonisJS + Modular | ~3,800 |
+| **AdonisJS (MVC)** | General + TypeScript + AdonisJS + MVC | ~4,250 |
 | **Spring Boot API (Java)** | General + Java + Spring Boot + Hibernate + Clean | ~5,390 |
 | **Android MVVM (Java)** | General + Java + Android + MVVM | ~3,740 |
 | **iOS MVVM (UIKit)** | General + Swift + iOS + Core Data + MVVM | ~5,810 |
@@ -305,6 +369,8 @@ Understanding how many tokens your rule selection consumes helps optimize AI con
 - **Select only what you need** – Don't include unused frameworks
 - **Choose one structure** – Pick the best fit, not all options
 - **Node.js is shared** – Using Express with both JS/TS adds it only once
+- **Processes are optional** – Only select testing implementation if you need it
+- **Processes are token-efficient** – ~1,650-1,900 tokens each (35-40% smaller than traditional docs)
 
 ---
 
@@ -355,6 +421,29 @@ Understanding how many tokens your rule selection consumes helps optimize AI con
   }
 }
 ```
+
+### Add a Process Guide
+
+1. Create: `.ai-iap/processes/yourlanguage/process-name.md`
+2. Add to language's `processes` in `config.json`:
+
+```json
+"processes": {
+  "process-name": {
+    "name": "Process Name",
+    "file": "process-name",
+    "description": "What this process does"
+  }
+}
+```
+
+**Process Best Practices**:
+- Use phase-based structure (Phase 1, Phase 2, etc.)
+- Include explicit ALWAYS/NEVER directives
+- Add AI Self-Check lists
+- Keep token-efficient (aim for 35-40% reduction vs verbose docs)
+- Include Git workflow guidance (one branch per phase)
+- Never fix production bugs during infrastructure setup
 
 ---
 
