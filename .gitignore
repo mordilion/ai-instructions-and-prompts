@@ -24,25 +24,6 @@ CLAUDE.md
 # Aider
 CONVENTIONS.md
 
-# ============================================================================
-# Analysis & Documentation Files (Generated)
-# ============================================================================
-# These are analysis and testing documentation files that can be regenerated
-# or customized per use case. Uncomment to commit them if desired.
-
-# Expert analysis documents
-EXPERT_ANALYSIS.md
-ANALYSIS_SUMMARY.md
-OPTIMIZATION_GUIDE.md
-CROSS_AI_COMPATIBILITY_GUIDE.md
-PRIORITY_ACTIONS.md
-ANALYSIS_README.md
-
-# Implementation status documents
-IMPLEMENTATION_COMPLETE.md
-GITHUB_ACTIONS_TESTING_COMPLETE.md
-QUICK_START_TESTING.md
-
 # Test results
 test-results/
 
