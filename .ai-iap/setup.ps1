@@ -330,6 +330,71 @@ function Select-Frameworks {
     return $selectedFrameworks
 }
 
+function Select-Processes {
+    param(
+        [PSCustomObject]$Config,
+        [string[]]$SelectedLanguages
+    )
+    
+    $selectedProcesses = @{}
+    
+    foreach ($lang in $SelectedLanguages) {
+        $langConfig = $Config.languages.$lang
+        
+        # Skip if no processes defined for this language
+        if (-not $langConfig.processes) {
+            continue
+        }
+        
+        $processKeys = @()
+        $processes = @()
+        $index = 0
+        
+        foreach ($key in $langConfig.processes.PSObject.Properties.Name) {
+            $proc = $langConfig.processes.$key
+            $processKeys += $key
+            $processes += @{
+                Key = $key
+                Name = $proc.name
+                Description = $proc.description
+                File = $proc.file
+                Index = $index
+            }
+            $index++
+        }
+        
+        if ($processes.Count -eq 0) {
+            continue
+        }
+        
+        Write-Host ""
+        Write-Host "Select processes for $($langConfig.name):" -ForegroundColor White
+        Write-Host "(Workflow guides for establishing infrastructure)" -ForegroundColor DarkGray
+        Write-Host ""
+        
+        foreach ($proc in $processes) {
+            Write-Host "  $($proc.Index + 1). $($proc.Name) - $($proc.Description)"
+        }
+        Write-Host ""
+        Write-Host "  s. Skip (no processes)"
+        Write-Host "  a. All processes"
+        Write-Host ""
+        
+        $langProcesses = Get-ValidatedSelection `
+            -Prompt "Enter choices (e.g., 1 2 or 'a' for all, 's' to skip)" `
+            -Options $processKeys `
+            -MaxValue $processKeys.Count `
+            -AllowEmpty $false `
+            -AllowSkip $true
+        
+        if ($langProcesses.Count -gt 0) {
+            $selectedProcesses[$lang] = $langProcesses
+        }
+    }
+    
+    return $selectedProcesses
+}
+
 function Select-Structures {
     param(
         [PSCustomObject]$Config,
@@ -473,7 +538,8 @@ function New-CursorConfig {
         [PSCustomObject]$Config,
         [string[]]$SelectedLanguages,
         [hashtable]$SelectedFrameworks,
-        [hashtable]$SelectedStructures
+        [hashtable]$SelectedStructures,
+        [hashtable]$SelectedProcesses
     )
     
     $outputDir = Join-Path $Script:ProjectRoot ".cursor\rules"
@@ -545,6 +611,27 @@ function New-CursorConfig {
                 }
             }
         }
+        
+        # Generate process files for this language
+        if ($SelectedProcesses.ContainsKey($lang)) {
+            foreach ($proc in $SelectedProcesses[$lang]) {
+                $procConfig = $Config.languages.$lang.processes.$proc
+                $content = Read-InstructionFile -Lang $lang -File $procConfig.file -IsProcess $true
+                
+                if ($null -eq $content) {
+                    continue
+                }
+                
+                $outputFile = Join-Path $langDir "$($procConfig.file).mdc"
+                $frontmatter = New-CursorFrontmatter -Config $Config -Lang $lang -File $proc
+                
+                $fullContent = $frontmatter + $content
+                $fullContent | Out-File -FilePath $outputFile -Encoding UTF8 -NoNewline
+                
+                $relativePath = $outputFile.Replace($Script:ProjectRoot, "").TrimStart("\", "/")
+                Write-SuccessMessage "Created $relativePath"
+            }
+        }
     }
 }
 
@@ -555,7 +642,8 @@ function New-ConcatenatedConfig {
         [string]$OutputFile,
         [string[]]$SelectedLanguages,
         [hashtable]$SelectedFrameworks,
-        [hashtable]$SelectedStructures
+        [hashtable]$SelectedStructures,
+        [hashtable]$SelectedProcesses
     )
     
     Write-InfoMessage "Generating $ToolName configuration..."
@@ -609,6 +697,18 @@ function New-ConcatenatedConfig {
                 }
             }
         }
+        
+        # Add process files for this language
+        if ($SelectedProcesses.ContainsKey($lang)) {
+            foreach ($proc in $SelectedProcesses[$lang]) {
+                $procConfig = $Config.languages.$lang.processes.$proc
+                $fileContent = Read-InstructionFile -Lang $lang -File $procConfig.file -IsProcess $true
+                
+                if ($null -ne $fileContent) {
+                    $content += $fileContent + "`n`n---`n`n"
+                }
+            }
+        }
     }
     
     $content | Out-File -FilePath $fullPath -Encoding UTF8 -NoNewline
@@ -622,24 +722,25 @@ function New-ToolConfig {
         [string]$Tool,
         [string[]]$SelectedLanguages,
         [hashtable]$SelectedFrameworks,
-        [hashtable]$SelectedStructures
+        [hashtable]$SelectedStructures,
+        [hashtable]$SelectedProcesses
     )
     
     switch ($Tool) {
         "cursor" {
-            New-CursorConfig -Config $Config -SelectedLanguages $SelectedLanguages -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures
+            New-CursorConfig -Config $Config -SelectedLanguages $SelectedLanguages -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
         }
         "claude-cli" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Claude CLI" -OutputFile "CLAUDE.md" -SelectedLanguages $SelectedLanguages -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures
+            New-ConcatenatedConfig -Config $Config -ToolName "Claude CLI" -OutputFile "CLAUDE.md" -SelectedLanguages $SelectedLanguages -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
         }
         "github-copilot" {
-            New-ConcatenatedConfig -Config $Config -ToolName "GitHub Copilot" -OutputFile ".github\copilot-instructions.md" -SelectedLanguages $SelectedLanguages -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures
+            New-ConcatenatedConfig -Config $Config -ToolName "GitHub Copilot" -OutputFile ".github\copilot-instructions.md" -SelectedLanguages $SelectedLanguages -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
         }
         "windsurf" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Windsurf" -OutputFile ".windsurfrules" -SelectedLanguages $SelectedLanguages -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures
+            New-ConcatenatedConfig -Config $Config -ToolName "Windsurf" -OutputFile ".windsurfrules" -SelectedLanguages $SelectedLanguages -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
         }
         "aider" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Aider" -OutputFile "CONVENTIONS.md" -SelectedLanguages $SelectedLanguages -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures
+            New-ConcatenatedConfig -Config $Config -ToolName "Aider" -OutputFile "CONVENTIONS.md" -SelectedLanguages $SelectedLanguages -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
         }
         default {
             Write-WarningMessage "Unknown tool: $Tool"
@@ -725,6 +826,9 @@ function Main {
     # Structure selection (for frameworks that have structure options)
     $selectedStructures = Select-Structures -Config $config -SelectedLanguages $selectedLanguages -SelectedFrameworks $selectedFrameworks
     
+    # Process selection
+    $selectedProcesses = Select-Processes -Config $config -SelectedLanguages $selectedLanguages
+    
     Write-Host ""
     Write-Host "Configuration Summary:" -ForegroundColor White
     Write-Host "  Tools: $($selectedTools -join ', ')"
@@ -740,6 +844,11 @@ function Main {
             Write-Host "  Structure ($key): $($selectedStructures[$key])"
         }
     }
+    if ($selectedProcesses.Count -gt 0) {
+        foreach ($lang in $selectedProcesses.Keys) {
+            Write-Host "  Processes ($lang): $($selectedProcesses[$lang] -join ', ')"
+        }
+    }
     Write-Host ""
     
     $confirm = Read-Host "Proceed with generation? (Y/n)"
@@ -752,7 +861,7 @@ function Main {
     
     # Generate files
     foreach ($tool in $selectedTools) {
-        New-ToolConfig -Config $config -Tool $tool -SelectedLanguages $selectedLanguages -SelectedFrameworks $selectedFrameworks -SelectedStructures $selectedStructures
+        New-ToolConfig -Config $config -Tool $tool -SelectedLanguages $selectedLanguages -SelectedFrameworks $selectedFrameworks -SelectedStructures $selectedStructures -SelectedProcesses $selectedProcesses
     }
     
     # Gitignore prompt

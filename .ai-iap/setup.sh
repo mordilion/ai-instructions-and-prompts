@@ -215,8 +215,24 @@ get_language_frameworks() {
     jq -r ".languages[\"$1\"].frameworks // empty | keys[]" "$CONFIG_FILE" 2>/dev/null || true
 }
 
+get_language_processes() {
+    jq -r ".languages[\"$1\"].processes // empty | keys[]" "$CONFIG_FILE" 2>/dev/null || true
+}
+
 get_framework_name() {
     jq -r ".languages[\"$1\"].frameworks[\"$2\"].name" "$CONFIG_FILE"
+}
+
+get_process_name() {
+    jq -r ".languages[\"$1\"].processes[\"$2\"].name" "$CONFIG_FILE"
+}
+
+get_process_description() {
+    jq -r ".languages[\"$1\"].processes[\"$2\"].description" "$CONFIG_FILE"
+}
+
+get_process_file() {
+    jq -r ".languages[\"$1\"].processes[\"$2\"].file" "$CONFIG_FILE"
 }
 
 get_framework_description() {
@@ -481,6 +497,69 @@ select_frameworks() {
 # Associative array to store selected structures
 declare -A SELECTED_STRUCTURES
 
+# Associative array to store selected processes
+declare -A SELECTED_PROCESSES
+
+select_processes() {
+    SELECTED_PROCESSES=()
+    
+    for lang in "${SELECTED_LANGUAGES[@]}"; do
+        local proc_keys=()
+        local proc_names=()
+        local proc_descs=()
+        local proc_files=()
+        local lang_name
+        lang_name=$(get_language_name "$lang")
+        
+        # Get processes for this language
+        while IFS= read -r key; do
+            [[ -z "$key" ]] && continue
+            proc_keys+=("$key")
+            proc_names+=("$(get_process_name "$lang" "$key")")
+            proc_descs+=("$(get_process_description "$lang" "$key")")
+            proc_files+=("$(get_process_file "$lang" "$key")")
+        done < <(get_language_processes "$lang")
+        
+        # Skip if no processes
+        [[ ${#proc_keys[@]} -eq 0 ]] && continue
+        
+        echo ""
+        echo -e "${BOLD}Select processes for $lang_name:${NC}"
+        echo -e "${DIM}(Workflow guides for establishing infrastructure)${NC}"
+        echo ""
+        
+        for ((i=0; i<${#proc_keys[@]}; i++)); do
+            echo "  $((i+1)). ${proc_names[$i]} - ${proc_descs[$i]}"
+        done
+        echo ""
+        echo "  s. Skip (no processes)"
+        echo "  a. All processes"
+        echo ""
+        
+        read -rp "Enter choices (e.g., 1 2 or 'a' for all, 's' to skip): " input
+        
+        local selected_proc=()
+        
+        if [[ "$input" == "s" || "$input" == "S" ]]; then
+            # Skip - no processes for this language
+            continue
+        elif [[ "$input" == "a" || "$input" == "A" ]]; then
+            selected_proc=("${proc_keys[@]}")
+        else
+            for num in $input; do
+                local idx=$((num - 1))
+                if [[ $idx -ge 0 && $idx -lt ${#proc_keys[@]} ]]; then
+                    selected_proc+=("${proc_keys[$idx]}")
+                fi
+            done
+        fi
+        
+        if [[ ${#selected_proc[@]} -gt 0 ]]; then
+            SELECTED_PROCESSES[$lang]="${selected_proc[*]}"
+        fi
+    done
+}
+
 select_structures() {
     SELECTED_STRUCTURES=()
     
@@ -652,6 +731,25 @@ generate_cursor() {
                 fi
             done
         fi
+        
+        # Generate process files for this language
+        if [[ -n "${SELECTED_PROCESSES[$lang]:-}" ]]; then
+            for proc in ${SELECTED_PROCESSES[$lang]}; do
+                local proc_file output_file content
+                proc_file=$(get_process_file "$lang" "$proc")
+                output_file="$lang_dir/$proc_file.mdc"
+                
+                content=$(read_instruction_file "$lang" "$proc_file" "false" "false" "true") || continue
+                
+                {
+                    generate_cursor_frontmatter "$lang" "$proc" "false"
+                    echo "$content"
+                } > "$output_file"
+                
+                local relative_path="${output_file#"$PROJECT_ROOT/"}"
+                print_success "Created $relative_path"
+            done
+        fi
     done
 }
 
@@ -722,6 +820,24 @@ generate_concatenated() {
                         echo "---"
                         echo ""
                     fi
+                done
+            fi
+            
+            # Process files for this language
+            if [[ -n "${SELECTED_PROCESSES[$lang]:-}" ]]; then
+                for proc in ${SELECTED_PROCESSES[$lang]}; do
+                    local proc_file content
+                    proc_file=$(get_process_file "$lang" "$proc")
+                    content=$(read_instruction_file "$lang" "$proc_file" "false" "false" "true") || continue
+                    
+                    if [[ -n "$separator" ]]; then
+                        echo "$separator"
+                    fi
+                    
+                    echo "$content"
+                    echo ""
+                    echo "---"
+                    echo ""
                 done
             fi
         done
@@ -817,6 +933,9 @@ main() {
     # Structure selection (for frameworks that have structure options)
     select_structures
     
+    # Process selection
+    select_processes
+    
     echo ""
     echo -e "${BOLD}Configuration Summary:${NC}"
     echo "  Tools: ${SELECTED_TOOLS[*]}"
@@ -827,6 +946,9 @@ main() {
     done
     for key in "${!SELECTED_STRUCTURES[@]}"; do
         echo "  Structure ($key): ${SELECTED_STRUCTURES[$key]}"
+    done
+    for lang in "${!SELECTED_PROCESSES[@]}"; do
+        echo "  Processes ($lang): ${SELECTED_PROCESSES[$lang]}"
     done
     echo ""
     
