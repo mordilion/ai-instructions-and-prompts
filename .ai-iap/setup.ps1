@@ -110,18 +110,18 @@ function Get-ValidatedSelection {
     )
     
     while ($true) {
-        $input = Read-Host $Prompt
+        $userInput = Read-Host $Prompt
         
         $selected = @()
         $isValid = $true
         
-        if ($input -eq 'a' -or $input -eq 'A') {
+        if ($userInput -eq 'a' -or $userInput -eq 'A') {
             $selected = $Options
             break
-        } elseif (($input -eq 's' -or $input -eq 'S') -and $AllowSkip) {
+        } elseif (($userInput -eq 's' -or $userInput -eq 'S') -and $AllowSkip) {
             # Return empty array for skip
             break
-        } elseif ([string]::IsNullOrWhiteSpace($input)) {
+        } elseif ([string]::IsNullOrWhiteSpace($userInput)) {
             if ($AllowEmpty -or $AllowSkip) {
                 break
             }
@@ -132,7 +132,7 @@ function Get-ValidatedSelection {
             Write-Host ""
             continue
         } else {
-            $choices = $input -split '\s+' | Where-Object { $_ -ne '' }
+            $choices = $userInput -split '\s+' | Where-Object { $_ -ne '' }
             foreach ($num in $choices) {
                 if ($num -notmatch '^\d+$') {
                     Write-Host ""
@@ -454,10 +454,10 @@ function Select-Structures {
             Write-Host "  s. Skip (use default patterns only)"
             Write-Host ""
             
-            $input = Read-Host "Enter choice (1-$($structures.Count) or 's' to skip)"
+            $choice = Read-Host "Enter choice (1-$($structures.Count) or 's' to skip)"
             
-            if ($input -ne 's' -and $input -ne 'S') {
-                $idx = [int]$input - 1
+            if ($choice -ne 's' -and $choice -ne 'S') {
+                $idx = [int]$choice - 1
                 if ($idx -ge 0 -and $idx -lt $structureKeys.Count) {
                     $structKey = "$lang-$fwKey"
                     $selectedStructures[$structKey] = $structures[$idx].File
