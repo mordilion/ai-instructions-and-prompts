@@ -53,7 +53,7 @@
       "globs": "*.dart",
       "alwaysApply": false,
       "description": "Dart and Flutter standards",
-      "files": ["architecture", "code-style"],
+      "files": ["architecture", "code-style", "security"],
       "processes": {
         "test-implementation": {
           "name": "Testing Implementation",
@@ -413,7 +413,7 @@
       "globs": "*.java",
       "alwaysApply": false,
       "description": "Java standards",
-      "files": ["architecture", "code-style"],
+      "files": ["architecture", "code-style", "security"],
       "processes": {
         "test-implementation": {
           "name": "Testing Implementation",
@@ -492,7 +492,7 @@
       "globs": "*.py",
       "alwaysApply": false,
       "description": "Python standards",
-      "files": ["architecture", "code-style"],
+      "files": ["architecture", "code-style", "security"],
       "processes": {
         "test-implementation": {
           "name": "Testing Implementation",
@@ -578,7 +578,7 @@
       "globs": "*.php",
       "alwaysApply": false,
       "description": "PHP standards",
-      "files": ["architecture", "code-style"],
+      "files": ["architecture", "code-style", "security"],
       "processes": {
         "test-implementation": {
           "name": "Testing Implementation",
@@ -656,6 +656,7 @@
       "name": "Kotlin",
       "description": "Modern, expressive language for JVM, Android, and multiplatform",
       "enabled": true,
+      "files": ["security"],
       "processes": {
         "test-implementation": {
           "name": "Testing Implementation",
@@ -749,6 +750,7 @@
       "name": "Swift",
       "description": "Apple's modern, type-safe language for iOS, macOS, and server-side development",
       "enabled": true,
+      "files": ["security"],
       "processes": {
         "test-implementation": {
           "name": "Testing Implementation",
