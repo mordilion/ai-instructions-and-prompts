@@ -345,6 +345,26 @@
             }
           }
         },
+        "adonisjs": {
+          "name": "AdonisJS",
+          "file": "adonisjs",
+          "category": "Backend Framework",
+          "description": "Full-stack MVC framework for Node.js (TypeScript-first)",
+          "recommended": true,
+          "structures": {
+            "modular": {
+              "name": "Modular/Domain",
+              "file": "adonisjs-modular",
+              "description": "Domain-driven module organization",
+              "recommended": true
+            },
+            "mvc": {
+              "name": "MVC/Traditional",
+              "file": "adonisjs-mvc",
+              "description": "Classic MVC structure with app/ folder"
+            }
+          }
+        },
         "prisma": {
           "name": "Prisma",
           "file": "prisma",
