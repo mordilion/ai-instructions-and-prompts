@@ -1,129 +1,72 @@
 ﻿# Swift Security
 
-> **Scope**: Swift-specific security practices (iOS, macOS, Vapor)
+> **Scope**: Swift-specific security (iOS, macOS, Vapor)
 > **Extends**: general/security.md
 > **Applies to**: *.swift files
 
-## CRITICAL REQUIREMENTS
-
-> **ALWAYS**: Use Keychain for sensitive data (iOS/macOS)
-> **ALWAYS**: Use prepared statements or ORM (Core Data, Vapor)
-> **ALWAYS**: Enable App Transport Security (ATS)
-> **ALWAYS**: Validate all user input
-> **ALWAYS**: Use HTTPS/TLS
-> 
-> **NEVER**: Store secrets in UserDefaults or plist files
-> **NEVER**: Use string interpolation for SQL queries
-> **NEVER**: Disable certificate validation
-> **NEVER**: Log sensitive data
-> **NEVER**: Use deprecated cryptography APIs
-
 ## 1. iOS/macOS Security
 
-### Keychain Storage
+### Keychain
+- **ALWAYS**: Keychain Services API for sensitive data (tokens, passwords, keys).
+- **ALWAYS**: `kSecAttrAccessibleWhenUnlockedThisDeviceOnly` for access control.
+- **ALWAYS**: Parameterized keychain queries (avoid hardcoded values).
+- **NEVER**: `UserDefaults` or plist files for secrets (plaintext).
 
-```swift
-// âœ… CORRECT - Keychain wrapper
-import Security
+### App Transport Security (ATS)
+- **ALWAYS**: HTTPS only (`NSAppTransportSecurity` → `NSAllowsArbitraryLoads: false`).
+- **ALWAYS**: Certificate pinning for critical APIs (URLSession with custom delegate).
+- **NEVER**: Disable ATS in production.
 
-class KeychainManager {
-    
-    enum KeychainError: Error {
-        case itemNotFound
-        case duplicateItem
-        case unexpectedError(status: OSStatus)
-    }
-    
-    func save(key: String, data: Data) throws {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrAccount as String: key,
-            kSecValueData as String: data,
-            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
-        ]
-        
-        let status = SecItemAdd(query as CFDictionary, nil)
-        
-        guard status != errSecDuplicateItem else {
-            throw KeychainError.duplicateItem
-        }
-        
-        guard status == errSecSuccess else {
-            throw KeychainError.unexpectedError(status: status)
-        }
-    }
-    
-    func retrieve(key: String) throws -> Data {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrAccount as String: key,
-            kSecReturnData as String: true
-        ]
-        
-        var result: AnyObject?
-        let status = SecItemCopyMatching(query as CFDictionary, &result)
-        
-        guard status == errSecSuccess else {
-            throw KeychainError.itemNotFound
-        }
-        
-        guard let data = result as? Data else {
-            throw KeychainError.unexpectedError(status: errSecInvalidData)
-        }
-        
-        return data
-    }
-    
-    func delete(key: String) throws {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrAccount as String: key
-        ]
-        
-        let status = SecItemDelete(query as CFDictionary)
-        
-        guard status == errSecSuccess || status == errSecItemNotFound else {
-            throw KeychainError.unexpectedError(status: status)
-        }
-    }
-}
+### Data Protection
+- **ALWAYS**: File Protection API (`FileManager` with `.complete` protection class).
+- **ALWAYS**: Encrypt sensitive data at rest (CryptoKit).
 
-// âŒ WRONG - UserDefaults for sensitive data
-UserDefaults.standard.set(authToken, forKey: \"token\")  // Plaintext!
-```
+## 2. Vapor (Server-Side)
 
-### Network Security (ATS)
+### Authentication
+- **ALWAYS**: Vapor's JWT authentication with expiration.
+- **ALWAYS**: `BCryptDigest` for password hashing (12+ cost).
+- **ALWAYS**: `Authenticatable` protocol for user models.
 
-```swift
-// âœ… CORRECT - Info.plist ATS configuration
-// Only allow HTTPS by default
-<key>NSAppTransportSecurity</key>
-<dict>
-    <key>NSAllowsArbitraryLoads</key>
-    <false/>
-</dict>
+### SQL Injection Prevention
+- **ALWAYS**: Fluent ORM (type-safe, parameterized).
+- **NEVER**: Raw SQL with string interpolation.
 
-// âŒ WRONG - Disable ATS (allows HTTP)
-<key>NSAppTransportSecurity</key>
-<dict>
-    <key>NSAllowsArbitraryLoads</key>
-    <true/>  <!-- DO NOT DO THIS -->
-</dict>
-```
+### CORS
+- **ALWAYS**: Specific origins in CORS configuration. NEVER `allowedOrigin: .all` with credentials.
+
+### Input Validation
+- **ALWAYS**: Validatable protocol with custom validators.
+- **ALWAYS**: Content validation middleware.
+
+## 3. SwiftUI/UIKit
+
+### User Input
+- **ALWAYS**: Sanitize/validate text input before processing or storage.
+- **ALWAYS**: Use secure text fields (`SecureField`) for passwords.
+
+### WebView
+- **NEVER**: Load untrusted URLs without validation.
+- **ALWAYS**: Disable JavaScript if not needed (`WKWebViewConfiguration`).
+
+## 4. Error Handling
+
+- **ALWAYS**: Generic error messages to users. Log details server-side.
+- **NEVER**: Display stack traces, internal paths, or sensitive data in alerts/UI.
+
+## 5. Dependency Security
+
+- **ALWAYS**: Swift Package Manager with version pinning.
+- **ALWAYS**: Audit dependencies regularly.
 
 ## AI Self-Check
 
-Before generating Swift code, verify:
-- [ ] Keychain used for sensitive data?
+Before generating Swift code:
+- [ ] Keychain for sensitive data (not UserDefaults)?
 - [ ] ATS enabled (HTTPS only)?
-- [ ] Core Data or prepared statements for SQL?
-- [ ] Input validation on all user input?
-- [ ] Passwords hashed (never stored plaintext)?
+- [ ] BCrypt for passwords (Vapor)?
+- [ ] Fluent ORM (no string interpolation in SQL)?
 - [ ] Certificate pinning for critical APIs?
-- [ ] No sensitive data in UserDefaults?
-- [ ] Error messages don't expose internals?
-- [ ] Dependencies up-to-date?
-
----
-
-**Swift Security: Use Keychain, never UserDefaults for secrets. Enable ATS.**
+- [ ] SecureField for password inputs?
+- [ ] File Protection API for sensitive files?
+- [ ] Generic error messages to users?

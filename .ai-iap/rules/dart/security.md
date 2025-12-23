@@ -4,59 +4,99 @@
 > **Extends**: general/security.md
 > **Applies to**: *.dart files
 
-## CRITICAL REQUIREMENTS
-
-> **ALWAYS**: Use flutter_secure_storage for sensitive data
-> **ALWAYS**: Use parameterized queries (sqflite, drift)
-> **ALWAYS**: Validate all user input
-> **ALWAYS**: Use HTTPS for all network requests
-> **ALWAYS**: Enable certificate pinning for sensitive APIs
-> 
-> **NEVER**: Store secrets in SharedPreferences
-> **NEVER**: Use string interpolation for SQL
-> **NEVER**: Disable certificate validation
-> **NEVER**: Log sensitive data
-> **NEVER**: Include API keys in source code
-
 ## 1. Flutter Secure Storage
 
+### Sensitive Data
+- **ALWAYS**: `flutter_secure_storage` package for tokens, keys, passwords.
+- **ALWAYS**: Platform keychains (iOS Keychain, Android Keystore) automatically used.
+- **NEVER**: `SharedPreferences` for secrets (plaintext).
+
+### Usage
 ```dart
-// âœ… CORRECT - Secure storage
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
-class SecureStorage {
-  final _storage = const FlutterSecureStorage();
-  
-  Future<void> saveToken(String token) async {
-    await _storage.write(key: 'auth_token', value: token);
-  }
-  
-  Future<String?> getToken() async {
-    return await _storage.read(key: 'auth_token');
-  }
-  
-  Future<void> deleteToken() async {
-    await _storage.delete(key: 'auth_token');
-  }
-}
-
-// âŒ WRONG - SharedPreferences for sensitive data
-final prefs = await SharedPreferences.getInstance();
-await prefs.setString('token', authToken);  // Plaintext!
+final storage = FlutterSecureStorage();
+await storage.write(key: 'token', value: authToken);
+final token = await storage.read(key: 'token');
+await storage.delete(key: 'token');
 ```
+
+## 2. Network Security
+
+### HTTPS
+- **ALWAYS**: HTTPS for all API calls. Use `https://` URLs.
+- **ALWAYS**: Certificate pinning for critical APIs (`HttpClient` or `dio` package with custom certificates).
+- **NEVER**: Disable certificate validation (`badCertificateCallback`).
+
+### Android
+- **ALWAYS**: Network security config XML (no cleartext traffic).
+
+### iOS
+- **ALWAYS**: ATS enabled (Info.plist → `NSAppTransportSecurity`).
+
+## 3. SQL Injection Prevention
+
+### sqflite / drift
+- **ALWAYS**: Parameterized queries (`?` placeholders with arguments).
+- **NEVER**: String interpolation in SQL (`'SELECT * FROM users WHERE id = $id'`).
+
+```dart
+// ✅ CORRECT
+db.query('users', where: 'email = ?', whereArgs: [email]);
+
+// ❌ WRONG
+db.rawQuery("SELECT * FROM users WHERE email = '$email'");
+```
+
+## 4. Input Validation
+
+- **ALWAYS**: Validate user input (email, length, format) before processing.
+- **ALWAYS**: Form validators (`TextFormField` with `validator`).
+- **ALWAYS**: Backend validation (never trust client-side only).
+
+## 5. API Keys & Secrets
+
+- **ALWAYS**: Environment variables or build configs (`.env` files, `--dart-define`).
+- **NEVER**: Hardcode API keys in source code.
+- **NEVER**: Commit secrets to Git.
+
+## 6. WebView Security
+
+- **ALWAYS**: Validate URLs before loading in `webview_flutter`.
+- **ALWAYS**: Disable JavaScript if not needed (`javascriptMode: JavascriptMode.disabled`).
+
+## 7. File Handling
+
+### File Uploads
+- **ALWAYS**: Validate file type, size before upload.
+- **ALWAYS**: Use secure file paths (avoid user-controlled paths).
+
+### File Storage
+- **ALWAYS**: `path_provider` for app directories.
+- **ALWAYS**: Encrypt sensitive files before storage.
+
+## 8. State Management Security
+
+- **ALWAYS**: Clear sensitive state on logout (tokens, user data).
+- **ALWAYS**: Secure state persistence (use `flutter_secure_storage`, not plain files).
+
+## 9. Error Handling
+
+- **ALWAYS**: Generic error messages in UI. Log details securely.
+- **NEVER**: Display stack traces or API errors to users.
+
+## 10. Dependency Security
+
+- **ALWAYS**: `flutter pub outdated` and `flutter pub upgrade` regularly.
+- **ALWAYS**: Audit dependencies for CVEs.
 
 ## AI Self-Check
 
-Before generating Dart/Flutter code, verify:
-- [ ] flutter_secure_storage for sensitive data?
-- [ ] Parameterized SQL queries?
-- [ ] Input validation on all user input?
+Before generating Dart/Flutter code:
+- [ ] `flutter_secure_storage` for tokens/secrets?
+- [ ] Parameterized SQL queries (no string interpolation)?
 - [ ] HTTPS enforced?
-- [ ] Certificate pinning configured?
-- [ ] No API keys hardcoded?
-- [ ] Error messages don't expose internals?
-- [ ] Dependencies up-to-date?
-
----
-
-**Flutter Security: Use flutter_secure_storage, never SharedPreferences for secrets. Enable HTTPS.**
+- [ ] Certificate pinning for critical APIs?
+- [ ] Input validation on forms?
+- [ ] API keys in environment variables (not hardcoded)?
+- [ ] No `SharedPreferences` for sensitive data?
+- [ ] Generic error messages in UI?
+- [ ] State cleared on logout?

@@ -1,393 +1,104 @@
 # Security Guidelines (General)
 
-> **Scope**: Baseline security practices for ALL languages. Language-specific rules extend these.
-> **Precedence**: Security rules ALWAYS apply - they CANNOT be overridden.
+> **Scope**: Baseline security for ALL languages. Language-specific rules take precedence.
 
-## CRITICAL REQUIREMENTS (AI: NEVER skip these)
+## 1. OWASP Top 10 Protection
 
-> **ALWAYS**: Validate ALL user input at entry points (API, forms, file uploads)
-> **ALWAYS**: Use parameterized queries/prepared statements for database access
-> **ALWAYS**: Encode output based on context (HTML, SQL, JavaScript, URL)
-> **ALWAYS**: Use HTTPS/TLS for ALL production traffic
-> **ALWAYS**: Store secrets in environment variables or secure vaults
-> 
-> **NEVER**: Trust user input (all input is malicious until validated)
-> **NEVER**: Concatenate user input into SQL queries (SQL injection risk)
-> **NEVER**: Return sensitive data in error messages (stack traces, credentials)
-> **NEVER**: Hardcode secrets, API keys, passwords in source code
-> **NEVER**: Disable security features (CSRF protection, XSS filters, CORS)
+### Input Validation
+- **ALWAYS**: Validate ALL user input (length, format, type, range).
+- **ALWAYS**: Use allowlists over denylists.
+- **NEVER**: Trust `GET`, `POST`, headers, cookies, or URL parameters.
+- **SQL Injection**: Parameterized queries/ORM ONLY. NEVER string concatenation/interpolation.
+- **XSS**: Auto-escape output by default. Sanitize HTML if required (use framework tools).
+- **Path Traversal**: Validate file paths. Generate safe filenames (UUIDs). Check file types via content, not extension.
 
-## 1. Input Validation
+### Authentication
+- **ALWAYS**: Hash passwords (BCrypt/Argon2, 12+ cost). NEVER MD5/SHA1/plaintext.
+- **ALWAYS**: Use framework authentication (Spring Security, Django Auth, Passport.js).
+- **ALWAYS**: Multi-factor authentication for sensitive operations.
+- **Session**: Secure, HttpOnly, SameSite=Strict cookies. Rotate session IDs after login.
+- **JWT**: Sign tokens (HS256/RS256). Set expiration (≤15 min). Store secret securely.
 
-### Validate at Boundaries
-```
-User Input → VALIDATE → Application Logic
-External API → VALIDATE → Application Logic
-File Upload → VALIDATE → Storage
-```
+### Authorization
+- **ALWAYS**: Verify permissions on EVERY protected resource.
+- **ALWAYS**: Use role-based (RBAC) or attribute-based (ABAC) access control.
+- **NEVER**: Trust client-side checks. Validate server-side.
 
-### Validation Rules
-- **Whitelist** over blacklist (allow known good, not block known bad)
-- **Type checking**: Ensure correct data types
-- **Length limits**: Enforce maximum lengths
-- **Format validation**: Email, phone, dates, URLs
-- **Range validation**: Numbers within acceptable ranges
-- **Sanitization**: Remove dangerous characters AFTER validation
+### Secrets Management
+- **ALWAYS**: Environment variables or secret managers (Vault, AWS Secrets Manager).
+- **NEVER**: Hardcode secrets, commit to Git, log secrets.
+- **Rotation**: Regular rotation for API keys, tokens, certificates.
 
-### Common Vulnerabilities
+## 2. Transport & Communication
 
-❌ **SQL Injection**:
-```javascript
-// WRONG - String concatenation
-const query = `SELECT * FROM users WHERE id = ${userId}`
-```
+### HTTPS/TLS
+- **ALWAYS**: HTTPS in production. TLS 1.2+ only.
+- **ALWAYS**: Redirect HTTP → HTTPS.
+- **ALWAYS**: HSTS headers (`Strict-Transport-Security: max-age=31536000`).
+- **Certificate**: Valid certificates. Pin certificates for critical APIs.
 
-✅ **Use Parameterized Queries**:
-```javascript
-// CORRECT - Parameterized
-const query = 'SELECT * FROM users WHERE id = ?'
-db.query(query, [userId])
-```
+### CORS
+- **ALWAYS**: Restrictive origins. NEVER `*` with credentials.
+- **ALWAYS**: Specific methods (GET, POST). Avoid OPTIONS if possible.
 
-❌ **NoSQL Injection**:
-```javascript
-// WRONG - Direct object
-db.users.find({ username: req.body.username })
-```
+## 3. Data Protection
 
-✅ **Validate and Sanitize**:
-```javascript
-// CORRECT - Validated
-const username = validator.isAlphanumeric(req.body.username)
-db.users.find({ username })
-```
+### Sensitive Data
+- **ALWAYS**: Encrypt at rest (database, files) and in transit (TLS).
+- **ALWAYS**: Use platform keychains (iOS Keychain, Android Keystore, OS credential managers).
+- **NEVER**: Store in plaintext, logs, browser localStorage (for tokens/secrets).
 
-## 2. Authentication
+### File Uploads
+- **ALWAYS**: Validate type (magic bytes), size limit, sanitize filename.
+- **ALWAYS**: Store outside webroot. Serve via separate domain/CDN.
+- **NEVER**: Execute uploaded files.
 
-### Password Security
-- **Hashing**: Use bcrypt, Argon2, or PBKDF2 (NEVER store plaintext)
-- **Salt**: Unique salt per password (library handles automatically)
-- **Minimum strength**: 12+ characters, complexity requirements
-- **Rate limiting**: Prevent brute force (5 attempts per 15 minutes)
-
-```javascript
-// ✅ CORRECT - Bcrypt
-const hashedPassword = await bcrypt.hash(password, 12)
-const isValid = await bcrypt.compare(password, hashedPassword)
-
-// ❌ WRONG - Weak hashing
-const hashedPassword = md5(password)  // Broken, DO NOT USE
-const hashedPassword = sha1(password)  // Weak, DO NOT USE
-```
-
-### Session Management
-- **Secure cookies**: `HttpOnly`, `Secure`, `SameSite=Strict`
-- **Session timeout**: 15-30 minutes idle timeout
-- **Session invalidation**: Logout must destroy session server-side
-- **CSRF tokens**: Required for state-changing operations
-
-```javascript
-// ✅ CORRECT - Secure session
-res.cookie('sessionId', token, {
-  httpOnly: true,      // No JavaScript access
-  secure: true,        // HTTPS only
-  sameSite: 'strict',  // CSRF protection
-  maxAge: 1800000      // 30 minutes
-})
-```
-
-### JWT Tokens
-- **Algorithm**: Use RS256 or HS256 (NEVER 'none')
-- **Expiration**: Short-lived (15 min access, 7 day refresh)
-- **Secret rotation**: Rotate signing keys regularly
-- **Payload**: NEVER include sensitive data (PII, passwords)
-
-```javascript
-// ✅ CORRECT - Secure JWT
-const token = jwt.sign(
-  { userId: user.id, role: user.role },  // Minimal payload
-  process.env.JWT_SECRET,
-  { 
-    expiresIn: '15m',
-    algorithm: 'HS256'
-  }
-)
-
-// ❌ WRONG - Insecure JWT
-const token = jwt.sign({ password: user.password }, 'hardcoded-secret')
-```
-
-## 3. Authorization
-
-### Check Permissions
-```
-1. Authenticate (who are you?)
-2. Authorize (what can you do?)
-3. Execute (perform action)
-```
-
-```typescript
-// ✅ CORRECT - Check ownership
-async deletePost(userId: string, postId: string) {
-  const post = await getPost(postId)
-  if (post.authorId !== userId) {
-    throw new ForbiddenError('Not authorized')
-  }
-  await deletePost(postId)
-}
-
-// ❌ WRONG - No authorization check
-async deletePost(postId: string) {
-  await deletePost(postId)  // Anyone can delete any post!
-}
-```
-
-### Access Control Patterns
-- **Role-Based (RBAC)**: Users have roles (admin, user, guest)
-- **Attribute-Based (ABAC)**: Access based on attributes (owner, department)
-- **Policy-Based**: Complex rules (time-based, location-based)
-
-## 4. Output Encoding
-
-### Context-Aware Encoding
-- **HTML context**: Encode `<`, `>`, `&`, `"`, `'`
-- **JavaScript context**: JSON.stringify, escape quotes
-- **URL context**: encodeURIComponent
-- **SQL context**: Use parameterized queries (not encoding)
-
-```javascript
-// ✅ CORRECT - Context-aware encoding
-const safeHTML = escapeHtml(userInput)
-const safeJS = JSON.stringify(userInput)
-const safeURL = encodeURIComponent(userInput)
-
-// ❌ WRONG - No encoding (XSS vulnerability)
-html = `<div>${userInput}</div>`  // XSS if userInput contains <script>
-```
-
-### Content Security Policy (CSP)
-```
-Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-{random}'
-```
-
-## 5. Secrets Management
-
-### Storage
-- **Environment variables**: Development/staging
-- **Secret vaults**: Production (AWS Secrets Manager, Azure Key Vault, HashiCorp Vault)
-- **Kubernetes secrets**: For K8s deployments
-- **NEVER**: Commit secrets to version control
-
-```bash
-# ✅ CORRECT - Environment variables
-DATABASE_URL=postgresql://...
-API_KEY=sk_live_...
-
-# ❌ WRONG - Hardcoded in code
-const apiKey = 'sk_live_abc123def456'
-```
-
-### Rotation
-- **API keys**: Rotate every 90 days
-- **Database passwords**: Rotate every 90 days
-- **JWT secrets**: Rotate every 30 days
-- **Use managed rotation**: Cloud provider services
-
-## 6. HTTPS/TLS
-
-### Requirements
-- **Production**: HTTPS only (redirect HTTP → HTTPS)
-- **Development**: Can use HTTP locally
-- **TLS version**: 1.2+ (1.3 preferred)
-- **Certificate**: Valid, not self-signed
-
-```nginx
-# ✅ CORRECT - Force HTTPS
-server {
-  listen 80;
-  return 301 https://$host$request_uri;
-}
-
-server {
-  listen 443 ssl;
-  ssl_protocols TLSv1.2 TLSv1.3;
-  # ... SSL configuration
-}
-```
-
-### Security Headers
-```
-Strict-Transport-Security: max-age=31536000; includeSubDomains
-X-Content-Type-Options: nosniff
-X-Frame-Options: DENY
-X-XSS-Protection: 1; mode=block
-Content-Security-Policy: default-src 'self'
-```
-
-## 7. File Upload Security
-
-### Validation
-- **Type**: Check MIME type AND file extension
-- **Size**: Enforce maximum file size (e.g., 5MB)
-- **Content**: Scan for malware (ClamAV, cloud scanners)
-- **Storage**: Store outside web root, serve via CDN
-
-```javascript
-// ✅ CORRECT - Validate file upload
-const allowedTypes = ['image/jpeg', 'image/png', 'image/gif']
-const maxSize = 5 * 1024 * 1024  // 5MB
-
-if (!allowedTypes.includes(file.mimetype)) {
-  throw new Error('Invalid file type')
-}
-if (file.size > maxSize) {
-  throw new Error('File too large')
-}
-
-// Store with random name, not original filename
-const filename = `${uuid()}.${extension}`
-```
-
-### Dangerous Files
-- **Executable**: `.exe`, `.sh`, `.bat`, `.cmd`
-- **Server-side**: `.php`, `.jsp`, `.asp`
-- **Archives**: May contain malicious files
-
-## 8. API Security
+## 4. API Security
 
 ### Rate Limiting
-- **Per user**: 100 requests/minute
-- **Per IP**: 1000 requests/minute
-- **Authentication endpoints**: 5 attempts/15 minutes
+- **ALWAYS**: Rate limit by IP/user. Strict on auth endpoints (5/15min).
+- **Tools**: Express Rate Limit, Flask-Limiter, Spring Rate Limiting.
 
-```javascript
-// ✅ CORRECT - Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,  // 15 minutes
-  max: 100,                   // Limit each IP to 100 requests
-  message: 'Too many requests'
-})
-app.use('/api/', limiter)
-```
+### Error Handling
+- **ALWAYS**: Generic error messages to clients. Log details server-side.
+- **NEVER**: Expose stack traces, SQL queries, internal paths.
 
-### CORS Configuration
-```javascript
-// ✅ CORRECT - Strict CORS
-app.use(cors({
-  origin: ['https://yourapp.com'],  // Specific origins only
-  credentials: true,                 // Allow cookies
-  methods: ['GET', 'POST', 'PUT', 'DELETE']
-}))
+## 5. Security Headers
 
-// ❌ WRONG - Open CORS
-app.use(cors({ origin: '*' }))  // Anyone can access!
-```
+- **CSP**: `Content-Security-Policy: default-src 'self'`.
+- **X-Frame-Options**: `DENY` or `SAMEORIGIN`.
+- **X-Content-Type-Options**: `nosniff`.
+- **Referrer-Policy**: `strict-origin-when-cross-origin`.
 
-### API Keys
-- **Prefix**: Identify key type (`sk_live_`, `pk_test_`)
-- **Transmission**: Header or query param (NEVER in URL path)
-- **Rotation**: Provide rotation mechanism
-- **Scoping**: Limit permissions per key
+## 6. Testing & Monitoring
 
-## 9. Error Handling
+### Testing
+- **ALWAYS**: Test authentication, authorization, input validation.
+- **ALWAYS**: Security scanning (OWASP ZAP, Snyk, npm audit, pip-audit).
+- **ALWAYS**: Dependency updates. Automated CVE alerts.
 
-### Safe Error Messages
-```javascript
-// ✅ CORRECT - Generic error
-catch (error) {
-  logger.error('Database error', { error, userId })  // Log details
-  res.status(500).json({ error: 'Internal server error' })  // Generic to user
-}
+### Monitoring
+- **ALWAYS**: Log security events (failed auth, privilege escalation attempts).
+- **ALWAYS**: Anomaly detection (unusual access patterns).
 
-// ❌ WRONG - Expose internals
-catch (error) {
-  res.status(500).json({ error: error.message })  // Exposes stack trace!
-}
-```
+## 7. Anti-Patterns (MUST Avoid)
 
-### Information Disclosure
-- **Avoid**: Stack traces, database errors, file paths, versions
-- **Production**: Generic error messages
-- **Development**: Detailed errors OK (but disable in production)
-
-## 10. Logging & Monitoring
-
-### Security Logging
-Log these events:
-- Authentication attempts (success/failure)
-- Authorization failures
-- Input validation failures
-- Session management events (create, destroy)
-- Admin actions
-- Security-relevant configuration changes
-
-```javascript
-// ✅ CORRECT - Security logging
-logger.security({
-  event: 'login_failure',
-  userId: attempt.userId,
-  ip: req.ip,
-  timestamp: new Date(),
-  reason: 'invalid_password'
-})
-```
-
-### What NOT to Log
-- **Passwords** (plaintext or hashed)
-- **API keys, tokens**
-- **Credit card numbers**
-- **Personally Identifiable Information (PII)** (unless required)
-
-## OWASP Top 10 Coverage
-
-| Vulnerability | Prevention |
-|---------------|------------|
-| **Injection** | Parameterized queries, input validation |
-| **Broken Auth** | Bcrypt, secure sessions, MFA |
-| **Sensitive Data** | Encryption at rest/transit, HTTPS |
-| **XML External Entities** | Disable XXE in parsers |
-| **Broken Access Control** | Check permissions on every request |
-| **Security Misconfiguration** | Secure defaults, harden configuration |
-| **XSS** | Output encoding, CSP headers |
-| **Insecure Deserialization** | Validate before deserialize, use JSON |
-| **Known Vulnerabilities** | Keep dependencies updated |
-| **Insufficient Logging** | Log security events, monitor alerts |
+- **Eval/Exec**: NEVER with user input (`eval()`, `exec()`, `Function()`).
+- **Deserialization**: NEVER untrusted data (pickle, yaml.unsafe_load).
+- **Debug Mode**: NEVER in production.
+- **Default Credentials**: Change immediately.
+- **Client-Side Validation Only**: Always validate server-side.
 
 ## AI Self-Check
 
-Before generating code, verify:
-- [ ] All user input validated at boundaries?
-- [ ] Database queries parameterized (no string concatenation)?
-- [ ] Passwords hashed with bcrypt/Argon2 (NEVER plaintext)?
-- [ ] HTTPS enforced in production?
-- [ ] Secrets stored in environment variables (not hardcoded)?
-- [ ] Output encoded for correct context (HTML, JS, URL)?
-- [ ] Authentication required for protected endpoints?
-- [ ] Authorization checked before actions?
-- [ ] Error messages don't expose sensitive data?
-- [ ] Security headers configured (CSP, HSTS, etc.)?
-- [ ] Rate limiting applied to API endpoints?
-- [ ] File uploads validated (type, size, content)?
-- [ ] CORS configured restrictively (not `*`)?
-- [ ] Security events logged (auth, authz, failures)?
-- [ ] Dependencies kept up-to-date?
-
-## Security Testing
-
-- **SAST**: Static code analysis (SonarQube, Snyk)
-- **DAST**: Dynamic testing (OWASP ZAP, Burp Suite)
-- **Dependency scanning**: npm audit, Dependabot, Snyk
-- **Secret scanning**: git-secrets, TruffleHog
-- **Penetration testing**: Professional security audit
-
-## Compliance Considerations
-
-- **GDPR**: Data protection, right to deletion, consent
-- **HIPAA**: Healthcare data encryption, access logging
-- **PCI-DSS**: Credit card data, encryption, network segmentation
-- **SOC 2**: Security controls, audit trails, access management
-
----
-
-**Remember**: Security is NOT optional. Every vulnerability is a potential breach. When in doubt, choose the more secure option.
-
+Before generating code:
+- [ ] Parameterized queries (no string concatenation)?
+- [ ] Password hashing (BCrypt/Argon2, 12+ rounds)?
+- [ ] Input validation on ALL user data?
+- [ ] HTTPS enforced?
+- [ ] Secrets in environment variables?
+- [ ] CSRF protection enabled?
+- [ ] Security headers configured?
+- [ ] Rate limiting on auth endpoints?
+- [ ] Error messages don't expose internals?
+- [ ] File uploads validated (type, size)?
