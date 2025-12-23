@@ -27,6 +27,10 @@ CONVENTIONS.md
 # Test results
 test-results/
 
+# Generated documentation
+TESTING_PROCESSES_COMPLETE.md
+PROCESSES_RESTRUCTURED.md
+
 # ============================================================================
 # Development Files
 # ============================================================================

@@ -54,6 +54,13 @@
       "alwaysApply": false,
       "description": "Dart and Flutter standards",
       "files": ["architecture", "code-style"],
+      "processes": {
+        "testing": {
+          "name": "Testing Implementation",
+          "file": "testing",
+          "description": "flutter_test testing setup workflow"
+        }
+      },
       "frameworks": {
         "flutter": {
           "name": "Flutter",
@@ -110,6 +117,13 @@
       "alwaysApply": false,
       "description": ".NET and C# standards",
       "files": ["architecture", "code-style"],
+      "processes": {
+        "testing": {
+          "name": "Testing Implementation",
+          "file": "testing",
+          "description": "NUnit testing setup workflow"
+        }
+      },
       "frameworks": {
         "aspnetcore": {
           "name": "ASP.NET Core",
@@ -169,13 +183,6 @@
           "recommended": true
         }
       }
-    },
-    "processes": {
-      "name": "Processes & Workflows",
-      "globs": "",
-      "alwaysApply": false,
-      "description": "Procedural workflow guides (not auto-applied)",
-      "files": ["dotnet-testing"]
     },
     "javascript": {
       "name": "JavaScript",
@@ -247,6 +254,13 @@
       "alwaysApply": false,
       "description": "TypeScript standards",
       "files": ["architecture", "code-style"],
+      "processes": {
+        "testing": {
+          "name": "Testing Implementation",
+          "file": "testing",
+          "description": "Jest/Vitest testing setup workflow"
+        }
+      },
       "frameworks": {
         "react": {
           "name": "React",
@@ -380,6 +394,13 @@
       "alwaysApply": false,
       "description": "Java standards",
       "files": ["architecture", "code-style"],
+      "processes": {
+        "testing": {
+          "name": "Testing Implementation",
+          "file": "testing",
+          "description": "JUnit 5 testing setup workflow"
+        }
+      },
       "frameworks": {
         "spring-boot": {
           "name": "Spring Boot",
@@ -452,6 +473,13 @@
       "alwaysApply": false,
       "description": "Python standards",
       "files": ["architecture", "code-style"],
+      "processes": {
+        "testing": {
+          "name": "Testing Implementation",
+          "file": "testing",
+          "description": "pytest testing setup workflow"
+        }
+      },
       "frameworks": {
         "django": {
           "name": "Django",
@@ -531,6 +559,13 @@
       "alwaysApply": false,
       "description": "PHP standards",
       "files": ["architecture", "code-style"],
+      "processes": {
+        "testing": {
+          "name": "Testing Implementation",
+          "file": "testing",
+          "description": "PHPUnit testing setup workflow"
+        }
+      },
       "frameworks": {
         "laravel": {
           "name": "Laravel",
@@ -601,6 +636,13 @@
       "name": "Kotlin",
       "description": "Modern, expressive language for JVM, Android, and multiplatform",
       "enabled": true,
+      "processes": {
+        "testing": {
+          "name": "Testing Implementation",
+          "file": "testing",
+          "description": "JUnit 5/Kotest testing setup workflow"
+        }
+      },
       "frameworks": {
         "android": {
           "name": "Android",
@@ -687,6 +729,13 @@
       "name": "Swift",
       "description": "Apple's modern, type-safe language for iOS, macOS, and server-side development",
       "enabled": true,
+      "processes": {
+        "testing": {
+          "name": "Testing Implementation",
+          "file": "testing",
+          "description": "XCTest testing setup workflow"
+        }
+      },
       "frameworks": {
         "ios": {
           "name": "iOS (UIKit)",

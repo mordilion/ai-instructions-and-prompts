@@ -544,10 +544,10 @@ read_instruction_file() {
     local file="$2"
     local is_framework="${3:-false}"
     local is_structure="${4:-false}"
+    local is_process="${5:-false}"
     
-    # Processes folder is at root level, others are under rules/
-    if [[ "$lang" == "processes" ]]; then
-        local filepath="$SCRIPT_DIR/processes/$file.md"
+    if [[ "$is_process" == "true" ]]; then
+        local filepath="$SCRIPT_DIR/processes/$lang/$file.md"
     elif [[ "$is_structure" == "true" ]]; then
         local filepath="$SCRIPT_DIR/rules/$lang/frameworks/structures/$file.md"
     elif [[ "$is_framework" == "true" ]]; then

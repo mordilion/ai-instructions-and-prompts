@@ -413,12 +413,12 @@ function Read-InstructionFile {
         [string]$Lang,
         [string]$File,
         [bool]$IsFramework = $false,
-        [bool]$IsStructure = $false
+        [bool]$IsStructure = $false,
+        [bool]$IsProcess = $false
     )
     
-    # Processes folder is at root level, others are under rules/
-    if ($Lang -eq "processes") {
-        $filePath = Join-Path $Script:ScriptDir "processes\$File.md"
+    if ($IsProcess) {
+        $filePath = Join-Path $Script:ScriptDir "processes\$Lang\$File.md"
     } elseif ($IsStructure) {
         $filePath = Join-Path $Script:ScriptDir "rules\$Lang\frameworks\structures\$File.md"
     } elseif ($IsFramework) {
