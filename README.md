@@ -16,6 +16,7 @@ Define your coding standards once, generate configurations for **Cursor, Claude 
 - 🌍 **Multi-Language** – Swift, Kotlin, Java, Python, JavaScript, TypeScript, Dart/Flutter, .NET/C#, PHP, Node.js
 - 📦 **50+ Frameworks** – React, Next.js, NestJS, AdonisJS, Spring Boot, Django, FastAPI, Laravel, iOS, Android, and more
 - 🏗️ **Structure Templates** – Clean Architecture, MVVM, MVI, Vertical Slices, Feature-First, DDD, Modular
+- 🔒 **Security Rules** – OWASP Top 10 coverage for all languages (token-optimized)
 - 🔄 **Process Guides** – Testing implementation workflows for all languages (NUnit, Jest, JUnit, pytest, etc.)
 - ⚡ **Interactive Setup** – Wizard guides you through configuration
 

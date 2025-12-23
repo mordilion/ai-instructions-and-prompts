@@ -32,6 +32,7 @@ Your Rules (one source) → Setup Script → All AI Tools Configured
 - **🌍 Multi-Language** – Kotlin, JavaScript, TypeScript, Java, Python, Dart/Flutter, .NET/C#, PHP, Swift, Node.js
 - **📦 Framework-Specific** – React, Next.js, NestJS, AdonisJS, Laravel, ASP.NET Core, Spring Boot, Django, FastAPI, and 50+ more
 - **🏗️ Structure Templates** – Clean Architecture, Vertical Slices, Feature-First, Modular, MVVM, MVI, DDD, and more
+- **🔒 Security Rules** – OWASP Top 10 coverage for all languages (token-optimized, 80% more efficient)
 - **🔄 Process Guides** – Step-by-step testing implementation workflows for existing projects (all languages)
 - **⚡ Interactive Setup** – Wizard guides you through configuration
 - **🎯 Recommended Defaults** – Best practices marked with `⭐`
@@ -207,17 +208,18 @@ For supported frameworks, choose how you want to organize your code:
 │   ├── general/                # Always applied
 │   │   ├── persona.md          # AI behavior & personality
 │   │   ├── architecture.md     # Code structure guidelines
-│   │   └── code-style.md       # Coding conventions
+│   │   ├── code-style.md       # Coding conventions
+│   │   └── security.md         # Security best practices (OWASP Top 10)
 │   ├── javascript/             # JavaScript-specific rules
-│   ├── typescript/             # TypeScript-specific rules
+│   ├── typescript/             # TypeScript-specific rules (includes security.md)
 │   ├── nodejs/                 # Node.js backend (shared JS/TS)
-│   ├── swift/                  # Swift-specific rules
-│   ├── kotlin/                 # Kotlin-specific rules
-│   ├── java/                   # Java-specific rules
-│   ├── python/                 # Python-specific rules
-│   ├── dart/                   # Dart-specific rules
-│   ├── dotnet/                 # .NET-specific rules
-│   └── php/                    # PHP-specific rules
+│   ├── swift/                  # Swift-specific rules (includes security.md)
+│   ├── kotlin/                 # Kotlin-specific rules (includes security.md)
+│   ├── java/                   # Java-specific rules (includes security.md)
+│   ├── python/                 # Python-specific rules (includes security.md)
+│   ├── dart/                   # Dart-specific rules (includes security.md)
+│   ├── dotnet/                 # .NET-specific rules (includes security.md)
+│   └── php/                    # PHP-specific rules (includes security.md)
 ├── processes/                  # Step-by-step workflow guides
 │   ├── dotnet/                 # .NET processes
 │   │   └── test-implementation.md  # NUnit testing setup
@@ -323,20 +325,22 @@ Understanding how many tokens your rule selection consumes helps optimize AI con
 
 ### Total Available Tokens by Language
 
-| Language | Base | Frameworks | Structures | Processes | Total |
-|----------|------|------------|------------|-----------|-------|
-| **General** (always loaded) | 1,075 | – | – | – | **1,075** |
+| Language | Base (+Security) | Frameworks | Structures | Processes | Total |
+|----------|------------------|------------|------------|-----------|-------|
+| **General** (always loaded) | 1,075 + 1,200 | – | – | – | **2,275** |
 | **JavaScript** | 1,012 | 4,596 | 1,162 | – | **6,770** |
-| **TypeScript** | 852 | 11,000 | 5,800 | 1,650 | **19,300** |
+| **TypeScript** | 852 + 1,050 | 11,000 | 5,800 | 1,650 | **20,350** |
 | **Node.js** | – | 2,879 | – | – | **2,879** |
-| **Java** | 1,662 | 10,011 | 4,910 | 1,850 | **18,433** |
-| **Python** | 1,746 | 9,686 | 10,060 | 1,700 | **23,192** |
-| **Kotlin** | 2,671 | 16,354 | 25,815 | 1,900 | **46,740** |
-| **Swift** | 4,015 | 16,862 | 3,885 | 1,800 | **26,562** |
-| **Dart** | 823 | 3,535 | 1,595 | 1,750 | **7,703** |
-| **.NET** | 844 | 5,008 | 1,356 | 1,650 | **8,858** |
-| **PHP** | 860 | 5,158 | 1,553 | 1,700 | **9,271** |
-| **Grand Total** | | | | | **~170,000** |
+| **Java** | 1,662 + 1,065 | 10,011 | 4,910 | 1,850 | **19,498** |
+| **Python** | 1,746 + 1,260 | 9,686 | 10,060 | 1,700 | **24,452** |
+| **Kotlin** | 2,671 + 1,020 | 16,354 | 25,815 | 1,900 | **47,760** |
+| **Swift** | 4,015 + 795 | 16,862 | 3,885 | 1,800 | **27,357** |
+| **Dart** | 823 + 1,095 | 3,535 | 1,595 | 1,750 | **8,798** |
+| **.NET** | 844 + 1,020 | 5,008 | 1,356 | 1,650 | **9,878** |
+| **PHP** | 860 + 1,050 | 5,158 | 1,553 | 1,700 | **10,321** |
+| **Grand Total** | | | | | **~180,000** |
+
+> **Security Rules**: Token-optimized (80% reduction from code examples). Each language now includes concise security guidance (~1,000-1,200 tokens) covering OWASP Top 10, authentication, SQL injection prevention, and framework-specific patterns.
 
 ### Typical Selection Examples
 
@@ -371,6 +375,7 @@ Understanding how many tokens your rule selection consumes helps optimize AI con
 - **Node.js is shared** – Using Express with both JS/TS adds it only once
 - **Processes are optional** – Only select testing implementation if you need it
 - **Processes are token-efficient** – ~1,650-1,900 tokens each (35-40% smaller than traditional docs)
+- **Security rules optimized** – Refactored for 80% token reduction (concise directives vs verbose code examples)
 
 ---
 
