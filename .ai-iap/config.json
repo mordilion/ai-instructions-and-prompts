@@ -59,6 +59,21 @@
           "name": "Testing Implementation",
           "file": "test-implementation",
           "description": "Establish flutter_test in existing projects"
+        },
+        "ci-cd-implementation": {
+          "name": "CI/CD Implementation",
+          "file": "ci-cd-implementation",
+          "description": "Establish GitHub Actions CI/CD pipeline"
+        },
+        "logging-observability": {
+          "name": "Logging & Observability",
+          "file": "logging-observability",
+          "description": "Implement structured logging and monitoring"
+        },
+        "docker-containerization": {
+          "name": "Docker Containerization",
+          "file": "docker-containerization",
+          "description": "Containerize application with Docker"
         }
       },
       "frameworks": {
@@ -122,6 +137,21 @@
           "name": "Testing Implementation",
           "file": "test-implementation",
           "description": "Establish NUnit testing in existing projects"
+        },
+        "ci-cd-implementation": {
+          "name": "CI/CD Implementation",
+          "file": "ci-cd-implementation",
+          "description": "Establish GitHub Actions CI/CD pipeline"
+        },
+        "logging-observability": {
+          "name": "Logging & Observability",
+          "file": "logging-observability",
+          "description": "Implement structured logging and monitoring"
+        },
+        "docker-containerization": {
+          "name": "Docker Containerization",
+          "file": "docker-containerization",
+          "description": "Containerize application with Docker"
         }
       },
       "frameworks": {
@@ -259,6 +289,21 @@
           "name": "Testing Implementation",
           "file": "test-implementation",
           "description": "Establish Jest/Vitest testing in existing projects"
+        },
+        "ci-cd-implementation": {
+          "name": "CI/CD Implementation",
+          "file": "ci-cd-implementation",
+          "description": "Establish GitHub Actions CI/CD pipeline"
+        },
+        "logging-observability": {
+          "name": "Logging & Observability",
+          "file": "logging-observability",
+          "description": "Implement structured logging and monitoring"
+        },
+        "docker-containerization": {
+          "name": "Docker Containerization",
+          "file": "docker-containerization",
+          "description": "Containerize application with Docker"
         }
       },
       "frameworks": {
@@ -419,6 +464,21 @@
           "name": "Testing Implementation",
           "file": "test-implementation",
           "description": "Establish JUnit 5 testing in existing projects"
+        },
+        "ci-cd-implementation": {
+          "name": "CI/CD Implementation",
+          "file": "ci-cd-implementation",
+          "description": "Establish GitHub Actions CI/CD pipeline"
+        },
+        "logging-observability": {
+          "name": "Logging & Observability",
+          "file": "logging-observability",
+          "description": "Implement structured logging and monitoring"
+        },
+        "docker-containerization": {
+          "name": "Docker Containerization",
+          "file": "docker-containerization",
+          "description": "Containerize application with Docker"
         }
       },
       "frameworks": {
@@ -498,6 +558,21 @@
           "name": "Testing Implementation",
           "file": "test-implementation",
           "description": "Establish pytest testing in existing projects"
+        },
+        "ci-cd-implementation": {
+          "name": "CI/CD Implementation",
+          "file": "ci-cd-implementation",
+          "description": "Establish GitHub Actions CI/CD pipeline"
+        },
+        "logging-observability": {
+          "name": "Logging & Observability",
+          "file": "logging-observability",
+          "description": "Implement structured logging and monitoring"
+        },
+        "docker-containerization": {
+          "name": "Docker Containerization",
+          "file": "docker-containerization",
+          "description": "Containerize application with Docker"
         }
       },
       "frameworks": {
@@ -584,6 +659,21 @@
           "name": "Testing Implementation",
           "file": "test-implementation",
           "description": "Establish PHPUnit testing in existing projects"
+        },
+        "ci-cd-implementation": {
+          "name": "CI/CD Implementation",
+          "file": "ci-cd-implementation",
+          "description": "Establish GitHub Actions CI/CD pipeline"
+        },
+        "logging-observability": {
+          "name": "Logging & Observability",
+          "file": "logging-observability",
+          "description": "Implement structured logging and monitoring"
+        },
+        "docker-containerization": {
+          "name": "Docker Containerization",
+          "file": "docker-containerization",
+          "description": "Containerize application with Docker"
         }
       },
       "frameworks": {
@@ -662,6 +752,21 @@
           "name": "Testing Implementation",
           "file": "test-implementation",
           "description": "Establish JUnit 5/Kotest testing in existing projects"
+        },
+        "ci-cd-implementation": {
+          "name": "CI/CD Implementation",
+          "file": "ci-cd-implementation",
+          "description": "Establish GitHub Actions CI/CD pipeline"
+        },
+        "logging-observability": {
+          "name": "Logging & Observability",
+          "file": "logging-observability",
+          "description": "Implement structured logging and monitoring"
+        },
+        "docker-containerization": {
+          "name": "Docker Containerization",
+          "file": "docker-containerization",
+          "description": "Containerize application with Docker"
         }
       },
       "frameworks": {
@@ -756,6 +861,21 @@
           "name": "Testing Implementation",
           "file": "test-implementation",
           "description": "Establish XCTest testing in existing projects"
+        },
+        "ci-cd-implementation": {
+          "name": "CI/CD Implementation",
+          "file": "ci-cd-implementation",
+          "description": "Establish GitHub Actions CI/CD pipeline"
+        },
+        "logging-observability": {
+          "name": "Logging & Observability",
+          "file": "logging-observability",
+          "description": "Implement structured logging and monitoring"
+        },
+        "docker-containerization": {
+          "name": "Docker Containerization",
+          "file": "docker-containerization",
+          "description": "Containerize application with Docker"
         }
       },
       "frameworks": {
