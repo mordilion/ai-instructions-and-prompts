@@ -79,6 +79,16 @@
           "name": "Authentication (JWT + OAuth)",
           "file": "authentication-jwt-oauth",
           "description": "Implement JWT, OAuth 2.0, and RBAC authentication"
+        },
+        "database-migrations": {
+          "name": "Database Migrations",
+          "file": "database-migrations",
+          "description": "Version-controlled database schema migrations"
+        },
+        "api-documentation-openapi": {
+          "name": "API Documentation (OpenAPI)",
+          "file": "api-documentation-openapi",
+          "description": "Auto-generate OpenAPI/Swagger API documentation"
         }
       },
       "frameworks": {
@@ -162,6 +172,16 @@
           "name": "Authentication (JWT + OAuth)",
           "file": "authentication-jwt-oauth",
           "description": "Implement JWT, OAuth 2.0, and RBAC authentication"
+        },
+        "database-migrations": {
+          "name": "Database Migrations",
+          "file": "database-migrations",
+          "description": "Version-controlled database schema migrations"
+        },
+        "api-documentation-openapi": {
+          "name": "API Documentation (OpenAPI)",
+          "file": "api-documentation-openapi",
+          "description": "Auto-generate OpenAPI/Swagger API documentation"
         }
       },
       "frameworks": {
@@ -319,6 +339,16 @@
           "name": "Authentication (JWT + OAuth)",
           "file": "authentication-jwt-oauth",
           "description": "Implement JWT, OAuth 2.0, and RBAC authentication"
+        },
+        "database-migrations": {
+          "name": "Database Migrations",
+          "file": "database-migrations",
+          "description": "Version-controlled database schema migrations"
+        },
+        "api-documentation-openapi": {
+          "name": "API Documentation (OpenAPI)",
+          "file": "api-documentation-openapi",
+          "description": "Auto-generate OpenAPI/Swagger API documentation"
         }
       },
       "frameworks": {
@@ -499,6 +529,16 @@
           "name": "Authentication (JWT + OAuth)",
           "file": "authentication-jwt-oauth",
           "description": "Implement JWT, OAuth 2.0, and RBAC authentication"
+        },
+        "database-migrations": {
+          "name": "Database Migrations",
+          "file": "database-migrations",
+          "description": "Version-controlled database schema migrations"
+        },
+        "api-documentation-openapi": {
+          "name": "API Documentation (OpenAPI)",
+          "file": "api-documentation-openapi",
+          "description": "Auto-generate OpenAPI/Swagger API documentation"
         }
       },
       "frameworks": {
@@ -598,6 +638,16 @@
           "name": "Authentication (JWT + OAuth)",
           "file": "authentication-jwt-oauth",
           "description": "Implement JWT, OAuth 2.0, and RBAC authentication"
+        },
+        "database-migrations": {
+          "name": "Database Migrations",
+          "file": "database-migrations",
+          "description": "Version-controlled database schema migrations"
+        },
+        "api-documentation-openapi": {
+          "name": "API Documentation (OpenAPI)",
+          "file": "api-documentation-openapi",
+          "description": "Auto-generate OpenAPI/Swagger API documentation"
         }
       },
       "frameworks": {
@@ -704,6 +754,16 @@
           "name": "Authentication (JWT + OAuth)",
           "file": "authentication-jwt-oauth",
           "description": "Implement JWT, OAuth 2.0, and RBAC authentication"
+        },
+        "database-migrations": {
+          "name": "Database Migrations",
+          "file": "database-migrations",
+          "description": "Version-controlled database schema migrations"
+        },
+        "api-documentation-openapi": {
+          "name": "API Documentation (OpenAPI)",
+          "file": "api-documentation-openapi",
+          "description": "Auto-generate OpenAPI/Swagger API documentation"
         }
       },
       "frameworks": {
@@ -802,6 +862,16 @@
           "name": "Authentication (JWT + OAuth)",
           "file": "authentication-jwt-oauth",
           "description": "Implement JWT, OAuth 2.0, and RBAC authentication"
+        },
+        "database-migrations": {
+          "name": "Database Migrations",
+          "file": "database-migrations",
+          "description": "Version-controlled database schema migrations"
+        },
+        "api-documentation-openapi": {
+          "name": "API Documentation (OpenAPI)",
+          "file": "api-documentation-openapi",
+          "description": "Auto-generate OpenAPI/Swagger API documentation"
         }
       },
       "frameworks": {
@@ -916,6 +986,16 @@
           "name": "Authentication (JWT + OAuth)",
           "file": "authentication-jwt-oauth",
           "description": "Implement JWT, OAuth 2.0, and RBAC authentication"
+        },
+        "database-migrations": {
+          "name": "Database Migrations",
+          "file": "database-migrations",
+          "description": "Version-controlled database schema migrations"
+        },
+        "api-documentation-openapi": {
+          "name": "API Documentation (OpenAPI)",
+          "file": "api-documentation-openapi",
+          "description": "Auto-generate OpenAPI/Swagger API documentation"
         }
       },
       "frameworks": {
