@@ -1,13 +1,37 @@
 # iOS Development with UIKit
 
-## Overview
-UIKit: Apple's mature, imperative UI framework for iOS (2008-present), still widely used in production apps.
-Event-driven with manual view lifecycle management and imperative UI updates.
-Best for maintaining existing iOS apps, complex UI animations, or when targeting iOS 12 and below.
+> **Scope**: iOS apps using UIKit (Apple's imperative UI framework, 2008-present)
+> **Applies to**: Swift files using UIKit
+> **Extends**: swift/architecture.md, swift/code-style.md
+> **Use When**: Existing apps, complex animations, iOS 12 and below
 
-## View Controllers
+## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
 
-### Lifecycle
+> **ALWAYS**: Use dependency injection via initializers (NOT singletons)
+> **ALWAYS**: Use `[weak self]` in closures (prevent retain cycles)
+> **ALWAYS**: Clean up observers/delegates in deinit
+> **ALWAYS**: Respect safe area for modern iOS (notch, Dynamic Island)
+> **ALWAYS**: Use Auto Layout (NOT frame-based)
+> 
+> **NEVER**: Force unwrap without safety check
+> **NEVER**: Use singletons (makes testing difficult)
+> **NEVER**: Put business logic in view controllers
+> **NEVER**: Create retain cycles in closures
+> **NEVER**: Ignore safe area layout guides
+
+## Pattern Selection
+
+| Pattern | Use When | Keywords |
+|---------|----------|----------|
+| **Diffable Data Source** | iOS 13+, modern apps | Type-safe, automatic animations |
+| **Traditional Data Source** | iOS 12 and below | Manual reloadData() |
+| **Coordinator** | Multi-screen navigation | Decoupled routing |
+| **Delegation** | Callbacks, events | Protocol-based communication |
+
+## Core Patterns
+
+### View Controllers
+
 ```swift
 class UserViewController: UIViewController {
     private let viewModel: UserViewModel
@@ -30,33 +54,7 @@ class UserViewController: UIViewController {
 }
 ```
 
-### Keep Lightweight
-```swift
-class UserViewController: UIViewController {
-    private let viewModel: UserViewModel
-    private lazy var dataSource = UserTableViewDataSource()
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        tableView.dataSource = dataSource
-        tableView.delegate = self
-    }
-}
-
-class UserTableViewDataSource: NSObject, UITableViewDataSource {
-    var users: [User] = []
-    
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        users.count
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        // Configure cell
-    }
-}
-```
-
-## Auto Layout
+### Auto Layout
 
 ```swift
 private func setupConstraints() {
@@ -68,39 +66,20 @@ private func setupConstraints() {
         label.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16)
     ])
 }
-
-extension UIView {
-    func pinToSuperview(insets: UIEdgeInsets = .zero) {
-        guard let superview = superview else { return }
-        translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            topAnchor.constraint(equalTo: superview.topAnchor, constant: insets.top),
-            leadingAnchor.constraint(equalTo: superview.leadingAnchor, constant: insets.left),
-            trailingAnchor.constraint(equalTo: superview.trailingAnchor, constant: -insets.right),
-            bottomAnchor.constraint(equalTo: superview.bottomAnchor, constant: -insets.bottom)
-        ])
-    }
-}
 ```
 
-## UITableView & UICollectionView
+### Diffable Data Source (iOS 13+)
 
-### Diffable Data Source
-```swift
+```kotlin
 class UserListViewController: UIViewController {
     private enum Section { case main }
     private var dataSource: UITableViewDiffableDataSource<Section, User>!
     private let tableView = UITableView()
     
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        configureDataSource()
-    }
-    
     private func configureDataSource() {
         dataSource = UITableViewDiffableDataSource<Section, User>(tableView: tableView) { 
             tableView, indexPath, user in
-            let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! UserCell
+            let cell = tableView.dequeueReusableCell(withIdentifier: "Cell") as! UserCell
             cell.configure(with: user)
             return cell
         }
@@ -115,37 +94,7 @@ class UserListViewController: UIViewController {
 }
 ```
 
-### Custom Cells
-```swift
-class UserCell: UITableViewCell {
-    static let reuseIdentifier = "UserCell"
-    
-    private let nameLabel = UILabel()
-    private let emailLabel = UILabel()
-    
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
-        setupUI()
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError()
-    }
-    
-    func configure(with user: User) {
-        nameLabel.text = user.name
-        emailLabel.text = user.email
-    }
-    
-    override func prepareForReuse() {
-        super.prepareForReuse()
-        nameLabel.text = nil
-        emailLabel.text = nil
-    }
-}
-```
-
-## Delegation Pattern
+### Delegation Pattern
 
 ```swift
 protocol UserSelectionDelegate: AnyObject {
@@ -161,9 +110,8 @@ class UserViewController: UIViewController {
 }
 ```
 
-## Navigation
-
 ### Coordinator Pattern
+
 ```swift
 protocol Coordinator: AnyObject {
     var navigationController: UINavigationController { get }
@@ -172,10 +120,6 @@ protocol Coordinator: AnyObject {
 
 class UserCoordinator: Coordinator {
     let navigationController: UINavigationController
-    
-    init(navigationController: UINavigationController) {
-        self.navigationController = navigationController
-    }
     
     func start() {
         let viewModel = UserViewModel()
@@ -193,8 +137,6 @@ protocol NetworkService {
 }
 
 class URLSessionNetworkService: NetworkService {
-    private let baseURL: URL
-    
     func fetch<T: Decodable>(_ endpoint: String) async throws -> T {
         let url = baseURL.appendingPathComponent(endpoint)
         let (data, response) = try await URLSession.shared.data(from: url)
@@ -209,100 +151,40 @@ class URLSessionNetworkService: NetworkService {
 }
 ```
 
-## Data Persistence
+## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
 
-### UserDefaults
+| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
+|---------|---------|-----------|--------------|
+| **Retain Cycles** | `self.updateUI()` in closure | `[weak self]` | Memory leak |
+| **Force Unwrapping** | `user!` | `guard let user = ...` | Crash risk |
+| **Singletons** | `UserService.shared` | Constructor injection | Hard to test |
+| **Massive ViewControllers** | 1000+ lines | Extract logic to services | Maintainability |
+| **Ignore Safe Area** | `view.topAnchor` | `view.safeAreaLayoutGuide.topAnchor` | Notch overlap |
+
+### Anti-Pattern: Retain Cycle (MEMORY LEAK)
+
 ```swift
-@propertyWrapper
-struct UserDefault<T> {
-    let key: String
-    let defaultValue: T
-    
-    var wrappedValue: T {
-        get { UserDefaults.standard.object(forKey: key) as? T ?? defaultValue }
-        set { UserDefaults.standard.set(newValue, forKey: key) }
-    }
+// ❌ WRONG: Retain cycle
+viewModel.onUsersChanged = { users in
+    self.updateUI(with: users)  // ViewController → closure → self → ViewController
 }
 
-struct Settings {
-    @UserDefault(key: "isDarkMode", defaultValue: false)
-    static var isDarkMode: Bool
-}
-```
-
-## Testing
-
-### Unit Tests
-```swift
-class UserViewModelTests: XCTestCase {
-    var sut: UserViewModel!
-    var mockService: MockUserService!
-    
-    override func setUp() {
-        super.setUp()
-        mockService = MockUserService()
-        sut = UserViewModel(service: mockService)
-    }
-    
-    func testLoadUsers_Success() async throws {
-        mockService.usersToReturn = [User(id: 1, name: "John", email: "john@test.com")]
-        
-        try await sut.loadUsers()
-        
-        XCTAssertEqual(sut.users.count, 1)
-        XCTAssertFalse(sut.isLoading)
-    }
+// ✅ CORRECT: [weak self] prevents retain cycle
+viewModel.onUsersChanged = { [weak self] users in
+    guard let self = self else { return }
+    self.updateUI(with: users)
 }
 ```
 
-### UI Tests
+### Anti-Pattern: Singleton (TESTING DISASTER)
+
 ```swift
-class UserListUITests: XCTestCase {
-    var app: XCUIApplication!
-    
-    override func setUp() {
-        super.setUp()
-        continueAfterFailure = false
-        app = XCUIApplication()
-        app.launch()
-    }
-    
-    func testUserListDisplaysUsers() {
-        let tableView = app.tables["UserTableView"]
-        XCTAssertTrue(tableView.exists)
-        XCTAssertTrue(tableView.cells.count > 0)
-    }
+// ❌ WRONG: Singleton (hard to test, global state)
+class UserViewController: UIViewController {
+    private let viewModel = UserViewModel.shared
 }
-```
 
-## Best Practices
-
-**MUST**:
-- Use dependency injection via initializers (NOT singletons)
-- Use [weak self] in closures to prevent retain cycles
-- Clean up observers/delegates in deinit or viewDidDisappear
-- Respect safe area for modern iOS devices (notch, Dynamic Island)
-- Use Auto Layout (NOT frame-based layout)
-
-**SHOULD**:
-- Use diffable data sources for UITableView/UICollectionView
-- Use async/await for modern iOS apps (iOS 13+)
-- Use Coordinator pattern for navigation in complex apps
-- Implement required init?(coder:) with fatalError (if not using storyboards)
-- Use private for internal view properties
-
-**AVOID**:
-- Retain cycles in closures (always use [weak self])
-- Force unwrapping (use guard let or if let)
-- Business logic in view controllers (move to ViewModels)
-- Singletons (makes testing difficult)
-- Massive view controllers (split into smaller VCs or extract logic)
-
-## Common Patterns
-
-### Dependency Injection
-```swift
-// ✅ GOOD: Constructor injection
+// ✅ CORRECT: Constructor injection
 class UserViewController: UIViewController {
     private let viewModel: UserViewModel
     
@@ -310,87 +192,53 @@ class UserViewController: UIViewController {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) not implemented")
-    }
-}
-
-// ❌ BAD: Singleton
-class UserViewController: UIViewController {
-    private let viewModel = UserViewModel.shared  // Hard to test, global state
 }
 ```
 
-### Memory Management
-```swift
-// ✅ GOOD: [weak self] prevents retain cycle
-viewModel.onUsersChanged = { [weak self] users in
-    guard let self = self else { return }
-    self.updateUI(with: users)
-}
+## AI Self-Check (Verify BEFORE generating UIKit code)
 
-// ❌ BAD: Retain cycle
-viewModel.onUsersChanged = { users in
-    self.updateUI(with: users)  // ViewController -> closure -> self -> ViewController
-}
+- [ ] Dependency injection via initializers?
+- [ ] [weak self] in closures?
+- [ ] Auto Layout (not frame-based)?
+- [ ] Respecting safe area layout guides?
+- [ ] Delegation pattern for callbacks?
+- [ ] No force unwrapping without safety?
+- [ ] ViewControllers under 300 lines?
+- [ ] Cleanup in deinit?
+- [ ] async/await for networking (iOS 13+)?
+- [ ] No singletons?
 
-// ✅ GOOD: Unsubscribe in deinit
-deinit {
-    NotificationCenter.default.removeObserver(self)
-}
-```
+## Key Components
 
-### Type-Safe Identifiers
-```swift
-// ✅ GOOD: Protocol-based reuse identifiers
-protocol ReusableView {
-    static var reuseIdentifier: String { get }
-}
+| Component | Purpose | Keywords |
+|-----------|---------|----------|
+| **ViewControllers** | Screen management | Lifecycle, navigation |
+| **Auto Layout** | Adaptive UI | Constraints, safe area |
+| **Diffable Data Source** | TableView/CollectionView | Type-safe, animations |
+| **Delegation** | Callbacks | Protocol, weak reference |
+| **Coordinator** | Navigation | Decoupled routing |
+| **URLSession** | Networking | async/await, Codable |
+| **UserDefaults** | Simple persistence | @propertyWrapper |
 
-extension ReusableView {
-    static var reuseIdentifier: String {
-        String(describing: self)
-    }
-}
+## Best Practices
 
-extension UserCell: ReusableView {}
+**MUST**:
+- Constructor injection (not singletons)
+- [weak self] in closures
+- Clean up observers in deinit
+- Safe area respect
+- Auto Layout
 
-// Usage
-tableView.register(UserCell.self, forCellReuseIdentifier: UserCell.reuseIdentifier)
-let cell = tableView.dequeueReusableCell(withIdentifier: UserCell.reuseIdentifier)
+**SHOULD**:
+- Diffable data sources (iOS 13+)
+- async/await (iOS 13+)
+- Coordinator pattern
+- Keep VCs under 300 lines
+- Use private for internals
 
-// ❌ BAD: String literals
-tableView.register(UserCell.self, forCellReuseIdentifier: "UserCell")  // Typo-prone
-```
-
-### Async/Await Error Handling
-```swift
-// ✅ GOOD: Specific error handling
-func loadData() async {
-    do {
-        let users = try await service.fetchUsers()
-        updateUI(with: users)
-    } catch NetworkError.notConnected {
-        showAlert(title: "No Connection", message: "Check your internet")
-    } catch NetworkError.unauthorized {
-        showLogin()
-    } catch {
-        showAlert(title: "Error", message: "Failed to load")
-    }
-}
-```
-
-### Safe Area
-```swift
-// ✅ GOOD: Respect safe area
-NSLayoutConstraint.activate([
-    view.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-    view.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
-])
-
-// ❌ BAD: Hardcoded offsets (breaks on notch devices)
-NSLayoutConstraint.activate([
-    view.topAnchor.constraint(equalTo: view.topAnchor, constant: 20)  // Wrong!
-])
-```
+**AVOID**:
+- Retain cycles
+- Force unwrapping
+- Business logic in VCs
+- Singletons
+- Massive view controllers
