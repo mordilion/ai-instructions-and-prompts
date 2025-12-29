@@ -1,50 +1,38 @@
-# AdonisJS Framework Rules
+# AdonisJS Framework
 
-> **Scope**: Full-stack MVC framework for Node.js with TypeScript-first approach
+> **Scope**: Full-stack MVC framework for Node.js (TypeScript-first)
 > **Version**: AdonisJS 6.x
-> **Precedence**: These rules apply when using AdonisJS. They extend TypeScript code-style and architecture rules.
+> **Applies to**: TypeScript files using AdonisJS
+> **Extends**: typescript/architecture.md, typescript/code-style.md
 
-## CRITICAL REQUIREMENTS
+## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
 
-> **ALWAYS**: Use AdonisJS IoC Container for dependency injection
+> **ALWAYS**: Use IoC Container for dependency injection with `@inject()`
 > **ALWAYS**: Use async/await for all asynchronous operations
-> **ALWAYS**: Validate requests using AdonisJS Validators
-> **NEVER**: Use `require()` - always use ES6 imports
-> **NEVER**: Access `process.env` directly - use `env` service
+> **ALWAYS**: Validate requests using VineJS validators
+> **ALWAYS**: Use path aliases (`#controllers`, `#models`, etc.)
+> **ALWAYS**: Use Lucid ORM for database operations
+> 
+> **NEVER**: Use `require()` (use ES6 imports)
+> **NEVER**: Access `process.env` directly (use `env` service)
+> **NEVER**: Skip validation in controllers
+> **NEVER**: Put business logic in controllers
+> **NEVER**: Use field injection (use constructor injection)
 
-## Project Structure
+## Pattern Selection
 
-```
-app/
-├── controllers/          # HTTP Controllers
-├── models/              # Lucid ORM Models
-├── services/            # Business logic services
-├── validators/          # Request validators
-├── middleware/          # HTTP middleware
-├── exceptions/          # Custom exceptions
-└── events/             # Event listeners
-config/                 # Configuration files
-database/
-├── migrations/         # Database migrations
-├── seeders/           # Database seeders
-└── factories/         # Model factories
-start/
-├── kernel.ts          # HTTP kernel
-├── routes.ts          # Route definitions
-└── events.ts          # Event bindings
-tests/                 # Japa tests
-```
+| Pattern | Use When | Keywords |
+|---------|----------|----------|
+| **IoC Container** | Dependency injection | `@inject()`, constructor params |
+| **Lucid ORM** | Database operations | Active Record, relationships |
+| **VineJS** | Input validation | Schema-based, type-safe |
+| **Events** | Decoupled side effects | `emitter.emit()` |
 
-## Controllers
+## Core Patterns
 
-### Pattern
-
-> **ALWAYS**: Use constructor injection for dependencies
-> **ALWAYS**: Return responses using `response` object
-> **ALWAYS**: Validate input with validators
+### Controllers (Request Handlers)
 
 ```typescript
-// ✅ CORRECT
 import { HttpContext } from '@adonisjs/core/http'
 import { inject } from '@adonisjs/core'
 import UserService from '#services/user_service'
@@ -67,34 +55,9 @@ export default class UsersController {
 }
 ```
 
-### Common AI Mistakes
-
-❌ **WRONG** - Field injection:
-```typescript
-export default class UsersController {
-  @inject()
-  private userService: UserService  // ❌ Don't use field injection
-}
-```
-
-❌ **WRONG** - No validation:
-```typescript
-async store({ request }: HttpContext) {
-  const data = request.body()  // ❌ No validation!
-  await User.create(data)
-}
-```
-
-## Models (Lucid ORM)
-
-### Pattern
-
-> **ALWAYS**: Extend `BaseModel`
-> **ALWAYS**: Use `@column` decorator for database columns
-> **ALWAYS**: Define relationships using decorators
+### Models (Lucid ORM)
 
 ```typescript
-// ✅ CORRECT
 import { DateTime } from 'luxon'
 import { BaseModel, column, hasMany } from '@adonisjs/lucid/orm'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
@@ -106,9 +69,6 @@ export default class User extends BaseModel {
 
   @column()
   declare email: string
-
-  @column()
-  declare fullName: string
 
   @column({ serializeAs: null })
   declare password: string
@@ -124,145 +84,104 @@ export default class User extends BaseModel {
 }
 ```
 
-### Common AI Mistakes
-
-❌ **WRONG** - Not using decorators:
-```typescript
-export default class User extends BaseModel {
-  id: number  // ❌ Missing @column decorator
-  email: string  // ❌ Missing @column decorator
-}
-```
-
-❌ **WRONG** - Exposing sensitive data:
-```typescript
-@column()
-declare password: string  // ❌ Should use serializeAs: null
-```
-
-## Validators
-
-### Pattern
-
-> **ALWAYS**: Use VineJS schema validators
-> **ALWAYS**: Create separate validator files
-> **ALWAYS**: Define explicit rules for all fields
+### Validators (VineJS)
 
 ```typescript
-// ✅ CORRECT - validators/user.ts
 import vine from '@vinejs/vine'
 
 export const createUserValidator = vine.compile(
   vine.object({
     email: vine.string().email().normalizeEmail(),
     password: vine.string().minLength(8).maxLength(32),
-    fullName: vine.string().minLength(3).maxLength(100),
+    fullName: vine.string().minLength(3).maxLength(100)
   })
 )
 
 export const updateUserValidator = vine.compile(
   vine.object({
     email: vine.string().email().normalizeEmail().optional(),
-    fullName: vine.string().minLength(3).maxLength(100).optional(),
+    fullName: vine.string().minLength(3).maxLength(100).optional()
   })
 )
 ```
 
-### Common AI Mistakes
-
-❌ **WRONG** - Inline validation:
-```typescript
-async store({ request }: HttpContext) {
-  // ❌ Don't validate inline
-  const data = await request.validate({
-    schema: schema.create({ email: schema.string() })
-  })
-}
-```
-
-## Services
-
-### Pattern
-
-> **ALWAYS**: Use `@inject()` decorator for dependencies
-> **ALWAYS**: Keep business logic in services, not controllers
-> **ALWAYS**: Return domain objects, not HTTP responses
+### Services (Business Logic)
 
 ```typescript
-// ✅ CORRECT - services/user_service.ts
 import { inject } from '@adonisjs/core'
 import User from '#models/user'
 import hash from '@adonisjs/core/services/hash'
+import emitter from '@adonisjs/core/services/emitter'
+import UserRegistered from '#events/user_registered'
 
 @inject()
 export default class UserService {
   async create(data: { email: string; password: string; fullName: string }) {
     const hashedPassword = await hash.make(data.password)
-    
-    return User.create({
-      ...data,
-      password: hashedPassword,
-    })
+    const user = await User.create({ ...data, password: hashedPassword })
+    emitter.emit(new UserRegistered(user))
+    return user
   }
 
   async getAll() {
     return User.query().orderBy('createdAt', 'desc')
   }
-
-  async findById(id: number) {
-    return User.findOrFail(id)
-  }
-
-  async update(id: number, data: Partial<User>) {
-    const user = await this.findById(id)
-    return user.merge(data).save()
-  }
 }
 ```
 
-## Routes
-
-### Pattern
-
-> **ALWAYS**: Group related routes
-> **ALWAYS**: Use route resource for RESTful routes
-> **ALWAYS**: Apply middleware at route level
+## Routes (start/routes.ts)
 
 ```typescript
-// ✅ CORRECT - start/routes.ts
 import router from '@adonisjs/core/services/router'
 import { middleware } from '#start/kernel'
 
 const UsersController = () => import('#controllers/users_controller')
-const PostsController = () => import('#controllers/posts_controller')
+const AuthController = () => import('#controllers/auth_controller')
 
-// API routes
-router.group(() => {
-  // Resource routes
-  router.resource('users', UsersController).apiOnly()
-  router.resource('posts', PostsController).apiOnly()
-  
-  // Custom routes
-  router.post('users/:id/follow', [UsersController, 'follow'])
-}).prefix('/api/v1').middleware(middleware.auth())
-
-// Public routes
+// Auth routes (public)
 router.group(() => {
   router.post('login', [AuthController, 'login'])
   router.post('register', [AuthController, 'register'])
-}).prefix('/api/v1')
+}).prefix('/api/v1/auth')
+
+// Protected routes
+router.group(() => {
+  router.resource('users', UsersController).apiOnly()
+}).prefix('/api/v1').middleware(middleware.auth())
+```
+
+## Events & Listeners
+
+```typescript
+// app/events/user_registered.ts
+import { BaseEvent } from '@adonisjs/core/events'
+import User from '#models/user'
+
+export default class UserRegistered extends BaseEvent {
+  constructor(public user: User) { super() }
+}
+
+// app/listeners/send_welcome_email.ts
+@inject()
+export default class SendWelcomeEmail {
+  constructor(protected emailService: EmailService) {}
+  
+  async handle(event: UserRegistered) {
+    await this.emailService.sendWelcome(event.user.email, event.user.fullName)
+  }
+}
+
+// start/events.ts
+import emitter from '@adonisjs/core/services/emitter'
+import UserRegistered from '#events/user_registered'
+import SendWelcomeEmail from '#listeners/send_welcome_email'
+
+emitter.on(UserRegistered, [SendWelcomeEmail])
 ```
 
 ## Middleware
 
-### Pattern
-
-> **ALWAYS**: Extend from base middleware types
-> **ALWAYS**: Call `next()` to continue request
-> **ALWAYS**: Use `HttpContext` for type safety
-
 ```typescript
-// ✅ CORRECT - middleware/admin_middleware.ts
 import { HttpContext } from '@adonisjs/core/http'
 import { NextFn } from '@adonisjs/core/types/http'
 
@@ -271,7 +190,7 @@ export default class AdminMiddleware {
     const user = auth.user
     
     if (!user || user.role !== 'admin') {
-      return response.forbidden({ message: 'Access denied' })
+      return response.forbidden({ message: 'Admin access required' })
     }
 
     await next()
@@ -279,157 +198,120 @@ export default class AdminMiddleware {
 }
 ```
 
-## Exception Handling
+## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
 
-### Pattern
+| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
+|---------|---------|-----------|--------------|
+| **Field Injection** | `@inject() private service` | Constructor injection | IoC pattern |
+| **No Validation** | `request.body()` | `request.validateUsing()` | Security, type safety |
+| **Business Logic in Controller** | Logic in controller | Move to service | Separation of concerns |
+| **process.env** | Direct access | `env` service | Type safety, validation |
+| **require()** | CommonJS | ES6 imports | Module system |
 
-> **ALWAYS**: Extend `Exception` class for custom exceptions
-> **ALWAYS**: Provide `status` and `message`
-> **ALWAYS**: Handle exceptions in global exception handler
+### Anti-Pattern: Field Injection (NOT SUPPORTED)
 
 ```typescript
-// ✅ CORRECT - exceptions/business_exception.ts
-import { Exception } from '@adonisjs/core/exceptions'
-import { HttpContext } from '@adonisjs/core/http'
+// ❌ WRONG: Field injection (doesn't work)
+export default class UsersController {
+  @inject()
+  private userService: UserService  // ❌ Won't be injected!
+}
 
-export default class BusinessException extends Exception {
-  static status = 422
-  static code = 'BUSINESS_ERROR'
-
-  async handle(error: this, ctx: HttpContext) {
-    ctx.response.status(error.status).send({
-      errors: [{
-        message: error.message,
-        code: error.code,
-      }],
-    })
-  }
+// ✅ CORRECT: Constructor injection
+@inject()
+export default class UsersController {
+  constructor(protected userService: UserService) {}
 }
 ```
 
-## Testing (Japa)
-
-### Pattern
-
-> **ALWAYS**: Use Japa test runner
-> **ALWAYS**: Use factories for test data
-> **ALWAYS**: Clean up after tests
+### Anti-Pattern: No Validation (SECURITY RISK)
 
 ```typescript
-// ✅ CORRECT
+// ❌ WRONG: No validation
+async store({ request }: HttpContext) {
+  const data = request.body()  // ❌ Unvalidated!
+  await User.create(data)
+}
+
+// ✅ CORRECT: Validated input
+async store({ request, response }: HttpContext) {
+  const payload = await request.validateUsing(createUserValidator)
+  const user = await this.userService.create(payload)
+  return response.created(user)
+}
+```
+
+## AI Self-Check (Verify BEFORE generating AdonisJS code)
+
+- [ ] Using `@inject()` on class (not fields)?
+- [ ] Constructor injection for dependencies?
+- [ ] Validating all user input?
+- [ ] Business logic in services?
+- [ ] Using path aliases (`#controllers`, etc.)?
+- [ ] Lucid ORM for database?
+- [ ] Events for side effects?
+- [ ] Middleware for cross-cutting concerns?
+- [ ] Using `env` service (not `process.env`)?
+- [ ] ES6 imports (not `require()`)?
+
+## Key Features
+
+| Feature | Purpose | Keywords |
+|---------|---------|----------|
+| **IoC Container** | Dependency injection | `@inject()` |
+| **Lucid ORM** | Database ORM | Active Record, relationships |
+| **VineJS** | Validation | Schema-based, type-safe |
+| **Events** | Decoupled logic | `emitter.emit()` |
+| **Middleware** | Request pipeline | Auth, rate limiting, CORS |
+| **Japa** | Testing | Unit, functional tests |
+
+## Testing (Japa)
+
+```typescript
 import { test } from '@japa/runner'
 import UserFactory from '#database/factories/user_factory'
 
-test.group('Users API', (group) => {
-  group.each.setup(async () => {
-    // Setup code
-  })
-
-  group.each.teardown(async () => {
-    // Cleanup code
-  })
-
-  test('can create a user', async ({ client }) => {
-    const userData = {
+test.group('Users API', () => {
+  test('can create user', async ({ client }) => {
+    const response = await client.post('/api/v1/users').json({
       email: 'test@example.com',
-      password: 'password',
-      fullName: 'Test User',
-    }
-
-    const response = await client.post('/api/v1/users').json(userData)
+      password: 'password123',
+      fullName: 'Test User'
+    })
     
     response.assertStatus(201)
-    response.assertBodyContains({
-      email: userData.email,
-      fullName: userData.fullName,
-    })
+    response.assertBodyContains({ email: 'test@example.com' })
   })
 
   test('can list users', async ({ client }) => {
     await UserFactory.createMany(5)
-    
     const response = await client.get('/api/v1/users')
     
     response.assertStatus(200)
-    response.assertBodyContains([])
+    response.assertBodyContains({ data: [] })
   })
 })
 ```
 
-## Configuration
+## Best Practices
 
-### Pattern
+**MUST**:
+- IoC Container with `@inject()`
+- Constructor injection
+- VineJS validation
+- Path aliases
+- Lucid ORM
 
-> **ALWAYS**: Use `env` service for environment variables
-> **ALWAYS**: Validate env variables in config files
-> **NEVER**: Access `process.env` directly
+**SHOULD**:
+- Services for business logic
+- Events for side effects
+- Middleware for cross-cutting
+- Japa for testing
+- env service for configuration
 
-```typescript
-// ✅ CORRECT - config/database.ts
-import env from '#start/env'
-import { defineConfig } from '@adonisjs/lucid'
-
-export default defineConfig({
-  connection: env.get('DB_CONNECTION'),
-  connections: {
-    postgres: {
-      client: 'pg',
-      connection: {
-        host: env.get('DB_HOST'),
-        port: env.get('DB_PORT'),
-        user: env.get('DB_USER'),
-        password: env.get('DB_PASSWORD'),
-        database: env.get('DB_DATABASE'),
-      },
-    },
-  },
-})
-```
-
-## Events
-
-### Pattern
-
-> **ALWAYS**: Define events as classes
-> **ALWAYS**: Use event listeners for side effects
-> **ALWAYS**: Keep listeners focused on single responsibility
-
-```typescript
-// ✅ CORRECT - events/user_registered.ts
-import { BaseEvent } from '@adonisjs/core/events'
-import User from '#models/user'
-
-export default class UserRegistered extends BaseEvent {
-  constructor(public user: User) {
-    super()
-  }
-}
-
-// Listener - listeners/send_welcome_email.ts
-import UserRegistered from '#events/user_registered'
-import mail from '@adonisjs/mail/services/main'
-
-export default class SendWelcomeEmail {
-  async handle(event: UserRegistered) {
-    await mail.send((message) => {
-      message
-        .to(event.user.email)
-        .subject('Welcome!')
-        .htmlView('emails/welcome', { user: event.user })
-    })
-  }
-}
-```
-
-## AI Self-Check
-
-Before generating AdonisJS code, verify:
-- [ ] Using constructor injection with `@inject()` decorator?
-- [ ] Validating all requests with VineJS validators?
-- [ ] Using `@column` decorators on all model properties?
-- [ ] Hiding sensitive fields with `serializeAs: null`?
-- [ ] Keeping business logic in services, not controllers?
-- [ ] Using `env` service instead of `process.env`?
-- [ ] Returning appropriate HTTP responses?
-- [ ] Using async/await for all async operations?
-
+**AVOID**:
+- Field injection
+- Skipping validation
+- Business logic in controllers
+- Direct `process.env`
+- `require()` syntax
