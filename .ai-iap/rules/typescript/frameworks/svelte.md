@@ -1,514 +1,232 @@
-# Svelte / SvelteKit Framework
+# Svelte Framework
 
-> **Scope**: Apply these rules when working with Svelte and SvelteKit applications.
+> **Scope**: Apply these rules when working with Svelte/SvelteKit applications
+> **Applies to**: .svelte files and Svelte TypeScript files
+> **Extends**: typescript/architecture.md, typescript/code-style.md
+> **Precedence**: Framework rules OVERRIDE TypeScript rules for Svelte-specific patterns
 
-## Overview
+## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
 
-Svelte is a component framework that compiles components to highly efficient JavaScript at build time. SvelteKit is the official full-stack framework built on top of Svelte, providing routing, server-side rendering, and API routes.
-
-**Key Capabilities**:
-- **No Virtual DOM**: Compiles to vanilla JS (smaller bundles, faster runtime)
-- **Runes (Svelte 5)**: Modern reactivity with `$state`, `$derived`, `$effect`
-- **Full-Stack**: Server load functions, form actions, API routes
-- **TypeScript-First**: Full type safety with generated types
-- **Progressive Enhancement**: Forms work without JavaScript
+> **ALWAYS**: Use `$:` for reactive statements (Svelte's reactivity system)
+> **ALWAYS**: Use `export let` for props (Svelte prop syntax)
+> **ALWAYS**: Use stores for shared state (writable, readable, derived)
+> **ALWAYS**: Clean up subscriptions with `onDestroy` (prevent memory leaks)
+> **ALWAYS**: Use `bind:` for two-way binding (NOT manual event handlers)
+> 
+> **NEVER**: Use `.subscribe()` without `onDestroy` cleanup (memory leak)
+> **NEVER**: Mutate props directly (use events for parent updates)
+> **NEVER**: Forget `$:` for derived values (breaks reactivity)
+> **NEVER**: Use complex logic in templates (move to reactive statements)
+> **NEVER**: Create stores inside components (define at module level)
 
 ## Pattern Selection
 
-### Component Type
-**Use Runes (Svelte 5) when**:
-- New projects
-- Want better TypeScript support
-- More explicit reactivity
+| Pattern | Use When | Keywords |
+|---------|----------|----------|
+| Reactive Statements | Derived values, side effects | `$: derivedValue = count * 2` |
+| Stores | Shared state across components | `writable()`, `readable()`, `derived()` |
+| bind: | Two-way binding | `bind:value`, `bind:checked` |
+| on: | Event handling | `on:click={handler}` |
+| {#if}/{#each} | Conditional/list rendering | Control flow blocks |
 
-**AVOID Legacy Syntax**:
-- `let count = 0` for reactive state (use `$state` instead)
-- `$:` for reactive statements (use `$derived` instead)
-- `createEventDispatcher` (use callback props instead)
+## Core Patterns
 
-### Data Loading Strategy
-**Use +page.server.ts when**:
-- Need database access
-- Need environment secrets
-- Server-only data
-
-**Use +page.ts when**:
-- Can run on client or server
-- Fetching from public APIs
-- Want client-side navigation
-
-**Use Form Actions when**:
-- Form submissions
-- Mutations
-- Progressive enhancement needed
-
-### Store vs Component State
-**Use Component State ($state) when**:
-- Local to single component
-- Not shared
-
-**Use Stores when**:
-- Shared across multiple components
-- Need subscriptions outside components
-- Complex derived state
-
-## 1. Project Structure (SvelteKit)
-```
-src/
-├── lib/
-│   ├── components/       # Reusable components
-│   ├── stores/           # Svelte stores
-│   ├── utils/
-│   └── server/           # Server-only code
-├── routes/
-│   ├── +layout.svelte    # Root layout
-│   ├── +page.svelte      # Home page
-│   ├── api/
-│   │   └── users/
-│   │       └── +server.ts  # API endpoint
-│   └── users/
-│       ├── +page.svelte
-│       ├── +page.server.ts  # Server load function
-│       └── [id]/
-│           └── +page.svelte
-├── app.html
-└── app.d.ts
-```
-
-## 2. Component Basics
-- **Runes (Svelte 5)**: Use `$state`, `$derived`, `$effect`.
-- **Props**: Use `$props()` for type-safe props.
-- **Events**: Use callback props instead of `createEventDispatcher`.
-
+### Component with Props & Events
 ```svelte
-<!-- ✅ Good - Svelte 5 with Runes -->
 <script lang="ts">
-  interface Props {
-    count?: number;
-    onUpdate?: (count: number) => void;
-  }
-
-  let { count = 0, onUpdate }: Props = $props();
+  import { createEventDispatcher } from 'svelte'
   
-  let doubled = $derived(count * 2);
+  export let value: string = ''
+  export let placeholder: string = 'Enter text'
   
-  function increment() {
-    count++;
-    onUpdate?.(count);
+  const dispatch = createEventDispatcher<{
+    change: string
+    submit: void
+  }>()
+  
+  function handleInput(e: Event) {
+    const target = e.target as HTMLInputElement
+    dispatch('change', target.value)
   }
 </script>
 
-<button onclick={increment}>
-  {count} (doubled: {doubled})
-</button>
+<input
+  value={value}
+  placeholder={placeholder}
+  on:input={handleInput}
+  on:keydown={(e) => e.key === 'Enter' && dispatch('submit')}
+/>
 ```
 
-## 3. Stores
-- **writable**: Mutable state.
-- **readable**: Read-only external state.
-- **derived**: Computed from other stores.
-
-```typescript
-// stores/auth.ts
-import { writable, derived } from 'svelte/store';
-
-interface User {
-  id: string;
-  name: string;
-}
-
-function createAuthStore() {
-  const { subscribe, set, update } = writable<User | null>(null);
-
-  return {
-    subscribe,
-    login: async (email: string, password: string) => {
-      const user = await api.login(email, password);
-      set(user);
-    },
-    logout: () => set(null),
-  };
-}
-
-export const auth = createAuthStore();
-export const isAuthenticated = derived(auth, $auth => $auth !== null);
-```
-
-## 4. SvelteKit Data Loading
-- **+page.server.ts**: Server-side data loading.
-- **+page.ts**: Universal (client + server) loading.
-- **load function**: Return data for the page.
-
-```typescript
-// routes/users/+page.server.ts
-import type { PageServerLoad } from './$types';
-
-export const load: PageServerLoad = async ({ locals, fetch }) => {
-  const response = await fetch('/api/users');
-  const users = await response.json();
-  
-  return {
-    users,
-    currentUser: locals.user,
-  };
-};
-```
-
+### Reactivity (Core Feature)
 ```svelte
-<!-- routes/users/+page.svelte -->
 <script lang="ts">
-  import type { PageData } from './$types';
+  let count = 0
   
-  let { data }: { data: PageData } = $props();
+  // Reactive statement: runs when count changes
+  $: doubled = count * 2
+  
+  // Reactive block: multiple statements
+  $: {
+    console.log(`Count is ${count}`)
+    if (count > 10) {
+      console.warn('Count is high!')
+    }
+  }
+  
+  // Reactive expression for class/style
+  $: className = count > 5 ? 'high' : 'low'
 </script>
 
-<ul>
-  {#each data.users as user}
-    <li>{user.name}</li>
-  {/each}
-</ul>
+<div class={className}>
+  <p>Count: {count}</p>
+  <p>Doubled: {doubled}</p>
+  <button on:click={() => count++}>Increment</button>
+</div>
 ```
 
-## 5. Form Actions
+### Stores (Shared State)
 ```typescript
-// routes/login/+page.server.ts
-import type { Actions } from './$types';
-import { fail, redirect } from '@sveltejs/kit';
+// stores/counter.ts
+import { writable, derived, readable } from 'svelte/store'
 
-export const actions: Actions = {
-  default: async ({ request, cookies }) => {
-    const data = await request.formData();
-    const email = data.get('email');
-    const password = data.get('password');
+// Writable store
+export const count = writable(0)
 
-    if (!email || !password) {
-      return fail(400, { email, missing: true });
-    }
+// Derived store
+export const doubled = derived(count, $count => $count * 2)
 
-    const user = await auth.login(email, password);
-    if (!user) {
-      return fail(401, { email, incorrect: true });
-    }
+// Readable store (read-only)
+export const time = readable(new Date(), (set) => {
+  const interval = setInterval(() => set(new Date()), 1000)
+  return () => clearInterval(interval)  // Cleanup function
+})
 
-    cookies.set('session', user.token, { path: '/' });
-    throw redirect(303, '/dashboard');
-  },
-};
+// Usage in component
+import { count } from './stores/counter'
+import { onDestroy } from 'svelte'
+
+// Auto-subscribe with $
+$: console.log($count)  // Automatically subscribes and unsubscribes
+
+// Manual subscribe (requires cleanup)
+const unsubscribe = count.subscribe(value => console.log(value))
+onDestroy(unsubscribe)
 ```
 
-## 6. API Routes
-```typescript
-// routes/api/users/+server.ts
-import type { RequestHandler } from './$types';
-import { json, error } from '@sveltejs/kit';
+## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
 
-export const GET: RequestHandler = async ({ url }) => {
-  const limit = Number(url.searchParams.get('limit')) || 10;
-  const users = await db.users.findMany({ take: limit });
-  return json(users);
-};
+| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
+|---------|---------|-----------|--------------|
+| **Missing `$:` for Derived Values** | `const doubled = count * 2` | `$: doubled = count * 2` | Breaks reactivity |
+| **Subscribe Without Cleanup** | `store.subscribe()` without `onDestroy` | Use `$store` or cleanup in `onDestroy` | Memory leak |
+| **Mutating Props** | `value = 'new'` when `value` is prop | `dispatch('change', 'new')` | Breaks one-way data flow |
+| **Stores in Components** | `const store = writable()` in component | Define at module level | Creates new store per instance |
+| **Complex Template Logic** | Long expressions in `{...}` | Move to reactive statement | Unreadable, breaks reactivity |
 
-export const POST: RequestHandler = async ({ request }) => {
-  const data = await request.json();
-  const user = await db.users.create({ data });
-  return json(user, { status: 201 });
-};
-```
-
-## 7. Template Syntax
+### Anti-Pattern: Missing $: for Derived Values (COMMON ERROR)
 ```svelte
-<!-- Conditionals -->
-{#if loading}
-  <p>Loading...</p>
-{:else if error}
-  <p>Error: {error}</p>
+<!-- ❌ WRONG - Not reactive -->
+<script lang="ts">
+  let count = 0
+  const doubled = count * 2  // Calculated ONCE, never updates
+</script>
+
+<!-- ✅ CORRECT - Reactive -->
+<script lang="ts">
+  let count = 0
+  $: doubled = count * 2  // Recalculates when count changes
+</script>
+```
+
+### Anti-Pattern: Subscribe Without Cleanup (MEMORY LEAK)
+```svelte
+<!-- ❌ WRONG - Memory leak -->
+<script lang="ts">
+  import { myStore } from './stores'
+  
+  myStore.subscribe(value => {
+    console.log(value)
+  })  // NEVER cleaned up!
+</script>
+
+<!-- ✅ CORRECT - Auto-subscribe -->
+<script lang="ts">
+  import { myStore } from './stores'
+  
+  $: console.log($myStore)  // Auto-subscribes and cleans up
+</script>
+
+<!-- ✅ CORRECT - Manual cleanup -->
+<script lang="ts">
+  import { onDestroy } from 'svelte'
+  import { myStore } from './stores'
+  
+  const unsubscribe = myStore.subscribe(value => console.log(value))
+  onDestroy(unsubscribe)
+</script>
+```
+
+## AI Self-Check (Verify BEFORE generating Svelte code)
+
+- [ ] Using `$:` for derived values? (NOT const assignments)
+- [ ] Props declared with `export let`? (Svelte prop syntax)
+- [ ] Events dispatched with `createEventDispatcher`?
+- [ ] Stores defined at module level? (NOT inside components)
+- [ ] Using `$store` for auto-subscribe? (OR manual cleanup with `onDestroy`)
+- [ ] Two-way binding with `bind:`? (NOT manual v-model)
+- [ ] Never mutating props directly? (Dispatch events)
+- [ ] Cleanup in `onDestroy`? (Subscriptions, timers)
+- [ ] Control flow with `{#if}` and `{#each}`?
+- [ ] TypeScript types for props and events?
+
+## Control Flow
+
+```svelte
+<!-- Conditional rendering -->
+{#if condition}
+  <p>Shown when true</p>
+{:else if otherCondition}
+  <p>Alternate</p>
 {:else}
-  <p>{data}</p>
+  <p>Default</p>
 {/if}
 
-<!-- Loops -->
-{#each items as item (item.id)}
-  <li>{item.name}</li>
+<!-- List rendering -->
+{#each items as item, index (item.id)}
+  <div>{index}: {item.name}</div>
+{:else}
+  <p>No items</p>
 {/each}
 
-<!-- Await blocks -->
+<!-- Promises -->
 {#await promise}
   <p>Loading...</p>
-{:then data}
-  <p>{data}</p>
+{:then value}
+  <p>Result: {value}</p>
 {:catch error}
   <p>Error: {error.message}</p>
 {/await}
 ```
 
-## Best Practices
+## Bindings
 
-**MUST**:
-- Use Runes (`$state`, `$derived`, `$effect`) in Svelte 5 (NO legacy syntax)
-- Use `<script lang="ts">` for ALL components
-- Use callback props (NO `createEventDispatcher`)
-- Use `(item.id)` key in `{#each}` loops
-- Return data from load functions (NO throwing errors without fail())
-
-**SHOULD**:
-- Use `+page.server.ts` for server-side data loading
-- Use form actions for mutations
-- Use `$lib` alias for imports
-- Use hooks.server.ts for auth/middleware
-- Run `svelte-kit sync` after schema changes
-
-**AVOID**:
-- Legacy reactivity (`let count = 0`, `$:`)
-- Client-side data fetching in components (use load functions)
-- Exposing secrets to client
-- Missing type annotations
-- Direct database access in `+page.ts` (use `+page.server.ts`)
-
-## Common Patterns
-
-### Runes (Svelte 5)
 ```svelte
-<!-- ✅ GOOD: Runes for reactivity -->
-<script lang="ts">
-  interface Props {
-    initialCount?: number
-    onUpdate?: (count: number) => void
-  }
+<!-- Two-way binding -->
+<input bind:value={name} />
+<input type="checkbox" bind:checked={accepted} />
+<select bind:value={selected}>...</select>
 
-  let { initialCount = 0, onUpdate }: Props = $props()
-  
-  let count = $state(initialCount)  // Reactive state
-  let doubled = $derived(count * 2)  // Computed state
-  
-  $effect(() => {
-    console.log('Count changed:', count)  // Side effect
-  })
-  
-  function increment() {
-    count++
-    onUpdate?.(count)
-  }
-</script>
+<!-- Component binding -->
+<CustomInput bind:value={text} />
 
-<button onclick={increment}>
-  {count} (doubled: {doubled})
-</button>
-
-<!-- ❌ BAD: Legacy syntax -->
-<script lang="ts">
-  let count = 0  // NOT reactive in Svelte 5
-  $: doubled = count * 2  // Old syntax
-  
-  $: {
-    console.log('Count changed:', count)  // Use $effect instead
-  }
-</script>
+<!-- Element binding -->
+<div bind:clientWidth={width} bind:clientHeight={height}>...</div>
 ```
 
-### Load Functions
-```typescript
-// ✅ GOOD: Server load function with types
-// routes/users/[id]/+page.server.ts
-import type { PageServerLoad } from './$types'
-import { error } from '@sveltejs/kit'
+## Key Libraries
 
-export const load: PageServerLoad = async ({ params, locals }) => {
-  const user = await db.user.findUnique({
-    where: { id: params.id }
-  })
-  
-  if (!user) {
-    throw error(404, 'User not found')
-  }
-  
-  return {
-    user,
-    currentUser: locals.user  // From hooks.server.ts
-  }
-}
-
-// routes/users/[id]/+page.svelte
-<script lang="ts">
-  import type { PageData } from './$types'
-  
-  let { data }: { data: PageData } = $props()
-</script>
-
-<h1>{data.user.name}</h1>
-
-// ❌ BAD: Client-side fetching
-<script lang="ts">
-  import { onMount } from 'svelte'
-  
-  let user = $state(null)
-  
-  onMount(async () => {
-    const response = await fetch(`/api/users/${id}`)
-    user = await response.json()  // Slower, no SSR
-  })
-</script>
-```
-
-### Form Actions
-```typescript
-// ✅ GOOD: Form action with validation
-// routes/login/+page.server.ts
-import type { Actions } from './$types'
-import { fail, redirect } from '@sveltejs/kit'
-
-export const actions: Actions = {
-  default: async ({ request, cookies }) => {
-    const data = await request.formData()
-    const email = data.get('email')?.toString()
-    const password = data.get('password')?.toString()
-
-    // Validation
-    if (!email || !password) {
-      return fail(400, { 
-        email, 
-        error: 'Email and password required' 
-      })
-    }
-
-    // Authentication
-    const user = await auth.login(email, password)
-    if (!user) {
-      return fail(401, { 
-        email, 
-        error: 'Invalid credentials' 
-      })
-    }
-
-    // Set session
-    cookies.set('session', user.token, { 
-      path: '/',
-      httpOnly: true,
-      secure: true,
-      sameSite: 'strict'
-    })
-
-    throw redirect(303, '/dashboard')
-  }
-}
-
-// routes/login/+page.svelte
-<script lang="ts">
-  import { enhance } from '$app/forms'
-  import type { ActionData } from './$types'
-  
-  let { form }: { form: ActionData } = $props()
-</script>
-
-<form method="POST" use:enhance>
-  <input name="email" type="email" required />
-  <input name="password" type="password" required />
-  {#if form?.error}
-    <p class="error">{form.error}</p>
-  {/if}
-  <button type="submit">Login</button>
-</form>
-
-// ❌ BAD: Client-side form submission
-<script>
-  async function handleSubmit(e) {
-    e.preventDefault()
-    await fetch('/api/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password })
-    })  // No progressive enhancement, extra API route
-  }
-</script>
-
-<form onsubmit={handleSubmit}>
-  <!-- ... -->
-</form>
-```
-
-### Stores
-```typescript
-// ✅ GOOD: Custom store with methods
-// stores/cart.ts
-import { writable, derived } from 'svelte/store'
-
-interface CartItem {
-  id: string
-  name: string
-  price: number
-  quantity: number
-}
-
-function createCartStore() {
-  const { subscribe, set, update } = writable<CartItem[]>([])
-
-  return {
-    subscribe,
-    addItem: (item: CartItem) => {
-      update(items => {
-        const existing = items.find(i => i.id === item.id)
-        if (existing) {
-          existing.quantity += item.quantity
-          return items
-        }
-        return [...items, item]
-      })
-    },
-    removeItem: (id: string) => {
-      update(items => items.filter(i => i.id !== id))
-    },
-    clear: () => set([])
-  }
-}
-
-export const cart = createCartStore()
-export const cartTotal = derived(
-  cart, 
-  $cart => $cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
-)
-
-// Usage in component
-<script lang="ts">
-  import { cart, cartTotal } from '$lib/stores/cart'
-</script>
-
-<p>Total: ${$cartTotal}</p>
-{#each $cart as item (item.id)}
-  <div>{item.name} x {item.quantity}</div>
-{/each}
-```
-
-## Common Anti-Patterns
-
-**❌ Missing keys in loops**:
-```svelte
-<!-- BAD -->
-{#each items as item}
-  <li>{item.name}</li>
-{/each}
-```
-
-**✅ Always use keys**:
-```svelte
-<!-- GOOD -->
-{#each items as item (item.id)}
-  <li>{item.name}</li>
-{/each}
-```
-
-**❌ Exposing secrets to client**:
-```typescript
-// BAD - In +page.ts (runs on client)
-import { API_SECRET_KEY } from '$env/static/private'  // ERROR
-```
-
-**✅ Use server-only files**:
-```typescript
-// GOOD - In +page.server.ts (server only)
-import { API_SECRET_KEY } from '$env/static/private'  // Safe
-```
-
-## 8. Best Practices
-- **$lib alias**: Import from `$lib/` for lib folder
-- **Type Generation**: Run `svelte-kit sync` for types
-- **Hooks**: Use `hooks.server.ts` for auth, logging
-- **Environment**: Use `$env/static/private` for secrets (server-only)
-
+- **SvelteKit**: Full-stack framework (replaces Sapper)
+- **Svelte Stores**: `writable`, `readable`, `derived`
+- **svelte/transition**: Animations and transitions
+- **svelte/motion**: Tweened and spring animations

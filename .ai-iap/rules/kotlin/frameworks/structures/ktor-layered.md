@@ -1,462 +1,168 @@
-# Ktor Layered Structure
+# Ktor Layered Architecture
 
-## Overview
-Traditional layered architecture for Ktor, separating code by technical responsibilities.
+> **Scope**: Apply to Ktor projects using traditional layered architecture
+> **Applies to**: Kotlin files in Ktor layered projects
+> **Extends**: kotlin/architecture.md, kotlin/frameworks/ktor.md
+> **Precedence**: Structure rules OVERRIDE framework rules
 
-## Directory Structure
+## Structure Overview
 
 ```
-src/main/kotlin/com/app/
-├── route/                        # Presentation layer
-│   ├── UserRoutes.kt
-│   ├── OrderRoutes.kt
-│   └── AuthRoutes.kt
-├── service/                      # Business logic
-│   ├── UserService.kt
-│   ├── OrderService.kt
-│   └── AuthService.kt
-├── repository/                   # Data access
-│   ├── UserRepository.kt
-│   ├── OrderRepository.kt
-│   └── database/
-│       └── Tables.kt
-├── model/                        # Domain models
-│   ├── User.kt
-│   ├── Order.kt
-│   └── Auth.kt
-├── dto/                          # Data transfer objects
-│   ├── request/
-│   │   ├── CreateUserRequest.kt
-│   │   └── UpdateUserRequest.kt
-│   └── response/
-│       ├── UserResponse.kt
-│       └── OrderResponse.kt
-├── exception/                    # Exception handling
-│   ├── AppException.kt
-│   └── StatusPages.kt
-├── config/                       # Configuration
-│   ├── DatabaseConfig.kt
-│   └── JwtConfig.kt
-├── plugins/                      # Ktor plugins
+src/main/kotlin/
+├── Application.kt              # Entry point
+├── plugins/                    # Ktor plugins
 │   ├── Routing.kt
 │   ├── Serialization.kt
-│   ├── Security.kt
-│   └── Monitoring.kt
-├── util/                         # Utilities
-│   └── Extensions.kt
-└── Application.kt
-
-src/test/kotlin/com/app/
-├── service/
-│   └── UserServiceTest.kt
-├── repository/
-│   └── UserRepositoryTest.kt
-└── route/
-    └── UserRoutesTest.kt
+│   └── Security.kt
+├── routes/                     # Route definitions
+│   ├── UserRoutes.kt
+│   └── ProductRoutes.kt
+├── controllers/                # Request handlers
+│   ├── UserController.kt
+│   └── ProductController.kt
+├── services/                   # Business logic
+│   ├── UserService.kt
+│   └── ProductService.kt
+├── repositories/               # Data access
+│   ├── UserRepository.kt
+│   └── ProductRepository.kt
+├── models/                     # Domain models
+│   ├── User.kt
+│   └── Product.kt
+├── dto/                        # DTOs for API
+│   ├── UserDto.kt
+│   └── CreateUserRequest.kt
+└── config/                     # Configuration
+    └── DatabaseConfig.kt
 ```
 
-## Implementation
+## Layer Responsibilities
 
-### Model Layer
+| Layer | Purpose | Dependencies | Keywords |
+|-------|---------|--------------|----------|
+| Routes | Define endpoints | Controllers | `routing { }`, `get()`, `post()` |
+| Controllers | Validate, call services | Services | `call.receive()`, `call.respond()` |
+| Services | Business logic | Repositories | Business rules, orchestration |
+| Repositories | Data access | Database | `transaction { }`, queries |
+| Models | Domain entities | None | Data classes |
+| DTOs | API contracts | Models | Request/Response objects |
+
+## Critical Rules
+
+> **ALWAYS**: Routes → Controllers → Services → Repositories (strict layering)
+> **ALWAYS**: Return DTOs from controllers (NEVER domain models)
+> **ALWAYS**: Keep controllers thin (only validation and service calls)
+> **ALWAYS**: Use dependency injection (Koin or manual)
+> **ALWAYS**: Transaction boundaries in service layer
+> 
+> **NEVER**: Skip layers (e.g., routes directly to repositories)
+> **NEVER**: Business logic in controllers or routes
+> **NEVER**: Return domain models in API responses
+> **NEVER**: Database access outside repository layer
+> **NEVER**: Circular dependencies between layers
+
+## Example Implementation
+
 ```kotlin
-// model/User.kt
-data class User(
-    val id: Long = 0,
-    val name: String,
-    val email: String,
-    val createdAt: Instant = Instant.now()
-)
-```
-
-### DTO Layer
-```kotlin
-// dto/request/CreateUserRequest.kt
-@Serializable
-data class CreateUserRequest(
-    val name: String,
-    val email: String
-)
-
-// dto/request/UpdateUserRequest.kt
-@Serializable
-data class UpdateUserRequest(
-    val name: String? = null,
-    val email: String? = null
-)
-
-// dto/response/UserResponse.kt
-@Serializable
-data class UserResponse(
-    val id: Long,
-    val name: String,
-    val email: String,
-    val createdAt: String
-)
-```
-
-### Repository Layer
-```kotlin
-// repository/database/Tables.kt
-object Users : Table("users") {
-    val id = long("id").autoIncrement()
-    val name = varchar("name", 100)
-    val email = varchar("email", 100).uniqueIndex()
-    val createdAt = timestamp("created_at").defaultExpression(CurrentTimestamp())
-    val updatedAt = timestamp("updated_at").defaultExpression(CurrentTimestamp())
-    
-    override val primaryKey = PrimaryKey(id)
-}
-
-// repository/UserRepository.kt
-class UserRepository(
-    private val database: Database
-) {
-    
-    suspend fun findAll(): List<User> = dbQuery {
-        Users.selectAll().map { toUser(it) }
-    }
-    
-    suspend fun findById(id: Long): User? = dbQuery {
-        Users.select { Users.id eq id }
-            .map { toUser(it) }
-            .singleOrNull()
-    }
-    
-    suspend fun findByEmail(email: String): User? = dbQuery {
-        Users.select { Users.email eq email }
-            .map { toUser(it) }
-            .singleOrNull()
-    }
-    
-    suspend fun create(user: User): User = dbQuery {
-        val id = Users.insert {
-            it[name] = user.name
-            it[email] = user.email
-        } get Users.id
-        
-        user.copy(id = id)
-    }
-    
-    suspend fun update(id: Long, user: User): User? = dbQuery {
-        val updated = Users.update({ Users.id eq id }) {
-            it[name] = user.name
-            it[email] = user.email
-            it[updatedAt] = Instant.now()
-        }
-        
-        if (updated > 0) user.copy(id = id) else null
-    }
-    
-    suspend fun delete(id: Long): Boolean = dbQuery {
-        Users.deleteWhere { Users.id eq id } > 0
-    }
-    
-    suspend fun existsByEmail(email: String): Boolean = dbQuery {
-        Users.select { Users.email eq email }.count() > 0
-    }
-    
-    private fun toUser(row: ResultRow): User = User(
-        id = row[Users.id],
-        name = row[Users.name],
-        email = row[Users.email],
-        createdAt = row[Users.createdAt]
-    )
-}
-
-suspend fun <T> dbQuery(block: suspend () -> T): T =
-    newSuspendedTransaction(Dispatchers.IO) { block() }
-```
-
-### Service Layer
-```kotlin
-// service/UserService.kt
-class UserService(
-    private val repository: UserRepository
-) {
-    
-    suspend fun findAll(): List<UserResponse> =
-        repository.findAll().map { toResponse(it) }
-    
-    suspend fun findById(id: Long): UserResponse {
-        val user = repository.findById(id)
-            ?: throw NotFoundException("User not found: $id")
-        return toResponse(user)
-    }
-    
-    suspend fun create(request: CreateUserRequest): UserResponse {
-        // Validation
-        validateUserRequest(request.name, request.email)
-        
-        // Check for duplicate email
-        if (repository.existsByEmail(request.email)) {
-            throw ConflictException("Email already exists: ${request.email}")
-        }
-        
-        val user = User(
-            name = request.name,
-            email = request.email
-        )
-        
-        val created = repository.create(user)
-        return toResponse(created)
-    }
-    
-    suspend fun update(id: Long, request: UpdateUserRequest): UserResponse {
-        val existing = repository.findById(id)
-            ?: throw NotFoundException("User not found: $id")
-        
-        // Validate if provided
-        request.name?.let { validateName(it) }
-        request.email?.let { email ->
-            validateEmail(email)
-            if (email != existing.email && repository.existsByEmail(email)) {
-                throw ConflictException("Email already exists: $email")
-            }
-        }
-        
-        val updated = existing.copy(
-            name = request.name ?: existing.name,
-            email = request.email ?: existing.email
-        )
-        
-        val saved = repository.update(id, updated)
-            ?: throw NotFoundException("User not found: $id")
-        
-        return toResponse(saved)
-    }
-    
-    suspend fun delete(id: Long) {
-        if (!repository.delete(id)) {
-            throw NotFoundException("User not found: $id")
-        }
-    }
-    
-    private fun validateUserRequest(name: String, email: String) {
-        validateName(name)
-        validateEmail(email)
-    }
-    
-    private fun validateName(name: String) {
-        require(name.isNotBlank()) { "Name cannot be blank" }
-        require(name.length in 2..100) { "Name must be between 2 and 100 characters" }
-    }
-    
-    private fun validateEmail(email: String) {
-        require(email.isNotBlank()) { "Email cannot be blank" }
-        require(email.matches(Regex(".+@.+"))) { "Invalid email format" }
-    }
-    
-    private fun toResponse(user: User) = UserResponse(
-        id = user.id,
-        name = user.name,
-        email = user.email,
-        createdAt = user.createdAt.toString()
-    )
-}
-```
-
-### Route Layer
-```kotlin
-// route/UserRoutes.kt
-fun Route.userRoutes(service: UserService) {
+// routes/UserRoutes.kt
+fun Route.userRoutes(controller: UserController) {
     route("/users") {
-        
-        get {
-            val users = service.findAll()
-            call.respond(HttpStatusCode.OK, users)
-        }
-        
-        get("/{id}") {
-            val id = call.parameters["id"]?.toLongOrNull()
-                ?: return@get call.respond(
-                    HttpStatusCode.BadRequest,
-                    ErrorResponse(400, "Invalid ID")
-                )
-            
-            val user = service.findById(id)
-            call.respond(HttpStatusCode.OK, user)
-        }
-        
-        get("/search") {
-            val email = call.request.queryParameters["email"]
-            if (email == null) {
-                return@get call.respond(
-                    HttpStatusCode.BadRequest,
-                    ErrorResponse(400, "Email parameter is required")
-                )
-            }
-            
-            val user = service.findByEmail(email)
-            call.respond(HttpStatusCode.OK, user)
-        }
-        
-        post {
-            val request = call.receive<CreateUserRequest>()
-            val created = service.create(request)
-            call.respond(HttpStatusCode.Created, created)
-        }
-        
-        put("/{id}") {
-            val id = call.parameters["id"]?.toLongOrNull()
-                ?: return@put call.respond(
-                    HttpStatusCode.BadRequest,
-                    ErrorResponse(400, "Invalid ID")
-                )
-            
-            val request = call.receive<UpdateUserRequest>()
-            val updated = service.update(id, request)
-            call.respond(HttpStatusCode.OK, updated)
-        }
-        
-        delete("/{id}") {
-            val id = call.parameters["id"]?.toLongOrNull()
-                ?: return@delete call.respond(
-                    HttpStatusCode.BadRequest,
-                    ErrorResponse(400, "Invalid ID")
-                )
-            
-            service.delete(id)
-            call.respond(HttpStatusCode.NoContent)
-        }
+        get { controller.getAllUsers(call) }
+        get("/{id}") { controller.getUserById(call) }
+        post { controller.createUser(call) }
     }
 }
-```
 
-### Exception Layer
-```kotlin
-// exception/AppException.kt
-sealed class AppException(message: String) : RuntimeException(message)
-
-class NotFoundException(message: String) : AppException(message)
-class ConflictException(message: String) : AppException(message)
-class BadRequestException(message: String) : AppException(message)
-class UnauthorizedException(message: String = "Unauthorized") : AppException(message)
-
-// exception/StatusPages.kt
-@Serializable
-data class ErrorResponse(
-    val status: Int,
-    val message: String,
-    val timestamp: String = Instant.now().toString()
-)
-
-fun Application.configureStatusPages() {
-    install(StatusPages) {
-        exception<NotFoundException> { call, cause ->
-            call.respond(
-                HttpStatusCode.NotFound,
-                ErrorResponse(404, cause.message ?: "Not found")
-            )
-        }
-        
-        exception<ConflictException> { call, cause ->
-            call.respond(
-                HttpStatusCode.Conflict,
-                ErrorResponse(409, cause.message ?: "Conflict")
-            )
-        }
-        
-        exception<BadRequestException> { call, cause ->
-            call.respond(
-                HttpStatusCode.BadRequest,
-                ErrorResponse(400, cause.message ?: "Bad request")
-            )
-        }
-        
-        exception<UnauthorizedException> { call, cause ->
-            call.respond(
-                HttpStatusCode.Unauthorized,
-                ErrorResponse(401, cause.message ?: "Unauthorized")
-            )
-        }
-        
-        exception<IllegalArgumentException> { call, cause ->
-            call.respond(
-                HttpStatusCode.BadRequest,
-                ErrorResponse(400, cause.message ?: "Bad request")
-            )
-        }
-        
-        exception<Throwable> { call, cause ->
-            call.application.log.error("Unhandled exception", cause)
-            call.respond(
-                HttpStatusCode.InternalServerError,
-                ErrorResponse(500, "Internal server error")
-            )
-        }
+// controllers/UserController.kt
+class UserController(private val userService: UserService) {
+    suspend fun getAllUsers(call: ApplicationCall) {
+        val users = userService.findAll()
+        call.respond(HttpStatusCode.OK, users)
     }
-}
-```
-
-### Configuration Layer
-```kotlin
-// config/DatabaseConfig.kt
-object DatabaseConfig {
     
-    fun init() {
-        val jdbcURL = System.getenv("DATABASE_URL") ?: "jdbc:postgresql://localhost:5432/mydb"
-        val user = System.getenv("DATABASE_USER") ?: "user"
-        val password = System.getenv("DATABASE_PASSWORD") ?: "password"
-        
-        Database.connect(
-            url = jdbcURL,
-            driver = "org.postgresql.Driver",
-            user = user,
-            password = password
-        )
-        
-        transaction {
-            SchemaUtils.create(Users, Orders)
+    suspend fun createUser(call: ApplicationCall) {
+        val request = call.receive<CreateUserRequest>()
+        val user = userService.create(request)
+        call.respond(HttpStatusCode.Created, user)
+    }
+}
+
+// services/UserService.kt
+class UserService(private val repository: UserRepository) {
+    suspend fun findAll(): List<UserDto> = transaction {
+        repository.findAll().map { it.toDto() }
+    }
+    
+    suspend fun create(request: CreateUserRequest): UserDto = transaction {
+        // Business logic here
+        val user = User(email = request.email, name = request.name)
+        repository.save(user).toDto()
+    }
+}
+
+// repositories/UserRepository.kt
+class UserRepository {
+    fun findAll(): List<User> = transaction {
+        Users.selectAll().map { it.toUser() }
+    }
+    
+    fun save(user: User): User = transaction {
+        val id = Users.insertAndGetId {
+            it[email] = user.email
+            it[name] = user.name
         }
+        user.copy(id = id.value)
     }
 }
 ```
 
-### Plugins
+## Common Mistakes
+
+| Mistake | ❌ Wrong | ✅ Correct |
+|---------|---------|-----------|
+| **Skip Layers** | Route calls repository directly | Route → Controller → Service → Repository |
+| **Fat Controllers** | Business logic in controller | Move to service layer |
+| **Expose Models** | Return domain `User` from API | Return `UserDto` |
+| **Wrong Transaction Placement** | Transactions in controller | Transactions in service |
+
+## AI Self-Check
+
+- [ ] Strict layer flow: Routes → Controllers → Services → Repositories?
+- [ ] Controllers only validate and call services?
+- [ ] Business logic in service layer?
+- [ ] Data access only in repository layer?
+- [ ] Returns DTOs (NOT domain models)?
+- [ ] Transactions in service layer?
+- [ ] Dependency injection used?
+- [ ] No circular dependencies?
+- [ ] Each layer in correct directory?
+- [ ] Single Responsibility per class?
+
+## Dependency Injection
+
 ```kotlin
-// plugins/Routing.kt
-fun Application.configureRouting() {
-    DatabaseConfig.init()
-    
-    val userRepository = UserRepository(Database.connect())
+// Manual DI in Application.kt
+fun Application.module() {
+    val userRepository = UserRepository()
     val userService = UserService(userRepository)
+    val userController = UserController(userService)
     
     routing {
-        route("/api") {
-            userRoutes(userService)
-            // Add other routes
-        }
+        userRoutes(userController)
     }
 }
-```
 
-### Main Application
-```kotlin
-// Application.kt
-fun main() {
-    embeddedServer(Netty, port = 8080, host = "0.0.0.0") {
-        module()
-    }.start(wait = true)
-}
-
-fun Application.module() {
-    configureSerialization()
-    configureSecurity()
-    configureMonitoring()
-    configureStatusPages()
-    configureRouting()
+// Or use Koin
+val appModule = module {
+    single { UserRepository() }
+    single { UserService(get()) }
+    single { UserController(get()) }
 }
 ```
 
-## Benefits
-- Familiar structure
-- Clear technical separation
-- Easy to understand
-- Works well for CRUD apps
+## Key Principles
 
-## When to Use
-- Traditional web applications
-- Teams familiar with layered architecture
-- CRUD-focused APIs
-- When technical separation is preferred
-
+- **Layering**: Strict one-way dependencies (top → bottom)
+- **Separation**: Each layer has distinct responsibility
+- **Testability**: Easy to mock dependencies
+- **Maintainability**: Changes isolated to specific layers
