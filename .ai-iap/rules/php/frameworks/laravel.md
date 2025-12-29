@@ -1,433 +1,273 @@
 # Laravel Framework
 
-> **Scope**: Apply these rules when working with Laravel applications.
+> **Scope**: Apply these rules when working with Laravel 9+ applications
+> **Applies to**: PHP files in Laravel projects
+> **Extends**: php/architecture.md, php/code-style.md
+> **Precedence**: Framework rules OVERRIDE PHP rules for Laravel-specific patterns
 
-## Overview
+## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
 
-Laravel is a PHP web framework emphasizing elegant syntax, developer experience, and modern features. It provides a complete ecosystem including ORM (Eloquent), routing, authentication, queuing, and more.
-
-**Key Capabilities**:
-- **Eloquent ORM**: Active Record pattern for database
-- **Blade Templates**: Powerful templating engine
-- **Artisan CLI**: Code generation and tasks
-- **Queue System**: Background job processing
-- **API Resources**: Transform models for JSON responses
+> **ALWAYS**: Use Eloquent ORM for database access (type-safe, queryable)
+> **ALWAYS**: Validate requests with Form Requests (NOT in controllers)
+> **ALWAYS**: Use resource controllers for REST APIs (standard actions)
+> **ALWAYS**: Return API resources for responses (NOT raw Eloquent models)
+> **ALWAYS**: Use Laravel's dependency injection (constructor injection)
+> 
+> **NEVER**: Use DB::raw without parameter binding (SQL injection risk)
+> **NEVER**: Return Eloquent models directly from controllers (exposes internals)
+> **NEVER**: Put business logic in controllers (use services/actions)
+> **NEVER**: Validate in controllers (use Form Requests)
+> **NEVER**: Use env() outside config files (breaks caching)
 
 ## Pattern Selection
 
-### Controller Organization
-**Use Single Action Controllers when**:
-- Controller has one responsibility
-- Route has complex logic
-- Want explicit naming
+| Pattern | Use When | Keywords |
+|---------|----------|----------|
+| Resource Controllers | REST APIs | `Route::apiResource()`, CRUD methods |
+| Form Requests | Validation | `FormRequest`, `rules()`, `authorize()` |
+| API Resources | API responses | `JsonResource`, `toArray()` |
+| Eloquent Models | Database entities | `Model`, relationships |
+| Services/Actions | Business logic | Single responsibility classes |
 
-**Use Resource Controllers when**:
-- Standard CRUD operations
-- RESTful API
-- Following conventions
+## Core Patterns
 
-### Data Flow
-**Controllers MUST**:
-- Validate using Form Requests
-- Delegate to Actions/Services
-- Return Resources (NOT models)
-
-**Services/Actions MUST**:
-- Contain business logic
-- Be framework-agnostic
-- Return domain objects
-
-### Validation Strategy
-**Use Form Requests when**:
-- HTTP validation
-- Authorization logic needed
-- Want reusable validation
-
-**Use Validator facade when**:
-- Simple one-off validation
-- Testing scenarios
-
-## 1. Controllers
-- **Thin Controllers**: Validate, delegate, respond.
-- **Form Requests**: Move validation to dedicated classes.
-- **API Resources**: Transform models for responses.
-- **Single Action**: Use `__invoke()` for single-action controllers.
-
+### Resource Controller (Thin)
 ```php
-// ✅ Good
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Requests\StoreUserRequest;
+use App\Http\Resources\UserResource;
+use App\Services\UserService;
+use Illuminate\Http\Resources\Json\ResourceCollection;
+
 class UserController extends Controller
 {
-    public function store(StoreUserRequest $request, CreateUserAction $action): UserResource
+    public function __construct(
+        private UserService $userService
+    ) {}
+    
+    public function index(): ResourceCollection
     {
-        $user = $action->execute($request->validated());
+        $users = $this->userService->getAll();
+        return UserResource::collection($users);
+    }
+    
+    public function store(StoreUserRequest $request): UserResource
+    {
+        $user = $this->userService->create($request->validated());
+        return new UserResource($user);
+    }
+    
+    public function show(int $id): UserResource
+    {
+        $user = $this->userService->findById($id);
         return new UserResource($user);
     }
 }
-
-// ❌ Bad - Logic in controller
-public function store(Request $request)
-{
-    $request->validate(['email' => 'required|email']);
-    $user = User::create($request->all());
-    return response()->json($user);
-}
 ```
 
-## 2. Eloquent
-- **Scopes**: Encapsulate query logic.
-- **Accessors/Mutators**: Use `Attribute` cast (Laravel 9+).
-- **Relationships**: Define all relationships.
-- **No Raw Queries in Controllers**: Use scopes or repositories.
-
+### Form Request (Validation)
 ```php
-// ✅ Good - Query scope
-class User extends Model
-{
-    public function scopeActive(Builder $query): Builder
-    {
-        return $query->where('status', 'active');
-    }
-}
+<?php
 
-// Usage
-User::active()->get();
-```
+namespace App\Http\Requests;
 
-## 3. Validation
-- **Form Requests**: Dedicated validation classes.
-- **Custom Rules**: Create `Rule` classes for complex validation.
-- **Messages**: Define custom error messages.
+use Illuminate\Foundation\Http\FormRequest;
 
-```php
-class StoreUserRequest extends FormRequest
-{
-    public function rules(): array
-    {
-        return [
-            'email' => ['required', 'email', 'unique:users'],
-            'password' => ['required', Password::min(8)->mixedCase()],
-        ];
-    }
-}
-```
-
-## 4. Services & Actions
-- **Services**: Stateless classes for complex business logic.
-- **Actions**: Single-purpose classes (`CreateUser`, `SendInvoice`).
-- **Dependency Injection**: Inject via constructor.
-
-```php
-// ✅ Good - Action class
-class CreateUserAction
-{
-    public function __construct(private UserRepository $users) {}
-
-    public function execute(array $data): User
-    {
-        return $this->users->create($data);
-    }
-}
-```
-
-## 5. API Resources
-- **Transform Data**: Never expose models directly.
-- **Conditional Fields**: Use `when()` for optional fields.
-- **Collections**: Use `ResourceCollection` for lists.
-
-```php
-class UserResource extends JsonResource
-{
-    public function toArray(Request $request): array
-    {
-        return [
-            'id' => $this->id,
-            'name' => $this->name,
-            'email' => $this->email,
-            'posts' => PostResource::collection($this->whenLoaded('posts')),
-        ];
-    }
-}
-```
-
-## 6. Events & Listeners
-- **Decouple Logic**: Fire events for side effects.
-- **Queued Listeners**: For heavy operations (emails, notifications).
-- **Observers**: For model lifecycle events.
-
-## Best Practices
-
-**MUST**:
-- Use Form Requests for validation (NO validation in controllers)
-- Return API Resources (NEVER expose models directly)
-- Use Actions/Services for business logic (thin controllers)
-- Use Eloquent scopes for reusable queries
-- Use database transactions for multi-step operations
-
-**SHOULD**:
-- Use single action controllers for complex operations
-- Use route model binding for automatic entity loading
-- Use API Resources for all JSON responses
-- Use queued listeners for heavy operations
-- Use factories for test data
-
-**AVOID**:
-- Logic in controllers (use Actions/Services)
-- Raw queries in controllers (use scopes/repositories)
-- Exposing models in API responses
-- Validation in controllers
-- God controllers (split into smaller controllers)
-
-## Common Patterns
-
-### Form Requests + Actions
-```php
-// ✅ GOOD: Form Request for validation
-// app/Http/Requests/StoreUserRequest.php
 class StoreUserRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('create', User::class);
+        return true;  // Or check permissions
     }
-
+    
     public function rules(): array
     {
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'unique:users'],
-            'password' => ['required', Password::min(8)->mixedCase()->numbers()],
+            'password' => ['required', 'min:8', 'confirmed'],
         ];
     }
-}
-
-// app/Actions/CreateUserAction.php
-class CreateUserAction
-{
-    public function __construct(
-        private UserRepository $users,
-        private HashService $hasher
-    ) {}
-
-    public function execute(array $data): User
+    
+    public function messages(): array
     {
-        $data['password'] = $this->hasher->make($data['password']);
-        return $this->users->create($data);
-    }
-}
-
-// app/Http/Controllers/UserController.php
-class UserController extends Controller
-{
-    public function store(
-        StoreUserRequest $request, 
-        CreateUserAction $action
-    ): UserResource {
-        $user = $action->execute($request->validated());  // Type-safe, validated
-        return new UserResource($user);
-    }
-}
-
-// ❌ BAD: Everything in controller
-class UserController extends Controller
-{
-    public function store(Request $request)
-    {
-        $request->validate([  // Validation in controller
-            'email' => 'required|email|unique:users',
-        ]);
-        
-        $user = User::create([  // Business logic in controller
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
-        
-        return response()->json($user);  // Exposing model
+        return [
+            'email.unique' => 'This email is already registered.',
+        ];
     }
 }
 ```
 
-### API Resources
+### API Resource (Response Transformation)
 ```php
-// ✅ GOOD: API Resource transforms data
-// app/Http/Resources/UserResource.php
+<?php
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Resources\Json\JsonResource;
+
 class UserResource extends JsonResource
 {
-    public function toArray(Request $request): array
+    public function toArray($request): array
     {
         return [
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
-            'created_at' => $this->created_at->toIso8601String(),
-            // Conditional fields
+            'created_at' => $this->created_at->toISOString(),
             'posts' => PostResource::collection($this->whenLoaded('posts')),
-            'admin' => $this->when($this->isAdmin(), true),
-            // NO password, internal fields
         ];
     }
 }
-
-// Usage in controller
-public function show(User $user): UserResource
-{
-    return new UserResource($user->load('posts'));  // Eager load
-}
-
-// ❌ BAD: Exposing model directly
-public function show(User $user)
-{
-    return response()->json($user);  // Exposes ALL fields including password
-}
 ```
 
-### Eloquent Scopes
+### Eloquent Model
 ```php
-// ✅ GOOD: Reusable query scopes
-// app/Models/User.php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
 class User extends Model
 {
-    public function scopeActive(Builder $query): Builder
+    use HasFactory;
+    
+    protected $fillable = ['name', 'email', 'password'];
+    protected $hidden = ['password', 'remember_token'];
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'created_at' => 'datetime',
+    ];
+    
+    public function posts(): HasMany
     {
-        return $query->where('status', 'active')
-                    ->whereNotNull('email_verified_at');
-    }
-
-    public function scopeWithRecentPosts(Builder $query, int $days = 30): Builder
-    {
-        return $query->with(['posts' => function ($q) use ($days) {
-            $q->where('created_at', '>=', now()->subDays($days));
-        }]);
-    }
-
-    public function scopeSearch(Builder $query, string $term): Builder
-    {
-        return $query->where(function ($q) use ($term) {
-            $q->where('name', 'like', "%{$term}%")
-              ->orWhere('email', 'like', "%{$term}%");
-        });
+        return $this->hasMany(Post::class);
     }
 }
-
-// Usage (chainable, readable)
-$users = User::active()
-            ->withRecentPosts(7)
-            ->search($request->query('q'))
-            ->paginate(20);
-
-// ❌ BAD: Raw queries in controller
-$users = User::where('status', 'active')
-            ->whereNotNull('email_verified_at')
-            ->with(['posts' => function ($q) {
-                $q->where('created_at', '>=', now()->subDays(30));
-            }])
-            ->get();  // Repeated in multiple places
 ```
 
-### Transactions
+### Service Layer (Business Logic)
 ```php
-// ✅ GOOD: Transaction for multi-step operations
-use Illuminate\Support\Facades\DB;
+<?php
 
-class CreateOrderAction
+namespace App\Services;
+
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+
+class UserService
 {
-    public function execute(array $items, User $user): Order
+    public function create(array $data): User
     {
-        return DB::transaction(function () use ($items, $user) {
-            // All or nothing
-            $order = Order::create([
-                'user_id' => $user->id,
-                'total' => $this->calculateTotal($items),
-            ]);
-
-            foreach ($items as $item) {
-                $order->items()->create($item);
-                
-                // Update inventory
-                Product::find($item['product_id'])
-                       ->decrement('stock', $item['quantity']);
-            }
-
-            // Send notification
-            $user->notify(new OrderCreatedNotification($order));
-
-            return $order;
-        });  // Auto-rollback on any exception
+        return User::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+        ]);
+    }
+    
+    public function findById(int $id): User
+    {
+        return User::with('posts')->findOrFail($id);
     }
 }
-
-// ❌ BAD: No transaction (partial state possible)
-$order = Order::create(['user_id' => $user->id]);
-$order->items()->createMany($items);  // If this fails, order exists!
-Product::find($item['product_id'])->decrement('stock', $qty);  // Inconsistent
 ```
 
-### Route Model Binding
+## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
+
+| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
+|---------|---------|-----------|--------------|
+| **Exposing Models** | Return `User` model from controller | Return `UserResource` | Exposes all fields, breaks encapsulation |
+| **Validation in Controller** | Validate in controller method | Use `FormRequest` | Code duplication, violates SRP |
+| **Business Logic in Controller** | Controller does DB queries, logic | Service layer | Untestable, unmaintainable |
+| **DB::raw Without Binding** | `DB::raw("WHERE id = $id")` | Use Eloquent or bindings | SQL injection vulnerability |
+| **env() Outside Config** | `env('APP_KEY')` in code | `config('app.key')` | Breaks config caching |
+
+### Anti-Pattern: Exposing Eloquent Models (FORBIDDEN)
 ```php
-// ✅ GOOD: Automatic model loading
-// routes/api.php
-Route::get('/users/{user}', [UserController::class, 'show']);
-
-// Controller
-public function show(User $user): UserResource
+// ❌ WRONG - Returns raw Eloquent model
+public function show(int $id)
 {
-    return new UserResource($user);  // Already loaded, 404 if not found
+    return User::findOrFail($id);  // Exposes all fields, password hash!
 }
 
-// Custom key binding
-public function resolveRouteBinding($value, $field = null)
-{
-    return $this->where('slug', $value)->firstOrFail();
-}
-
-// ❌ BAD: Manual loading
+// ✅ CORRECT - Returns API Resource
 public function show(int $id): UserResource
 {
-    $user = User::findOrFail($id);  // Manual, repetitive
+    $user = $this->userService->findById($id);
+    return new UserResource($user);  // Controls exposed fields
+}
+```
+
+### Anti-Pattern: Validation in Controller (LEGACY)
+```php
+// ❌ WRONG - Validation in controller
+public function store(Request $request)
+{
+    $request->validate([
+        'email' => 'required|email|unique:users',
+        'name' => 'required|string|max:255',
+    ]);  // Repeated across controllers
+    
+    $user = User::create($request->all());
+    return response()->json($user);
+}
+
+// ✅ CORRECT - Form Request
+public function store(StoreUserRequest $request): UserResource
+{
+    $user = $this->userService->create($request->validated());
     return new UserResource($user);
 }
 ```
 
-## Common Anti-Patterns
+## AI Self-Check (Verify BEFORE generating Laravel code)
 
-**❌ Fat controllers**:
+- [ ] Using resource controllers for REST APIs?
+- [ ] Validation in Form Requests? (NOT in controllers)
+- [ ] Returning API Resources? (NOT raw models)
+- [ ] Business logic in services? (NOT in controllers)
+- [ ] Constructor injection for dependencies?
+- [ ] Using Eloquent (NOT raw SQL without bindings)?
+- [ ] Using config() (NOT env() outside config files)?
+- [ ] Mass assignment protection? ($fillable or $guarded)
+- [ ] Relationships defined in models?
+- [ ] Following Laravel conventions?
+
+## Routing
+
 ```php
-// BAD
-public function store(Request $request)
-{
-    // 50 lines of validation, business logic, DB operations
-}
+// routes/api.php
+Route::apiResource('users', UserController::class);
+
+// Equivalent to:
+Route::get('/users', [UserController::class, 'index']);
+Route::post('/users', [UserController::class, 'store']);
+Route::get('/users/{id}', [UserController::class, 'show']);
+Route::put('/users/{id}', [UserController::class, 'update']);
+Route::delete('/users/{id}', [UserController::class, 'destroy']);
 ```
 
-**✅ Thin controllers**:
-```php
-// GOOD
-public function store(StoreUserRequest $request, CreateUserAction $action): UserResource
-{
-    return new UserResource($action->execute($request->validated()));
-}
-```
+## Eloquent Relationships
 
-**❌ N+1 queries**:
-```php
-// BAD
-$users = User::all();
-foreach ($users as $user) {
-    echo $user->posts->count();  // Query for each user!
-}
-```
+| Type | Method | Example |
+|------|--------|---------|
+| One-to-Many | `hasMany()`, `belongsTo()` | User → Posts |
+| Many-to-Many | `belongsToMany()` | Users ↔ Roles |
+| One-to-One | `hasOne()`, `belongsTo()` | User → Profile |
+| Has-Many-Through | `hasManyThrough()` | Country → Posts (via Users) |
 
-**✅ Eager loading**:
-```php
-// GOOD
-$users = User::withCount('posts')->get();  // Single query
-foreach ($users as $user) {
-    echo $user->posts_count;
-}
-```
+## Key Features
 
-## 7. Testing
-- **Feature Tests**: Test HTTP endpoints with `RefreshDatabase`
-- **Unit Tests**: Test services/actions in isolation
-- **Factories**: Use factories for test data (NOT manual creation)
-- **RefreshDatabase**: Clean state per test
-
+- **Eloquent ORM**: Type-safe database access
+- **Migrations**: Version-controlled schema changes
+- **Seeders**: Test/sample data
+- **Factories**: Model factories for testing
+- **Queues**: Background job processing
+- **Events**: Event-driven architecture

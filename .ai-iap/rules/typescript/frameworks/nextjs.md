@@ -1,361 +1,263 @@
 # Next.js Framework
 
-> **Scope**: Apply these rules when working with Next.js applications (App Router preferred)
-> **Applies to**: *.tsx files in Next.js projects (v13+)
-> **Extends**: typescript/frameworks/react.md
-> **Precedence**: Next.js rules OVERRIDE React rules for SSR/RSC patterns
+> **Scope**: Apply these rules when working with Next.js 13+ (App Router) applications
+> **Applies to**: TypeScript files in Next.js projects
+> **Extends**: typescript/architecture.md, typescript/frameworks/react.md
+> **Precedence**: Framework rules OVERRIDE React rules for Next.js-specific patterns
 
 ## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
 
-> **ALWAYS**: Use App Router (app/ directory) for new projects (Pages Router deprecated)
-> **ALWAYS**: Default to Server Components (only add 'use client' when needed)
-> **ALWAYS**: Use async/await in Server Components for data fetching
-> **ALWAYS**: Keep client components small and leaf-level
-> **ALWAYS**: Use Server Actions for mutations
+> **ALWAYS**: Use App Router (NOT Pages Router for new code)
+> **ALWAYS**: Use Server Components by default (opt-in to Client Components)
+> **ALWAYS**: Add 'use client' directive for client-side interactivity
+> **ALWAYS**: Use Server Actions for mutations (NOT API routes)
+> **ALWAYS**: Implement loading.tsx and error.tsx for better UX
 > 
-> **NEVER**: Use 'use client' unless component needs hooks/interactivity
-> **NEVER**: Fetch data in Client Components (use Server Components or Server Actions)
-> **NEVER**: Import Server Components into Client Components (breaks hydration)
-> **NEVER**: Use useEffect for data fetching (use Server Components instead)
-> **NEVER**: Mix Pages Router and App Router patterns
-
-## Overview
-
-Next.js is a React metaframework providing server-side rendering, static generation, and API routes. The App Router (introduced in v13) is the recommended approach, offering React Server Components, improved layouts, and better data fetching patterns.
-
-**Key Capabilities**:
-- **Server Components**: Default rendering on server (zero JS to client)
-- **File-based Routing**: Folder structure defines URL structure
-- **Full-Stack**: API routes, server actions, middleware
-- **Performance**: Automatic image/font optimization, streaming, caching
+> **NEVER**: Use Pages Router in new projects (legacy)
+> **NEVER**: Fetch data in Client Components (use Server Components)
+> **NEVER**: Use useEffect for data fetching (use async Server Components)
+> **NEVER**: Forget 'use client' when using hooks (causes errors)
+> **NEVER**: Expose secrets in Client Components (use Server Components/Actions)
 
 ## Pattern Selection
 
-### Component Type Selection
-**Use Server Component (default) when**:
-- Fetching data (DB, API)
-- Reading environment variables
-- No interactivity needed
-- Want to reduce bundle size
+| Pattern | Use When | Keywords |
+|---------|----------|----------|
+| Server Components | Default for all components | No 'use client', can be async |
+| Client Components | Interactivity, hooks, browser APIs | `'use client'` at top |
+| Server Actions | Form submissions, mutations | `'use server'`, async functions |
+| Route Handlers | API endpoints | `route.ts`, `GET`, `POST` |
+| Parallel Routes | Multiple content areas | `@slot` folders |
 
-**Use Client Component ('use client') when**:
-- Using React hooks (useState, useEffect, useContext)
-- Browser APIs (localStorage, window)
-- Event handlers (onClick, onChange)
-- Third-party libraries requiring client-side
+## Core Patterns
 
-**Example**:
-```tsx
-// ✅ Server Component - Default, best for data fetching
-async function UserList() {
-  const users = await prisma.user.findMany();  // Direct DB access
-  return <ul>{users.map(u => <UserCard key={u.id} user={u} />)}</ul>;
-}
-
-// ✅ Client Component - Only when interactivity needed
-'use client';
-function SearchInput() {
-  const [query, setQuery] = useState('');  // Needs useState
-  return <input value={query} onChange={(e) => setQuery(e.target.value)} />;
-}
-```
-
-### Data Fetching Strategy
-**Use Server Component async/await when**:
-- Initial page data
-- SEO-critical content
-- Data doesn't change per user
-
-**Use Server Actions when**:
-- Form submissions
-- Mutations from client components
-- Need to revalidate cache
-
-**Use Route Handlers when**:
-- Building an API
-- Webhooks
-- Third-party integrations
-
-### Caching Strategy
-**Use Static (default) when**:
-- Content doesn't change often (docs, marketing)
-- Can regenerate on build
-
-**Use ISR (Incremental Static Regeneration) when**:
-- Content changes periodically (blog, products)
-- Set `revalidate` time in seconds
-
-**Use Dynamic when**:
-- User-specific content (dashboard)
-- Real-time data
-- Use `export const dynamic = 'force-dynamic'`
-
-## 1. App Router Structure
-```
-app/
-├── (auth)/                 # Route group (no URL impact)
-│   ├── login/page.tsx
-│   └── register/page.tsx
-├── dashboard/
-│   ├── page.tsx            # /dashboard
-│   ├── layout.tsx          # Shared layout
-│   └── [id]/page.tsx       # /dashboard/:id
-├── api/
-│   └── users/route.ts      # API route
-├── layout.tsx              # Root layout
-└── page.tsx                # Home page
-```
-
-## 2. Server vs Client Components
-- **Default to Server**: Components are Server Components by default.
-- **'use client'**: Only when needed (interactivity, hooks, browser APIs).
-- **Composition**: Server components can wrap client components.
-
-```tsx
-// ✅ Good - Server Component (default)
-async function UserList() {
-  const users = await db.users.findMany();  // Direct DB access
-  return <ul>{users.map(u => <li key={u.id}>{u.name}</li>)}</ul>;
-}
-
-// ✅ Good - Client Component (when needed)
-'use client';
-function Counter() {
-  const [count, setCount] = useState(0);
-  return <button onClick={() => setCount(c => c + 1)}>{count}</button>;
+### Server Component (Default)
+```typescript
+// app/users/page.tsx
+export default async function UsersPage() {
+  // ✅ Fetch directly in Server Component
+  const users = await fetch('https://api.example.com/users').then(r => r.json())
+  
+  return (
+    <div>
+      <h1>Users</h1>
+      {users.map(user => (
+        <div key={user.id}>{user.name}</div>
+      ))}
+    </div>
+  )
 }
 ```
 
-## 3. Data Fetching
-- **Server Components**: Fetch directly with async/await.
-- **Route Handlers**: For API endpoints (`app/api/*/route.ts`).
-- **Server Actions**: For mutations from client components.
+### Client Component (Opt-in)
+```typescript
+// app/components/Counter.tsx
+'use client'  // ✅ Required for hooks and interactivity
 
-```tsx
-// ✅ Good - Server Action
-'use server';
-export async function createUser(formData: FormData) {
-  const user = await db.users.create({ data: { name: formData.get('name') } });
-  revalidatePath('/users');
-  return user;
+import { useState } from 'react'
+
+export function Counter() {
+  const [count, setCount] = useState(0)
+  
+  return (
+    <button onClick={() => setCount(count + 1)}>
+      Count: {count}
+    </button>
+  )
 }
 ```
 
-## 4. Caching & Revalidation
-- **Static by Default**: Pages are cached at build time.
-- **revalidatePath**: Invalidate specific paths.
-- **revalidateTag**: Invalidate by cache tag.
-- **Dynamic**: Use `export const dynamic = 'force-dynamic'` when needed.
+### Server Actions (Mutations)
+```typescript
+// app/actions.ts
+'use server'
 
-## 5. Routing
-- **File-based**: Folder structure = URL structure.
-- **Dynamic Routes**: `[param]` for dynamic segments.
-- **Catch-all**: `[...slug]` for multiple segments.
-- **Parallel Routes**: `@modal` for simultaneous routes.
-
-## 6. Loading & Error States
-- **loading.tsx**: Automatic loading UI.
-- **error.tsx**: Error boundary per route.
-- **not-found.tsx**: 404 handling.
-
-```tsx
-// app/users/loading.tsx
-export default function Loading() {
-  return <Skeleton />;
-}
-```
-
-## 7. Metadata & SEO
-- **Export metadata**: Static metadata per page.
-- **generateMetadata**: Dynamic metadata.
-
-```tsx
-export const metadata: Metadata = {
-  title: 'Users',
-  description: 'User management page',
-};
-```
-
-## Best Practices
-
-**MUST**:
-- Use Server Components by default (NO unnecessary 'use client')
-- Use async/await for data fetching in Server Components
-- Return Response DTOs (NEVER expose DB entities directly)
-- Use revalidatePath/revalidateTag after mutations
-- Use next/image for ALL images (automatic optimization)
-
-**SHOULD**:
-- Use App Router (app/) NOT Pages Router (pages/)
-- Colocate components with routes (app/dashboard/components/)
-- Use loading.tsx and error.tsx for each route
-- Use Suspense boundaries for streaming
-- Use metadata exports for SEO
-
-**AVOID**:
-- Client Components for data fetching (use Server Components)
-- Fetching in useEffect (use Server Components or SWR)
-- Direct DB access in client components
-- Missing revalidation after mutations
-- Exposing API keys to client
-
-## Common Patterns
-
-### Server Actions (Forms & Mutations)
-```tsx
-// ✅ GOOD: Server Action with revalidation
-// app/actions/users.ts
-'use server';
-import { revalidatePath } from 'next/cache';
-import { prisma } from '@/lib/db';
+import { revalidatePath } from 'next/cache'
 
 export async function createUser(formData: FormData) {
-  const name = formData.get('name') as string;
-  const email = formData.get('email') as string;
+  const name = formData.get('name') as string
+  const email = formData.get('email') as string
   
-  // Validation
-  if (!name || !email) {
-    return { error: 'Name and email required' };
-  }
+  await db.user.create({ data: { name, email } })
   
-  // Mutation
-  const user = await prisma.user.create({
-    data: { name, email },
-  });
-  
-  // Revalidate affected pages
-  revalidatePath('/users');
-  return { success: true, user };
+  revalidatePath('/users')  // Revalidate cache
 }
 
-// Usage in Client Component
-'use client';
-export function UserForm() {
+// app/users/new/page.tsx
+import { createUser } from '../actions'
+
+export default function NewUserPage() {
   return (
     <form action={createUser}>
       <input name="name" required />
       <input name="email" type="email" required />
       <button type="submit">Create</button>
     </form>
-  );
-}
-
-// ❌ BAD: Using API route + fetch (unnecessary complexity)
-'use client';
-export function UserForm() {
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    await fetch('/api/users', {
-      method: 'POST',
-      body: JSON.stringify({ name, email }),
-    });  // Extra API route, no type safety, manual revalidation
-  };
+  )
 }
 ```
 
-### Caching & Revalidation
-```tsx
-// ✅ GOOD: ISR with time-based revalidation
-export const revalidate = 3600;  // Revalidate every hour
+### Route Handler (API Endpoint)
+```typescript
+// app/api/users/route.ts
+import { NextResponse } from 'next/server'
 
-async function BlogPosts() {
-  const posts = await fetch('https://api.blog.com/posts', {
-    next: { revalidate: 3600 },  // Cache for 1 hour
-  });
-  return <PostList posts={posts} />;
+export async function GET() {
+  const users = await db.user.findMany()
+  return NextResponse.json(users)
 }
 
-// ✅ GOOD: Tag-based revalidation
-async function fetchPosts() {
-  return fetch('https://api.blog.com/posts', {
-    next: { tags: ['posts'] },  // Tag for selective revalidation
-  });
-}
-
-// In server action:
-revalidateTag('posts');  // Invalidate all posts
-
-// ❌ BAD: No caching strategy
-async function fetchPosts() {
-  return fetch('https://api.blog.com/posts');  // No caching config
+export async function POST(request: Request) {
+  const body = await request.json()
+  const user = await db.user.create({ data: body })
+  return NextResponse.json(user, { status: 201 })
 }
 ```
 
-### Server + Client Composition
-```tsx
-// ✅ GOOD: Server Component wraps Client Component
-// app/dashboard/page.tsx (Server Component)
-async function DashboardPage() {
-  const user = await getUser();  // Server-side data fetching
+### Loading & Error States
+```typescript
+// app/users/loading.tsx
+export default function Loading() {
+  return <div>Loading users...</div>
+}
+
+// app/users/error.tsx
+'use client'
+
+export default function Error({
+  error,
+  reset,
+}: {
+  error: Error
+  reset: () => void
+}) {
   return (
     <div>
-      <Header user={user} />
-      <InteractiveDashboard userId={user.id} />  {/* Client Component */}
+      <h2>Error: {error.message}</h2>
+      <button onClick={reset}>Try again</button>
     </div>
-  );
-}
-
-// app/dashboard/InteractiveDashboard.tsx
-'use client';
-export function InteractiveDashboard({ userId }: { userId: string }) {
-  const [data, setData] = useState(null);
-  // Interactive logic here
-}
-
-// ❌ BAD: Making entire page client component
-'use client';  // Unnecessary - loses server benefits
-async function DashboardPage() {
-  const user = await getUser();  // Won't work - can't use async in client
+  )
 }
 ```
 
-## Common Anti-Patterns
+## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
 
-**❌ Fetching in useEffect (Client Component)**:
-```tsx
-// BAD
-'use client';
-function Users() {
-  const [users, setUsers] = useState([]);
+| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
+|---------|---------|-----------|--------------|
+| **Using Pages Router** | `pages/index.tsx` for new projects | `app/page.tsx` (App Router) | Pages Router is legacy |
+| **Client Component for Data** | `'use client'` + `useEffect` to fetch | Server Component with async | Extra client JS, slower |
+| **Missing 'use client'** | Using hooks without directive | Add `'use client'` at top | Runtime error |
+| **API Routes for Mutations** | POST to `/api/users` | Server Actions | More performant, simpler |
+| **Exposing Secrets Client-Side** | API keys in Client Component | Server Component/Action | Security vulnerability |
+
+### Anti-Pattern: Pages Router (LEGACY)
+```typescript
+// ❌ WRONG - Pages Router (legacy)
+// pages/users.tsx
+export default function Users({ users }) {
+  return <div>{users.map(u => u.name)}</div>
+}
+
+export async function getServerSideProps() {
+  const users = await fetch('...').then(r => r.json())
+  return { props: { users } }
+}
+
+// ✅ CORRECT - App Router
+// app/users/page.tsx
+export default async function UsersPage() {
+  const users = await fetch('...').then(r => r.json())
+  return <div>{users.map(u => u.name)}</div>
+}
+```
+
+### Anti-Pattern: Client-Side Data Fetching (SLOW)
+```typescript
+// ❌ WRONG - Fetch in Client Component
+'use client'
+import { useEffect, useState } from 'react'
+
+export default function Users() {
+  const [users, setUsers] = useState([])
+  
   useEffect(() => {
-    fetch('/api/users').then(r => r.json()).then(setUsers);
-  }, []);  // Extra API route, no SSR, slower
+    fetch('/api/users')
+      .then(r => r.json())
+      .then(setUsers)
+  }, [])
+  
+  return <div>{users.map(u => u.name)}</div>
+}
+
+// ✅ CORRECT - Fetch in Server Component
+export default async function Users() {
+  const users = await fetch('...').then(r => r.json())
+  return <div>{users.map(u => u.name)}</div>
 }
 ```
 
-**✅ Use Server Component instead**:
-```tsx
-// GOOD
-async function Users() {
-  const users = await prisma.user.findMany();  // Direct DB access, SSR
-  return <UserList users={users} />;
-}
+## AI Self-Check (Verify BEFORE generating Next.js code)
+
+- [ ] Using App Router? (`app/` directory, NOT `pages/`)
+- [ ] Server Components by default? (No 'use client' unless needed)
+- [ ] 'use client' for interactivity? (Hooks, event handlers)
+- [ ] Server Actions for mutations? (NOT API routes)
+- [ ] Async/await in Server Components? (Direct data fetching)
+- [ ] loading.tsx and error.tsx implemented?
+- [ ] No secrets in Client Components?
+- [ ] Using TypeScript for type safety?
+- [ ] Metadata exported from pages?
+- [ ] Following Next.js file conventions?
+
+## File Structure (App Router)
+
+```
+app/
+├── layout.tsx          # Root layout (required)
+├── page.tsx            # Home page
+├── loading.tsx         # Loading UI
+├── error.tsx           # Error UI
+├── not-found.tsx       # 404 page
+├── api/
+│   └── users/
+│       └── route.ts    # API route handler
+├── users/
+│   ├── page.tsx        # /users
+│   ├── [id]/
+│   │   └── page.tsx    # /users/:id
+│   └── actions.ts      # Server actions
+└── components/
+    └── Counter.tsx     # Client component
 ```
 
-**❌ Missing revalidation after mutations**:
-```tsx
-// BAD
-'use server';
-export async function deleteUser(id: string) {
-  await prisma.user.delete({ where: { id } });
-  // Missing revalidation! Cached pages show stale data
-}
+## Data Fetching
+
+| Method | Use Case | Location |
+|--------|----------|----------|
+| async Server Component | Page data | `app/page.tsx` |
+| Server Action | Form mutations | `'use server'` functions |
+| Route Handler | External API endpoint | `app/api/*/route.ts` |
+| Client fetch | Client-side updates | Client Components |
+
+## Caching & Revalidation
+
+```typescript
+// Force no cache
+fetch(url, { cache: 'no-store' })
+
+// Revalidate every 60 seconds
+fetch(url, { next: { revalidate: 60 } })
+
+// Revalidate path after mutation
+import { revalidatePath, revalidateTag } from 'next/cache'
+revalidatePath('/users')
+revalidateTag('users')
 ```
 
-**✅ Always revalidate affected paths**:
-```tsx
-// GOOD
-'use server';
-export async function deleteUser(id: string) {
-  await prisma.user.delete({ where: { id } });
-  revalidatePath('/users');  // Update cached pages
-  revalidatePath(`/users/${id}`);
-}
-```
+## Key Features
 
-## 8. Performance
-- **Image Optimization**: Use `next/image` for automatic optimization
-- **Font Optimization**: Use `next/font` for self-hosting
-- **Static Generation**: Prefer SSG over SSR when possible
-- **Streaming**: Use Suspense for progressive loading
-
+- **Server Components**: Default, faster, SEO-friendly
+- **Streaming**: Progressive rendering with Suspense
+- **Server Actions**: Form handling without API routes
+- **Image Optimization**: `next/image` component
+- **Font Optimization**: `next/font` module
