@@ -1,292 +1,168 @@
-# AdonisJS Modular/Domain Structure
+# AdonisJS Modular Architecture
 
-> **Scope**: Use this structure for large AdonisJS apps organized by domain/module.
-> **Precedence**: When loaded, this structure overrides any default folder organization from the base AdonisJS rules.
+> **Scope**: Apply to AdonisJS projects using modular/domain-driven architecture
+> **Applies to**: TypeScript files in AdonisJS modular projects
+> **Extends**: typescript/architecture.md, typescript/frameworks/adonisjs.md
+> **Precedence**: Structure rules OVERRIDE framework rules
 
-## Project Structure
+## Structure Overview
 
 ```
 app/
-├── modules/                    # Feature modules
+├── modules/
 │   ├── user/
 │   │   ├── controllers/
 │   │   │   └── users_controller.ts
 │   │   ├── models/
 │   │   │   └── user.ts
-│   │   ├── services/
-│   │   │   └── user_service.ts
 │   │   ├── validators/
 │   │   │   └── user_validator.ts
-│   │   ├── events/
-│   │   │   ├── user_registered.ts
-│   │   │   └── user_updated.ts
-│   │   ├── listeners/
-│   │   │   └── send_welcome_email.ts
-│   │   ├── middleware/
-│   │   │   └── user_ownership.ts
-│   │   └── routes.ts          # Module-specific routes
+│   │   ├── services/
+│   │   │   └── user_service.ts
+│   │   └── routes.ts
 │   ├── post/
 │   │   ├── controllers/
 │   │   ├── models/
-│   │   ├── services/
 │   │   └── routes.ts
 │   └── auth/
 │       ├── controllers/
-│       ├── services/
-│       ├── validators/
+│       ├── middleware/
 │       └── routes.ts
-├── shared/                     # Cross-module utilities
+├── shared/
 │   ├── services/
-│   │   └── email_service.ts
 │   ├── middleware/
-│   │   └── rate_limiter.ts
-│   └── exceptions/
-│       └── business_exception.ts
-└── core/                      # Core application logic
-    ├── database/
-    └── types/
-config/                        # Configuration files
-database/
-├── migrations/
-├── seeders/
-└── factories/
-start/
-├── kernel.ts
-├── routes.ts                  # Imports all module routes
-└── events.ts
-tests/
-├── unit/
-│   ├── user/
-│   └── post/
-└── functional/
-    ├── user/
-    └── post/
+│   └── validators/
+└── start/
+    └── routes.ts (imports module routes)
 ```
 
-## Module Structure
+## Module Responsibilities
 
-Each module is self-contained with its own:
-- Controllers (HTTP layer)
-- Models (Data layer)
-- Services (Business logic)
-- Validators (Request validation)
-- Events & Listeners (Domain events)
-- Routes (Module routing)
+| Layer | Purpose | Dependencies |
+|-------|---------|--------------|
+| Controllers | HTTP handling | Services, validators |
+| Services | Business logic | Models, shared services |
+| Models | Data/ORM | None (Lucid models) |
+| Validators | Input validation | VineJS schemas |
+| Routes | Module endpoints | Controllers |
 
-### Example: User Module
+## Critical Rules
 
-**controllers/users_controller.ts**
+> **ALWAYS**: Keep modules self-contained (feature-first)
+> **ALWAYS**: Use shared/ for cross-module code
+> **ALWAYS**: Export module routes from routes.ts
+> **ALWAYS**: Use dependency injection for services
+> **ALWAYS**: Keep controllers thin (delegate to services)
+> 
+> **NEVER**: Import from other modules (use shared/)
+> **NEVER**: Put business logic in controllers
+> **NEVER**: Create circular dependencies between modules
+> **NEVER**: Mix unrelated features in one module
+> **NEVER**: Skip module route registration
+
+## Example Implementation
+
+### Module Structure
 ```typescript
+// app/modules/user/routes.ts
+import router from '@adonisjs/core/services/router'
+
+router.group(() => {
+  router.get('/', 'UsersController.index')
+  router.get('/:id', 'UsersController.show')
+  router.post('/', 'UsersController.store')
+}).prefix('/users')
+
+// app/start/routes.ts
+import './modules/user/routes'
+import './modules/post/routes'
+```
+
+### Controller
+```typescript
+// app/modules/user/controllers/users_controller.ts
 import { HttpContext } from '@adonisjs/core/http'
 import { inject } from '@adonisjs/core'
-import UserService from '#modules/user/services/user_service'
-import { createUserValidator, updateUserValidator } from '#modules/user/validators/user_validator'
+import UserService from '../services/user_service'
 
 @inject()
 export default class UsersController {
   constructor(protected userService: UserService) {}
-
+  
   async index({ response }: HttpContext) {
-    const users = await this.userService.getAll()
+    const users = await this.userService.findAll()
     return response.ok(users)
   }
-
-  async store({ request, response }: HttpContext) {
-    const payload = await request.validateUsing(createUserValidator)
-    const user = await this.userService.create(payload)
-    return response.created(user)
-  }
-
-  async show({ params, response }: HttpContext) {
-    const user = await this.userService.findById(params.id)
-    return response.ok(user)
-  }
-
-  async update({ params, request, response }: HttpContext) {
-    const payload = await request.validateUsing(updateUserValidator)
-    const user = await this.userService.update(params.id, payload)
-    return response.ok(user)
-  }
-
-  async destroy({ params, response }: HttpContext) {
-    await this.userService.delete(params.id)
-    return response.noContent()
-  }
 }
 ```
 
-**services/user_service.ts**
+### Service
 ```typescript
-import { inject } from '@adonisjs/core'
-import User from '#modules/user/models/user'
-import hash from '@adonisjs/core/services/hash'
-import emitter from '@adonisjs/core/services/emitter'
-import UserRegistered from '#modules/user/events/user_registered'
+// app/modules/user/services/user_service.ts
+import User from '../models/user'
 
-@inject()
 export default class UserService {
-  async create(data: { email: string; password: string; fullName: string }) {
-    const hashedPassword = await hash.make(data.password)
-    
-    const user = await User.create({
-      ...data,
-      password: hashedPassword,
-    })
-
-    // Emit domain event
-    emitter.emit(new UserRegistered(user))
-
-    return user
+  async findAll() {
+    return User.all()
   }
-
-  async getAll() {
-    return User.query().orderBy('createdAt', 'desc')
-  }
-
-  async findById(id: number) {
-    return User.findOrFail(id)
-  }
-
-  async update(id: number, data: Partial<User>) {
-    const user = await this.findById(id)
-    await user.merge(data).save()
-    return user
-  }
-
-  async delete(id: number) {
-    const user = await this.findById(id)
-    await user.delete()
+  
+  async create(data: any) {
+    return User.create(data)
   }
 }
 ```
 
-**routes.ts**
-```typescript
-import router from '@adonisjs/core/services/router'
-import { middleware } from '#start/kernel'
+## Common Mistakes
 
-const UsersController = () => import('#modules/user/controllers/users_controller')
+| Mistake | ❌ Wrong | ✅ Correct |
+|---------|---------|-----------|
+| **Cross-module Imports** | Import from `../post/` | Use `shared/` |
+| **Monolithic Modules** | One huge module | Split by feature/domain |
+| **No Shared Code** | Duplicate utilities | Extract to `shared/` |
+| **Wrong Organization** | By layer (all controllers/) | By feature (user/, post/) |
 
-export default function userRoutes() {
-  router.group(() => {
-    router.resource('users', UsersController).apiOnly()
-    router.post('users/:id/follow', [UsersController, 'follow'])
-  }).prefix('/api/v1').middleware(middleware.auth())
-}
-```
+## AI Self-Check
 
-## Global Routes File
-
-**start/routes.ts**
-```typescript
-import router from '@adonisjs/core/services/router'
-
-// Import module routes
-import userRoutes from '#modules/user/routes'
-import postRoutes from '#modules/post/routes'
-import authRoutes from '#modules/auth/routes'
-
-// Health check
-router.get('/health', () => ({ status: 'ok' }))
-
-// Register module routes
-userRoutes()
-postRoutes()
-authRoutes()
-```
-
-## Shared Services
-
-**shared/services/email_service.ts**
-```typescript
-import { inject } from '@adonisjs/core'
-import mail from '@adonisjs/mail/services/main'
-
-@inject()
-export default class EmailService {
-  async sendWelcome(email: string, name: string) {
-    await mail.send((message) => {
-      message
-        .to(email)
-        .subject('Welcome!')
-        .htmlView('emails/welcome', { name })
-    })
-  }
-
-  async sendPasswordReset(email: string, token: string) {
-    await mail.send((message) => {
-      message
-        .to(email)
-        .subject('Reset Password')
-        .htmlView('emails/reset-password', { token })
-    })
-  }
-}
-```
-
-## Rules
-
-- **Self-Contained Modules**: Each module has all its layers
-- **Module Routes**: Each module exports its own routes
-- **Domain Events**: Use events for cross-module communication
-- **Shared Services**: Only truly generic code in shared/
-- **No Cross-Module Imports**: Modules communicate via events or shared services
-- **Core for Infrastructure**: Database, types, configs in core/
-
-## When to Use
-
-- Large applications (10+ domain entities)
-- Multiple developers/teams
-- Clear domain boundaries
-- Need for module isolation
-- Microservices candidates
+- [ ] Modules organized by feature/domain?
+- [ ] Self-contained modules (no cross-imports)?
+- [ ] Shared code in shared/ directory?
+- [ ] Module routes registered in start/routes.ts?
+- [ ] Controllers use dependency injection?
+- [ ] Business logic in services?
+- [ ] Each module has clear responsibility?
+- [ ] No circular dependencies?
 
 ## Module Communication
 
-### Via Events
 ```typescript
-// In user module
-emitter.emit(new UserRegistered(user))
-
-// In notification module
-export default class SendWelcomeNotification {
-  async handle(event: UserRegistered) {
-    // Cross-module communication via events
+// ✅ CORRECT - Via shared services
+// app/shared/services/notification_service.ts
+export default class NotificationService {
+  async send(userId: number, message: string) {
+    // Implementation
   }
 }
-```
 
-### Via Shared Services
-```typescript
-// In any module
-import EmailService from '#app/shared/services/email_service'
+// app/modules/user/services/user_service.ts
+import { inject } from '@adonisjs/core'
+import NotificationService from '#shared/services/notification_service'
 
 @inject()
-export default class SomeService {
-  constructor(protected emailService: EmailService) {}
+export default class UserService {
+  constructor(protected notifications: NotificationService) {}
   
-  async doSomething() {
-    await this.emailService.sendWelcome(email, name)
+  async create(data: any) {
+    const user = await User.create(data)
+    await this.notifications.send(user.id, 'Welcome!')
+    return user
   }
 }
 ```
 
-## Testing
+## Key Principles
 
-Tests should mirror module structure:
-
-```
-tests/
-├── unit/
-│   ├── user/
-│   │   ├── user_service.spec.ts
-│   │   └── user_validator.spec.ts
-│   └── post/
-│       └── post_service.spec.ts
-└── functional/
-    ├── user/
-    │   └── users.spec.ts
-    └── post/
-        └── posts.spec.ts
-```
-
+- **Feature-First**: Organize by business domain
+- **Self-Contained**: Modules are independent
+- **Shared Resources**: Common code in shared/
+- **Clear Boundaries**: No cross-module dependencies
+- **Scalability**: Easy to add/remove modules
