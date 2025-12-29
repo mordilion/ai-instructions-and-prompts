@@ -46,7 +46,7 @@
       "globs": "*",
       "alwaysApply": true,
       "description": "General coding standards",
-      "files": ["persona", "architecture", "code-style", "security"]
+      "files": ["persona", "architecture", "code-style", "security", "commit-standards"]
     },
     "dart": {
       "name": "Dart/Flutter",
