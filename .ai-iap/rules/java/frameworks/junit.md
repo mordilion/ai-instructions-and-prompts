@@ -1,11 +1,26 @@
 # JUnit Testing Framework
 
-> **Scope**: Apply these rules when writing tests with JUnit 5 (Jupiter).
+> **Scope**: Testing with JUnit 5 (Jupiter)
+> **Applies to**: Java test files using JUnit
+> **Extends**: java/architecture.md, java/code-style.md
 
-## 1. Test Structure
-- **Given-When-Then**: Structure tests clearly.
-- **One Assertion per Test**: Focus on single behavior.
-- **Descriptive Names**: Test names should describe what is being tested.
+## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
+
+> **ALWAYS**: Use Given-When-Then structure
+> **ALWAYS**: Use descriptive test names (methodName_Condition_ExpectedResult)
+> **ALWAYS**: Use AssertJ for fluent assertions
+> **ALWAYS**: Mock dependencies with Mockito
+> **ALWAYS**: One assertion per test (or use assertAll)
+> 
+> **NEVER**: Test multiple behaviors in one test
+> **NEVER**: Use generic test names (test1, test2)
+> **NEVER**: Skip cleanup (@AfterEach)
+> **NEVER**: Ignore test coverage for critical paths
+> **NEVER**: Use Thread.sleep() (use awaitility)
+
+## Core Patterns
+
+### Test Structure (Given-When-Then)
 
 ```java
 @ExtendWith(MockitoExtension.class)
@@ -48,136 +63,150 @@ class UserServiceTest {
 }
 ```
 
-## 2. Assertions
-- **AssertJ**: Use AssertJ for fluent assertions.
-- **Multiple Assertions**: Use `assertAll()` for related assertions.
+### Assertions (AssertJ)
 
 ```java
 @Test
 void createUser_ValidRequest_ReturnsUser() {
     // Given
-    CreateUserRequest request = new CreateUserRequest("test@example.com", "Test User");
+    CreateUserRequest request = new CreateUserRequest("test@example.com", "Test");
     
     // When
     UserDto result = userService.createUser(request);
     
-    // Then
-    assertAll(
-        () -> assertThat(result.id()).isNotNull(),
-        () -> assertThat(result.email()).isEqualTo("test@example.com"),
-        () -> assertThat(result.name()).isEqualTo("Test User"),
-        () -> assertThat(result.active()).isTrue()
-    );
+    // Then (AssertJ fluent assertions)
+    assertThat(result)
+        .isNotNull()
+        .extracting(UserDto::email, UserDto::name)
+        .containsExactly("test@example.com", "Test");
+}
+
+@Test
+void getAllUsers_ReturnsMultipleUsers() {
+    // Then (collections)
+    assertThat(users)
+        .hasSize(3)
+        .extracting(User::getEmail)
+        .containsExactly("user1@test.com", "user2@test.com", "user3@test.com");
 }
 ```
 
-## 3. Parameterized Tests
-- **@ParameterizedTest**: Test multiple inputs.
-- **@ValueSource**: Simple value inputs.
-- **@CsvSource**: Multiple parameters.
+### Parameterized Tests
 
 ```java
-@ParameterizedTest
-@ValueSource(strings = {"", "  ", "invalid"})
-void validateEmail_InvalidEmail_ThrowsException(String email) {
-    assertThrows(IllegalArgumentException.class, 
-        () -> validator.validateEmail(email));
-}
-
 @ParameterizedTest
 @CsvSource({
     "test@example.com, true",
-    "invalid, false",
-    "@example.com, false"
+    "invalid-email, false",
+    "'', false"
 })
-void isValidEmail_VariousInputs_ReturnsExpected(String email, boolean expected) {
-    assertThat(validator.isValidEmail(email)).isEqualTo(expected);
+void validateEmail_VariousInputs_ReturnsExpected(String email, boolean expected) {
+    boolean result = validator.isValidEmail(email);
+    assertThat(result).isEqualTo(expected);
+}
+
+@ParameterizedTest
+@ValueSource(ints = {1, 3, 5, 7, 9})
+void isOdd_OddNumbers_ReturnsTrue(int number) {
+    assertThat(MathUtils.isOdd(number)).isTrue();
 }
 ```
 
-## 4. Mocking (Mockito)
-- **@Mock**: Mock dependencies.
-- **@InjectMocks**: Inject mocks into class under test.
-- **Verification**: Verify interactions.
+### Test Lifecycle
 
 ```java
+@BeforeEach
+void setUp() {
+    // Initialize test data
+    userService = new UserService(userRepository);
+}
+
+@AfterEach
+void tearDown() {
+    // Clean up resources
+}
+
+@BeforeAll
+static void setUpClass() {
+    // One-time setup
+}
+
+@AfterAll
+static void tearDownClass() {
+    // One-time cleanup
+}
+```
+
+## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
+
+| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
+|---------|---------|-----------|--------------|
+| **Generic Names** | `test1()`, `testUser()` | `getUser_WhenExists_ReturnsUser()` | Clarity |
+| **Multiple Behaviors** | Test 5 things in one | One test per behavior | Isolation |
+| **No Mocking** | Use real DB | Mock dependencies | Speed, isolation |
+| **Thread.sleep** | `Thread.sleep(1000)` | Awaitility | Flaky tests |
+
+### Anti-Pattern: Generic Test Names (UNMAINTAINABLE)
+
+```java
+// ❌ WRONG: Generic names
 @Test
-void createUser_ValidRequest_SavesUser() {
-    // Given
-    CreateUserRequest request = new CreateUserRequest("test@example.com", "Test");
-    User savedUser = User.builder().id(1L).email(request.email()).build();
-    when(userRepository.save(any(User.class))).thenReturn(savedUser);
-    
-    // When
-    userService.createUser(request);
-    
-    // Then
-    verify(userRepository).save(argThat(user -> 
-        user.getEmail().equals("test@example.com") &&
-        user.getName().equals("Test")
-    ));
-}
+void test1() { ... }
+
+@Test
+void testUser() { ... }
+
+// ✅ CORRECT: Descriptive names
+@Test
+void getUser_WhenUserExists_ReturnsUser() { ... }
+
+@Test
+void getUser_WhenUserNotFound_ThrowsException() { ... }
 ```
 
-## 5. Integration Tests (Spring Boot)
-- **@SpringBootTest**: Full application context.
-- **@WebMvcTest**: Test controllers only.
-- **@DataJpaTest**: Test JPA repositories only.
+## AI Self-Check (Verify BEFORE generating JUnit tests)
 
-```java
-@SpringBootTest
-@AutoConfigureMockMvc
-class UserControllerIntegrationTest {
-    @Autowired
-    private MockMvc mockMvc;
-    
-    @Test
-    void createUser_ValidRequest_ReturnsCreated() throws Exception {
-        mockMvc.perform(post("/api/users")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                    {
-                        "email": "test@example.com",
-                        "name": "Test User"
-                    }
-                    """))
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.email").value("test@example.com"))
-            .andExpect(jsonPath("$.name").value("Test User"));
-    }
-}
-```
+- [ ] Given-When-Then structure?
+- [ ] Descriptive test names?
+- [ ] AssertJ assertions?
+- [ ] Mockito for mocking?
+- [ ] One behavior per test?
+- [ ] @BeforeEach/@AfterEach for setup/cleanup?
+- [ ] Parameterized tests for multiple inputs?
+- [ ] verify() calls for behavior verification?
+- [ ] No Thread.sleep()?
+- [ ] Test covers critical paths?
 
-## 6. Test Lifecycle
-- **@BeforeEach**: Setup before each test.
-- **@AfterEach**: Cleanup after each test.
-- **@BeforeAll**: Setup once before all tests (must be static).
+## Key Annotations
 
-```java
-class UserServiceTest {
-    private UserService userService;
-    
-    @BeforeEach
-    void setUp() {
-        userService = new UserService(new InMemoryUserRepository());
-    }
-    
-    @AfterEach
-    void tearDown() {
-        // Cleanup if needed
-    }
-    
-    @Test
-    void test() {
-        // ...
-    }
-}
-```
+| Annotation | Purpose |
+|------------|---------|
+| `@Test` | Mark test method |
+| `@ParameterizedTest` | Multiple inputs |
+| `@BeforeEach/@AfterEach` | Setup/cleanup |
+| `@Mock` | Mockito mock |
+| `@InjectMocks` | Inject mocks |
+| `@ExtendWith` | JUnit extension |
+| `@Disabled` | Skip test |
 
-## 7. Best Practices
-- **Test Naming**: `methodName_condition_expectedResult`
-- **Arrange-Act-Assert**: Clear test structure
-- **Don't Test Framework Code**: Only test your business logic
-- **Fast Tests**: Unit tests should run in milliseconds
-- **Independent Tests**: Tests should not depend on execution order
+## Best Practices
 
+**MUST**:
+- Given-When-Then
+- Descriptive names
+- AssertJ assertions
+- Mock dependencies
+- One behavior per test
+
+**SHOULD**:
+- Parameterized tests
+- Test lifecycle methods
+- verify() for interactions
+- Test coverage tools
+
+**AVOID**:
+- Generic test names
+- Multiple behaviors
+- Real dependencies
+- Thread.sleep()
+- Flaky tests

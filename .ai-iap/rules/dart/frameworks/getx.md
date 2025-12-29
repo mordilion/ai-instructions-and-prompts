@@ -1,185 +1,88 @@
 # GetX Framework
 
-> **Scope**: Apply these rules when using GetX for state management, routing, and DI in Flutter.
+> **Scope**: State management, routing, and DI for Flutter with GetX
+> **Applies to**: Dart files using GetX in Flutter
+> **Extends**: dart/architecture.md, dart/code-style.md
 
-## Overview
+## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
 
-GetX is a lightweight yet powerful Flutter framework providing state management, dependency injection, and route management in a single package.
+> **ALWAYS**: Use GetxController (NOT StatefulWidget)
+> **ALWAYS**: Use .obs for reactive variables
+> **ALWAYS**: Use bindings for dependency injection
+> **ALWAYS**: Use Get.find() to access controllers
+> **ALWAYS**: Dispose in onClose()
+> 
+> **NEVER**: Instantiate controllers directly (use Get.put/Get.lazyPut)
+> **NEVER**: Use StatefulWidget with GetX
+> **NEVER**: Skip onClose() cleanup
+> **NEVER**: Overuse Get.find() (use GetView)
+> **NEVER**: Create global state unless needed
 
-**Key Capabilities**:
-- **Reactive State**: .obs variables for reactivity
-- **Routing**: Named routes with parameters
-- **Dependency Injection**: Get.put, Get.lazyPut
-- **All-in-One**: State + Routes + DI + Utils
-- **Minimal Boilerplate**: Less code than BLoC/Provider
+## Core Patterns
 
-## Best Practices
-
-**MUST**:
-- Use GetxController (NOT StatefulWidget)
-- Use .obs for reactive variables
-- Use bindings for dependency injection
-- Use Get.find() to access controllers
-- Dispose in onClose()
-
-**SHOULD**:
-- Use GetView for widgets with controllers
-- Use Get.to() for navigation (NOT Navigator.push)
-- Use Obx() or GetX() for reactive UI
-- Organize by features (modules)
-- Use GetMaterialApp as root
-
-**AVOID**:
-- Direct controller instantiation (use Get.put/Get.lazyPut)
-- StatefulWidget when using GetX
-- Missing onClose() cleanup
-- Overusing Get.find() (use GetView)
-- Global state when not needed
-
-## 1. Project Structure
-```
-lib/
-├── app/
-│   ├── bindings/           # Dependency injection
-│   ├── routes/             # Route definitions
-│   └── translations/       # i18n
-├── data/
-│   ├── models/
-│   ├── providers/          # API clients
-│   └── repositories/
-└── modules/
-    └── auth/
-        ├── bindings/auth_binding.dart
-        ├── controllers/auth_controller.dart
-        └── views/login_view.dart
-```
-
-## 2. Controllers
-- **GetxController**: For reactive state management.
-- **.obs**: Make variables observable.
-- **onInit/onClose**: Lifecycle methods.
+### Controller (GetxController)
 
 ```dart
-class AuthController extends GetxController {
-  final AuthRepository _authRepository;
-  AuthController(this._authRepository);
-
-  // Observable state
-  final Rx<User?> user = Rx<User?>(null);
-  final RxBool isLoading = false.obs;
-  final RxString error = ''.obs;
-
-  // Getters
-  bool get isLoggedIn => user.value != null;
-
+class UserController extends GetxController {
+  final UserRepository _repository;
+  UserController(this._repository);
+  
+  final users = <User>[].obs;
+  final isLoading = false.obs;
+  final error = Rxn<String>();
+  
   @override
   void onInit() {
     super.onInit();
-    ever(user, _onUserChanged);  // React to user changes
+    loadUsers();
   }
-
-  void _onUserChanged(User? user) {
-    if (user != null) {
-      Get.offAllNamed('/home');
-    }
-  }
-
-  Future<void> login(String email, String password) async {
-    isLoading.value = true;
-    error.value = '';
+  
+  Future<void> loadUsers() async {
     try {
-      user.value = await _authRepository.login(email, password);
+      isLoading.value = true;
+      error.value = null;
+      users.value = await _repository.getUsers();
     } catch (e) {
       error.value = e.toString();
     } finally {
       isLoading.value = false;
     }
   }
-}
-```
-
-## 3. Bindings
-- **Binding Classes**: Register dependencies per route.
-- **Lazy Injection**: Use `Get.lazyPut` for lazy loading.
-
-```dart
-class AuthBinding extends Bindings {
+  
   @override
-  void dependencies() {
-    Get.lazyPut(() => AuthRepository(Get.find()));
-    Get.lazyPut(() => AuthController(Get.find()));
-  }
-}
-
-// Global bindings
-class InitialBinding extends Bindings {
-  @override
-  void dependencies() {
-    Get.put(ApiClient(), permanent: true);
-    Get.put(StorageService(), permanent: true);
+  void onClose() {
+    // Clean up resources
+    super.onClose();
   }
 }
 ```
 
-## 4. Routing
-- **GetPage**: Define routes with bindings.
-- **Named Routes**: Always use named routes.
-- **Middleware**: For auth guards.
+### View (GetView)
 
 ```dart
-class AppRoutes {
-  static const home = '/home';
-  static const login = '/login';
-
-  static final routes = [
-    GetPage(
-      name: login,
-      page: () => LoginView(),
-      binding: AuthBinding(),
-    ),
-    GetPage(
-      name: home,
-      page: () => HomeView(),
-      binding: HomeBinding(),
-      middlewares: [AuthMiddleware()],
-    ),
-  ];
-}
-
-// Middleware
-class AuthMiddleware extends GetMiddleware {
-  @override
-  RouteSettings? redirect(String? route) {
-    final authController = Get.find<AuthController>();
-    return authController.isLoggedIn ? null : const RouteSettings(name: '/login');
-  }
-}
-```
-
-## 5. UI Integration
-- **GetBuilder**: Manual updates (update()).
-- **Obx**: Automatic reactive rebuilds.
-- **GetX**: Named reactive widget.
-
-```dart
-// ✅ Good - Obx for reactive
-class LoginView extends GetView<AuthController> {
+class UserView extends GetView<UserController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: Text('Users')),
       body: Obx(() {
         if (controller.isLoading.value) {
-          return const CircularProgressIndicator();
+          return Center(child: CircularProgressIndicator());
         }
-        return Column(
-          children: [
-            if (controller.error.value.isNotEmpty)
-              Text(controller.error.value, style: TextStyle(color: Colors.red)),
-            ElevatedButton(
-              onPressed: () => controller.login(email, password),
-              child: const Text('Login'),
-            ),
-          ],
+        
+        if (controller.error.value != null) {
+          return Center(child: Text('Error: ${controller.error.value}'));
+        }
+        
+        return ListView.builder(
+          itemCount: controller.users.length,
+          itemBuilder: (context, index) {
+            final user = controller.users[index];
+            return ListTile(
+              title: Text(user.name),
+              subtitle: Text(user.email),
+            );
+          },
         );
       }),
     );
@@ -187,27 +90,124 @@ class LoginView extends GetView<AuthController> {
 }
 ```
 
-## 6. Dialogs, Snackbars, Navigation
+### Bindings (Dependency Injection)
+
 ```dart
-// Navigation
-Get.toNamed('/home');
-Get.offAllNamed('/login');
-Get.back();
-
-// Dialogs
-Get.dialog(AlertDialog(title: Text('Confirm')));
-Get.defaultDialog(title: 'Alert', middleText: 'Message');
-
-// Snackbar
-Get.snackbar('Title', 'Message');
-
-// Bottom Sheet
-Get.bottomSheet(Container());
+class UserBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut<UserRepository>(() => UserRepositoryImpl());
+    Get.lazyPut<UserController>(() => UserController(Get.find()));
+  }
+}
 ```
 
-## 7. Best Practices
-- **GetView**: Extend for widgets with a single controller.
-- **Avoid**: Global state pollution, too many `Get.put()` calls.
-- **Prefer**: Bindings over manual `Get.put()`.
-- **Testing**: Use `Get.testMode = true` in tests.
+### Routes
 
+```dart
+class AppPages {
+  static const HOME = '/home';
+  static const USER_DETAILS = '/user/:id';
+  
+  static final routes = [
+    GetPage(
+      name: HOME,
+      page: () => HomeView(),
+      binding: HomeBinding(),
+    ),
+    GetPage(
+      name: USER_DETAILS,
+      page: () => UserDetailsView(),
+      binding: UserDetailsBinding(),
+    ),
+  ];
+}
+
+// Navigation
+Get.toNamed(AppPages.USER_DETAILS, arguments: {'id': userId});
+Get.back();
+```
+
+### App Setup
+
+```dart
+void main() {
+  runApp(GetMaterialApp(
+    title: 'My App',
+    initialRoute: AppPages.HOME,
+    getPages: AppPages.routes,
+    initialBinding: InitialBinding(),
+  ));
+}
+```
+
+## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
+
+| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
+|---------|---------|-----------|--------------|
+| **Direct Instantiation** | `UserController()` | `Get.put(UserController())` | Lifecycle management |
+| **StatefulWidget** | `StatefulWidget` + GetX | `GetView<Controller>` | Redundant state |
+| **No onClose** | Skip cleanup | Implement `onClose()` | Memory leak |
+| **Manual Rebuild** | `setState()` | `.obs` + `Obx()` | GetX pattern |
+
+### Anti-Pattern: Direct Controller Instantiation (LIFECYCLE DISASTER)
+
+```dart
+// ❌ WRONG: Direct instantiation
+class UserView extends StatelessWidget {
+  final controller = UserController();  // Wrong lifecycle!
+}
+
+// ✅ CORRECT: GetView + Binding
+class UserView extends GetView<UserController> {
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() => Text(controller.count.toString()));
+  }
+}
+```
+
+## AI Self-Check (Verify BEFORE generating GetX code)
+
+- [ ] Using GetxController?
+- [ ] .obs for reactive variables?
+- [ ] Bindings for DI?
+- [ ] GetView for widgets?
+- [ ] Obx() for reactive UI?
+- [ ] onClose() cleanup implemented?
+- [ ] Get.toNamed() for navigation?
+- [ ] Get.lazyPut() in bindings?
+- [ ] GetMaterialApp as root?
+- [ ] No StatefulWidget with GetX?
+
+## Key Features
+
+| Feature | Purpose | Keywords |
+|---------|---------|----------|
+| **GetxController** | State management | `.obs`, `update()` |
+| **Obx()** | Reactive widgets | Auto-rebuild |
+| **Bindings** | Dependency injection | `Get.put()`, `Get.lazyPut()` |
+| **Get.toNamed()** | Navigation | Named routes |
+| **GetView** | Controller access | No Get.find() calls |
+
+## Best Practices
+
+**MUST**:
+- GetxController for state
+- .obs for reactivity
+- Bindings for DI
+- Get.find() or GetView
+- onClose() cleanup
+
+**SHOULD**:
+- GetView over StatelessWidget
+- Get.toNamed() for navigation
+- Feature-based modules
+- GetMaterialApp root
+
+**AVOID**:
+- Direct controller instantiation
+- StatefulWidget
+- Missing onClose()
+- Overusing Get.find()
+- Global state
