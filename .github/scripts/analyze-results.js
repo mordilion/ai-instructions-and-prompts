@@ -6,8 +6,12 @@
  * Compares test results across multiple AI models to ensure consistency
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Parse command line arguments
 const resultsDir = process.argv[2] || './all-results';

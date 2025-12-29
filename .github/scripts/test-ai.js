@@ -6,8 +6,12 @@
  * Tests AI models against standardized prompts to ensure consistent code quality
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Parse command line arguments
 const args = process.argv.slice(2);
@@ -179,25 +183,29 @@ const testSuites = {
 // AI Provider clients
 async function createAIClient(provider) {
   switch (provider) {
-    case 'openai':
-      const { OpenAI } = await import('openai');
+    case 'openai': {
+      const { default: OpenAI } = await import('openai');
       return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    }
     
-    case 'anthropic':
-      const { Anthropic } = await import('@anthropic-ai/sdk');
+    case 'anthropic': {
+      const { default: Anthropic } = await import('@anthropic-ai/sdk');
       return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    }
     
-    case 'google':
+    case 'google': {
       const { GoogleGenerativeAI } = await import('@google/generative-ai');
       return new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+    }
     
-    case 'mistral':
+    case 'mistral': {
       // Use OpenAI-compatible API
-      const { OpenAI: MistralClient } = await import('openai');
-      return new MistralClient({
+      const { default: OpenAI } = await import('openai');
+      return new OpenAI({
         apiKey: process.env.MISTRAL_API_KEY,
         baseURL: 'https://api.mistral.ai/v1'
       });
+    }
     
     default:
       throw new Error(`Unknown provider: ${provider}`);
