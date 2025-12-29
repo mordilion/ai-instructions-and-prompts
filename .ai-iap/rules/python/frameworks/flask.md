@@ -1,318 +1,248 @@
 # Flask Framework
 
-## Overview
-Flask: lightweight, flexible Python web microframework with minimalist core.
-Philosophy: provide basics (routing, requests), you choose extensions (database, auth, etc.).
-Best for small to medium applications, APIs, and when you need maximum flexibility.
+> **Scope**: Apply these rules when working with Flask applications
+> **Applies to**: Python files in Flask projects
+> **Extends**: python/architecture.md, python/code-style.md
+> **Precedence**: Framework rules OVERRIDE Python rules for Flask-specific patterns
 
-## Basic Application
+## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
 
+> **ALWAYS**: Use blueprints for route organization
+> **ALWAYS**: Use application factory pattern
+> **ALWAYS**: Use Flask-SQLAlchemy or similar ORM
+> **ALWAYS**: Use environment variables for configuration
+> **ALWAYS**: Use proper error handlers
+> 
+> **NEVER**: Put routes in main app file (use blueprints)
+> **NEVER**: Use global app instance (use app factory)
+> **NEVER**: Hard-code configuration (use config objects)
+> **NEVER**: Return raw dictionaries (use jsonify)
+> **NEVER**: Skip CSRF protection for forms
+
+## Pattern Selection
+
+| Pattern | Use When | Keywords |
+|---------|----------|----------|
+| Application Factory | Always | `create_app()` function |
+| Blueprints | Route organization | `Blueprint()`, modular |
+| Flask-SQLAlchemy | Database ORM | `db.Model`, migrations |
+| Flask-Marshmallow | Serialization | Schema validation |
+| Flask-Login | Authentication | User session management |
+
+## Core Patterns
+
+### Application Factory
 ```python
-from flask import Flask, request, jsonify
-from werkzeug.exceptions import NotFound
-
-app = Flask(__name__)
-
-@app.route("/users", methods=["GET"])
-def get_users():
-    users = user_service.get_all()
-    return jsonify([user.to_dict() for user in users])
-
-@app.route("/users/<int:user_id>", methods=["GET"])
-def get_user(user_id):
-    user = user_service.get_by_id(user_id)
-    if not user:
-        raise NotFound("User not found")
-    return jsonify(user.to_dict())
-
-@app.route("/users", methods=["POST"])
-def create_user():
-    data = request.get_json()
-    user = user_service.create(data)
-    return jsonify(user.to_dict()), 201
-
-if __name__ == "__main__":
-    app.run(debug=True)
-```
-
-## Flask-SQLAlchemy
-
-```python
+# app/__init__.py
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from flask_migrate import Migrate
 
 db = SQLAlchemy()
+migrate = Migrate()
+
+def create_app(config_name='default'):
+    app = Flask(__name__)
+    app.config.from_object(f'config.{config_name}')
+    
+    db.init_app(app)
+    migrate.init_app(app, db)
+    
+    from app.users import users_bp
+    app.register_blueprint(users_bp, url_prefix='/users')
+    
+    return app
+```
+
+### Blueprint Organization
+```python
+# app/users/routes.py
+from flask import Blueprint, jsonify, request
+from app.models import User
+from app import db
+
+users_bp = Blueprint('users', __name__)
+
+@users_bp.route('/', methods=['GET'])
+def get_users():
+    users = User.query.all()
+    return jsonify([user.to_dict() for user in users])
+
+@users_bp.route('/', methods=['POST'])
+def create_user():
+    data = request.get_json()
+    user = User(name=data['name'], email=data['email'])
+    db.session.add(user)
+    db.session.commit()
+    return jsonify(user.to_dict()), 201
+
+@users_bp.route('/<int:id>', methods=['GET'])
+def get_user(id):
+    user = User.query.get_or_404(id)
+    return jsonify(user.to_dict())
+```
+
+### Model with SQLAlchemy
+```python
+# app/models.py
+from app import db
+from datetime import datetime
 
 class User(db.Model):
-    __tablename__ = "users"
+    __tablename__ = 'users'
     
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(100), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    posts = db.relationship("Post", backref="user", lazy="dynamic")
+    posts = db.relationship('Post', backref='author', lazy='dynamic')
     
     def to_dict(self):
         return {
-            "id": self.id,
-            "name": self.name,
-            "email": self.email
+            'id': self.id,
+            'name': self.name,
+            'email': self.email,
+            'created_at': self.created_at.isoformat()
         }
-
-# Initialize
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://user:pass@localhost/db"
-db.init_app(app)
-
-with app.app_context():
-    db.create_all()
 ```
 
-## Blueprints
-
+### Configuration
 ```python
-from flask import Blueprint
+# config.py
+import os
 
-users_bp = Blueprint("users", __name__, url_prefix="/api/users")
+class Config:
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key'
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-@users_bp.route("", methods=["GET"])
+class DevelopmentConfig(Config):
+    DEBUG = True
+
+class ProductionConfig(Config):
+    DEBUG = False
+
+config = {
+    'development': DevelopmentConfig,
+    'production': ProductionConfig,
+    'default': DevelopmentConfig
+}
+```
+
+## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
+
+| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
+|---------|---------|-----------|--------------|
+| **No App Factory** | Global `app = Flask(__name__)` | `create_app()` function | Not testable, inflexible |
+| **No Blueprints** | All routes in one file | Blueprints per module | Unmaintainable |
+| **Raw Dicts** | `return {'data': users}` | `return jsonify({'data': users})` | Wrong content-type |
+| **Hard-coded Config** | `app.config['KEY'] = 'value'` | Environment variables | Security risk |
+| **No Error Handlers** | Default Flask errors | Custom error handlers | Poor UX |
+
+### Anti-Pattern: No Application Factory (NOT TESTABLE)
+```python
+# ❌ WRONG - Global app instance
+from flask import Flask
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://...'  # Hard-coded!
+
+@app.route('/users')
 def get_users():
-    return jsonify([])
+    return {'users': []}
 
-@users_bp.route("/<int:user_id>", methods=["GET"])
-def get_user(user_id):
-    return jsonify({})
-
-# Register
-app.register_blueprint(users_bp)
-```
-
-## Request Validation (Marshmallow)
-
-```python
-from marshmallow import Schema, fields, validate, ValidationError
-
-class UserSchema(Schema):
-    id = fields.Int(dump_only=True)
-    name = fields.Str(required=True, validate=validate.Length(min=2, max=100))
-    email = fields.Email(required=True)
-
-user_schema = UserSchema()
-users_schema = UserSchema(many=True)
-
-@app.route("/users", methods=["POST"])
-def create_user():
-    try:
-        data = user_schema.load(request.get_json())
-    except ValidationError as err:
-        return jsonify(err.messages), 400
+# ✅ CORRECT - Application factory
+def create_app(config_name='default'):
+    app = Flask(__name__)
+    app.config.from_object(config[config_name])
     
-    user = user_service.create(data)
-    return jsonify(user_schema.dump(user)), 201
+    from app.users import users_bp
+    app.register_blueprint(users_bp)
+    
+    return app
 ```
+
+### Anti-Pattern: No Blueprints (UNMAINTAINABLE)
+```python
+# ❌ WRONG - All routes in one file
+@app.route('/users')
+def get_users(): pass
+
+@app.route('/posts')
+def get_posts(): pass
+
+@app.route('/comments')
+def get_comments(): pass
+# ... 50 more routes
+
+# ✅ CORRECT - Blueprints
+# users/routes.py
+users_bp = Blueprint('users', __name__)
+@users_bp.route('/')
+def get_users(): pass
+
+# posts/routes.py
+posts_bp = Blueprint('posts', __name__)
+@posts_bp.route('/')
+def get_posts(): pass
+```
+
+## AI Self-Check (Verify BEFORE generating Flask code)
+
+- [ ] Using application factory pattern?
+- [ ] Blueprints for route organization?
+- [ ] Configuration from environment variables?
+- [ ] Using Flask-SQLAlchemy for database?
+- [ ] Using jsonify for JSON responses?
+- [ ] Error handlers defined?
+- [ ] CSRF protection enabled?
+- [ ] Type hints on functions?
+- [ ] Proper status codes (200, 201, 404, etc.)?
+- [ ] Following Flask best practices?
 
 ## Error Handling
 
 ```python
-from werkzeug.exceptions import HTTPException
+from flask import jsonify
 
-class UserNotFoundException(Exception):
-    pass
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({'error': 'Not found'}), 404
 
-@app.errorhandler(UserNotFoundException)
-def handle_user_not_found(e):
-    return jsonify({"error": str(e)}), 404
-
-@app.errorhandler(ValidationError)
-def handle_validation_error(e):
-    return jsonify({"errors": e.messages}), 400
-
-@app.errorhandler(HTTPException)
-def handle_http_exception(e):
-    return jsonify({"error": e.description}), e.code
+@app.errorhandler(500)
+def internal_error(error):
+    db.session.rollback()
+    return jsonify({'error': 'Internal server error'}), 500
 ```
 
-## Authentication (Flask-JWT-Extended)
+## Migrations
 
-```python
-from flask_jwt_extended import (
-    JWTManager, create_access_token,
-    jwt_required, get_jwt_identity
-)
+```bash
+# Initialize migrations
+flask db init
 
-app.config["JWT_SECRET_KEY"] = "secret"
-jwt = JWTManager(app)
+# Create migration
+flask db migrate -m "Add users table"
 
-@app.route("/login", methods=["POST"])
-def login():
-    data = request.get_json()
-    user = user_service.authenticate(data["email"], data["password"])
-    if not user:
-        return jsonify({"error": "Invalid credentials"}), 401
-    
-    access_token = create_access_token(identity=user.id)
-    return jsonify({"access_token": access_token})
-
-@app.route("/profile", methods=["GET"])
-@jwt_required()
-def profile():
-    user_id = get_jwt_identity()
-    user = user_service.get_by_id(user_id)
-    return jsonify(user_schema.dump(user))
+# Apply migration
+flask db upgrade
 ```
 
-## Configuration
+## Key Extensions
 
-```python
-class Config:
-    SECRET_KEY = os.getenv("SECRET_KEY", "dev")
-    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
+| Extension | Purpose | Keywords |
+|-----------|---------|----------|
+| Flask-SQLAlchemy | ORM | `db.Model`, `db.session` |
+| Flask-Migrate | Migrations | `flask db migrate/upgrade` |
+| Flask-Login | Authentication | `login_required`, `current_user` |
+| Flask-Marshmallow | Serialization | Schema validation |
+| Flask-CORS | CORS support | Cross-origin requests |
 
-app.config.from_object(Config)
+## Key Features
 
-# Or from file
-app.config.from_pyfile("config.py")
-```
-
-## Middleware
-
-```python
-@app.before_request
-def log_request():
-    app.logger.info(f"{request.method} {request.path}")
-
-@app.after_request
-def add_header(response):
-    response.headers["X-Custom-Header"] = "value"
-    return response
-```
-
-## Testing
-
-```python
-import pytest
-
-@pytest.fixture
-def client():
-    app.config["TESTING"] = True
-    with app.test_client() as client:
-        yield client
-
-def test_get_users(client):
-    response = client.get("/users")
-    assert response.status_code == 200
-    assert isinstance(response.get_json(), list)
-
-def test_create_user(client):
-    response = client.post("/users", json={
-        "name": "John",
-        "email": "john@test.com"
-    })
-    assert response.status_code == 201
-```
-
-## Best Practices
-
-**MUST**:
-- Use Blueprints for applications with 3+ routes (modularity)
-- Use Flask-SQLAlchemy for database operations
-- Validate ALL input (use Marshmallow or Pydantic)
-- Use application factory pattern for testing/multiple configs
-- Register error handlers for consistent error responses
-
-**SHOULD**:
-- Use Flask-JWT-Extended for authentication (NOT custom JWT)
-- Use `current_app` instead of global `app` in modules
-- Use `g` object for request-scoped data
-- Use environment variables for config (`.env` file)
-- Use context managers for database sessions
-
-**AVOID**:
-- Global state (use application factory)
-- Manual SQL queries (use ORM)
-- Returning different error formats (use error handlers)
-- Storing secrets in code (use environment variables)
-- Direct access to `request.form` without validation
-
-## Pattern Selection
-
-### Function-Based vs Class-Based Views
-**Use function-based views when**:
-- Simple logic (< 30 lines)
-- Single endpoint
-- Quick prototypes
-
-**Use class-based views (MethodView) when**:
-- Multiple HTTP methods
-- Shared logic between methods
-- Need inheritance
-
-```python
-# Function-based (simple)
-@app.route('/users', methods=['GET'])
-def get_users():
-    return jsonify(User.query.all())
-
-# Class-based (multiple methods)
-from flask.views import MethodView
-
-class UserAPI(MethodView):
-    def get(self, user_id):
-        return jsonify(User.query.get_or_404(user_id))
-    
-    def put(self, user_id):
-        user = User.query.get_or_404(user_id)
-        user.name = request.json['name']
-        db.session.commit()
-        return jsonify(user)
-
-app.add_url_rule('/users/<int:user_id>', view_func=UserAPI.as_view('user_api'))
-```
-
-## Application Factory Pattern
-
-```python
-# app/__init__.py
-def create_app(config_name='default'):
-    app = Flask(__name__)
-    app.config.from_object(config[config_name])  # Load config
-    
-    # Initialize extensions
-    db.init_app(app)
-    jwt.init_app(app)
-    
-    # Register blueprints
-    from .api import api_bp
-    app.register_blueprint(api_bp, url_prefix='/api')
-    
-    # Register error handlers
-    register_error_handlers(app)
-    
-    return app
-
-# Usage
-app = create_app(os.getenv('FLASK_ENV', 'development'))
-```
-
-## Common Patterns
-
-### Request Lifecycle
-```python
-@app.before_request
-def before_request():
-    g.start_time = time.time()  # Store in request context
-    g.user = get_current_user()  # Auth check
-
-@app.after_request
-def after_request(response):
-    duration = time.time() - g.start_time
-    response.headers['X-Process-Time'] = str(duration)
-    return response
-
-@app.teardown_appcontext
-def teardown_db(exception):
-    db = g.pop('db', None)  # Clean up database connection
-    if db is not None:
-        db.close()
-```
+- **Blueprints**: Modular applications
+- **Jinja2**: Template engine
+- **Werkzeug**: WSGI toolkit
+- **Click**: CLI commands
+- **Development Server**: Built-in server

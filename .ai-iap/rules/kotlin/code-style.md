@@ -1,352 +1,262 @@
-# Kotlin Code Style Guidelines
+# Kotlin Code Style
 
-## Language Version
-- **Kotlin 1.9+** (2.0 recommended for latest features)
-- Enable explicit API mode for libraries
-- Use latest language features and stdlib
+> **Scope**: Apply these code style rules to all Kotlin files
+> **Applies to**: *.kt files across all Kotlin projects
+> **Precedence**: Language-specific style rules
+
+## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
+
+> **ALWAYS**: Use `val` for immutable variables (default)
+> **ALWAYS**: Use data classes for DTOs and value objects
+> **ALWAYS**: Use named arguments for functions with 3+ parameters
+> **ALWAYS**: Use expression body for single-expression functions
+> **ALWAYS**: Use null-safety operators (`?.`, `?:`, `!!`)
+> 
+> **NEVER**: Use `var` unless mutation is required
+> **NEVER**: Use `!!` (force unwrap) without justification
+> **NEVER**: Ignore null-safety (Kotlin's main feature)
+> **NEVER**: Use Java-style getters/setters (use properties)
+> **NEVER**: Use semicolons (not required in Kotlin)
+
+## Core Patterns
+
+| Pattern | Use When | Keywords |
+|---------|----------|----------|
+| `val` | Immutable (default) | Read-only, cannot reassign |
+| `var` | Mutable (when needed) | Can reassign |
+| Data classes | DTOs, value objects | `data class`, auto-generates equals/hashCode |
+| Sealed classes | Type hierarchies | Exhaustive when expressions |
+| Extension functions | Add functionality | `fun String.toTitleCase()` |
 
 ## Naming Conventions
 
-### Classes & Interfaces
 ```kotlin
-// PascalCase for classes
-class UserRepository { }
-data class User(val id: Long, val name: String)
-sealed class Result<out T>
+// Classes: PascalCase
+class UserService
+data class User(val id: Int, val name: String)
+sealed class Result<T>
 
-// Interfaces without 'I' prefix
-interface Repository { }
-interface DataSource { }
-```
-
-### Functions & Properties
-```kotlin
-// camelCase for functions and properties
-fun getUserById(id: Long): User?
+// Functions/variables: camelCase
+fun calculateTotal(items: List<Item>): BigDecimal
 val userName: String
-var isLoading: Boolean = false
+var isActive: Boolean
 
-// Boolean properties with 'is' prefix
-val isValid: Boolean
-val hasPermission: Boolean
-```
-
-### Constants
-```kotlin
-// UPPER_SNAKE_CASE for constants
-const val MAX_RETRY_COUNT = 3
+// Constants: UPPER_SNAKE_CASE
+const val MAX_RETRY_ATTEMPTS = 3
 const val API_BASE_URL = "https://api.example.com"
 
-// Companion object for class-level constants
-class Config {
-    companion object {
-        const val TIMEOUT_MS = 5000
-    }
-}
+// Private properties: leading underscore (optional)
+private val _users = mutableListOf<User>()
+val users: List<User> get() = _users.toList()
 ```
 
-## Immutability
+## Variables & Properties
 
-### Prefer val over var
 ```kotlin
-// ✅ Good - immutable
-val user = User(id = 1, name = "John")
+// ✅ CORRECT - Immutable by default
+val name = "John"
+val age = 30
 val items = listOf(1, 2, 3)
 
-// ❌ Avoid - mutable when not needed
-var user = User(id = 1, name = "John")  // Never reassigned
-```
+// ✅ CORRECT - Mutable when needed
+var count = 0
+count++
 
-### Use Immutable Collections
-```kotlin
-// ✅ Good - immutable lists
-val items: List<String> = listOf("a", "b", "c")
-val map: Map<String, Int> = mapOf("a" to 1)
+// ✅ CORRECT - Type inference
+val user = User(id = 1, name = "John")
 
-// ❌ Avoid - mutable when not needed
-val items: MutableList<String> = mutableListOf("a", "b", "c")
-```
+// ✅ CORRECT - Explicit type when needed
+val users: List<User> = repository.findAll()
 
-## Null Safety
-
-### Use Safe Calls and Elvis Operator
-```kotlin
-// ✅ Good - safe handling
-val length = text?.length ?: 0
-user?.name?.let { println(it) }
-
-// ❌ Avoid - non-null assertion
-val length = text!!.length  // Can crash!
-```
-
-### Prefer Non-Nullable Types
-```kotlin
-// ✅ Good - non-nullable when possible
-data class User(
-    val id: Long,
-    val name: String,
-    val email: String? = null  // Only nullable if truly optional
-)
-
-// ❌ Avoid - unnecessary nullability
-data class User(
-    val id: Long?,  // ID should never be null
-    val name: String?  // Name should never be null
-)
+// ❌ WRONG - Mutable by default
+var name = "John"  // Should be val if not mutated
 ```
 
 ## Functions
 
-### Use Expression Bodies
 ```kotlin
-// ✅ Good - concise expression body
+// ✅ CORRECT - Expression body for single expression
 fun double(x: Int): Int = x * 2
-fun isValid(user: User): Boolean = user.email.isNotEmpty()
+fun isValid(user: User): Boolean = user.age >= 18
 
-// ✅ Also good for single-line functions
-fun getFullName() = "$firstName $lastName"
-```
+// ✅ CORRECT - Block body for complex logic
+fun processUser(user: User): Result {
+    validateUser(user)
+    saveToDatabase(user)
+    return Result.Success(user)
+}
 
-### Named Arguments for Clarity
-```kotlin
-// ✅ Good - clear intent
+// ✅ CORRECT - Named arguments for readability
+fun createUser(
+    name: String,
+    email: String,
+    age: Int,
+    isActive: Boolean = true
+)
+
 createUser(
-    name = "John Doe",
+    name = "John",
     email = "john@example.com",
     age = 30
 )
 
-// ❌ Avoid - unclear what values mean
-createUser("John Doe", "john@example.com", 30)
-```
-
-### Default Parameters Instead of Overloads
-```kotlin
-// ✅ Good - single function with defaults
-fun fetchData(
-    url: String,
-    timeout: Long = 5000,
-    retryCount: Int = 3
-) { }
-
-// ❌ Avoid - multiple overloads
-fun fetchData(url: String) { }
-fun fetchData(url: String, timeout: Long) { }
-fun fetchData(url: String, timeout: Long, retryCount: Int) { }
+// ✅ CORRECT - Default parameters
+fun retry(times: Int = 3, delay: Long = 1000)
 ```
 
 ## Data Classes
 
-### Use data classes for DTOs
 ```kotlin
-// ✅ Good - automatic equals, hashCode, toString, copy
+// ✅ CORRECT - Data class for DTOs
 data class User(
-    val id: Long,
+    val id: Int,
     val name: String,
-    val email: String
+    val email: String,
+    val createdAt: LocalDateTime = LocalDateTime.now()
 )
 
-// Usage
-val updated = user.copy(name = "Jane Doe")
+// Auto-generates: equals(), hashCode(), toString(), copy()
+val user1 = User(1, "John", "john@example.com")
+val user2 = user1.copy(name = "Jane")  // Copy with modifications
 ```
 
-### Avoid data classes for behavior-rich entities
+## Null Safety
+
 ```kotlin
-// ✅ Good - regular class with behavior
-class Order(
-    val id: Long,
-    private val items: List<OrderItem>
-) {
-    fun calculateTotal(): Money = items.sumOf { it.price }
-    fun canBeCancelled(): Boolean = status == OrderStatus.PENDING
-}
+// ✅ CORRECT - Safe call operator
+val length = name?.length
+
+// ✅ CORRECT - Elvis operator
+val length = name?.length ?: 0
+
+// ✅ CORRECT - Safe cast
+val user = obj as? User
+
+// ✅ CORRECT - let for null checks
+name?.let { println("Name: $it") }
+
+// ⚠️ USE SPARINGLY - Force unwrap (only when certain)
+val length = name!!.length  // Crashes if null - justify in comments
 ```
 
-## Sealed Classes
+## Collections
 
-### Use for exhaustive state handling
 ```kotlin
-// ✅ Good - compile-time exhaustive checks
-sealed class Result<out T> {
-    data class Success<T>(val data: T) : Result<T>()
-    data class Error(val exception: Throwable) : Result<Nothing>()
-    data object Loading : Result<Nothing>()
+// ✅ CORRECT - Immutable collections (default)
+val items = listOf(1, 2, 3)
+val map = mapOf("a" to 1, "b" to 2)
+val set = setOf(1, 2, 3)
+
+// ✅ CORRECT - Mutable when needed
+val mutableItems = mutableListOf(1, 2, 3)
+mutableItems.add(4)
+
+// ✅ CORRECT - Collection operations
+val doubled = items.map { it * 2 }
+val filtered = items.filter { it > 1 }
+val sum = items.reduce { acc, i -> acc + i }
+```
+
+## When Expression
+
+```kotlin
+// ✅ CORRECT - When as expression
+val result = when (x) {
+    0 -> "zero"
+    in 1..10 -> "small"
+    else -> "large"
 }
 
-// Usage - compiler ensures all cases handled
-when (result) {
-    is Result.Success -> showData(result.data)
-    is Result.Error -> showError(result.exception)
-    is Result.Loading -> showLoading()
+// ✅ CORRECT - Sealed class with when
+sealed class Result {
+    data class Success(val data: String) : Result()
+    data class Error(val message: String) : Result()
 }
+
+fun handle(result: Result) = when (result) {
+    is Result.Success -> println(result.data)
+    is Result.Error -> println(result.message)
+}  // Exhaustive, no else needed
 ```
 
 ## Extension Functions
 
-### Use extensions for utility operations
 ```kotlin
-// ✅ Good - extend existing types
-fun String.isValidEmail(): Boolean =
-    matches(Regex("[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"))
+// ✅ CORRECT - Extension function
+fun String.toTitleCase(): String =
+    split(" ").joinToString(" ") { it.capitalize() }
 
-fun <T> List<T>.second(): T = this[1]
+val title = "hello world".toTitleCase()  // "Hello World"
 
-// Usage
-val email = "test@example.com"
-if (email.isValidEmail()) { }
-```
-
-### Don't overuse extensions
-```kotlin
-// ❌ Avoid - should be a method or function
-fun User.save() { repository.save(this) }  // Side effects
-
-// ✅ Good - repository method instead
-class UserRepository {
-    fun save(user: User) { }
-}
-```
-
-## Coroutines
-
-### Use structured concurrency
-```kotlin
-// ✅ Good - structured concurrency
-class UserViewModel(
-    private val repository: UserRepository
-) : ViewModel() {
-    fun loadUser(id: Long) {
-        viewModelScope.launch {
-            val user = repository.getUser(id)
-            _state.value = UserState.Success(user)
-        }
-    }
-}
-```
-
-### Use Flow for streams
-```kotlin
-// ✅ Good - reactive stream
-fun observeUsers(): Flow<List<User>> = flow {
-    val users = repository.getUsers()
-    emit(users)
-}.flowOn(Dispatchers.IO)
-```
-
-## Type Inference
-
-### Let compiler infer types when obvious
-```kotlin
-// ✅ Good - type obvious from initializer
-val name = "John"  // String
-val count = 42  // Int
-val items = listOf(1, 2, 3)  // List<Int>
-
-// ✅ Good - explicit type when not obvious
-val users: List<User> = emptyList()
-val callback: (String) -> Unit = { println(it) }
+// ✅ CORRECT - Extension property
+val String.isEmail: Boolean
+    get() = contains("@") && contains(".")
 ```
 
 ## Scope Functions
 
-### Use appropriate scope function
 ```kotlin
-// let - null safety and transform
-val length = text?.let { it.length } ?: 0
+// let - null safety
+name?.let { println(it) }
 
-// apply - object configuration
+// apply - configure object
 val user = User().apply {
     name = "John"
     email = "john@example.com"
 }
 
 // also - side effects
-val user = createUser().also { 
+val user = createUser().also {
     logger.info("Created user: ${it.id}")
 }
 
-// run - execute block and return result
-val result = run {
-    val a = compute()
-    val b = compute()
-    a + b
+// run - execute block
+val result = user.run {
+    validateEmail()
+    save()
 }
 
-// with - multiple calls on same object
+// with - multiple operations
 with(user) {
     println(name)
     println(email)
 }
 ```
 
-## Best Practices
+## Common Mistakes
 
-### 1. Use when Instead of if-else Chains
-```kotlin
-// ✅ Good
-when (status) {
-    Status.PENDING -> handlePending()
-    Status.PROCESSING -> handleProcessing()
-    Status.COMPLETED -> handleCompleted()
-    Status.FAILED -> handleFailed()
-}
+| Mistake | ❌ Wrong | ✅ Correct |
+|---------|---------|-----------|
+| **Overusing var** | `var name = "John"` | `val name = "John"` |
+| **Force unwrap** | `name!!.length` everywhere | `name?.length`, `?:` |
+| **Java style** | `getName()`, `setName()` | Properties `name` |
+| **Verbose null checks** | `if (x != null) { x.method() }` | `x?.method()` |
+| **Mutable by default** | `val items = mutableListOf()` | `val items = listOf()` |
 
-// ❌ Avoid
-if (status == Status.PENDING) {
-    handlePending()
-} else if (status == Status.PROCESSING) {
-    handleProcessing()
-} // ...
-```
+## AI Self-Check
 
-### 2. Use require/check/assert
-```kotlin
-// ✅ Good - explicit preconditions
-fun processUser(user: User?) {
-    requireNotNull(user) { "User cannot be null" }
-    require(user.age >= 18) { "User must be 18 or older" }
-    check(isInitialized) { "Service not initialized" }
-}
-```
+- [ ] Using `val` by default, `var` only when needed?
+- [ ] Data classes for DTOs?
+- [ ] Named arguments for functions with 3+ params?
+- [ ] Expression body for single-expression functions?
+- [ ] Null-safety operators (`?.`, `?:`) instead of `!!`?
+- [ ] Immutable collections by default?
+- [ ] When expressions for conditionals?
+- [ ] Extension functions where appropriate?
+- [ ] Following Kotlin naming conventions?
+- [ ] No semicolons?
 
-### 3. Avoid Platform Types
-```kotlin
-// ❌ Avoid - Java interop without null annotations
-val name = javaObject.getName()  // String! (platform type)
+## Formatting
 
-// ✅ Good - explicit nullability
-val name: String = javaObject.getName() ?: "Unknown"
-```
+- Indentation: 4 spaces
+- Line length: 120 characters max
+- Import order: Android, third-party, Kotlin/Java stdlib
+- No wildcard imports
 
-### 4. Use Delegation
-```kotlin
-// ✅ Good - property delegation
-class User {
-    val name: String by lazy {
-        fetchNameFromDatabase()
-    }
-}
+## Key Principles
 
-// ✅ Good - interface delegation
-class Repository(
-    private val cache: Cache
-) : Cache by cache {
-    // Only override what's needed
-    override fun get(key: String): String? {
-        return cache.get(key) ?: fetchFromNetwork(key)
-    }
-}
-```
-
-### 5. Destructuring Declarations
-```kotlin
-// ✅ Good - cleaner code
-val (name, email) = user
-val (first, second) = list
-
-// Map iteration
-for ((key, value) in map) {
-    println("$key: $value")
-}
-```
-
+- **Immutability First**: `val` over `var`
+- **Null Safety**: Leverage Kotlin's type system
+- **Expressiveness**: Concise, readable code
+- **Functional Style**: map, filter, reduce over loops
+- **Data Classes**: For value objects
