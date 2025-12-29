@@ -42,12 +42,12 @@ const testDefinitions = {
       '\\.get\\(\\)'
     ],
     rules: [
-      'rules/general/persona.md',
-      'rules/general/architecture.md',
-      'rules/general/code-style.md',
-      'rules/java/architecture.md',
-      'rules/java/code-style.md',
-      'rules/java/frameworks/spring-boot.md'
+      '.ai-iap/rules/general/persona.md',
+      '.ai-iap/rules/general/architecture.md',
+      '.ai-iap/rules/general/code-style.md',
+      '.ai-iap/rules/java/architecture.md',
+      '.ai-iap/rules/java/code-style.md',
+      '.ai-iap/rules/java/frameworks/spring-boot.md'
     ]
   },
   
@@ -71,12 +71,12 @@ const testDefinitions = {
       '^\\s*const\\s+[a-z]'  // camelCase component name
     ],
     rules: [
-      'rules/general/persona.md',
-      'rules/general/architecture.md',
-      'rules/general/code-style.md',
-      'rules/typescript/architecture.md',
-      'rules/typescript/code-style.md',
-      'rules/typescript/frameworks/react.md'
+      '.ai-iap/rules/general/persona.md',
+      '.ai-iap/rules/general/architecture.md',
+      '.ai-iap/rules/general/code-style.md',
+      '.ai-iap/rules/typescript/architecture.md',
+      '.ai-iap/rules/typescript/code-style.md',
+      '.ai-iap/rules/typescript/frameworks/react.md'
     ]
   },
   
@@ -102,12 +102,12 @@ const testDefinitions = {
       'try.*catch'  // Try-catch in controller
     ],
     rules: [
-      'rules/general/persona.md',
-      'rules/general/architecture.md',
-      'rules/general/code-style.md',
-      'rules/dotnet/architecture.md',
-      'rules/dotnet/code-style.md',
-      'rules/dotnet/frameworks/aspnetcore.md'
+      '.ai-iap/rules/general/persona.md',
+      '.ai-iap/rules/general/architecture.md',
+      '.ai-iap/rules/general/code-style.md',
+      '.ai-iap/rules/dotnet/architecture.md',
+      '.ai-iap/rules/dotnet/code-style.md',
+      '.ai-iap/rules/dotnet/frameworks/aspnetcore.md'
     ]
   },
   
@@ -130,12 +130,12 @@ const testDefinitions = {
       '@app\\.post.*\\)',  // Missing response_model
     ],
     rules: [
-      'rules/general/persona.md',
-      'rules/general/architecture.md',
-      'rules/general/code-style.md',
-      'rules/python/architecture.md',
-      'rules/python/code-style.md',
-      'rules/python/frameworks/fastapi.md'
+      '.ai-iap/rules/general/persona.md',
+      '.ai-iap/rules/general/architecture.md',
+      '.ai-iap/rules/general/code-style.md',
+      '.ai-iap/rules/python/architecture.md',
+      '.ai-iap/rules/python/code-style.md',
+      '.ai-iap/rules/python/frameworks/fastapi.md'
     ]
   },
   
@@ -158,13 +158,13 @@ const testDefinitions = {
       'useEffect'
     ],
     rules: [
-      'rules/general/persona.md',
-      'rules/general/architecture.md',
-      'rules/general/code-style.md',
-      'rules/typescript/architecture.md',
-      'rules/typescript/code-style.md',
-      'rules/typescript/frameworks/react.md',
-      'rules/typescript/frameworks/nextjs.md'
+      '.ai-iap/rules/general/persona.md',
+      '.ai-iap/rules/general/architecture.md',
+      '.ai-iap/rules/general/code-style.md',
+      '.ai-iap/rules/typescript/architecture.md',
+      '.ai-iap/rules/typescript/code-style.md',
+      '.ai-iap/rules/typescript/frameworks/react.md',
+      '.ai-iap/rules/typescript/frameworks/nextjs.md'
     ]
   }
 };
