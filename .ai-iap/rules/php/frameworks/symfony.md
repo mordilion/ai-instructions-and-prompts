@@ -1,480 +1,271 @@
 # Symfony Framework
 
-> **Scope**: Apply these rules when working with Symfony applications.
+> **Scope**: Apply these rules when working with Symfony 6+ applications
+> **Applies to**: PHP files in Symfony projects
+> **Extends**: php/architecture.md, php/code-style.md
+> **Precedence**: Framework rules OVERRIDE PHP rules for Symfony-specific patterns
 
-## Overview
+## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
 
-Symfony is a mature PHP framework providing reusable components and a full-stack solution for web applications. It emphasizes flexibility, best practices, and enterprise-grade features.
-
-**Key Capabilities**:
-- **Component-Based**: Reusable, decoupled components
-- **Dependency Injection**: Powerful service container
-- **Doctrine ORM**: Enterprise ORM integration
-- **Flexibility**: Highly configurable
-- **Long-Term Support**: LTS versions for stability
+> **ALWAYS**: Use attributes for routing (PHP 8+, NOT annotations)
+> **ALWAYS**: Use dependency injection via constructor autowiring
+> **ALWAYS**: Return Response objects from controllers (NOT arrays)
+> **ALWAYS**: Use Doctrine ORM for database access (type-safe)
+> **ALWAYS**: Use serializer groups for API responses
+> 
+> **NEVER**: Use annotations (deprecated, use attributes)
+> **NEVER**: Use service locator pattern (inject dependencies)
+> **NEVER**: Return raw arrays from controllers (use Response/JsonResponse)
+> **NEVER**: Query database in controllers (use repositories/services)
+> **NEVER**: Use global state or static methods
 
 ## Pattern Selection
 
-### Controller Organization
-**Use Attributes (PHP 8+) when**:
-- Modern Symfony (5.2+)
-- Want cleaner code
-- Prefer convention over configuration
+| Pattern | Use When | Keywords |
+|---------|----------|----------|
+| Attributes | Routing, validation (PHP 8+) | `#[Route]`, `#[Assert]` |
+| Autowiring | Dependency injection | Constructor injection, `services.yaml` |
+| ParamConverter | Entity from route params | `User $user` in controller params |
+| Serializer Groups | Control API output | `context: ['groups' => ['user:read']]` |
+| AbstractController | Controllers | `extends AbstractController` |
 
-**Use YAML/XML when**:
-- Complex routing logic
-- Need centralized configuration
+## Core Patterns
 
-### Service Configuration
-**Use Autowiring when** (recommended):
-- Standard dependencies
-- Following conventions
-- Want less configuration
-
-**Use Manual Configuration when**:
-- Complex dependencies
-- Need specific instances
-- Third-party integrations
-
-## 1. Project Structure
-```
-src/
-├── Controller/
-├── Entity/
-├── Repository/
-├── Service/
-├── Form/
-├── EventSubscriber/
-├── Security/
-└── DTO/
-config/
-├── packages/
-├── routes/
-└── services.yaml
-```
-
-## 2. Controllers
-- **AbstractController**: Extend for common shortcuts.
-- **Attributes**: Use PHP 8 attributes for routing.
-- **ParamConverter**: Auto-convert route params to entities.
-- **Response Types**: Return `Response`, `JsonResponse`, or use serializer.
-
+### Controller with Attributes
 ```php
-// ✅ Good
-#[Route('/users', name: 'user_')]
+<?php
+
+namespace App\Controller;
+
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Routing\Attribute\Route;
+
+#[Route('/api/users', name: 'api_user_')]
 class UserController extends AbstractController
 {
+    public function __construct(
+        private UserService $userService
+    ) {}
+    
+    #[Route('', name: 'list', methods: ['GET'])]
+    public function list(): JsonResponse
+    {
+        $users = $this->userService->findAll();
+        return $this->json($users, context: ['groups' => ['user:read']]);
+    }
+    
     #[Route('/{id}', name: 'show', methods: ['GET'])]
-    public function show(User $user): JsonResponse
+    public function show(User $user): JsonResponse  // ParamConverter
     {
         return $this->json($user, context: ['groups' => ['user:read']]);
     }
 }
+```
 
-// ❌ Bad
-public function show(int $id, UserRepository $repo): Response
+### Service with Autowiring
+```php
+<?php
+
+namespace App\Service;
+
+use App\Repository\UserRepository;
+
+class UserService
 {
-    $user = $repo->find($id);
-    return new Response(json_encode($user));  // Manual serialization
+    public function __construct(
+        private UserRepository $userRepository,
+        private MailerInterface $mailer
+    ) {}  // Autowired by Symfony
+    
+    public function create(array $data): User
+    {
+        $user = new User();
+        $user->setEmail($data['email']);
+        $user->setName($data['name']);
+        
+        $this->userRepository->save($user);
+        $this->mailer->send(/* welcome email */);
+        
+        return $user;
+    }
 }
 ```
 
-## 3. Services
-- **Autowiring**: Let Symfony inject dependencies automatically.
-- **Service Tags**: Use for plugin systems, event subscribers.
-- **Constructor Injection**: Standard pattern.
-
-```yaml
-# services.yaml - usually not needed with autowiring
-services:
-    _defaults:
-        autowire: true
-        autoconfigure: true
-    
-    App\:
-        resource: '../src/'
-```
-
-## 4. Doctrine ORM
-- **Entities**: Plain PHP objects with attributes/annotations.
-- **Repositories**: Custom queries in repository classes.
-- **Migrations**: Version-controlled schema changes.
-- **DTOs**: Don't expose entities in APIs.
-
+### Entity with Attributes
 ```php
-#[Entity(repositoryClass: UserRepository::class)]
+<?php
+
+namespace App\Entity;
+
+use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
+
+#[ORM\Entity(repositoryClass: UserRepository::class)]
+#[ORM\Table(name: 'users')]
 class User
 {
-    #[Id]
-    #[GeneratedValue]
-    #[Column]
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    #[Groups(['user:read'])]
     private ?int $id = null;
-
-    #[Column(length: 255)]
+    
+    #[ORM\Column(length: 180, unique: true)]
+    #[Groups(['user:read'])]
     private string $email;
+    
+    #[ORM\Column]
+    private string $password;  // Not in groups = not serialized
+    
+    #[ORM\Column]
+    #[Groups(['user:read'])]
+    private \DateTimeImmutable $createdAt;
+    
+    public function __construct()
+    {
+        $this->createdAt = new \DateTimeImmutable();
+    }
 }
 ```
 
-## 5. Forms
-- **Form Types**: Dedicated classes for forms.
-- **Data Class**: Bind to DTOs or entities.
-- **Validation**: Use validation constraints on entities/DTOs.
-
+### Form Type
 ```php
+<?php
+
+namespace App\Form;
+
+use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\EmailType;
+use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Validator\Constraints as Assert;
+
 class UserType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('email', EmailType::class)
-            ->add('password', PasswordType::class);
-    }
-
-    public function configureOptions(OptionsResolver $resolver): void
-    {
-        $resolver->setDefaults(['data_class' => User::class]);
-    }
-}
-```
-
-## 6. Validation
-- **Constraint Attributes**: On entity/DTO properties.
-- **Custom Constraints**: Implement `Constraint` + `ConstraintValidator`.
-- **Groups**: For context-specific validation.
-
-```php
-class CreateUserDTO
-{
-    #[Assert\NotBlank]
-    #[Assert\Email]
-    public string $email;
-
-    #[Assert\NotBlank]
-    #[Assert\Length(min: 8)]
-    public string $password;
-}
-```
-
-## 7. Security
-- **Voters**: For authorization logic.
-- **Authenticators**: Custom authentication (API tokens, etc.).
-- **#[IsGranted]**: Attribute for route authorization.
-
-```php
-#[Route('/admin')]
-#[IsGranted('ROLE_ADMIN')]
-class AdminController extends AbstractController { }
-```
-
-## Best Practices
-
-**MUST**:
-- Use attributes for routing (PHP 8+, NO YAML in new code)
-- Use constructor injection (NO property injection)
-- Return typed responses (Response, JsonResponse)
-- Use serialization groups for API responses
-- Use ParamConverter for automatic entity loading
-
-**SHOULD**:
-- Use autowiring for service configuration
-- Use voters for authorization logic
-- Use event subscribers (NOT listeners)
-- Use DTOs for form data
-- Use validation constraints on entities/DTOs
-
-**AVOID**:
-- Manual entity loading (use ParamConverter)
-- Exposing entities in API responses (use serialization groups)
-- Property injection (unreliable)
-- Manual JSON encoding (use serializer)
-- Logic in controllers (use services)
-
-## Common Patterns
-
-### Controller with Attributes
-```php
-// ✅ GOOD: Attributes + ParamConverter + Serialization
-#[Route('/api/users', name: 'api_user_')]
-class UserController extends AbstractController
-{
-    public function __construct(
-        private UserService $userService,
-        private SerializerInterface $serializer
-    ) {}
-
-    #[Route('/{id}', name: 'show', methods: ['GET'])]
-    public function show(User $user): JsonResponse  // Auto-loaded
-    {
-        return $this->json($user, context: [
-            'groups' => ['user:read']  // Control exposed fields
-        ]);
-    }
-
-    #[Route('', name: 'create', methods: ['POST'])]
-    public function create(Request $request): JsonResponse
-    {
-        $dto = $this->serializer->deserialize(
-            $request->getContent(),
-            CreateUserDTO::class,
-            'json'
-        );
-
-        $user = $this->userService->createUser($dto);
-        
-        return $this->json($user, Response::HTTP_CREATED, [], [
-            'groups' => ['user:read']
-        ]);
-    }
-}
-
-// ❌ BAD: Manual loading, no type safety
-class UserController extends AbstractController
-{
-    #[Route('/api/users/{id}')]
-    public function show(int $id, EntityManagerInterface $em): Response
-    {
-        $user = $em->getRepository(User::class)->find($id);  // Manual
-        if (!$user) {
-            throw $this->createNotFoundException();
-        }
-        return new Response(json_encode($user));  // Manual serialization
+            ->add('email', EmailType::class, [
+                'constraints' => [
+                    new Assert\NotBlank(),
+                    new Assert\Email(),
+                ],
+            ])
+            ->add('name', null, [
+                'constraints' => [
+                    new Assert\NotBlank(),
+                    new Assert\Length(min: 2, max: 100),
+                ],
+            ]);
     }
 }
 ```
 
-### Serialization Groups
+## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
+
+| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
+|---------|---------|-----------|--------------|
+| **Using Annotations** | `@Route("/users")` | `#[Route('/users')]` | Annotations deprecated |
+| **Service Locator** | `$this->container->get()` | Constructor injection | Anti-pattern |
+| **Raw Arrays** | `return ['data' => $users];` | `return $this->json($users)` | No Response object |
+| **DB in Controller** | `$em->getRepository()->find()` | Inject service/repository | Breaks separation |
+| **No Serializer Groups** | Expose all entity fields | Use `#[Groups]` | Security risk |
+
+### Anti-Pattern: Annotations (DEPRECATED)
 ```php
-// ✅ GOOD: Control API exposure with groups
-use Symfony\Component\Serializer\Annotation\Groups;
+// ❌ WRONG - Annotations (deprecated)
+/**
+ * @Route("/users", name="user_list")
+ */
+public function list() {}
 
-#[Entity]
-class User
-{
-    #[Id, GeneratedValue, Column]
-    #[Groups(['user:read'])]
-    private ?int $id = null;
-
-    #[Column(length: 255)]
-    #[Groups(['user:read', 'user:write'])]
-    private string $name;
-
-    #[Column(length: 255, unique: true)]
-    #[Groups(['user:read', 'user:write'])]
-    private string $email;
-
-    #[Column]
-    private string $password;  // NO group - never exposed
-
-    #[OneToMany(targetEntity: Post::class, mappedBy: 'author')]
-    #[Groups(['user:read:with-posts'])]
-    private Collection $posts;
-}
-
-// Controller
-return $this->json($user, context: ['groups' => ['user:read']]);
-// Returns: {id, name, email} - NO password
-
-// ❌ BAD: Exposing everything
-return $this->json($user);  // Exposes password!
+// ✅ CORRECT - Attributes (PHP 8+)
+#[Route('/users', name: 'user_list')]
+public function list(): Response {}
 ```
 
-### Service with DI
+### Anti-Pattern: Service Locator (ANTI-PATTERN)
 ```php
-// ✅ GOOD: Constructor injection with autowiring
-class UserService
+// ❌ WRONG - Service locator
+public function create(Request $request): Response
 {
-    public function __construct(
-        private EntityManagerInterface $em,
-        private PasswordHasherInterface $hasher,
-        private EventDispatcherInterface $dispatcher
-    ) {}  // Autowired automatically
-
-    public function createUser(CreateUserDTO $dto): User
-    {
-        $user = new User(
-            $dto->email,
-            $this->hasher->hashPassword($user, $dto->password)
-        );
-
-        $this->em->persist($user);
-        $this->em->flush();
-
-        $this->dispatcher->dispatch(new UserCreatedEvent($user));
-
-        return $user;
-    }
+    $userService = $this->container->get('app.user_service');  // BAD!
+    $user = $userService->create($request->request->all());
+    return $this->json($user);
 }
 
-// ❌ BAD: Property injection
-class UserService
+// ✅ CORRECT - Constructor injection
+public function __construct(
+    private UserService $userService
+) {}
+
+public function create(Request $request): Response
 {
-    #[Autowire]
-    private EntityManagerInterface $em;  // Can be null at construction
-
-    public function createUser($dto)  // No types
-    {
-        // ...
-    }
-}
-```
-
-### Voters for Authorization
-```php
-// ✅ GOOD: Voter for complex authorization
-class PostVoter extends Voter
-{
-    const EDIT = 'POST_EDIT';
-    const DELETE = 'POST_DELETE';
-
-    protected function supports(string $attribute, mixed $subject): bool
-    {
-        return in_array($attribute, [self::EDIT, self::DELETE])
-            && $subject instanceof Post;
-    }
-
-    protected function voteOnAttribute(
-        string $attribute,
-        mixed $subject,
-        TokenInterface $token
-    ): bool {
-        $user = $token->getUser();
-        if (!$user instanceof User) {
-            return false;
-        }
-
-        /** @var Post $post */
-        $post = $subject;
-
-        return match($attribute) {
-            self::EDIT => $this->canEdit($post, $user),
-            self::DELETE => $this->canDelete($post, $user),
-            default => false
-        };
-    }
-
-    private function canEdit(Post $post, User $user): bool
-    {
-        return $user === $post->getAuthor() || $user->isAdmin();
-    }
-
-    private function canDelete(Post $post, User $user): bool
-    {
-        return $user->isAdmin();
-    }
-}
-
-// Usage in controller
-#[Route('/{id}/edit', name: 'edit', methods: ['PUT'])]
-#[IsGranted('POST_EDIT', subject: 'post')]
-public function edit(Post $post, Request $request): JsonResponse
-{
-    // User is authorized - voter checked
-    // ...
-}
-
-// ❌ BAD: Authorization in controller
-public function edit(Post $post, Request $request): JsonResponse
-{
-    if ($post->getAuthor() !== $this->getUser() && !$this->getUser()->isAdmin()) {
-        throw $this->createAccessDeniedException();  // Repeated logic
-    }
-}
-```
-
-### Event Subscribers
-```php
-// ✅ GOOD: Event subscriber
-class UserSubscriber implements EventSubscriberInterface
-{
-    public function __construct(
-        private MailerInterface $mailer,
-        private LoggerInterface $logger
-    ) {}
-
-    public static function getSubscribedEvents(): array
-    {
-        return [
-            UserCreatedEvent::class => 'onUserCreated',
-            UserDeletedEvent::class => ['onUserDeleted', -10],  // Priority
-        ];
-    }
-
-    public function onUserCreated(UserCreatedEvent $event): void
-    {
-        $user = $event->getUser();
-        
-        $email = (new Email())
-            ->to($user->getEmail())
-            ->subject('Welcome!')
-            ->html('<p>Welcome to our platform!</p>');
-
-        $this->mailer->send($email);
-        $this->logger->info('Welcome email sent', ['user_id' => $user->getId()]);
-    }
-
-    public function onUserDeleted(UserDeletedEvent $event): void
-    {
-        $this->logger->info('User deleted', ['user_id' => $event->getUserId()]);
-    }
-}
-
-// ❌ BAD: Logic in controller
-public function create(Request $request): JsonResponse
-{
-    $user = $this->userService->createUser($dto);
-    
-    // Sending email in controller (should be in subscriber)
-    $this->mailer->send($email);
-    $this->logger->info('User created');
-    
+    $user = $this->userService->create($request->request->all());
     return $this->json($user);
 }
 ```
 
-## Common Anti-Patterns
+## AI Self-Check (Verify BEFORE generating Symfony code)
 
-**❌ Manual serialization**:
-```php
-// BAD
-return new Response(json_encode($user));
+- [ ] Using attributes? (#[Route], NOT @Route annotations)
+- [ ] Constructor injection for dependencies?
+- [ ] Returning Response objects? (JsonResponse, Response)
+- [ ] Using serializer groups for API responses?
+- [ ] Doctrine entities with attributes?
+- [ ] No database queries in controllers?
+- [ ] ParamConverter for entity params?
+- [ ] Form types for validation?
+- [ ] Autowiring enabled in services.yaml?
+- [ ] Following Symfony best practices?
+
+## Configuration
+
+```yaml
+# config/services.yaml
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
 ```
 
-**✅ Use serializer**:
-```php
-// GOOD
-return $this->json($user, context: ['groups' => ['user:read']]);
+## Console Commands
+
+```bash
+# Create controller
+symfony console make:controller UserController
+
+# Create entity
+symfony console make:entity User
+
+# Create migration
+symfony console make:migration
+symfony console doctrine:migrations:migrate
+
+# Clear cache
+symfony console cache:clear
 ```
 
-**❌ Property injection**:
-```php
-// BAD
-#[Autowire]
-private EntityManagerInterface $em;  // Unreliable
-```
+## Key Features
 
-**✅ Constructor injection**:
-```php
-// GOOD
-public function __construct(private EntityManagerInterface $em) {}
-```
+- **Dependency Injection**: Autowiring, service container
+- **Doctrine ORM**: Entity management, migrations
+- **Serializer**: JSON/XML serialization with groups
+- **Validator**: Constraint-based validation
+- **Forms**: Form building and validation
+- **Messenger**: Message queue/bus
 
-## 8. Events
-- **Event Dispatcher**: For decoupled communication
-- **Event Subscribers**: Preferred over listeners (cleaner, type-safe)
-- **Kernel Events**: For request/response lifecycle hooks
+## Key Libraries
 
-```php
-class UserSubscriber implements EventSubscriberInterface
-{
-    public static function getSubscribedEvents(): array
-    {
-        return [UserCreatedEvent::class => 'onUserCreated'];
-    }
-
-    public function onUserCreated(UserCreatedEvent $event): void
-    {
-        // Send welcome email, etc.
-    }
-}
-```
-
+- **doctrine/orm**: Database ORM
+- **symfony/serializer**: Data serialization
+- **symfony/validator**: Data validation
+- **symfony/form**: Form handling
+- **symfony/messenger**: Message bus
