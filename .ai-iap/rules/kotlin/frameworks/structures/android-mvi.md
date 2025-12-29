@@ -1,43 +1,47 @@
 # Android MVI Structure
 
-## Overview
-Model-View-Intent (MVI) is a unidirectional data flow pattern where user intents trigger state changes.
+> **Scope**: Model-View-Intent pattern for Android apps with unidirectional data flow
+> **Use When**: Complex UI state, predictable state management, debugging state changes important
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Define Intent, State, and Effect as sealed classes
+> **ALWAYS**: Use unidirectional data flow (Intent → State → View)
+> **ALWAYS**: Use StateFlow for state, SharedFlow for one-time effects
+> **ALWAYS**: Process intents through single `processIntent()` function
+> **ALWAYS**: Make state immutable (use `data class` with `copy()`)
+> 
+> **NEVER**: Mutate state directly (use `_state.update { it.copy(...) }`)
+> **NEVER**: Mix state and effects (separate concerns)
+> **NEVER**: Process intents outside ViewModel
+> **NEVER**: Skip effect handling in UI layer
 
 ## Directory Structure
 
 ```
-app/src/main/
-├── kotlin/com/app/
-│   ├── data/                     # Data layer (same as MVVM)
-│   │   ├── repository/
-│   │   ├── local/
-│   │   └── remote/
-│   ├── domain/                   # Business logic
-│   │   ├── model/
-│   │   └── usecase/
-│   ├── presentation/             # UI layer
-│   │   ├── home/
-│   │   │   ├── HomeScreen.kt    # Composable
-│   │   │   ├── HomeViewModel.kt
-│   │   │   ├── HomeIntent.kt    # User intents
-│   │   │   ├── HomeState.kt     # UI state
-│   │   │   └── HomeEffect.kt    # Side effects
-│   │   └── profile/
-│   │       ├── ProfileScreen.kt
-│   │       ├── ProfileViewModel.kt
-│   │       ├── ProfileIntent.kt
-│   │       ├── ProfileState.kt
-│   │       └── ProfileEffect.kt
-│   ├── di/
-│   └── util/
-└── res/
+app/src/main/kotlin/com/app/
+├── data/               # Repositories, data sources
+├── domain/             # Use cases, models
+└── presentation/       # UI layer
+    ├── home/
+    │   ├── HomeScreen.kt       # Composable
+    │   ├── HomeViewModel.kt    # Intent processor
+    │   ├── HomeIntent.kt       # User actions
+    │   ├── HomeState.kt        # UI state
+    │   └── HomeEffect.kt       # Side effects
+    └── profile/
+        ├── ProfileScreen.kt
+        ├── ProfileViewModel.kt
+        ├── ProfileIntent.kt
+        ├── ProfileState.kt
+        └── ProfileEffect.kt
 ```
 
-## Implementation
+## Core Components
 
-### Intent
+### Intent (User Actions)
+
 ```kotlin
-// presentation/home/HomeIntent.kt
 sealed class HomeIntent {
     data object LoadUsers : HomeIntent()
     data class SelectUser(val userId: Long) : HomeIntent()
@@ -46,9 +50,9 @@ sealed class HomeIntent {
 }
 ```
 
-### State
+### State (UI State)
+
 ```kotlin
-// presentation/home/HomeState.kt
 data class HomeState(
     val isLoading: Boolean = false,
     val users: List<User> = emptyList(),
@@ -57,17 +61,14 @@ data class HomeState(
     val error: String? = null
 ) {
     val filteredUsers: List<User>
-        get() = if (searchQuery.isEmpty()) {
-            users
-        } else {
-            users.filter { it.name.contains(searchQuery, ignoreCase = true) }
-        }
+        get() = if (searchQuery.isEmpty()) users
+                else users.filter { it.name.contains(searchQuery, ignoreCase = true) }
 }
 ```
 
-### Effect
+### Effect (One-Time Events)
+
 ```kotlin
-// presentation/home/HomeEffect.kt
 sealed class HomeEffect {
     data class NavigateToDetail(val userId: Long) : HomeEffect()
     data class ShowToast(val message: String) : HomeEffect()
@@ -75,9 +76,9 @@ sealed class HomeEffect {
 }
 ```
 
-### ViewModel
+### ViewModel (Intent Processor)
+
 ```kotlin
-// presentation/home/HomeViewModel.kt
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val getUsersUseCase: GetUsersUseCase
@@ -108,21 +109,10 @@ class HomeViewModel @Inject constructor(
             
             getUsersUseCase()
                 .onSuccess { users ->
-                    _state.update {
-                        it.copy(
-                            isLoading = false,
-                            users = users,
-                            error = null
-                        )
-                    }
+                    _state.update { it.copy(isLoading = false, users = users) }
                 }
                 .onFailure { error ->
-                    _state.update {
-                        it.copy(
-                            isLoading = false,
-                            error = error.message
-                        )
-                    }
+                    _state.update { it.copy(isLoading = false, error = error.message) }
                     _effect.emit(HomeEffect.ShowToast("Failed to load users"))
                 }
         }
@@ -134,16 +124,14 @@ class HomeViewModel @Inject constructor(
             _effect.emit(HomeEffect.NavigateToDetail(userId))
         }
     }
-    
-    private fun searchUsers(query: String) {
-        _state.update { it.copy(searchQuery = query) }
-    }
 }
 ```
 
-### Composable Screen
+## View Layer
+
+### Compose
+
 ```kotlin
-// presentation/home/HomeScreen.kt
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
@@ -151,39 +139,25 @@ fun HomeScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     
-    // Handle effects
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
                 is HomeEffect.NavigateToDetail -> onNavigateToDetail(effect.userId)
-                is HomeEffect.ShowToast -> {
-                    // Show toast
-                }
-                is HomeEffect.NavigateBack -> {
-                    // Navigate back
-                }
+                is HomeEffect.ShowToast -> { /* Show toast */ }
+                is HomeEffect.NavigateBack -> { /* Navigate back */ }
             }
         }
     }
     
-    HomeContent(
-        state = state,
-        onIntent = viewModel::processIntent
-    )
+    HomeContent(state = state, onIntent = viewModel::processIntent)
 }
 
 @Composable
-private fun HomeContent(
-    state: HomeState,
-    onIntent: (HomeIntent) -> Unit
-) {
-    Column(modifier = Modifier.fillMaxSize()) {
-        // Search bar
+private fun HomeContent(state: HomeState, onIntent: (HomeIntent) -> Unit) {
+    Column {
         SearchBar(
             query = state.searchQuery,
-            onQueryChange = { query ->
-                onIntent(HomeIntent.SearchUsers(query))
-            }
+            onQueryChange = { onIntent(HomeIntent.SearchUsers(it)) }
         )
         
         when {
@@ -194,103 +168,39 @@ private fun HomeContent(
             )
             else -> UserList(
                 users = state.filteredUsers,
-                onUserClick = { userId ->
-                    onIntent(HomeIntent.SelectUser(userId))
-                }
-            )
-        }
-    }
-}
-
-@Composable
-private fun UserList(
-    users: List<User>,
-    onUserClick: (Long) -> Unit
-) {
-    LazyColumn {
-        items(users) { user ->
-            UserItem(
-                user = user,
-                onClick = { onUserClick(user.id) }
+                onUserClick = { onIntent(HomeIntent.SelectUser(it)) }
             )
         }
     }
 }
 ```
 
-### Fragment Version (View System)
+### Fragment (View System)
+
 ```kotlin
-// presentation/home/HomeFragment.kt
 @AndroidEntryPoint
 class HomeFragment : Fragment(R.layout.fragment_home) {
-    
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
-    
     private val viewModel: HomeViewModel by viewModels()
     
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentHomeBinding.bind(view)
         
-        setupUI()
         observeState()
         observeEffects()
     }
     
-    private fun setupUI() {
-        binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String?): Boolean = false
-            
-            override fun onQueryTextChange(newText: String?): Boolean {
-                viewModel.processIntent(HomeIntent.SearchUsers(newText.orEmpty()))
-                return true
-            }
-        })
-    }
-    
     private fun observeState() {
         viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.state.collect { state ->
-                renderState(state)
-            }
+            viewModel.state.collect { renderState(it) }
         }
     }
     
     private fun observeEffects() {
         viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.effect.collect { effect ->
-                handleEffect(effect)
-            }
-        }
-    }
-    
-    private fun renderState(state: HomeState) {
-        binding.progressBar.isVisible = state.isLoading
-        binding.errorView.isVisible = state.error != null
-        binding.recyclerView.isVisible = !state.isLoading && state.error == null
-        
-        state.error?.let {
-            binding.errorText.text = it
-        }
-        
-        // Update adapter with filtered users
-        adapter.submitList(state.filteredUsers)
-    }
-    
-    private fun handleEffect(effect: HomeEffect) {
-        when (effect) {
-            is HomeEffect.NavigateToDetail -> {
-                findNavController().navigate(
-                    HomeFragmentDirections.actionHomeToDetail(effect.userId)
-                )
-            }
-            is HomeEffect.ShowToast -> {
-                Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
-            }
-            is HomeEffect.NavigateBack -> {
-                findNavController().popBackStack()
-            }
+            viewModel.effect.collect { handleEffect(it) }
         }
     }
     
@@ -301,72 +211,40 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 }
 ```
 
-## Testing
+## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
 
-### ViewModel Test
-```kotlin
-class HomeViewModelTest {
-    
-    @get:Rule
-    val mainDispatcherRule = MainDispatcherRule()
-    
-    private lateinit var getUsersUseCase: GetUsersUseCase
-    private lateinit var viewModel: HomeViewModel
-    
-    @BeforeEach
-    fun setup() {
-        getUsersUseCase = mockk()
-        viewModel = HomeViewModel(getUsersUseCase)
-    }
-    
-    @Test
-    fun `LoadUsers intent updates state to loading then success`() = runTest {
-        // Given
-        val users = listOf(User(1, "John", "john@example.com"))
-        coEvery { getUsersUseCase() } returns Result.success(users)
-        
-        // When
-        viewModel.processIntent(HomeIntent.LoadUsers)
-        advanceUntilIdle()
-        
-        // Then
-        val state = viewModel.state.value
-        assertFalse(state.isLoading)
-        assertEquals(users, state.users)
-        assertNull(state.error)
-    }
-    
-    @Test
-    fun `SelectUser intent emits navigation effect`() = runTest {
-        // Given
-        val userId = 123L
-        val effects = mutableListOf<HomeEffect>()
-        val job = launch {
-            viewModel.effect.collect { effects.add(it) }
-        }
-        
-        // When
-        viewModel.processIntent(HomeIntent.SelectUser(userId))
-        advanceUntilIdle()
-        
-        // Then
-        assertTrue(effects.any { it is HomeEffect.NavigateToDetail && it.userId == userId })
-        
-        job.cancel()
-    }
-}
-```
+| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
+|---------|---------|-----------|--------------|
+| **Direct State Mutation** | `_state.value.users.add(user)` | `_state.update { it.copy(users = ...) }` | State must be immutable |
+| **Mixed State/Effects** | `data class State(val toast: String?)` | Separate `Effect` | Effects are one-time events |
+| **No Intent Processing** | Direct ViewModel methods | `processIntent(intent)` | Single entry point |
+| **Mutable State Class** | `var users` | `val users` + `copy()` | Predictability |
+
+## AI Self-Check (Verify BEFORE generating MVI code)
+
+- [ ] Intent sealed class for all user actions?
+- [ ] State data class (immutable)?
+- [ ] Effect sealed class for one-time events?
+- [ ] processIntent() as single entry point?
+- [ ] StateFlow for state, SharedFlow for effects?
+- [ ] Using state.update { it.copy(...) }?
+- [ ] Effect handling in UI layer?
+- [ ] No direct state mutation?
+- [ ] ViewModelScope for coroutines?
+- [ ] Following unidirectional data flow?
 
 ## Benefits
-- Unidirectional data flow
-- Predictable state management
-- Easy to test and debug
-- Clear separation of concerns
-- Time-travel debugging possible
+
+- ✅ Unidirectional data flow
+- ✅ Predictable state management
+- ✅ Easy to test and debug
+- ✅ Time-travel debugging possible
+- ✅ Clear separation of concerns
 
 ## When to Use
-- Complex UI state
-- Apps requiring predictable state management
-- When debugging state changes is important
-- Teams familiar with Redux/Elm architecture
 
+- ✅ Complex UI state
+- ✅ Apps requiring predictable state management
+- ✅ Debugging state changes important
+- ✅ Teams familiar with Redux/Elm
+- ❌ Simple UIs (use MVVM instead)
