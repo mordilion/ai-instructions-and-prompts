@@ -1,451 +1,248 @@
 # Angular Framework
 
-> **Scope**: Apply these rules when working with Angular applications.
+> **Scope**: Apply these rules when working with Angular 14+ applications
+> **Applies to**: .ts files in Angular projects
+> **Extends**: typescript/architecture.md, typescript/code-style.md
+> **Precedence**: Framework rules OVERRIDE TypeScript rules for Angular-specific patterns
 
-## Overview
+## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
 
-Angular is a comprehensive TypeScript-based framework for building web applications. It provides a complete solution including routing, forms, HTTP client, and dependency injection out of the box.
-
-**Key Capabilities**:
-- **Full Framework**: Everything included (routing, forms, HTTP, testing)
-- **TypeScript-First**: Strong typing throughout
-- **Dependency Injection**: Built-in IoC container
-- **RxJS Integration**: Reactive programming with Observables
-- **Standalone Components**: Simplified architecture (Angular 14+)
+> **ALWAYS**: Use standalone components (Angular 14+, NOT NgModules for new code)
+> **ALWAYS**: Inject services via constructor (dependency injection required)
+> **ALWAYS**: Use OnPush change detection (performance)
+> **ALWAYS**: Use async pipe for observables (automatic subscription management)
+> **ALWAYS**: Unsubscribe from subscriptions in ngOnDestroy (prevent memory leaks)
+> 
+> **NEVER**: Use NgModules in new code (legacy pattern, use standalone)
+> **NEVER**: Manually subscribe without unsubscribing (memory leak)
+> **NEVER**: Mutate inputs directly (one-way data flow)
+> **NEVER**: Use `any` type (breaks type safety)
+> **NEVER**: Put business logic in components (belongs in services)
 
 ## Pattern Selection
 
-### Component Strategy
-**Use Smart (Container) Components when**:
-- Managing state
-- Calling services
-- Handling business logic
-- Composing dumb components
+| Pattern | Use When | Keywords |
+|---------|----------|----------|
+| Standalone Components | Always (Angular 14+) | `standalone: true`, `imports: []` |
+| OnPush Change Detection | Always (performance) | `changeDetection: ChangeDetectionStrategy.OnPush` |
+| async Pipe | Observable in template | `{{ observable$ | async }}` |
+| Signals | Reactive state (Angular 16+) | `signal()`, `computed()`, `effect()` |
+| RxJS | Async operations, streams | `Observable`, `Subject`, operators |
 
-**Use Dumb (Presentational) Components when**:
-- Pure display logic
-- Reusable UI elements
-- Inputs and outputs only
-- No service dependencies
+## Core Patterns
 
-### Change Detection
-**Use OnPush when** (recommended default):
-- Inputs are immutable
-- Performance matters
-- Want predictable change detection
-
-**Use Default when**:
-- Rapid prototyping
-- Complex two-way binding scenarios
-
-### State Management
-**Use Services + RxJS when**:
-- Simple state (< 5 features)
-- State local to feature
-
-**Use Signals when** (Angular 16+):
-- Simpler reactive state
-- Better performance than RxJS
-- Want fine-grained reactivity
-
-**Use NgRx when**:
-- Complex global state
-- Time-travel debugging needed
-- Strict Redux pattern desired
-
-## 1. Project Structure
-```
-src/app/
-├── core/               # Singleton services, guards, interceptors
-├── shared/             # Reusable components, pipes, directives
-├── features/
-│   └── users/
-│       ├── users.module.ts
-│       ├── users-routing.module.ts
-│       ├── components/
-│       ├── services/
-│       └── models/
-└── app.module.ts
-```
-
-## 2. Components
-- **Smart vs Dumb**: Container components (smart) vs presentational (dumb).
-- **OnPush**: Use `ChangeDetectionStrategy.OnPush` by default.
-- **Standalone**: Prefer standalone components (Angular 14+).
-
+### Standalone Component (REQUIRED)
 ```typescript
-// ✅ Good - Standalone component with OnPush
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+
 @Component({
   selector: 'app-user-card',
-  standalone: true,
-  imports: [CommonModule],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `<div>{{ user.name }}</div>`,
+  standalone: true,  // Angular 14+
+  imports: [CommonModule],  // Import dependencies
+  changeDetection: ChangeDetectionStrategy.OnPush,  // Performance
+  template: `
+    <div class="card">
+      <h3>{{ user.name }}</h3>
+      <button (click)="onDelete()">Delete</button>
+    </div>
+  `,
+  styles: [`
+    .card { padding: 1rem; border: 1px solid #ccc; }
+  `]
 })
 export class UserCardComponent {
   @Input({ required: true }) user!: User;
-  @Output() delete = new EventEmitter<string>();
+  @Output() delete = new EventEmitter<void>();
+  
+  onDelete() {
+    this.delete.emit();
+  }
 }
 ```
 
-## 3. Services
-- **Injectable**: Use `providedIn: 'root'` for singletons.
-- **Feature Services**: Provide in feature module for scoped instances.
-- **HTTP**: Use HttpClient with typed responses.
-
+### Service with DI
 ```typescript
-// ✅ Good
-@Injectable({ providedIn: 'root' })
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Injectable({ providedIn: 'root' })  // Singleton
 export class UserService {
+  private apiUrl = '/api/users';
+  
   constructor(private http: HttpClient) {}
-
+  
   getUsers(): Observable<User[]> {
-    return this.http.get<User[]>('/api/users');
+    return this.http.get<User[]>(this.apiUrl);
+  }
+  
+  createUser(user: CreateUserDto): Observable<User> {
+    return this.http.post<User>(this.apiUrl, user);
   }
 }
 ```
 
-## 4. State Management
-- **Services + RxJS**: For simple state.
-- **NgRx**: For complex state with Redux pattern.
-- **Signals**: For reactive state (Angular 16+).
-
+### Component with Service & Observables
 ```typescript
-// ✅ Good - Signal-based state
-@Injectable({ providedIn: 'root' })
-export class UserStore {
-  private users = signal<User[]>([]);
-  readonly users$ = this.users.asReadonly();
-  
-  addUser(user: User) {
-    this.users.update(users => [...users, user]);
-  }
-}
-```
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { UserService } from './user.service';
+import { Subject, takeUntil } from 'rxjs';
 
-## 5. RxJS Best Practices
-- **Async Pipe**: Let Angular handle subscriptions.
-- **takeUntilDestroyed**: Auto-unsubscribe (Angular 16+).
-- **Avoid Subscribe**: Prefer async pipe in templates.
-
-```typescript
-// ✅ Good
-@Component({
-  template: `
-    @for (user of users$ | async; track user.id) {
-      <app-user-card [user]="user" />
-    }
-  `,
-})
-export class UserListComponent {
-  users$ = this.userService.getUsers();
-}
-
-// ❌ Bad - Manual subscription
-ngOnInit() {
-  this.userService.getUsers().subscribe(users => this.users = users);
-}
-```
-
-## 6. Forms
-- **Reactive Forms**: For complex forms with validation.
-- **Typed Forms**: Use `FormGroup<T>` for type safety.
-- **Template Forms**: Only for simple forms.
-
-```typescript
-// ✅ Good - Typed reactive form
-form = new FormGroup({
-  name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-  email: new FormControl('', { nonNullable: true, validators: [Validators.email] }),
-});
-```
-
-## 7. Routing
-- **Lazy Loading**: Load feature modules on demand.
-- **Guards**: Protect routes with `canActivate`, `canMatch`.
-- **Resolvers**: Pre-fetch data before navigation.
-
-```typescript
-// ✅ Good - Lazy loading
-const routes: Routes = [
-  {
-    path: 'users',
-    loadChildren: () => import('./features/users/users.module').then(m => m.UsersModule),
-  },
-];
-```
-
-## Best Practices
-
-**MUST**:
-- Use standalone components (NO NgModules for new features)
-- Use `ChangeDetectionStrategy.OnPush` by default
-- Use `async` pipe in templates (NO manual subscriptions)
-- Use `takeUntilDestroyed()` for manual subscriptions (Angular 16+)
-- Use `providedIn: 'root'` for singleton services
-
-**SHOULD**:
-- Use Signals for reactive state (Angular 16+)
-- Use reactive forms (NOT template-driven for complex forms)
-- Use lazy loading for feature modules
-- Use trackBy in `@for` loops
-- Use typed forms for type safety
-
-**AVOID**:
-- Manual subscriptions without unsubscribe
-- Default change detection (use OnPush)
-- Logic in templates (extract to component/pipe)
-- Mutating inputs (use immutable patterns)
-- God components (split into smaller components)
-
-## Common Patterns
-
-### Smart vs Dumb Components
-```typescript
-// ✅ GOOD: Smart component (container)
-@Component({
-  selector: 'app-user-list-page',
-  standalone: true,
-  imports: [CommonModule, UserListComponent],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    @if (users$ | async; as users) {
-      <app-user-list 
-        [users]="users" 
-        (delete)="onDelete($event)" 
-      />
-    }
-  `,
-})
-export class UserListPageComponent {
-  users$ = this.userService.getUsers();
-  
-  constructor(private userService: UserService) {}
-  
-  onDelete(id: string) {
-    this.userService.deleteUser(id).subscribe();
-  }
-}
-
-// ✅ GOOD: Dumb component (presentational)
 @Component({
   selector: 'app-user-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    @for (user of users; track user.id) {
-      <div>
-        {{ user.name }}
-        <button (click)="delete.emit(user.id)">Delete</button>
-      </div>
-    }
-  `,
+    <div *ngFor="let user of users$ | async">
+      {{ user.name }}
+    </div>
+  `
 })
-export class UserListComponent {
-  @Input({ required: true }) users!: User[];
-  @Output() delete = new EventEmitter<string>();
-  // No service dependencies, pure display logic
-}
-
-// ❌ BAD: Mixed responsibilities
-@Component({
-  template: `
-    @for (user of users; track user.id) {
-      <div>{{ user.name }}</div>
-    }
-  `,
-})
-export class UserListComponent implements OnInit {
-  users: User[] = [];
+export class UserListComponent implements OnInit, OnDestroy {
+  users$ = this.userService.getUsers();  // Observable
+  private destroy$ = new Subject<void>();
   
-  constructor(private userService: UserService) {}  // Service in dumb component
+  constructor(private userService: UserService) {}
   
   ngOnInit() {
-    this.userService.getUsers().subscribe(u => this.users = u);  // Fetching in dumb component
-  }
-}
-```
-
-### RxJS + Async Pipe
-```typescript
-// ✅ GOOD: Async pipe handles subscription
-@Component({
-  template: `
-    @if (user$ | async; as user) {
-      <div>{{ user.name }}</div>
-    } @else {
-      <div>Loading...</div>
-    }
-  `,
-})
-export class UserProfileComponent {
-  user$ = this.route.params.pipe(
-    switchMap(params => this.userService.getUser(params['id']))
-  );
-  
-  constructor(
-    private route: ActivatedRoute,
-    private userService: UserService,
-  ) {}
-  // No ngOnDestroy needed - async pipe auto-unsubscribes
-}
-
-// ❌ BAD: Manual subscription
-@Component({
-  template: `<div>{{ user?.name }}</div>`,
-})
-export class UserProfileComponent implements OnInit, OnDestroy {
-  user?: User;
-  private subscription?: Subscription;
-  
-  ngOnInit() {
-    this.subscription = this.userService.getUser(this.id)
-      .subscribe(u => this.user = u);  // Manual subscription
+    // If manual subscription needed:
+    this.users$.pipe(
+      takeUntil(this.destroy$)  // Auto-unsubscribe
+    ).subscribe(users => console.log(users));
   }
   
   ngOnDestroy() {
-    this.subscription?.unsubscribe();  // Easy to forget
+    this.destroy$.next();  // Trigger unsubscribe
+    this.destroy$.complete();
   }
 }
 ```
 
-### Signal-Based State
+### Signals (Angular 16+)
 ```typescript
-// ✅ GOOD: Signals for reactive state (Angular 16+)
-@Injectable({ providedIn: 'root' })
-export class CartStore {
-  // Private writable signal
-  private _items = signal<CartItem[]>([]);
-  
-  // Public readonly signal
-  readonly items = this._items.asReadonly();
-  
-  // Computed signals
-  readonly total = computed(() => 
-    this._items().reduce((sum, item) => sum + item.price * item.quantity, 0)
-  );
-  
-  readonly itemCount = computed(() => 
-    this._items().reduce((sum, item) => sum + item.quantity, 0)
-  );
-  
-  addItem(item: CartItem) {
-    this._items.update(items => [...items, item]);  // Immutable update
-  }
-  
-  removeItem(id: string) {
-    this._items.update(items => items.filter(i => i.id !== id));
-  }
-}
+import { Component, signal, computed } from '@angular/core';
 
-// Usage in component
 @Component({
+  selector: 'app-counter',
+  standalone: true,
   template: `
-    <div>Total: {{ cartStore.total() }}</div>
-    <div>Items: {{ cartStore.itemCount() }}</div>
-  `,
+    <div>
+      <p>Count: {{ count() }}</p>
+      <p>Doubled: {{ doubled() }}</p>
+      <button (click)="increment()">+</button>
+    </div>
+  `
 })
-export class CartComponent {
-  constructor(public cartStore: CartStore) {}
-  // Signals auto-update view - no async pipe needed
-}
-
-// ❌ BAD: BehaviorSubject for everything
-@Injectable({ providedIn: 'root' })
-export class CartStore {
-  private _items = new BehaviorSubject<CartItem[]>([]);
-  items$ = this._items.asObservable();  // More boilerplate
+export class CounterComponent {
+  count = signal(0);  // Reactive state
+  doubled = computed(() => this.count() * 2);  // Derived state
   
-  total$ = this.items$.pipe(
-    map(items => items.reduce((sum, item) => sum + item.price, 0))
-  );  // Complex derived state
+  increment() {
+    this.count.update(n => n + 1);
+  }
 }
 ```
 
-### Reactive Forms with Types
+## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
+
+| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
+|---------|---------|-----------|--------------|
+| **Using NgModules** | `@NgModule()` for new code | `standalone: true` | NgModules are legacy |
+| **Manual Subscribe Without Unsubscribe** | `obs.subscribe()` without cleanup | `async` pipe or `takeUntil()` | Memory leak |
+| **Mutating Inputs** | `this.user.name = 'x'` | Emit event for parent update | Breaks one-way data flow |
+| **No OnPush** | Default change detection | `ChangeDetectionStrategy.OnPush` | Performance degradation |
+| **Business Logic in Component** | Component does API calls, logic | Service handles logic | Untestable, unmaintainable |
+
+### Anti-Pattern: NgModules (LEGACY, FORBIDDEN in new code)
 ```typescript
-// ✅ GOOD: Typed reactive form
-@Component({
-  template: `
-    <form [formGroup]="form" (ngSubmit)="onSubmit()">
-      <input formControlName="name" />
-      <input formControlName="email" />
-      <button type="submit" [disabled]="form.invalid">Submit</button>
-    </form>
-  `,
+// ❌ WRONG - NgModule (legacy Angular pattern)
+@NgModule({
+  declarations: [UserComponent],
+  imports: [CommonModule],
+  exports: [UserComponent]
 })
-export class UserFormComponent {
-  form = new FormGroup({
-    name: new FormControl('', { 
-      nonNullable: true, 
-      validators: [Validators.required, Validators.minLength(2)] 
-    }),
-    email: new FormControl('', { 
-      nonNullable: true, 
-      validators: [Validators.required, Validators.email] 
-    }),
-  });
-  
-  onSubmit() {
-    if (this.form.valid) {
-      const { name, email } = this.form.getRawValue();  // Type-safe
-      this.userService.create({ name, email }).subscribe();
-    }
+export class UserModule { }
+
+// ✅ CORRECT - Standalone component (Angular 14+)
+@Component({
+  selector: 'app-user',
+  standalone: true,
+  imports: [CommonModule]
+})
+export class UserComponent { }
+```
+
+### Anti-Pattern: Manual Subscribe Without Cleanup (MEMORY LEAK)
+```typescript
+// ❌ WRONG - Memory leak
+export class UserComponent implements OnInit {
+  ngOnInit() {
+    this.userService.getUsers().subscribe(users => {
+      this.users = users;  // NEVER cleaned up!
+    });
   }
 }
 
-// ❌ BAD: Untyped form
-form = new FormGroup({
-  name: new FormControl(),  // No validation, nullable
-  email: new FormControl(),
-});
-
-onSubmit() {
-  const data = this.form.value;  // Type is Partial<...> | null
-  this.userService.create(data);  // Type error
-}
-```
-
-## Common Anti-Patterns
-
-**❌ Missing trackBy in loops**:
-```typescript
-// BAD - Entire list re-renders on change
-<div *ngFor="let item of items">{{ item.name }}</div>
-```
-
-**✅ Use trackBy**:
-```typescript
-// GOOD - Only changed items re-render
-@for (item of items; track item.id) {
-  <div>{{ item.name }}</div>
-}
-```
-
-**❌ Forgetting to unsubscribe**:
-```typescript
-// BAD
-ngOnInit() {
-  this.userService.getUsers().subscribe(u => this.users = u);  // Memory leak
-}
-```
-
-**✅ Use async pipe or takeUntilDestroyed**:
-```typescript
-// GOOD (Option 1: async pipe)
+// ✅ CORRECT - Use async pipe
+template: `<div *ngFor="let user of users$ | async">...</div>`
 users$ = this.userService.getUsers();
 
-// GOOD (Option 2: takeUntilDestroyed)
+// ✅ CORRECT - Manual with takeUntil
+private destroy$ = new Subject<void>();
+
 ngOnInit() {
   this.userService.getUsers()
-    .pipe(takeUntilDestroyed(this.destroyRef))
-    .subscribe(u => this.users = u);
+    .pipe(takeUntil(this.destroy$))
+    .subscribe(users => this.users = users);
+}
+
+ngOnDestroy() {
+  this.destroy$.next();
+  this.destroy$.complete();
 }
 ```
 
-## 8. Performance
-- **OnPush**: Reduce change detection cycles
-- **TrackBy**: Use in `@for` loops for efficient rendering
-- **Lazy Loading**: Split code by feature module
-- **Pure Pipes**: For transformations in templates
+## AI Self-Check (Verify BEFORE generating Angular code)
 
+- [ ] Using standalone components? (`standalone: true`, NOT NgModules)
+- [ ] OnPush change detection? (`ChangeDetectionStrategy.OnPush`)
+- [ ] Using async pipe for observables? (Avoid manual subscribe)
+- [ ] Services injected via constructor? (Dependency injection)
+- [ ] Unsubscribing in ngOnDestroy? (If manual subscribe)
+- [ ] Never mutating @Input properties? (Emit events instead)
+- [ ] Business logic in services? (NOT in components)
+- [ ] Using signals for reactive state? (Angular 16+)
+- [ ] Inputs/Outputs properly typed? (No `any`)
+- [ ] Following Angular style guide?
+
+## Lifecycle Hooks
+
+| Hook | Purpose | Use Case |
+|------|---------|----------|
+| ngOnInit | Initialization | Fetch data, setup subscriptions |
+| ngOnDestroy | Cleanup | Unsubscribe, clear timers |
+| ngOnChanges | Input changes | React to @Input changes |
+| ngAfterViewInit | View ready | Access ViewChild |
+
+## Directives
+
+```typescript
+// Structural directives
+*ngIf="condition"
+*ngFor="let item of items; trackBy: trackByFn"
+*ngSwitch
+
+// Attribute directives
+[class.active]="isActive"
+[style.color]="color"
+(click)="handler()"
+[(ngModel)]="value"  // Two-way binding
+```
+
+## Key Libraries
+
+- **RxJS**: `Observable`, `Subject`, operators (`map`, `filter`, `switchMap`)
+- **Signals**: `signal()`, `computed()`, `effect()` (Angular 16+)
+- **HttpClient**: `get()`, `post()`, `put()`, `delete()`
+- **Router**: `RouterModule`, `RouterLink`, `ActivatedRoute`
