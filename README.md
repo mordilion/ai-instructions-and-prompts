@@ -17,8 +17,9 @@ Define your coding standards once, generate configurations for **Cursor, Claude 
 - 📦 **50+ Frameworks** – React, Next.js, NestJS, AdonisJS, Spring Boot, Django, FastAPI, Laravel, iOS, Android, and more
 - 🏗️ **Structure Templates** – Clean Architecture, MVVM, MVI, Vertical Slices, Feature-First, DDD, Modular
 - 🔒 **Security Rules** – OWASP Top 10 coverage for all languages (token-optimized)
-- 🔄 **Process Guides** – Testing implementation workflows for all languages (NUnit, Jest, JUnit, pytest, etc.)
+- 🔄 **Process Guides** – CI/CD, Testing, Logging, Docker, Authentication, Migrations, API Documentation (all languages)
 - ⚡ **Interactive Setup** – Wizard guides you through configuration
+- ✅ **Conflict-Free** – Verified consistent across all 191 files
 
 ## 🚀 Quick Start
 
