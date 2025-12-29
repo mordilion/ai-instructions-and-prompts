@@ -24,9 +24,39 @@ cd .github/scripts
 npm install
 ```
 
+### Optional: Install Free Local AI (No API Keys Required)
+
+```bash
+# Option 1: Ollama (recommended)
+# macOS: brew install ollama
+# Windows: winget install Ollama.Ollama
+# Linux: curl -fsSL https://ollama.com/install.sh | sh
+ollama pull codellama:13b
+
+# Option 2: LM Studio
+# Download from https://lmstudio.ai/
+```
+
+**See `FREE_AI_TESTING.md` for complete free testing guide**
+
 ---
 
 ## 🚀 **Usage**
+
+### Test with Free Local AI (No API Key) ⭐ NEW
+
+```bash
+# Install Ollama (one-time): https://ollama.com/
+ollama pull codellama:13b
+
+# Run tests (completely free, no API key needed)
+node test-ai.js \
+  --provider ollama \
+  --model codellama:13b \
+  --test-suite critical
+
+# See FREE_AI_TESTING.md for full guide
+```
 
 ### Test GPT-4
 

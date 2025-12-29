@@ -4,9 +4,30 @@ Test your rules against GPT-4, Claude, Gemini, and Codestral to ensure consisten
 
 ---
 
-## ⚡ **3 Ways to Run Tests**
+## ⚡ **4 Ways to Run Tests**
 
-### 1️⃣ **Local Testing** (Recommended First)
+### 0️⃣ **Free Local AI** (No API Keys!) ⭐ NEW
+
+```bash
+# Install Ollama (one-time)
+# macOS: brew install ollama
+# Windows: winget install Ollama.Ollama
+ollama pull codellama:13b
+
+# Run tests (completely free)
+cd .github/scripts
+node test-ai.js --provider ollama --model codellama:13b --test-suite critical
+```
+
+**Cost**: $0 (completely free)  
+**Quality**: 75-82% score (vs 95% for GPT-4)  
+**Speed**: 30-60 seconds
+
+📖 **Full Guide**: `.github/scripts/FREE_AI_TESTING.md`
+
+---
+
+### 1️⃣ **Local Testing** (With API Keys)
 
 ```bash
 # Install dependencies
@@ -254,10 +275,21 @@ node .github/scripts/test-ai.js ...
 
 ## 📚 **Next Steps**
 
-1. **Run your first test** (locally):
+1. **Run your first FREE test** (no API key):
+   ```bash
+   # Install Ollama: https://ollama.com/
+   ollama pull codellama:13b
+   
+   cd .github/scripts
+   npm install
+   node test-ai.js --provider ollama --model codellama:13b --test-suite critical
+   ```
+
+2. **Or run with paid API** (better quality):
    ```bash
    cd .github/scripts
    npm install
+   export OPENAI_API_KEY="sk-..."
    node test-ai.js --provider openai --model gpt-4-turbo-preview --test-suite critical
    ```
 

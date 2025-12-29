@@ -207,6 +207,26 @@ async function createAIClient(provider) {
       });
     }
     
+    case 'ollama': {
+      // Local Ollama instance (free, no API key needed)
+      const { default: OpenAI } = await import('openai');
+      const baseURL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434/v1';
+      return new OpenAI({
+        apiKey: 'ollama', // Ollama doesn't require real API key
+        baseURL: baseURL
+      });
+    }
+    
+    case 'lmstudio': {
+      // LM Studio local instance (free, no API key needed)
+      const { default: OpenAI } = await import('openai');
+      const baseURL = process.env.LMSTUDIO_BASE_URL || 'http://localhost:1234/v1';
+      return new OpenAI({
+        apiKey: 'lmstudio', // LM Studio doesn't require real API key
+        baseURL: baseURL
+      });
+    }
+    
     default:
       throw new Error(`Unknown provider: ${provider}`);
   }
@@ -235,6 +255,8 @@ async function callAI(client, provider, model, systemPrompt, userPrompt) {
     switch (provider) {
       case 'openai':
       case 'mistral':
+      case 'ollama':
+      case 'lmstudio':
         const completion = await client.chat.completions.create({
           model: model,
           messages: [
