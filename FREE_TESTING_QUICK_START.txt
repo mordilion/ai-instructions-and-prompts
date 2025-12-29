@@ -1,0 +1,150 @@
+╔════════════════════════════════════════════════════════════════╗
+║                                                                ║
+║          🎉 FREE AI TESTING NOW AVAILABLE! 🎉                  ║
+║                                                                ║
+║     Test your rules WITHOUT any API keys or costs!             ║
+║                                                                ║
+╚════════════════════════════════════════════════════════════════╝
+
+
+📦 QUICK SETUP (3 steps):
+─────────────────────────────────────────────────────────────────
+
+1. Install Ollama:
+   
+   Windows:  winget install Ollama.Ollama
+   macOS:    brew install ollama
+   Linux:    curl -fsSL https://ollama.com/install.sh | sh
+   
+   Or download from: https://ollama.com/download
+
+
+2. Pull a code model:
+   
+   ollama pull codellama:13b
+
+
+3. Run tests (COMPLETELY FREE!):
+   
+   cd .github/scripts
+   node test-ai.js --provider ollama --model codellama:13b --test-suite critical
+
+
+💰 COST COMPARISON:
+─────────────────────────────────────────────────────────────────
+
+   Provider          Cost per Test    Quality Score
+   ─────────────────────────────────────────────────
+   Ollama (local)    $0.00 ✅         78% (good)
+   GPT-4 (cloud)     $0.09            95% (best)
+   Claude (cloud)    $0.045           94% (best)
+
+
+🎯 RECOMMENDED WORKFLOW:
+─────────────────────────────────────────────────────────────────
+
+   Step 1: Develop rules with Ollama (free, fast)
+           → Iterate 10 times: $0.00
+   
+   Step 2: Final validation with GPT-4 (once)
+           → 1 test: $0.09
+   
+   Total Cost: $0.09 instead of $0.90
+   Savings: 90% 🎉
+
+
+📊 AVAILABLE FREE MODELS:
+─────────────────────────────────────────────────────────────────
+
+   Model                Size    Quality    Speed     Recommended
+   ────────────────────────────────────────────────────────────
+   codellama:13b        7GB     ⭐⭐⭐      Medium    ✅ YES
+   codellama:34b        19GB    ⭐⭐⭐⭐    Slow      Advanced
+   deepseek-coder:6.7b  4GB     ⭐⭐⭐      Fast      Quick tests
+   mistral:7b           4GB     ⭐⭐        Fast      Baseline
+
+
+💡 WHY USE FREE LOCAL AI?
+─────────────────────────────────────────────────────────────────
+
+   ✅ No API keys needed
+   ✅ Zero cost (run unlimited tests)
+   ✅ Privacy (rules never leave your machine)
+   ✅ Fast iteration (no network latency)
+   ✅ Perfect for learning and development
+   
+   ⚠️  Lower quality than GPT-4/Claude
+   ⚠️  Requires local disk space (4-19GB)
+
+
+🚀 EXAMPLE SESSION:
+─────────────────────────────────────────────────────────────────
+
+   PS> ollama pull codellama:13b
+   pulling manifest ✓
+   pulling model... (7.0 GB)
+   
+   PS> cd .github/scripts
+   PS> node test-ai.js --provider ollama --model codellama:13b --test-suite critical
+   
+   Testing codellama:13b (ollama) with test suite: critical
+   
+   Running test: Spring Boot Service
+     Score: 78/100 ✓
+   
+   Running test: React Component
+     Score: 82/100 ✓
+   
+   Running test: ASP.NET Core Controller
+     Score: 75/100 ✓
+   
+   === Summary ===
+   Tests: 3
+   Passed: 2
+   Failed: 1
+   Average Score: 78/100
+   Pass Rate: 67%
+   
+   Results saved to: test-results/ollama-codellama-13b-1234567890.json
+
+
+📖 FULL DOCUMENTATION:
+─────────────────────────────────────────────────────────────────
+
+   Complete guide:      .github/scripts/FREE_AI_TESTING.md
+   Quick start:         QUICK_START_AI_TESTING.md
+   Main docs:           .github/scripts/README.md
+
+
+🆘 TROUBLESHOOTING:
+─────────────────────────────────────────────────────────────────
+
+   Q: "Connection refused" error?
+   A: Start Ollama: ollama serve
+
+   Q: "Model not found" error?
+   A: Pull the model: ollama pull codellama:13b
+
+   Q: Score is very low (<50%)?
+   A: Use code-focused model (codellama, not mistral)
+
+   Q: Out of memory?
+   A: Use smaller model: ollama pull deepseek-coder:6.7b
+
+
+🎓 NEXT STEPS:
+─────────────────────────────────────────────────────────────────
+
+   1. Install Ollama (see setup above)
+   2. Pull codellama:13b model
+   3. Run your first FREE test
+   4. Iterate on rules with instant feedback
+   5. Final validation with GPT-4 (optional)
+
+
+═══════════════════════════════════════════════════════════════════
+
+   No API keys? No problem. Test for FREE! 🎉
+
+═══════════════════════════════════════════════════════════════════
+
