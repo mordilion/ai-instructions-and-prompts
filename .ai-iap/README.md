@@ -325,22 +325,24 @@ Understanding how many tokens your rule selection consumes helps optimize AI con
 
 ### Total Available Tokens by Language
 
-| Language | Base (+Security) | Frameworks | Structures | Processes | Total |
-|----------|------------------|------------|------------|-----------|-------|
+| Language | Base (+Security) | Frameworks | Structures | Processes (Optimized) | Total |
+|----------|------------------|------------|------------|-----------------------|-------|
 | **General** (always loaded) | 1,075 + 1,200 | – | – | – | **2,275** |
 | **JavaScript** | 1,012 | 4,596 | 1,162 | – | **6,770** |
-| **TypeScript** | 852 + 1,050 | 11,000 | 5,800 | 1,650 | **20,350** |
+| **TypeScript** | 852 + 1,050 | 11,000 | 5,800 | 1,540 | **20,240** |
 | **Node.js** | – | 2,879 | – | – | **2,879** |
-| **Java** | 1,662 + 1,065 | 10,011 | 4,910 | 1,850 | **19,498** |
-| **Python** | 1,746 + 1,260 | 9,686 | 10,060 | 1,700 | **24,452** |
-| **Kotlin** | 2,671 + 1,020 | 16,354 | 25,815 | 1,900 | **47,760** |
-| **Swift** | 4,015 + 795 | 16,862 | 3,885 | 1,800 | **27,357** |
-| **Dart** | 823 + 1,095 | 3,535 | 1,595 | 1,750 | **8,798** |
-| **.NET** | 844 + 1,020 | 5,008 | 1,356 | 1,650 | **9,878** |
-| **PHP** | 860 + 1,050 | 5,158 | 1,553 | 1,700 | **10,321** |
-| **Grand Total** | | | | | **~180,000** |
+| **Java** | 1,662 + 1,065 | 10,011 | 4,910 | 1,725 | **19,373** |
+| **Python** | 1,746 + 1,260 | 9,686 | 10,060 | 1,585 | **24,337** |
+| **Kotlin** | 2,671 + 1,020 | 16,354 | 25,815 | 1,770 | **47,630** |
+| **Swift** | 4,015 + 795 | 16,862 | 3,885 | 1,675 | **27,232** |
+| **Dart** | 823 + 1,095 | 3,535 | 1,595 | 1,630 | **8,678** |
+| **.NET** | 844 + 1,020 | 5,008 | 1,356 | 1,540 | **9,768** |
+| **PHP** | 860 + 1,050 | 5,158 | 1,553 | 1,585 | **10,206** |
+| **Grand Total** | | | | | **~177,000** |
 
-> **Security Rules**: Token-optimized (80% reduction from code examples). Each language now includes concise security guidance (~1,000-1,200 tokens) covering OWASP Top 10, authentication, SQL injection prevention, and framework-specific patterns.
+> **Process Files**: Token-optimized (6.7% reduction). Files standardized to 195-285 lines each with Git Workflow reference pattern, consolidated tables, and streamlined AI Self-Check (10-12 items). CI/CD files reduced 38%, Logging files standardized, API Documentation expanded with security & CI/CD integration.
+
+> **Security Rules**: Token-optimized (80% reduction from code examples). Each language includes concise security guidance (~1,000-1,200 tokens) covering OWASP Top 10, authentication, SQL injection prevention, and framework-specific patterns.
 
 ### Typical Selection Examples
 
