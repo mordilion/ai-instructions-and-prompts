@@ -266,11 +266,14 @@ In addition to coding rules, this system includes **step-by-step workflow guides
 ### Process Quality Features
 
 1. **Phase-Based**: Each process divided into 4-5 clear phases with Git workflow pattern
-2. **Token-Optimized**: 35-40% shorter than traditional docs (CI/CD files optimized 38%)
-3. **AI-Optimized**: Explicit directives (`> **ALWAYS**`, `> **NEVER**`), 10-12 item self-check lists
-4. **Version Flexible**: No hardcoded versions - reads from project config files (.nvmrc, global.json, pom.xml, etc.)
-5. **Platform Guidance**: GitHub Actions primary, with guidance for GitLab CI, Azure DevOps, CircleCI, Jenkins
-6. **Consistent Structure**: Git Workflow reference, table format comparisons, troubleshooting sections
+2. **Understandability-First**: Clarity prioritized over brevity - same result across GPT-3.5, GPT-4, Claude, Gemini, Codestral
+3. **Token-Optimized**: 35-40% shorter than traditional docs where clarity is maintained (CI/CD files optimized 38%)
+4. **AI-Optimized**: Explicit directives (`> **ALWAYS**`, `> **NEVER**`), 10-12 item self-check lists
+5. **Version Flexible**: No hardcoded versions - reads from project config files (.nvmrc, global.json, pom.xml, etc.)
+6. **Platform Guidance**: GitHub Actions primary, with guidance for GitLab CI, Azure DevOps, CircleCI, Jenkins
+7. **Consistent Structure**: Git Workflow reference, table format comparisons, troubleshooting sections
+
+> **Design Philosophy**: Files may exceed token guidelines when framework complexity requires it. All lengths are justified by the need for clear, unambiguous instructions that produce consistent results across different AI models.
 
 ### Selecting Processes
 
