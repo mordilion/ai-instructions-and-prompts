@@ -1,202 +1,136 @@
 # Prisma ORM
 
-> **Scope**: Apply these rules when using Prisma for database access in TypeScript projects
+> **Scope**: Prisma for database access in TypeScript  
+> **Applies to**: TypeScript files using Prisma
 
-## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
+## CRITICAL REQUIREMENTS
 
-> **ALWAYS**: Use singleton Prisma Client instance (prevent connection pool exhaustion)
-> **ALWAYS**: Use select or include explicitly (avoid fetching unnecessary data)
-> **ALWAYS**: Use transactions for multi-step operations (data consistency)
-> **ALWAYS**: Abstract Prisma behind repositories (prevent leaking to services)
-> **ALWAYS**: Use prepared statements (Prisma does this automatically)
+> **ALWAYS**: Use singleton Prisma Client
+> **ALWAYS**: Use select or include explicitly
+> **ALWAYS**: Use transactions for multi-step
+> **ALWAYS**: Abstract Prisma behind repositories
+> **ALWAYS**: Use prepared statements (automatic)
 > 
-> **NEVER**: Create new PrismaClient() in request handlers (causes memory leaks)
-> **NEVER**: Use raw queries without parameterization ($queryRaw requires Prisma.sql)
-> **NEVER**: Expose Prisma types in service layer (return domain types)
-> **NEVER**: Skip pagination for large datasets (causes performance issues)
-> **NEVER**: Forget to handle connection errors
-
-## Pattern Selection
-
-| Pattern | Use When | Keywords |
-|---------|----------|----------|
-| select | Need specific fields only | `select: { id: true, name: true }` |
-| include | Need relations | `include: { posts: true }` |
-| Interactive Transaction | Complex multi-step logic | `$transaction(async (tx) => {})` |
-| Batch Transaction | Independent parallel operations | `$transaction([op1, op2])` |
-| Repository Pattern | Always (required) | Abstract Prisma, return domain types |
+> **NEVER**: Create new PrismaClient() in handlers
+> **NEVER**: Use raw queries without parameterization
+> **NEVER**: Expose Prisma types in service layer
+> **NEVER**: Skip pagination for large datasets
+> **NEVER**: Forget connection error handling
 
 ## Core Patterns
 
-### Singleton Client Instance (REQUIRED)
+### Singleton Client
+
 ```typescript
 // lib/prisma.ts
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@prisma/client'
 
 const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
-};
+  prisma: PrismaClient | undefined
+}
 
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error'] : ['error'],
-  });
+    log: process.env.NODE_ENV === 'development' ? ['query', 'error'] : ['error']
+  })
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 ```
 
-### Schema Design
-```prisma
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  posts     Post[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+### CRUD Operations
 
-  @@index([email])
-  @@map("users")
-}
-
-model Post {
-  id        String   @id @default(cuid())
-  title     String
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  authorId  String
-  
-  @@index([authorId])
-  @@map("posts")
-}
-```
-
-### Repository Pattern (REQUIRED)
 ```typescript
-// repositories/user.repository.ts
-import { prisma } from '../lib/prisma';
-import { Prisma, User } from '@prisma/client';
+// Create
+const user = await prisma.user.create({
+  data: { name: 'John', email: 'john@example.com' }
+})
 
-export class UserRepository {
-  async findById(id: string): Promise<User | null> {
-    return prisma.user.findUnique({ where: { id } });
-  }
+// Read with select
+const users = await prisma.user.findMany({
+  select: { id: true, name: true, email: true }
+})
 
-  async create(data: Prisma.UserCreateInput): Promise<User> {
-    return prisma.user.create({ data });
-  }
+// Read with include (relations)
+const userWithPosts = await prisma.user.findUnique({
+  where: { id: 1 },
+  include: { posts: true }
+})
 
-  async findMany(params: {
-    skip?: number;
-    take?: number;
-    where?: Prisma.UserWhereInput;
-  }): Promise<User[]> {
-    return prisma.user.findMany(params);
-  }
-}
+// Update
+await prisma.user.update({
+  where: { id: 1 },
+  data: { name: 'Jane' }
+})
 
-export const userRepository = new UserRepository();
+// Delete
+await prisma.user.delete({ where: { id: 1 } })
 ```
 
 ### Transactions
-```typescript
-// Interactive transaction (for dependent operations)
-const result = await prisma.$transaction(async (tx) => {
-  const user = await tx.user.create({ data: { email, name } });
-  await tx.post.create({ data: { title: 'Welcome', authorId: user.id } });
-  return user;
-});
 
-// Batch transaction (for independent operations)
-const [users, posts] = await prisma.$transaction([
-  prisma.user.findMany(),
-  prisma.post.findMany(),
-]);
+```typescript
+// Interactive transaction
+await prisma.$transaction(async (tx) => {
+  const user = await tx.user.create({ data: { name: 'John', email: 'john@example.com' } })
+  await tx.post.create({ data: { title: 'Hello', authorId: user.id } })
+})
+
+// Batch transaction
+await prisma.$transaction([
+  prisma.user.create({ data: { name: 'John', email: 'john@example.com' } }),
+  prisma.user.create({ data: { name: 'Jane', email: 'jane@example.com' } })
+])
 ```
 
-## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
+### Repository Pattern
 
-| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
-|---------|---------|-----------|--------------|
-| **Multiple Client Instances** | `new PrismaClient()` in handlers | Singleton client | Connection pool exhaustion, memory leaks |
-| **N+1 Queries** | Loop with `findUnique()` | `findMany()` with `include` | Performance degradation |
-| **No Pagination** | `findMany()` without `take/skip` | Add pagination params | Memory exhaustion on large datasets |
-| **Exposing Prisma Types** | Return `Prisma.User` from service | Return domain DTO | Tight coupling, breaks abstraction |
-| **Missing Transactions** | Multiple writes without tx | Wrap in `$transaction()` | Data inconsistency |
-
-### Anti-Pattern: Multiple Client Instances (FORBIDDEN)
 ```typescript
-// ❌ WRONG - Creates new instance per request
-export async function getUser(id: string) {
-  const prisma = new PrismaClient();  // Memory leak!
-  return prisma.user.findUnique({ where: { id } });
-}
-
-// ✅ CORRECT - Use singleton
-import { prisma } from '../lib/prisma';
-export async function getUser(id: string) {
-  return prisma.user.findUnique({ where: { id } });
+export class UserRepository {
+  async create(data: CreateUserDto): Promise<User> {
+    const prismaUser = await prisma.user.create({ data })
+    return this.toDomain(prismaUser)
+  }
+  
+  private toDomain(prismaUser: PrismaUser): User {
+    return { id: prismaUser.id, name: prismaUser.name, email: prismaUser.email }
+  }
 }
 ```
 
-### Anti-Pattern: N+1 Queries (FORBIDDEN)
-```typescript
-// ❌ WRONG - N+1 queries
-const users = await prisma.user.findMany();
-for (const user of users) {
-  user.posts = await prisma.post.findMany({ where: { authorId: user.id } });
-}
+## Common AI Mistakes
 
-// ✅ CORRECT - Single query with include
-const users = await prisma.user.findMany({
-  include: { posts: true }
-});
-```
+| Mistake | ❌ Wrong | ✅ Correct |
+|---------|---------|-----------|
+| **New Client** | `new PrismaClient()` in handler | Singleton |
+| **No select/include** | Fetch all fields | Explicit fields |
+| **Exposed Types** | Return Prisma types | Domain types |
+| **No Pagination** | `findMany()` on 1M rows | `skip`/`take` |
 
-## AI Self-Check (Verify BEFORE generating Prisma code)
+## AI Self-Check
 
-- [ ] Using singleton PrismaClient? (NOT new PrismaClient() in handlers)
-- [ ] Using select or include explicitly? (Avoid fetching all fields)
-- [ ] Pagination for large datasets? (skip/take parameters)
-- [ ] Repository pattern? (Prisma abstracted, not in services)
-- [ ] Transactions for multi-step writes? ($transaction)
-- [ ] Indexes for frequently queried fields? (@@index in schema)
-- [ ] Cascading deletes configured? (onDelete: Cascade)
-- [ ] Proper error handling? (try-catch for connection errors)
-- [ ] Relations defined both sides? (User.posts, Post.author)
-- [ ] Using parameterized queries? (Prisma.sql for raw queries)
+- [ ] Singleton Prisma Client?
+- [ ] select/include explicit?
+- [ ] Transactions for multi-step?
+- [ ] Repository pattern?
+- [ ] Prepared statements?
+- [ ] No new Client in handlers?
+- [ ] No exposed Prisma types?
+- [ ] Pagination for large sets?
+- [ ] Connection error handling?
 
-## Key Commands
+## Key Features
 
-```bash
-# Generate Prisma Client after schema changes
-npx prisma generate
+| Feature | Purpose |
+|---------|---------|
+| Singleton Client | Prevent leaks |
+| select/include | Specific fields |
+| $transaction | Multi-step |
+| Repository | Abstraction |
+| Prisma.sql | Safe raw queries |
 
-# Create migration
-npx prisma migrate dev --name migration_name
+## Best Practices
 
-# Apply migrations (production)
-npx prisma migrate deploy
-
-# Seed database
-npx prisma db seed
-
-# Open Prisma Studio
-npx prisma studio
-```
-
-## Query Optimization
-
-| Technique | Purpose | Example |
-|-----------|---------|---------|
-| select | Reduce payload | `select: { id: true, name: true }` |
-| include | Eager load relations | `include: { posts: true }` |
-| where | Filter results | `where: { published: true }` |
-| orderBy | Sort results | `orderBy: { createdAt: 'desc' }` |
-| take/skip | Pagination | `take: 10, skip: 20` |
-
-## Key Libraries
-
-- **@prisma/client**: Generated type-safe client
-- **prisma**: CLI for migrations and schema management
-- **Prisma Studio**: Visual database browser
+**MUST**: Singleton, select/include, transactions, repository, error handling
+**SHOULD**: Pagination, indexes, connection pooling
+**AVOID**: New Client per request, exposed types, no pagination

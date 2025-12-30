@@ -1,165 +1,122 @@
 # Django Modular Structure
 
-> **Scope**: This structure extends the Django framework rules. When selected, use this folder organization instead of the default.
+> **Scope**: Feature-first modular structure for Django  
+> **Use When**: Medium-large apps, domain-driven design
 
-## Project Structure
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Organize by feature/domain app
+> **ALWAYS**: Each app is self-contained
+> **ALWAYS**: Minimize cross-app dependencies
+> **ALWAYS**: Use Django app registry
+> 
+> **NEVER**: Share implementation details between apps
+> **NEVER**: Create circular dependencies
+
+## Structure
+
 ```
 myproject/
 ├── manage.py
-├── config/                     # Project config
-│   ├── __init__.py
+├── config/                # Project config
 │   ├── settings/
-│   │   ├── base.py
-│   │   ├── development.py
-│   │   └── production.py
 │   ├── urls.py
-│   ├── wsgi.py
-│   └── asgi.py
+│   └── wsgi.py
 ├── apps/
-│   ├── users/                  # User domain module
-│   │   ├── __init__.py
+│   ├── users/            # User app (self-contained)
 │   │   ├── models/
-│   │   │   ├── __init__.py
-│   │   │   ├── user.py
-│   │   │   └── profile.py
 │   │   ├── views/
-│   │   │   ├── __init__.py
-│   │   │   ├── user_views.py
-│   │   │   └── auth_views.py
 │   │   ├── serializers/
-│   │   │   ├── __init__.py
-│   │   │   ├── user_serializer.py
-│   │   │   └── profile_serializer.py
 │   │   ├── services/
-│   │   │   ├── __init__.py
-│   │   │   ├── user_service.py
-│   │   │   └── auth_service.py
 │   │   ├── repositories/
-│   │   │   ├── __init__.py
-│   │   │   └── user_repository.py
 │   │   ├── urls.py
 │   │   ├── admin.py
-│   │   ├── apps.py
-│   │   ├── tests/
-│   │   │   ├── test_models.py
-│   │   │   ├── test_views.py
-│   │   │   └── test_services.py
-│   │   └── migrations/
-│   ├── posts/
-│   │   ├── models/
-│   │   ├── views/
-│   │   ├── serializers/
-│   │   ├── services/
-│   │   └── ...
-│   └── orders/
-├── core/                       # Shared utilities
-│   ├── __init__.py
-│   ├── exceptions.py
-│   ├── permissions.py
-│   ├── pagination.py
-│   ├── middleware.py
-│   └── utils.py
-└── requirements/
+│   │   └── tests/
+│   └── posts/            # Posts app
+│       ├── models/
+│       ├── views/
+│       └── services/
+└── core/                 # Shared utilities only
+    ├── exceptions.py
+    └── middleware.py
 ```
 
-## Module Structure (users/)
-```
-users/
-├── models/
-│   ├── __init__.py             # Export: User, Profile
-│   ├── user.py                 # User model
-│   └── profile.py              # Profile model
-├── views/
-│   ├── __init__.py
-│   ├── user_views.py           # UserListView, UserDetailView
-│   └── auth_views.py           # LoginView, RegisterView
-├── serializers/
-│   ├── __init__.py
-│   ├── user_serializer.py
-│   └── profile_serializer.py
-├── services/
-│   ├── __init__.py
-│   ├── user_service.py         # UserService class
-│   └── auth_service.py         # AuthService class
-├── repositories/
-│   ├── __init__.py
-│   └── user_repository.py      # UserRepository class
-├── urls.py
-├── admin.py
-└── tests/
-```
+## Core Patterns
 
-## Rules
-- **Organized by Type**: Models, views, serializers in separate files.
-- **Service Layer**: Business logic in `services/`.
-- **Repository Pattern**: Data access in `repositories/` (optional).
-- **Explicit Exports**: Use `__init__.py` to expose public API.
-- **Tests by Type**: Separate test files for models, views, services.
+### App Organization
 
-## Example: Service Layer
 ```python
-# apps/users/services/user_service.py
-from django.db import transaction
-from ..models import User, Profile
-from ..repositories.user_repository import UserRepository
+# apps/users/models/user.py
+class User(models.Model):
+    email = models.EmailField(unique=True)
+    name = models.CharField(max_length=100)
 
+# apps/users/views/user_views.py
+class UserListView(APIView):
+    def get(self, request):
+        service = UserService()
+        users = service.get_all_users()
+        return Response(UserSerializer(users, many=True).data)
+
+# apps/users/services/user_service.py
 class UserService:
     def __init__(self):
-        self.user_repo = UserRepository()
+        self.repository = UserRepository()
     
-    @transaction.atomic
-    def create_user(self, email: str, password: str) -> User:
-        user = self.user_repo.create(email=email, password=password)
-        Profile.objects.create(user=user)
-        return user
-    
-    def get_active_users(self) -> list[User]:
-        return self.user_repo.get_active()
+    def get_all_users(self):
+        return self.repository.get_all()
 ```
 
-## Example: Repository
+### Cross-App Communication
+
 ```python
-# apps/users/repositories/user_repository.py
-from ..models import User
+# apps/users/public_api.py - Interface for other apps
+class UserPublicApi:
+    @staticmethod
+    def get_user(user_id: int) -> Optional[User]:
+        return UserRepository().get_by_id(user_id)
 
-class UserRepository:
-    def create(self, **kwargs) -> User:
-        return User.objects.create_user(**kwargs)
-    
-    def get_active(self) -> list[User]:
-        return list(User.objects.filter(is_active=True))
-    
-    def get_by_email(self, email: str) -> User | None:
-        return User.objects.filter(email=email).first()
+# apps/posts/services/post_service.py - Uses user app via interface
+from apps.users.public_api import UserPublicApi
+
+class PostService:
+    def create_post(self, user_id: int, title: str):
+        user = UserPublicApi.get_user(user_id)
+        if not user:
+            raise UserNotFoundError()
+        return Post.objects.create(user=user, title=title)
 ```
 
-## Example: View with Service
-```python
-# apps/users/views/user_views.py
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from ..services.user_service import UserService
-from ..serializers import UserSerializer
+## Common AI Mistakes
 
-user_service = UserService()
+| Mistake | ❌ Wrong | ✅ Correct |
+|---------|---------|-----------|
+| **Circular Deps** | user → post → user | Use interfaces |
+| **Shared Implementation** | Direct model access | Public API |
+| **App Coupling** | Access internal classes | Public API only |
+| **Core Bloat** | Everything in core/ | Only shared code |
 
-@api_view(['POST'])
-def create_user(request):
-    serializer = UserSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
-    
-    user = user_service.create_user(
-        email=serializer.validated_data['email'],
-        password=serializer.validated_data['password']
-    )
-    
-    return Response(UserSerializer(user).data, status=201)
-```
+## AI Self-Check
+
+- [ ] Organized by feature?
+- [ ] Each app self-contained?
+- [ ] Public API for cross-app?
+- [ ] No circular dependencies?
+- [ ] Core/ has only shared utilities?
+- [ ] Tests mirror app structure?
+- [ ] Django app registry used?
+- [ ] Clear app boundaries?
+
+## Benefits
+
+- ✅ High cohesion, low coupling
+- ✅ Easy to understand scope
+- ✅ Parallel development
+- ✅ Easy to extract services
 
 ## When to Use
-- Medium to large Django projects
-- Clear separation of concerns needed
-- Multiple developers per module
-- Complex business logic requiring service layer
-- Potential for extracting modules to microservices
 
+- ✅ Medium-large apps
+- ✅ Clear business domains
+- ✅ Multiple teams
+- ❌ Simple CRUD apps

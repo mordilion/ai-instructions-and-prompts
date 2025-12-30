@@ -1,36 +1,27 @@
 # Hibernate ORM
 
-> **Scope**: Apply these rules when using Hibernate in Java projects
+> **Scope**: Hibernate in Java projects  
 > **Applies to**: Java files using Hibernate
 > **Extends**: java/architecture.md, java/code-style.md
 
-## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
+## CRITICAL REQUIREMENTS
 
-> **ALWAYS**: Use @Entity with proper mapping annotations
-> **ALWAYS**: Use Criteria API or JPQL (NOT raw SQL)
-> **ALWAYS**: Use transactions for write operations
-> **ALWAYS**: Use fetch joins to avoid N+1 queries
-> **ALWAYS**: Close SessionFactory on application shutdown
+> **ALWAYS**: Use @Entity with proper mapping
+> **ALWAYS**: Use Criteria API or JPQL
+> **ALWAYS**: Use transactions for writes
+> **ALWAYS**: Use fetch joins to avoid N+1
+> **ALWAYS**: Close SessionFactory on shutdown
 > 
-> **NEVER**: Use raw SQL without parameterization (SQL injection)
-> **NEVER**: Load collections in loops (N+1 problem)
-> **NEVER**: Forget @Transactional on write methods
+> **NEVER**: Use raw SQL without parameterization
+> **NEVER**: Load collections in loops
+> **NEVER**: Forget @Transactional
 > **NEVER**: Use lazy loading without open session
-> **NEVER**: Store Session in instance variables (not thread-safe)
-
-## Pattern Selection
-
-| Pattern | Use When | Keywords |
-|---------|----------|----------|
-| Entity Mapping | Domain models | `@Entity`, `@Table`, `@Column` |
-| Criteria API | Type-safe queries | `CriteriaBuilder`, type-safe |
-| JPQL | String-based queries | HQL syntax |
-| Fetch Joins | Avoid N+1 | `JOIN FETCH` |
-| Named Queries | Reusable queries | `@NamedQuery` |
+> **NEVER**: Store Session in instance variables
 
 ## Core Patterns
 
 ### Entity Mapping
+
 ```java
 @Entity
 @Table(name = "users")
@@ -45,150 +36,93 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
     
-    @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "author", cascade = CascadeType.ALL)
     private List<Post> posts = new ArrayList<>();
-    
-    @CreationTimestamp
-    @Column(updatable = false)
-    private LocalDateTime createdAt;
 }
 ```
 
-### Criteria API (Type-Safe)
+### CRUD Operations
+
+```java
+// Create
+@Transactional
+public User createUser(String name, String email) {
+    User user = new User(name, email);
+    session.persist(user);
+    return user;
+}
+
+// Read with fetch join (avoid N+1)
+@Transactional(readOnly = true)
+public User getUserWithPosts(Long id) {
+    return session.createQuery(
+        "SELECT u FROM User u JOIN FETCH u.posts WHERE u.id = :id",
+        User.class
+    ).setParameter("id", id).getSingleResult();
+}
+
+// Update
+@Transactional
+public void updateUser(Long id, String name) {
+    User user = session.get(User.class, id);
+    user.setName(name);
+}
+
+// Delete
+@Transactional
+public void deleteUser(Long id) {
+    User user = session.get(User.class, id);
+    session.remove(user);
+}
+```
+
+### Criteria API
+
 ```java
 CriteriaBuilder cb = session.getCriteriaBuilder();
-CriteriaQuery<User> query = cb.createQuery(User.class);
-Root<User> root = query.from(User.class);
+CriteriaQuery<User> cq = cb.createQuery(User.class);
+Root<User> user = cq.from(User.class);
 
-query.select(root)
-    .where(cb.equal(root.get("email"), email));
+cq.select(user)
+  .where(cb.like(user.get("email"), "%@example.com"))
+  .orderBy(cb.desc(user.get("id")));
 
-User user = session.createQuery(query).getSingleResult();
+List<User> users = session.createQuery(cq).getResultList();
 ```
 
-### JPQL with Fetch Join
-```java
-String jpql = "SELECT u FROM User u JOIN FETCH u.posts WHERE u.id = :id";
-User user = session.createQuery(jpql, User.class)
-    .setParameter("id", userId)
-    .getSingleResult();
-```
+## Common AI Mistakes
 
-### Transaction Management
-```java
-Transaction tx = null;
-try {
-    tx = session.beginTransaction();
-    
-    User user = new User();
-    user.setName("John");
-    user.setEmail("john@example.com");
-    
-    session.persist(user);
-    tx.commit();
-} catch (Exception e) {
-    if (tx != null) tx.rollback();
-    throw e;
-}
-```
+| Mistake | ❌ Wrong | ✅ Correct |
+|---------|---------|-----------|
+| **N+1 Queries** | Lazy load in loop | `JOIN FETCH` |
+| **No Transaction** | Direct persist | `@Transactional` |
+| **Raw SQL** | Unparameterized | Criteria API/JPQL |
+| **Instance Session** | Store session | Get from factory |
 
-## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
+## AI Self-Check
 
-| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
-|---------|---------|-----------|--------------|
-| **N+1 Queries** | Loop with lazy load | `JOIN FETCH` | Performance killer |
-| **Raw SQL** | Unparameterized SQL | Criteria API or parameterized | SQL injection |
-| **No Transaction** | Write without transaction | `@Transactional` or manual | Data inconsistency |
-| **Lazy Load Outside Session** | Access lazy collection after close | Eager fetch or open session | LazyInitializationException |
-| **Session as Field** | Store Session in class field | Method-local Session | Not thread-safe |
-
-### Anti-Pattern: N+1 Queries (PERFORMANCE DISASTER)
-```java
-// ❌ WRONG - N+1 queries
-List<User> users = session.createQuery("FROM User", User.class).list();
-for (User user : users) {
-    user.getPosts().size();  // Separate query for EACH user!
-}
-
-// ✅ CORRECT - Fetch join
-String jpql = "SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.posts";
-List<User> users = session.createQuery(jpql, User.class).list();
-```
-
-### Anti-Pattern: Raw SQL Without Parameters (SQL INJECTION)
-```java
-// ❌ WRONG - SQL injection vulnerability
-String sql = "SELECT * FROM users WHERE email = '" + email + "'";
-Query query = session.createNativeQuery(sql, User.class);
-
-// ✅ CORRECT - Parameterized query
-String jpql = "FROM User WHERE email = :email";
-User user = session.createQuery(jpql, User.class)
-    .setParameter("email", email)
-    .getSingleResult();
-```
-
-## AI Self-Check (Verify BEFORE generating Hibernate code)
-
-- [ ] Using @Entity with proper annotations?
-- [ ] Criteria API or JPQL (NOT raw SQL)?
-- [ ] Parameterized queries for all user input?
-- [ ] Transactions for write operations?
-- [ ] Fetch joins to avoid N+1?
-- [ ] Cascade operations configured?
-- [ ] No Session stored in fields?
-- [ ] Lazy loading handled properly?
-- [ ] SessionFactory properly configured?
-- [ ] Following Hibernate best practices?
-
-## Configuration
-
-```xml
-<!-- hibernate.cfg.xml -->
-<hibernate-configuration>
-    <session-factory>
-        <property name="hibernate.connection.driver_class">org.postgresql.Driver</property>
-        <property name="hibernate.connection.url">jdbc:postgresql://localhost/mydb</property>
-        <property name="hibernate.dialect">org.hibernate.dialect.PostgreSQLDialect</property>
-        <property name="hibernate.hbm2ddl.auto">update</property>
-        <property name="hibernate.show_sql">true</property>
-    </session-factory>
-</hibernate-configuration>
-```
-
-## Relationships
-
-| Type | Annotation | Example |
-|------|-----------|---------|
-| One-to-Many | `@OneToMany(mappedBy="...")` | User → Posts |
-| Many-to-One | `@ManyToOne` | Post → User |
-| Many-to-Many | `@ManyToMany` | Users ↔ Roles |
-| One-to-One | `@OneToOne` | User → Profile |
-
-## Cascade Operations
-
-```java
-@OneToMany(
-    mappedBy = "author",
-    cascade = CascadeType.ALL,  // Propagate all operations
-    orphanRemoval = true  // Delete orphaned entities
-)
-private List<Post> posts;
-```
+- [ ] @Entity with mapping?
+- [ ] Criteria API/JPQL?
+- [ ] Transactions for writes?
+- [ ] Fetch joins?
+- [ ] SessionFactory closed?
+- [ ] No raw SQL without params?
+- [ ] No N+1 queries?
+- [ ] @Transactional used?
+- [ ] Open session for lazy?
 
 ## Key Features
 
-- **Automatic DDL**: Schema generation
-- **Caching**: First/second level cache
-- **Lazy Loading**: On-demand loading
-- **Criteria API**: Type-safe queries
-- **HQL/JPQL**: Object-oriented queries
+| Feature | Purpose |
+|---------|---------|
+| @Entity | Mapping |
+| Criteria API | Type-safe queries |
+| JPQL | String queries |
+| JOIN FETCH | Avoid N+1 |
+| @Transactional | Transaction |
 
-## Key Annotations
+## Best Practices
 
-- `@Entity`: Mark as entity
-- `@Id`: Primary key
-- `@GeneratedValue`: Auto-generate ID
-- `@Column`: Column mapping
-- `@ManyToOne/@OneToMany`: Relationships
-- `@Transient`: Exclude from persistence
+**MUST**: @Entity, Criteria/JPQL, transactions, fetch joins, close factory
+**SHOULD**: Named queries, caching, indexes, batch operations
+**AVOID**: Raw SQL, N+1, no transactions, lazy without session

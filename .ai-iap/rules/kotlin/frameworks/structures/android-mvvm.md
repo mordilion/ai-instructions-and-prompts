@@ -1,49 +1,38 @@
 # Android MVVM Structure
 
-> **Scope**: Model-View-ViewModel pattern for Android apps
-> **Use When**: Standard Android apps with clear separation of concerns
+> **Scope**: Model-View-ViewModel pattern for Android  
+> **Use When**: Standard Android apps, clear separation
 
 ## CRITICAL REQUIREMENTS
 
-> **ALWAYS**: Separate into data, domain, and presentation layers
-> **ALWAYS**: ViewModels for business logic, Views for UI
+> **ALWAYS**: Separate data, domain, presentation layers
+> **ALWAYS**: ViewModels for business logic
 > **ALWAYS**: Repository pattern for data access
-> **ALWAYS**: Use cases for complex business logic
+> **ALWAYS**: Use cases for complex logic
 > **ALWAYS**: StateFlow or LiveData for reactive UI
 > 
 > **NEVER**: Put business logic in Views
 > **NEVER**: Access data sources directly from ViewModels
 > **NEVER**: Skip Repository pattern
-> **NEVER**: Use ViewModels without lifecycle awareness
+> **NEVER**: Use ViewModels without lifecycle
 
-## Directory Structure
+## Structure
 
 ```
 app/src/main/kotlin/com/app/
 ├── data/                # Data layer
 │   ├── local/          # Room, SharedPreferences
-│   │   ├── dao/
-│   │   └── entity/
 │   ├── remote/         # Retrofit, API
-│   │   ├── api/
-│   │   └── dto/
-│   └── repository/     # Repository implementations
+│   └── repository/     # Implementations
 ├── domain/             # Business logic
 │   ├── model/         # Domain models
-│   ├── repository/    # Repository interfaces
+│   ├── repository/    # Interfaces
 │   └── usecase/       # Use cases
-├── presentation/       # UI layer
-│   ├── ui/
-│   │   ├── home/
-│   │   │   ├── HomeFragment.kt
-│   │   │   ├── HomeViewModel.kt
-│   │   │   └── HomeState.kt
-│   │   └── profile/
-│   │       ├── ProfileFragment.kt
-│   │       └── ProfileViewModel.kt
-│   └── adapter/       # RecyclerView adapters
-├── di/                # Dependency injection (Hilt)
-└── util/              # Utilities
+└── presentation/       # UI layer
+    └── ui/home/
+        ├── HomeFragment.kt
+        ├── HomeViewModel.kt
+        └── HomeState.kt
 ```
 
 ## Core Patterns
@@ -51,58 +40,40 @@ app/src/main/kotlin/com/app/
 ### ViewModel
 
 ```kotlin
-@HiltViewModel
-class HomeViewModel @Inject constructor(
-    private val getUsersUseCase: GetUsersUseCase
-) : ViewModel() {
-    
-    private val _state = MutableStateFlow<UiState<List<User>>>(UiState.Loading)
-    val state: StateFlow<UiState<List<User>>> = _state.asStateFlow()
-    
-    init {
-        loadUsers()
-    }
+class HomeViewModel(private val getUsersUseCase: GetUsersUseCase) : ViewModel() {
+    private val _state = MutableStateFlow<UiState>(UiState.Loading)
+    val state: StateFlow<UiState> = _state.asStateFlow()
     
     fun loadUsers() {
         viewModelScope.launch {
             _state.value = UiState.Loading
-            getUsersUseCase()
-                .onSuccess { _state.value = UiState.Success(it) }
-                .onFailure { _state.value = UiState.Error(it.message ?: "") }
+            getUsersUseCase().fold(
+                onSuccess = { users -> _state.value = UiState.Success(users) },
+                onFailure = { e -> _state.value = UiState.Error(e.message) }
+            )
         }
     }
 }
 ```
 
-### Fragment (View)
+### Fragment/Activity
 
 ```kotlin
-@AndroidEntryPoint
-class HomeFragment : Fragment(R.layout.fragment_home) {
+class HomeFragment : Fragment() {
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
     private val viewModel: HomeViewModel by viewModels()
     
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        _binding = FragmentHomeBinding.bind(view)
-        
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.state.collect { renderState(it) }
+        lifecycleScope.launch {
+            viewModel.state.collect { state ->
+                when (state) {
+                    is UiState.Loading -> showLoading()
+                    is UiState.Success -> showData(state.data)
+                    is UiState.Error -> showError(state.message)
+                }
+            }
         }
-    }
-    
-    private fun renderState(state: UiState<List<User>>) {
-        when (state) {
-            is UiState.Loading -> showLoading()
-            is UiState.Success -> showUsers(state.data)
-            is UiState.Error -> showError(state.message)
-        }
-    }
-    
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
     }
 }
 ```
@@ -110,20 +81,17 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 ### Repository
 
 ```kotlin
-class UserRepositoryImpl @Inject constructor(
-    private val userApi: UserApi,
-    private val userDao: UserDao
+class UserRepositoryImpl(
+    private val remoteDataSource: UserRemoteDataSource,
+    private val localDataSource: UserLocalDataSource
 ) : UserRepository {
     
     override suspend fun getUsers(): Result<List<User>> = try {
-        val response = userApi.getUsers()
-        val users = response.map { it.toDomain() }
-        userDao.insertAll(users.map { it.toEntity() })
+        val users = remoteDataSource.fetchUsers()
+        localDataSource.saveUsers(users)
         Result.success(users)
     } catch (e: Exception) {
-        val cached = userDao.getAll().map { it.toDomain() }
-        if (cached.isNotEmpty()) Result.success(cached)
-        else Result.failure(e)
+        Result.failure(e)
     }
 }
 ```
@@ -131,49 +99,43 @@ class UserRepositoryImpl @Inject constructor(
 ### Use Case
 
 ```kotlin
-class GetUsersUseCase @Inject constructor(
-    private val userRepository: UserRepository
-) {
+class GetUsersUseCase(private val repository: UserRepository) {
     suspend operator fun invoke(): Result<List<User>> {
-        return userRepository.getUsers()
+        return repository.getUsers()
     }
 }
 ```
 
-## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
+## Common AI Mistakes
 
-| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
-|---------|---------|-----------|--------------|
-| **Logic in View** | Business logic in Fragment | ViewModel | Separation of concerns |
-| **Direct Data Access** | API call in ViewModel | Repository | Abstraction |
-| **No Repository** | ViewModel → API directly | Repository pattern | Testability |
-| **No UseCase** | Complex logic in ViewModel | Use Case | Single responsibility |
+| Mistake | ❌ Wrong | ✅ Correct |
+|---------|---------|-----------|
+| **Logic in View** | Business rules | ViewModel |
+| **Direct Data Access** | ViewModel → API | Repository |
+| **No Repository** | Direct database | Repository pattern |
+| **No Lifecycle** | GlobalScope | viewModelScope |
 
-## AI Self-Check (Verify BEFORE generating MVVM code)
+## AI Self-Check
 
-- [ ] Three-layer architecture (data/domain/presentation)?
-- [ ] ViewModels for business logic?
-- [ ] Repository pattern for data access?
-- [ ] Use cases for complex operations?
-- [ ] StateFlow/LiveData for state?
-- [ ] Hilt for dependency injection?
-- [ ] Fragment nullable binding pattern?
-- [ ] lifecycleScope for coroutines?
-- [ ] No business logic in Fragments?
-- [ ] Domain models separate from DTOs/Entities?
+- [ ] Data, domain, presentation layers?
+- [ ] ViewModels for logic?
+- [ ] Repository pattern?
+- [ ] Use cases?
+- [ ] StateFlow/LiveData?
+- [ ] No logic in Views?
+- [ ] No direct data access?
+- [ ] Lifecycle awareness?
 
 ## Benefits
 
-- ✅ Clear separation of concerns
-- ✅ Testable (mock repositories, use cases)
-- ✅ Lifecycle-aware
-- ✅ Reusable business logic
-- ✅ Easy to maintain
+- ✅ Clear separation
+- ✅ Testable
+- ✅ Maintainable
+- ✅ Scalable
 
 ## When to Use
 
 - ✅ Standard Android apps
-- ✅ Clear business logic
-- ✅ Teams familiar with MVVM
-- ✅ Long-term maintainability
-- ❌ Very simple apps (use simpler patterns)
+- ✅ Clear layers
+- ✅ Team structure aligns
+- ❌ Very simple apps
