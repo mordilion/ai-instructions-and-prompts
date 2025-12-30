@@ -1,235 +1,164 @@
 # SwiftUI Framework
 
-> **Scope**: Apply these rules when working with SwiftUI applications
-> **Applies to**: Swift files in SwiftUI projects (iOS 13+, macOS 10.15+)
+> **Scope**: SwiftUI applications (iOS 13+, macOS 10.15+)  
+> **Applies to**: Swift files in SwiftUI projects
 > **Extends**: swift/architecture.md, swift/code-style.md
-> **Precedence**: Framework rules OVERRIDE Swift rules for SwiftUI-specific patterns
 
-## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
+## CRITICAL REQUIREMENTS
 
-> **ALWAYS**: Use @State for view-local state, @StateObject for owned ObservableObjects
-> **ALWAYS**: Use @Binding for two-way data flow from parent
-> **ALWAYS**: Use @EnvironmentObject for dependency injection (NOT singletons)
-> **ALWAYS**: Extract subviews when body exceeds 10 lines (readability)
-> **ALWAYS**: Use @Published for observable properties (enables view updates)
+> **ALWAYS**: Use @State for view-local state
+> **ALWAYS**: Use @StateObject for owned ObservableObjects
+> **ALWAYS**: Use @Binding for two-way data flow
+> **ALWAYS**: Use @EnvironmentObject for DI
+> **ALWAYS**: Extract subviews when body > 10 lines
 > 
-> **NEVER**: Use @ObservedObject for view-owned objects (causes recreation)
-> **NEVER**: Mutate state outside the main thread (causes crashes)
-> **NEVER**: Create ObservableObject inside body (recreated every render)
-> **NEVER**: Forget @Published on observable properties (breaks reactivity)
-> **NEVER**: Use force unwrapping (!) in views (causes crashes)
+> **NEVER**: Use @ObservedObject for view-owned objects
+> **NEVER**: Mutate state off main thread
+> **NEVER**: Create ObservableObject inside body
+> **NEVER**: Forget @Published on properties
+> **NEVER**: Force unwrap in views
 
-## Pattern Selection
+## Property Wrappers
 
-| Property Wrapper | Use When | Ownership | Keywords |
-|------------------|----------|-----------|----------|
-| @State | View-local simple values | View owns | `@State private var count = 0` |
-| @StateObject | View-owned ObservableObject | View owns (survives re-renders) | `@StateObject var viewModel = VM()` |
-| @ObservedObject | Passed-in ObservableObject | Parent owns | `@ObservedObject var viewModel: VM` |
-| @Binding | Two-way binding to parent | Parent owns | `@Binding var isOn: Bool` |
-| @EnvironmentObject | Dependency injection | Ancestor provides | `@EnvironmentObject var user: UserStore` |
+| Wrapper | Use When | Ownership |
+|---------|----------|-----------|
+| @State | View-local simple values | View owns |
+| @StateObject | View-owned ObservableObject | View owns (survives re-renders) |
+| @ObservedObject | Passed-in ObservableObject | Parent owns |
+| @Binding | Two-way binding to parent | Parent owns |
+| @EnvironmentObject | Dependency injection | Ancestor provides |
 
 ## Core Patterns
 
-### View with State & Binding
+### State & Binding
+
 ```swift
 struct CounterView: View {
-    @State private var count = 0  // View-local state
+    @State private var count = 0
     
     var body: some View {
         VStack {
             Text("Count: \(count)")
             Button("Increment") { count += 1 }
-            
-            ChildView(count: $count)  // Pass binding with $
+            ChildView(count: $count)  // Pass binding
         }
     }
 }
 
 struct ChildView: View {
-    @Binding var count: Int  // Two-way binding to parent
-    
+    @Binding var count: Int
     var body: some View {
         Button("Decrement") { count -= 1 }
     }
 }
 ```
 
-### ViewModel Pattern
+### ObservableObject & StateObject
+
 ```swift
 class UserViewModel: ObservableObject {
-    @Published var users: [User] = []  // @Published = view updates
+    @Published var users: [User] = []
     @Published var isLoading = false
     
-    func fetchUsers() async {
+    func loadUsers() async {
         isLoading = true
-        defer { isLoading = false }
-        
-        do {
-            users = try await UserAPI.fetchUsers()
-        } catch {
-            print("Error: \(error)")
-        }
+        users = await api.fetchUsers()
+        isLoading = false
     }
 }
 
 struct UserListView: View {
-    @StateObject private var viewModel = UserViewModel()  // View owns VM
+    @StateObject private var viewModel = UserViewModel()
     
     var body: some View {
         List(viewModel.users) { user in
             Text(user.name)
         }
-        .task { await viewModel.fetchUsers() }  // Async on appear
+        .task { await viewModel.loadUsers() }
     }
 }
 ```
 
-### Environment Objects (Dependency Injection)
+### EnvironmentObject
+
 ```swift
-// App.swift
+class UserStore: ObservableObject {
+    @Published var currentUser: User?
+}
+
 @main
 struct MyApp: App {
     @StateObject private var userStore = UserStore()
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environmentObject(userStore)  // Inject into hierarchy
+            ContentView().environmentObject(userStore)
         }
     }
 }
 
-// Any descendant view
 struct ProfileView: View {
-    @EnvironmentObject var userStore: UserStore  // Access injected object
+    @EnvironmentObject var userStore: UserStore
+    var body: some View {
+        Text(userStore.currentUser?.name ?? "Guest")
+    }
+}
+```
+
+### Async/Await
+
+```swift
+struct UsersView: View {
+    @State private var users: [User] = []
     
     var body: some View {
-        Text("User: \(userStore.currentUser.name)")
+        List(users, id: \.id) { user in
+            Text(user.name)
+        }
+        .task {
+            users = await fetchUsers()
+        }
     }
-}
-```
-
-## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
-
-| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
-|---------|---------|-----------|--------------|
-| **Wrong Property Wrapper** | `@ObservedObject` for view-owned object | `@StateObject` for view-owned | Object recreated on re-render |
-| **State on Main Thread** | Mutate `@State` from background | `@MainActor` or `DispatchQueue.main` | Crashes, purple runtime warnings |
-| **Missing @Published** | Observable property without `@Published` | Add `@Published` to properties | View doesn't update |
-| **VM in body** | `let vm = ViewModel()` in body | `@StateObject` or `@ObservedObject` | Recreated every render |
-| **Force Unwrapping** | `user!.name` in views | Optional binding `if let`, `??` | Crashes |
-
-### Anti-Pattern: Wrong Property Wrapper (COMMON ERROR)
-```swift
-// ❌ WRONG - @ObservedObject for view-owned (recreates on re-render)
-struct ContentView: View {
-    @ObservedObject var viewModel = ViewModel()  // WRONG!
-    var body: some View { ... }
-}
-
-// ✅ CORRECT - @StateObject for view-owned
-struct ContentView: View {
-    @StateObject private var viewModel = ViewModel()
-    var body: some View { ... }
-}
-
-// ✅ CORRECT - @ObservedObject for passed-in
-struct ChildView: View {
-    @ObservedObject var viewModel: ViewModel  // Parent owns
-    var body: some View { ... }
-}
-```
-
-### Anti-Pattern: Background State Mutation (CRASHES)
-```swift
-// ❌ WRONG - Mutate @State from background thread
-@State private var data: [Item] = []
-
-Task {
-    let items = await fetchItems()
-    data = items  // CRASH! Not on main thread
-}
-
-// ✅ CORRECT - Use @MainActor or DispatchQueue.main
-@State private var data: [Item] = []
-
-Task {
-    let items = await fetchItems()
-    await MainActor.run {
-        data = items  // Safe on main thread
-    }
-}
-
-// ✅ BETTER - @MainActor on ViewModel
-@MainActor
-class ViewModel: ObservableObject {
-    @Published var data: [Item] = []
     
-    func fetch() async {
-        data = await fetchItems()  // Already on main thread
+    func fetchUsers() async -> [User] {
+        // Async network call
     }
 }
 ```
 
-## AI Self-Check (Verify BEFORE generating SwiftUI code)
+## Common AI Mistakes
 
-- [ ] Using @StateObject for view-owned ObservableObjects? (NOT @ObservedObject)
-- [ ] Using @State for view-local simple values?
-- [ ] Using @Binding for two-way parent-child communication?
-- [ ] Using @EnvironmentObject for dependency injection?
-- [ ] All @Published properties in ObservableObject?
-- [ ] State mutations on main thread? (@MainActor or DispatchQueue.main)
-- [ ] No force unwrapping (!) in views?
-- [ ] Subviews extracted when body > 10 lines?
-- [ ] Using .task for async work?
-- [ ] Lists use Identifiable protocol?
+| Mistake | ❌ Wrong | ✅ Correct |
+|---------|---------|-----------|
+| **ObservedObject** | `@ObservedObject var vm = VM()` | `@StateObject` |
+| **Background Mutation** | `DispatchQueue.global { state = x }` | `@MainActor` |
+| **Body Creation** | `let vm = VM()` in body | `@StateObject` |
+| **No @Published** | `var users: [User]` | `@Published var users` |
 
-## View Lifecycle
+## AI Self-Check
 
-```swift
-struct ContentView: View {
-    var body: some View {
-        Text("Hello")
-            .onAppear { print("View appeared") }
-            .onDisappear { print("View disappeared") }
-            .task { await fetchData() }  // Async work, auto-cancelled
-    }
-}
-```
+- [ ] @State for local state?
+- [ ] @StateObject for owned objects?
+- [ ] @Binding for two-way flow?
+- [ ] @EnvironmentObject for DI?
+- [ ] Subviews extracted?
+- [ ] @Published on properties?
+- [ ] Main thread mutations?
+- [ ] No body creation?
+- [ ] No force unwraps?
 
-## Navigation
+## Key Features
 
-```swift
-// NavigationStack (iOS 16+)
-NavigationStack {
-    List(items) { item in
-        NavigationLink(item.name, value: item)
-    }
-    .navigationDestination(for: Item.self) { item in
-        DetailView(item: item)
-    }
-}
+| Feature | Purpose |
+|---------|---------|
+| @State | Local state |
+| @StateObject | Owned objects |
+| @Binding | Two-way binding |
+| @EnvironmentObject | DI |
+| @Published | Reactivity |
 
-// NavigationLink (iOS 13+)
-NavigationView {
-    NavigationLink("Details", destination: DetailView())
-}
-```
+## Best Practices
 
-## Key Modifiers
-
-| Modifier | Purpose | Example |
-|----------|---------|---------|
-| .task | Async work on appear | `.task { await fetch() }` |
-| .onChange | React to value changes | `.onChange(of: value) { }` |
-| .sheet | Present modal | `.sheet(isPresented: $show) { }` |
-| .alert | Show alert | `.alert("Title", isPresented: $show) { }` |
-| .toolbar | Add toolbar items | `.toolbar { ToolbarItem { } }` |
-
-## Key Libraries
-
-- **Combine**: Reactive programming, publishers
-- **@MainActor**: Ensure main thread execution
-- **PreferenceKey**: Child-to-parent communication
-- **ViewModifier**: Reusable view modifications
+**MUST**: Correct property wrappers, @Published, main thread, extract subviews
+**SHOULD**: async/await, @MainActor, preview providers
+**AVOID**: @ObservedObject for owned, background mutations, force unwraps

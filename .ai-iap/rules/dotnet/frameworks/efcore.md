@@ -1,41 +1,31 @@
 # Entity Framework Core
 
-> **Scope**: Apply these rules when using EF Core in .NET applications
+> **Scope**: EF Core in .NET applications  
 > **Applies to**: C# files using Entity Framework Core
 > **Extends**: dotnet/architecture.md, dotnet/code-style.md
 
-## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
+## CRITICAL REQUIREMENTS
 
-> **ALWAYS**: Use async methods for all database operations
-> **ALWAYS**: Use DbContext with scoped lifetime (NOT singleton)
-> **ALWAYS**: Use Include/ThenInclude to avoid N+1 queries
+> **ALWAYS**: Use async methods for database operations
+> **ALWAYS**: Use DbContext with scoped lifetime
+> **ALWAYS**: Use Include/ThenInclude to avoid N+1
 > **ALWAYS**: Use migrations for schema changes
 > **ALWAYS**: Use AsNoTracking for read-only queries
 > 
-> **NEVER**: Use synchronous methods (blocks thread pool)
-> **NEVER**: Use DbContext as singleton (not thread-safe)
-> **NEVER**: Lazy load in loops (N+1 problem)
-> **NEVER**: Use string-based column names (use lambdas)
-> **NEVER**: Track entities unnecessarily (performance)
-
-## Pattern Selection
-
-| Pattern | Use When | Keywords |
-|---------|----------|----------|
-| Include/ThenInclude | Load related entities | Eager loading, avoid N+1 |
-| AsNoTracking | Read-only queries | Performance, no updates needed |
-| FromSqlRaw | Raw SQL queries | Complex queries, parameterized |
-| ExecuteSqlRaw | Non-query commands | Updates, deletes |
-| Migrations | Schema changes | Version control, deployment |
+> **NEVER**: Use synchronous methods
+> **NEVER**: Use DbContext as singleton
+> **NEVER**: Lazy load in loops
+> **NEVER**: Use string-based column names
+> **NEVER**: Track entities unnecessarily
 
 ## Core Patterns
 
-### DbContext Configuration
+### DbContext
+
 ```csharp
 public class AppDbContext : DbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options)
-        : base(options) { }
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
     
     public DbSet<User> Users => Set<User>();
     public DbSet<Post> Posts => Set<Post>();
@@ -49,32 +39,48 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
             
             entity.HasMany(e => e.Posts)
-                .WithOne(e => e.Author)
-                .HasForeignKey(e => e.AuthorId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .WithOne(e => e.User)
+                .HasForeignKey(e => e.UserId);
         });
     }
 }
 ```
 
-### Repository Pattern
+### Eager Loading (Avoid N+1)
+
 ```csharp
-public class UserRepository
+// ❌ WRONG: N+1 queries
+var users = await _context.Users.ToListAsync();
+foreach (var user in users)
+{
+    var posts = user.Posts;  // Lazy load for each user!
+}
+
+// ✅ CORRECT: Single query with Include
+var users = await _context.Users
+    .Include(u => u.Posts)
+    .ThenInclude(p => p.Comments)
+    .ToListAsync();
+```
+
+### AsNoTracking
+
+```csharp
+// Read-only query
+var users = await _context.Users
+    .AsNoTracking()
+    .Where(u => u.IsActive)
+    .ToListAsync();
+```
+
+### Repository Pattern
+
+```csharp
+public class UserRepository : IUserRepository
 {
     private readonly AppDbContext _context;
     
-    public UserRepository(AppDbContext context)
-    {
-        _context = context;
-    }
-    
-    public async Task<List<User>> GetAllAsync()
-    {
-        return await _context.Users
-            .AsNoTracking()  // Read-only, better performance
-            .Include(u => u.Posts)  // Eager load to avoid N+1
-            .ToListAsync();
-    }
+    public UserRepository(AppDbContext context) => _context = context;
     
     public async Task<User?> GetByIdAsync(int id)
     {
@@ -83,139 +89,65 @@ public class UserRepository
             .FirstOrDefaultAsync(u => u.Id == id);
     }
     
-    public async Task<User> CreateAsync(User user)
+    public async Task<IEnumerable<User>> GetAllAsync()
     {
-        _context.Users.Add(user);
+        return await _context.Users.AsNoTracking().ToListAsync();
+    }
+    
+    public async Task AddAsync(User user)
+    {
+        await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
-        return user;
     }
 }
 ```
 
-### Avoiding N+1 Queries
+### Raw SQL (Parameterized)
+
 ```csharp
-// ✅ CORRECT - Single query with Include
 var users = await _context.Users
-    .Include(u => u.Posts)
-        .ThenInclude(p => p.Comments)  // Nested include
+    .FromSqlRaw("SELECT * FROM Users WHERE Email = {0}", email)
     .ToListAsync();
 
-foreach (var user in users)
-{
-    Console.WriteLine(user.Posts.Count);  // No additional queries
-}
-
-// ❌ WRONG - N+1 queries
-var users = await _context.Users.ToListAsync();
-foreach (var user in users)
-{
-    var posts = await _context.Posts
-        .Where(p => p.AuthorId == user.Id)
-        .ToListAsync();  // Separate query for EACH user!
-}
+// Execute non-query
+await _context.Database.ExecuteSqlRawAsync(
+    "UPDATE Users SET IsActive = {0} WHERE Id = {1}", 
+    true, userId);
 ```
 
-## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
+## Common AI Mistakes
 
-| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
-|---------|---------|-----------|--------------|
-| **Sync Methods** | `.ToList()`, `.First()` | `await .ToListAsync()`, `await .FirstAsync()` | Blocks threads |
-| **Singleton DbContext** | `AddSingleton<AppDbContext>()` | `AddDbContext<AppDbContext>()` (scoped) | Not thread-safe |
-| **No Include** | Lazy load in loop | `Include()` eager loading | N+1 queries |
-| **Always Tracking** | Default tracking for reads | `AsNoTracking()` | Performance |
-| **String Names** | `"Email"` in queries | `u => u.Email` | Type-safety |
+| Mistake | ❌ Wrong | ✅ Correct |
+|---------|---------|-----------|
+| **Sync Methods** | `.ToList()` | `.ToListAsync()` |
+| **Singleton** | `AddSingleton<DbContext>` | `AddScoped<DbContext>` |
+| **N+1** | Lazy load in loop | `.Include()` |
+| **Tracking** | Default for reads | `.AsNoTracking()` |
 
-### Anti-Pattern: Singleton DbContext (NOT THREAD-SAFE)
-```csharp
-// ❌ WRONG - Singleton DbContext (NOT THREAD-SAFE)
-services.AddSingleton<AppDbContext>();  // CRASHES under load!
+## AI Self-Check
 
-// ✅ CORRECT - Scoped DbContext
-services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(connectionString));  // Scoped by default
-```
-
-### Anti-Pattern: N+1 Queries (PERFORMANCE KILLER)
-```csharp
-// ❌ WRONG - N+1 queries
-var users = await _context.Users.ToListAsync();
-foreach (var user in users)
-{
-    // Separate query for EACH user!
-    user.Posts = await _context.Posts
-        .Where(p => p.AuthorId == user.Id)
-        .ToListAsync();
-}
-
-// ✅ CORRECT - Single query with Include
-var users = await _context.Users
-    .Include(u => u.Posts)
-    .ToListAsync();
-```
-
-## AI Self-Check (Verify BEFORE generating EF Core code)
-
-- [ ] Using async/await for all DB operations?
-- [ ] DbContext registered as scoped? (NOT singleton)
-- [ ] Include/ThenInclude to avoid N+1?
-- [ ] AsNoTracking for read-only queries?
-- [ ] Lambdas instead of string column names?
-- [ ] Migrations for schema changes?
-- [ ] Proper indexes defined?
-- [ ] OnDelete behavior configured?
-- [ ] No lazy loading in loops?
-- [ ] SaveChangesAsync called appropriately?
-
-## Migrations
-
-```bash
-# Add migration
-dotnet ef migrations add AddUserTable
-
-# Update database
-dotnet ef database update
-
-# Remove last migration
-dotnet ef migrations remove
-
-# Generate SQL script
-dotnet ef migrations script
-```
-
-## Query Types
-
-| Method | Purpose | Use Case |
-|--------|---------|----------|
-| Include | Eager load relations | Avoid N+1 |
-| ThenInclude | Nested eager load | Multi-level relations |
-| AsNoTracking | Read-only queries | Performance |
-| FromSqlRaw | Raw SQL query | Complex queries |
-| ExecuteSqlRaw | Non-query command | Bulk updates/deletes |
-
-## Configuration
-
-```csharp
-// Program.cs or Startup.cs
-services.AddDbContext<AppDbContext>(options =>
-{
-    options.UseSqlServer(connectionString);
-    options.EnableSensitiveDataLogging(isDevelopment);  // Dev only
-    options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);  // Global
-});
-```
+- [ ] Using async methods?
+- [ ] Scoped lifetime?
+- [ ] Include for related data?
+- [ ] Migrations configured?
+- [ ] AsNoTracking for reads?
+- [ ] No sync methods?
+- [ ] No singleton DbContext?
+- [ ] Lambda-based queries?
+- [ ] Parameterized raw SQL?
 
 ## Key Features
 
-- **LINQ Provider**: Type-safe queries
-- **Change Tracking**: Automatic update detection
-- **Migrations**: Code-first schema management
-- **Lazy/Eager Loading**: Flexible data loading
-- **Raw SQL**: For complex scenarios
+| Feature | Purpose |
+|---------|---------|
+| Include/ThenInclude | Eager loading |
+| AsNoTracking | Performance |
+| Migrations | Schema versioning |
+| FromSqlRaw | Raw SQL |
+| DbContext | Unit of work |
 
-## Key Concepts
+## Best Practices
 
-- **DbContext**: Unit of work + repository
-- **DbSet**: Collection of entities
-- **ChangeTracker**: Tracks entity changes
-- **SaveChanges**: Persists changes to database
-- **Migrations**: Schema version control
+**MUST**: Async, scoped lifetime, Include, migrations, AsNoTracking
+**SHOULD**: Repository pattern, lambda queries, parameterized SQL
+**AVOID**: Sync methods, singleton DbContext, lazy loading in loops, tracking reads

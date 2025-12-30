@@ -1,35 +1,26 @@
 # .NET MAUI Framework
 
-> **Scope**: .NET Multi-platform App UI for cross-platform mobile/desktop apps
+> **Scope**: Multi-platform App UI for cross-platform mobile/desktop  
 > **Applies to**: C# files using .NET MAUI
 > **Extends**: dotnet/architecture.md, dotnet/code-style.md
 
-## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
+## CRITICAL REQUIREMENTS
 
-> **ALWAYS**: Use MVVM pattern (ViewModels separate from Views)
-> **ALWAYS**: Use CommunityToolkit.Mvvm for boilerplate reduction
-> **ALWAYS**: Use dependency injection for services
+> **ALWAYS**: Use MVVM pattern
+> **ALWAYS**: Use Community Toolkit.Mvvm
+> **ALWAYS**: Use DI for services
 > **ALWAYS**: Use Shell for navigation
-> **ALWAYS**: Handle platform differences gracefully
+> **ALWAYS**: Handle platform differences
 > 
-> **NEVER**: Put logic in code-behind (use ViewModels)
-> **NEVER**: Block UI thread with synchronous operations
+> **NEVER**: Put logic in code-behind
+> **NEVER**: Block UI thread
 > **NEVER**: Use static state
-> **NEVER**: Skip platform-specific testing
-> **NEVER**: Create memory leaks (unsubscribe events)
-
-## Pattern Selection
-
-| Pattern | Use When | Keywords |
-|---------|----------|----------|
-| **MVVM** | All apps | ViewModels, data binding |
-| **Shell** | Navigation | Routes, hierarchical |
-| **DI** | Service injection | `MauiProgram.cs` |
-| **Platform-Specific** | Native features | `#if ANDROID`, conditional compilation |
+> **NEVER**: Skip platform testing
+> **NEVER**: Create memory leaks
 
 ## Core Patterns
 
-### MVVM (ViewModel)
+### ViewModel (CommunityToolkit)
 
 ```csharp
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -43,45 +34,39 @@ public partial class UserViewModel : ObservableObject
     private string _username = "";
     
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(SaveCommand))]
-    private bool _isValid;
+    private bool _isLoading;
     
-    public UserViewModel(IUserService userService)
-    {
-        _userService = userService;
-    }
+    public UserViewModel(IUserService userService) => _userService = userService;
     
     [RelayCommand(CanExecute = nameof(CanSave))]
     private async Task SaveAsync()
     {
-        await _userService.SaveAsync(Username);
+        IsLoading = true;
+        await _userService.SaveUserAsync(Username);
+        IsLoading = false;
     }
     
-    private bool CanSave() => IsValid && !string.IsNullOrWhiteSpace(Username);
+    private bool CanSave() => !string.IsNullOrEmpty(Username);
 }
 ```
 
-### View (XAML + Binding)
+### View (XAML)
 
 ```xml
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             x:Class="MyApp.Views.UserPage"
-             x:DataType="vm:UserViewModel">
-    <StackLayout Padding="20">
-        <Entry Text="{Binding Username}"
-               Placeholder="Enter username" />
-        
-        <Button Text="Save"
-                Command="{Binding SaveCommand}"
-                IsEnabled="{Binding IsValid}" />
-        
-        <ActivityIndicator IsRunning="{Binding IsBusy}"
-                          IsVisible="{Binding IsBusy}" />
-    </StackLayout>
+<ContentPage xmlns:vm="clr-namespace:MyApp.ViewModels">
+    <ContentPage.BindingContext>
+        <vm:UserViewModel />
+    </ContentPage.BindingContext>
+    
+    <VerticalStackLayout Padding="20">
+        <Entry Text="{Binding Username}" Placeholder="Enter name" />
+        <Button Text="Save" Command="{Binding SaveCommand}" />
+        <ActivityIndicator IsRunning="{Binding IsLoading}" />
+    </VerticalStackLayout>
 </ContentPage>
 ```
 
-### Dependency Injection
+### DI Setup
 
 ```csharp
 // MauiProgram.cs
@@ -92,11 +77,8 @@ public static class MauiProgram
         var builder = MauiApp.CreateBuilder();
         builder
             .UseMauiApp<App>()
-            .ConfigureFonts(fonts => {
-                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-            });
+            .ConfigureFonts(fonts => {});
         
-        // Services
         builder.Services.AddSingleton<IUserService, UserService>();
         builder.Services.AddTransient<UserViewModel>();
         builder.Services.AddTransient<UserPage>();
@@ -106,131 +88,78 @@ public static class MauiProgram
 }
 ```
 
-### Navigation (Shell)
-
-```xml
-<!-- AppShell.xaml -->
-<Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-       x:Class="MyApp.AppShell">
-    <TabBar>
-        <Tab Title="Home" Icon="home.png">
-            <ShellContent ContentTemplate="{DataTemplate views:HomePage}" />
-        </Tab>
-        <Tab Title="Profile" Icon="profile.png">
-            <ShellContent ContentTemplate="{DataTemplate views:ProfilePage}" />
-        </Tab>
-    </TabBar>
-</Shell>
-```
+### Shell Navigation
 
 ```csharp
-// Navigate in code
-await Shell.Current.GoToAsync("//profile");
-await Shell.Current.GoToAsync($"details?id={userId}");
+// AppShell.xaml.cs
+Routing.RegisterRoute("userdetails", typeof(UserDetailsPage));
+
+// Navigate
+await Shell.Current.GoToAsync("userdetails", new Dictionary<string, object>
+{
+    ["UserId"] = userId
+});
 ```
 
 ### Platform-Specific Code
 
 ```csharp
-// Conditional compilation
-public partial class FileService
-{
 #if ANDROID
-    public string GetStoragePath() => Android.OS.Environment.ExternalStorageDirectory.AbsolutePath;
+using Android.Content;
 #elif IOS
-    public string GetStoragePath() => Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-#elif WINDOWS
-    public string GetStoragePath() => Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+using UIKit;
 #endif
-}
 
-// Platform-specific folders
-// Platforms/Android/MainActivity.cs
-// Platforms/iOS/AppDelegate.cs
-```
-
-## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
-
-| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
-|---------|---------|-----------|--------------|
-| **Code-Behind Logic** | Business logic in `.xaml.cs` | ViewModel | Testability, MVVM |
-| **No DI** | `new UserService()` | Constructor injection | Testability |
-| **Blocking UI** | Synchronous I/O | async/await | Responsiveness |
-| **Static State** | `static User CurrentUser` | DI scoped services | Multi-platform issues |
-
-### Anti-Pattern: Logic in Code-Behind (MVVM VIOLATION)
-
-```csharp
-// ❌ WRONG: Logic in code-behind
-public partial class UserPage : ContentPage
+public partial class PlatformService
 {
-    public UserPage()
+    public string GetDeviceId()
     {
-        InitializeComponent();
-    }
-    
-    private async void OnSaveClicked(object sender, EventArgs e)
-    {
-        var user = new User { Name = UsernameEntry.Text };
-        await _userService.SaveAsync(user);  // Business logic!
-    }
-}
-
-// ✅ CORRECT: ViewModel handles logic
-public partial class UserViewModel : ObservableObject
-{
-    [RelayCommand]
-    private async Task SaveAsync()
-    {
-        var user = new User { Name = Username };
-        await _userService.SaveAsync(user);
+#if ANDROID
+        return Android.Provider.Settings.Secure.GetString(
+            Android.App.Application.Context.ContentResolver,
+            Android.Provider.Settings.Secure.AndroidId);
+#elif IOS
+        return UIDevice.CurrentDevice.IdentifierForVendor.AsString();
+#else
+        return "Unknown";
+#endif
     }
 }
 ```
 
-## AI Self-Check (Verify BEFORE generating MAUI code)
+## Common AI Mistakes
 
-- [ ] Using MVVM pattern?
-- [ ] ViewModels with CommunityToolkit.Mvvm?
-- [ ] Dependency injection configured?
-- [ ] Data binding (not code-behind)?
+| Mistake | ❌ Wrong | ✅ Correct |
+|---------|---------|-----------|
+| **Logic in Code-Behind** | Click handler logic | ViewModel command |
+| **@ObservedObject** | Manual INotifyPropertyChanged | `[ObservableProperty]` |
+| **Blocking UI** | `.Result` on Task | `async`/`await` |
+| **Static State** | `public static User` | DI service |
+
+## AI Self-Check
+
+- [ ] Using MVVM?
+- [ ] CommunityToolkit.Mvvm?
+- [ ] DI configured?
 - [ ] Shell navigation?
-- [ ] async/await for I/O?
-- [ ] Platform-specific code isolated?
-- [ ] ObservableProperty for bindable properties?
-- [ ] RelayCommand for commands?
+- [ ] Platform differences handled?
+- [ ] No code-behind logic?
+- [ ] Async operations?
 - [ ] No static state?
+- [ ] Event unsubscription?
 
 ## Key Features
 
-| Feature | Purpose | Keywords |
-|---------|---------|----------|
-| **MVVM** | Separation of concerns | ViewModels, data binding |
-| **CommunityToolkit.Mvvm** | Boilerplate reduction | `[ObservableProperty]`, `[RelayCommand]` |
-| **Shell** | Navigation | Routes, tabs |
-| **DI** | Dependency injection | `MauiProgram.cs` |
-| **Platform-Specific** | Native features | `Platforms/` folder |
-| **Hot Reload** | Fast development | XAML/C# hot reload |
+| Feature | Purpose |
+|---------|---------|
+| CommunityToolkit.Mvvm | Boilerplate reduction |
+| Shell | Navigation |
+| DI | Service injection |
+| Platform-specific | Native features |
+| Data Binding | MVVM |
 
 ## Best Practices
 
-**MUST**:
-- MVVM pattern
-- CommunityToolkit.Mvvm
-- Dependency injection
-- Shell navigation
-- Platform-specific testing
-
-**SHOULD**:
-- Data binding (no code-behind)
-- async/await
-- ObservableProperty/RelayCommand
-- Platform folders
-- Converters for UI transformations
-
-**AVOID**:
-- Logic in code-behind
-- Blocking operations
-- Static state
-- Manual property notification
-- Platform-specific code in shared layer
+**MUST**: MVVM, CommunityToolkit.Mvvm, DI, Shell, async
+**SHOULD**: Platform-specific code, value converters, behaviors
+**AVOID**: Code-behind logic, static state, blocking operations
