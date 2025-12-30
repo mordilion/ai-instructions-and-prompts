@@ -27,16 +27,6 @@ CONVENTIONS.md
 # Test results
 test-results/
 
-# Generated documentation
-TESTING_PROCESSES_COMPLETE.md
-PROCESSES_RESTRUCTURED.md
-PROCESS_FILES_RENAMED.md
-ADONISJS_ANALYSIS.md
-DOCUMENTATION_UPDATES.md
-COMPREHENSIVE_SYSTEM_ANALYSIS.md
-PROCESS_FILES_REVIEW.md
-OPTIMIZATIONS_COMPLETE.md
-
 # AI compatibility test results
 .github/scripts/test-results/
 .github/scripts/analysis-report.md
