@@ -1,87 +1,50 @@
 # Laravel Framework
 
-> **Scope**: Apply these rules when working with Laravel 9+ applications
+> **Scope**: Laravel 9+ applications  
 > **Applies to**: PHP files in Laravel projects
 > **Extends**: php/architecture.md, php/code-style.md
-> **Precedence**: Framework rules OVERRIDE PHP rules for Laravel-specific patterns
 
-## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
+## CRITICAL REQUIREMENTS
 
-> **ALWAYS**: Use Eloquent ORM for database access (type-safe, queryable)
-> **ALWAYS**: Validate requests with Form Requests (NOT in controllers)
-> **ALWAYS**: Use resource controllers for REST APIs (standard actions)
-> **ALWAYS**: Return API resources for responses (NOT raw Eloquent models)
-> **ALWAYS**: Use Laravel's dependency injection (constructor injection)
+> **ALWAYS**: Use Eloquent ORM for database
+> **ALWAYS**: Validate with Form Requests
+> **ALWAYS**: Return API resources (NOT raw models)
+> **ALWAYS**: Use dependency injection
+> **ALWAYS**: Resource controllers for REST
 > 
-> **NEVER**: Use DB::raw without parameter binding (SQL injection risk)
-> **NEVER**: Return Eloquent models directly from controllers (exposes internals)
-> **NEVER**: Put business logic in controllers (use services/actions)
-> **NEVER**: Validate in controllers (use Form Requests)
-> **NEVER**: Use env() outside config files (breaks caching)
-
-## Pattern Selection
-
-| Pattern | Use When | Keywords |
-|---------|----------|----------|
-| Resource Controllers | REST APIs | `Route::apiResource()`, CRUD methods |
-| Form Requests | Validation | `FormRequest`, `rules()`, `authorize()` |
-| API Resources | API responses | `JsonResource`, `toArray()` |
-| Eloquent Models | Database entities | `Model`, relationships |
-| Services/Actions | Business logic | Single responsibility classes |
+> **NEVER**: Use `DB::raw` without binding
+> **NEVER**: Return Eloquent models directly
+> **NEVER**: Put business logic in controllers
+> **NEVER**: Validate in controllers
+> **NEVER**: Use `env()` outside config
 
 ## Core Patterns
 
 ### Resource Controller (Thin)
+
 ```php
-<?php
-
-namespace App\Http\Controllers\Api;
-
-use App\Http\Requests\StoreUserRequest;
-use App\Http\Resources\UserResource;
-use App\Services\UserService;
-use Illuminate\Http\Resources\Json\ResourceCollection;
-
 class UserController extends Controller
 {
-    public function __construct(
-        private UserService $userService
-    ) {}
+    public function __construct(private UserService $userService) {}
     
     public function index(): ResourceCollection
     {
-        $users = $this->userService->getAll();
-        return UserResource::collection($users);
+        return UserResource::collection($this->userService->getAll());
     }
     
     public function store(StoreUserRequest $request): UserResource
     {
-        $user = $this->userService->create($request->validated());
-        return new UserResource($user);
-    }
-    
-    public function show(int $id): UserResource
-    {
-        $user = $this->userService->findById($id);
-        return new UserResource($user);
+        return new UserResource($this->userService->create($request->validated()));
     }
 }
 ```
 
-### Form Request (Validation)
+### Form Request
+
 ```php
-<?php
-
-namespace App\Http\Requests;
-
-use Illuminate\Foundation\Http\FormRequest;
-
 class StoreUserRequest extends FormRequest
 {
-    public function authorize(): bool
-    {
-        return true;  // Or check permissions
-    }
+    public function authorize(): bool { return true; }
     
     public function rules(): array
     {
@@ -91,24 +54,12 @@ class StoreUserRequest extends FormRequest
             'password' => ['required', 'min:8', 'confirmed'],
         ];
     }
-    
-    public function messages(): array
-    {
-        return [
-            'email.unique' => 'This email is already registered.',
-        ];
-    }
 }
 ```
 
-### API Resource (Response Transformation)
+### API Resource
+
 ```php
-<?php
-
-namespace App\Http\Resources;
-
-use Illuminate\Http\Resources\Json\JsonResource;
-
 class UserResource extends JsonResource
 {
     public function toArray($request): array
@@ -118,32 +69,19 @@ class UserResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'created_at' => $this->created_at->toISOString(),
-            'posts' => PostResource::collection($this->whenLoaded('posts')),
         ];
     }
 }
 ```
 
 ### Eloquent Model
+
 ```php
-<?php
-
-namespace App\Models;
-
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-
 class User extends Model
 {
-    use HasFactory;
-    
     protected $fillable = ['name', 'email', 'password'];
     protected $hidden = ['password', 'remember_token'];
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'created_at' => 'datetime',
-    ];
+    protected $casts = ['email_verified_at' => 'datetime'];
     
     public function posts(): HasMany
     {
@@ -152,122 +90,70 @@ class User extends Model
 }
 ```
 
-### Service Layer (Business Logic)
+### Service
+
 ```php
-<?php
-
-namespace App\Services;
-
-use App\Models\User;
-use Illuminate\Support\Facades\Hash;
-
 class UserService
 {
+    public function __construct(private UserRepository $repository) {}
+    
     public function create(array $data): User
     {
-        return User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password']),
-        ]);
+        $data['password'] = Hash::make($data['password']);
+        return $this->repository->create($data);
     }
     
-    public function findById(int $id): User
+    public function getAll(): Collection
     {
-        return User::with('posts')->findOrFail($id);
+        return $this->repository->all();
     }
 }
 ```
 
-## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
-
-| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
-|---------|---------|-----------|--------------|
-| **Exposing Models** | Return `User` model from controller | Return `UserResource` | Exposes all fields, breaks encapsulation |
-| **Validation in Controller** | Validate in controller method | Use `FormRequest` | Code duplication, violates SRP |
-| **Business Logic in Controller** | Controller does DB queries, logic | Service layer | Untestable, unmaintainable |
-| **DB::raw Without Binding** | `DB::raw("WHERE id = $id")` | Use Eloquent or bindings | SQL injection vulnerability |
-| **env() Outside Config** | `env('APP_KEY')` in code | `config('app.key')` | Breaks config caching |
-
-### Anti-Pattern: Exposing Eloquent Models (FORBIDDEN)
-```php
-// ❌ WRONG - Returns raw Eloquent model
-public function show(int $id)
-{
-    return User::findOrFail($id);  // Exposes all fields, password hash!
-}
-
-// ✅ CORRECT - Returns API Resource
-public function show(int $id): UserResource
-{
-    $user = $this->userService->findById($id);
-    return new UserResource($user);  // Controls exposed fields
-}
-```
-
-### Anti-Pattern: Validation in Controller (LEGACY)
-```php
-// ❌ WRONG - Validation in controller
-public function store(Request $request)
-{
-    $request->validate([
-        'email' => 'required|email|unique:users',
-        'name' => 'required|string|max:255',
-    ]);  // Repeated across controllers
-    
-    $user = User::create($request->all());
-    return response()->json($user);
-}
-
-// ✅ CORRECT - Form Request
-public function store(StoreUserRequest $request): UserResource
-{
-    $user = $this->userService->create($request->validated());
-    return new UserResource($user);
-}
-```
-
-## AI Self-Check (Verify BEFORE generating Laravel code)
-
-- [ ] Using resource controllers for REST APIs?
-- [ ] Validation in Form Requests? (NOT in controllers)
-- [ ] Returning API Resources? (NOT raw models)
-- [ ] Business logic in services? (NOT in controllers)
-- [ ] Constructor injection for dependencies?
-- [ ] Using Eloquent (NOT raw SQL without bindings)?
-- [ ] Using config() (NOT env() outside config files)?
-- [ ] Mass assignment protection? ($fillable or $guarded)
-- [ ] Relationships defined in models?
-- [ ] Following Laravel conventions?
-
-## Routing
+### Routes
 
 ```php
 // routes/api.php
-Route::apiResource('users', UserController::class);
-
-// Equivalent to:
-Route::get('/users', [UserController::class, 'index']);
-Route::post('/users', [UserController::class, 'store']);
-Route::get('/users/{id}', [UserController::class, 'show']);
-Route::put('/users/{id}', [UserController::class, 'update']);
-Route::delete('/users/{id}', [UserController::class, 'destroy']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::apiResource('users', UserController::class);
+});
 ```
 
-## Eloquent Relationships
+## Common AI Mistakes
 
-| Type | Method | Example |
-|------|--------|---------|
-| One-to-Many | `hasMany()`, `belongsTo()` | User → Posts |
-| Many-to-Many | `belongsToMany()` | Users ↔ Roles |
-| One-to-One | `hasOne()`, `belongsTo()` | User → Profile |
-| Has-Many-Through | `hasManyThrough()` | Country → Posts (via Users) |
+| Mistake | ❌ Wrong | ✅ Correct |
+|---------|---------|-----------|
+| **Direct Model** | `return User::all()` | `UserResource::collection()` |
+| **Controller Validation** | `$request->validate()` | `StoreUserRequest` |
+| **Business Logic** | Logic in controller | Service class |
+| **env() Usage** | `env('APP_NAME')` | `config('app.name')` |
+| **DB::raw** | `DB::raw($input)` | `DB::raw('col = ?', [$input])` |
+
+## AI Self-Check
+
+- [ ] Using Eloquent ORM?
+- [ ] Form Requests for validation?
+- [ ] API Resources for responses?
+- [ ] Thin controllers?
+- [ ] Services for business logic?
+- [ ] Dependency injection?
+- [ ] Resource routes?
+- [ ] No env() outside config?
+- [ ] No raw models returned?
+- [ ] Parameter binding for raw queries?
 
 ## Key Features
 
-- **Eloquent ORM**: Type-safe database access
-- **Migrations**: Version-controlled schema changes
-- **Seeders**: Test/sample data
-- **Factories**: Model factories for testing
-- **Queues**: Background job processing
-- **Events**: Event-driven architecture
+| Feature | Purpose |
+|---------|---------|
+| Eloquent | ORM |
+| Form Requests | Validation |
+| API Resources | Response transformation |
+| Service Container | DI |
+| Route Model Binding | Automatic injection |
+
+## Best Practices
+
+**MUST**: Eloquent, Form Requests, API Resources, DI, thin controllers
+**SHOULD**: Services, repositories, events, jobs, middleware
+**AVOID**: Controller logic, direct model returns, env() outside config
