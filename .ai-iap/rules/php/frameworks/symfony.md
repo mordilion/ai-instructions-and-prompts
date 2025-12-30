@@ -1,106 +1,50 @@
 # Symfony Framework
 
-> **Scope**: Apply these rules when working with Symfony 6+ applications
+> **Scope**: Symfony 6+ applications  
 > **Applies to**: PHP files in Symfony projects
 > **Extends**: php/architecture.md, php/code-style.md
-> **Precedence**: Framework rules OVERRIDE PHP rules for Symfony-specific patterns
 
-## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
+## CRITICAL REQUIREMENTS
 
-> **ALWAYS**: Use attributes for routing (PHP 8+, NOT annotations)
-> **ALWAYS**: Use dependency injection via constructor autowiring
-> **ALWAYS**: Return Response objects from controllers (NOT arrays)
-> **ALWAYS**: Use Doctrine ORM for database access (type-safe)
-> **ALWAYS**: Use serializer groups for API responses
+> **ALWAYS**: Use attributes for routing (PHP 8+)
+> **ALWAYS**: Use constructor autowiring
+> **ALWAYS**: Return Response objects
+> **ALWAYS**: Use Doctrine ORM
+> **ALWAYS**: Use serializer groups
 > 
-> **NEVER**: Use annotations (deprecated, use attributes)
-> **NEVER**: Use service locator pattern (inject dependencies)
-> **NEVER**: Return raw arrays from controllers (use Response/JsonResponse)
-> **NEVER**: Query database in controllers (use repositories/services)
-> **NEVER**: Use global state or static methods
-
-## Pattern Selection
-
-| Pattern | Use When | Keywords |
-|---------|----------|----------|
-| Attributes | Routing, validation (PHP 8+) | `#[Route]`, `#[Assert]` |
-| Autowiring | Dependency injection | Constructor injection, `services.yaml` |
-| ParamConverter | Entity from route params | `User $user` in controller params |
-| Serializer Groups | Control API output | `context: ['groups' => ['user:read']]` |
-| AbstractController | Controllers | `extends AbstractController` |
+> **NEVER**: Use annotations (deprecated)
+> **NEVER**: Use service locator pattern
+> **NEVER**: Return raw arrays
+> **NEVER**: Query database in controllers
+> **NEVER**: Use global state
 
 ## Core Patterns
 
 ### Controller with Attributes
+
 ```php
-<?php
-
-namespace App\Controller;
-
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Routing\Attribute\Route;
-
 #[Route('/api/users', name: 'api_user_')]
 class UserController extends AbstractController
 {
-    public function __construct(
-        private UserService $userService
-    ) {}
+    public function __construct(private UserService $userService) {}
     
-    #[Route('', name: 'list', methods: ['GET'])]
-    public function list(): JsonResponse
+    #[Route('', methods: ['GET'])]
+    public function index(): JsonResponse
     {
-        $users = $this->userService->findAll();
-        return $this->json($users, context: ['groups' => ['user:read']]);
+        return $this->json($this->userService->getAll(), context: ['groups' => ['user:read']]);
     }
     
-    #[Route('/{id}', name: 'show', methods: ['GET'])]
-    public function show(User $user): JsonResponse  // ParamConverter
+    #[Route('', methods: ['POST'])]
+    public function create(#[MapRequestPayload] UserDto $dto): JsonResponse
     {
-        return $this->json($user, context: ['groups' => ['user:read']]);
+        return $this->json($this->userService->create($dto), status: 201);
     }
 }
 ```
 
-### Service with Autowiring
+### Entity (Doctrine)
+
 ```php
-<?php
-
-namespace App\Service;
-
-use App\Repository\UserRepository;
-
-class UserService
-{
-    public function __construct(
-        private UserRepository $userRepository,
-        private MailerInterface $mailer
-    ) {}  // Autowired by Symfony
-    
-    public function create(array $data): User
-    {
-        $user = new User();
-        $user->setEmail($data['email']);
-        $user->setName($data['name']);
-        
-        $this->userRepository->save($user);
-        $this->mailer->send(/* welcome email */);
-        
-        return $user;
-    }
-}
-```
-
-### Entity with Attributes
-```php
-<?php
-
-namespace App\Entity;
-
-use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Serializer\Annotation\Groups;
-
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: 'users')]
 class User
@@ -108,164 +52,109 @@ class User
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['user:read'])]
     private ?int $id = null;
     
-    #[ORM\Column(length: 180, unique: true)]
-    #[Groups(['user:read'])]
-    private string $email;
+    #[ORM\Column(length: 255)]
+    #[Groups(['user:read', 'user:write'])]
+    private string $name;
     
-    #[ORM\Column]
-    private string $password;  // Not in groups = not serialized
+    #[ORM\OneToMany(targetEntity: Post::class, mappedBy: 'user')]
+    private Collection $posts;
+}
+```
+
+### Service
+
+```php
+class UserService
+{
+    public function __construct(
+        private UserRepository $repository,
+        private EntityManagerInterface $em
+    ) {}
     
-    #[ORM\Column]
-    #[Groups(['user:read'])]
-    private \DateTimeImmutable $createdAt;
-    
-    public function __construct()
+    public function create(UserDto $dto): User
     {
-        $this->createdAt = new \DateTimeImmutable();
+        $user = new User();
+        $user->setName($dto->name);
+        $this->em->persist($user);
+        $this->em->flush();
+        return $user;
     }
 }
 ```
 
-### Form Type
+### DTO with Validation
+
 ```php
-<?php
-
-namespace App\Form;
-
-use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\Extension\Core\Type\EmailType;
-use Symfony\Component\Form\FormBuilderInterface;
-use Symfony\Component\Validator\Constraints as Assert;
-
-class UserType extends AbstractType
+class UserDto
 {
-    public function buildForm(FormBuilderInterface $builder, array $options): void
+    public function __construct(
+        #[Assert\NotBlank]
+        #[Assert\Length(min: 3, max: 255)]
+        public string $name,
+        
+        #[Assert\Email]
+        public string $email,
+    ) {}
+}
+```
+
+### Repository
+
+```php
+class UserRepository extends ServiceEntityRepository
+{
+    public function __construct(ManagerRegistry $registry)
     {
-        $builder
-            ->add('email', EmailType::class, [
-                'constraints' => [
-                    new Assert\NotBlank(),
-                    new Assert\Email(),
-                ],
-            ])
-            ->add('name', null, [
-                'constraints' => [
-                    new Assert\NotBlank(),
-                    new Assert\Length(min: 2, max: 100),
-                ],
-            ]);
+        parent::__construct($registry, User::class);
+    }
+    
+    public function findByEmail(string $email): ?User
+    {
+        return $this->createQueryBuilder('u')
+            ->where('u.email = :email')
+            ->setParameter('email', $email)
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 }
 ```
 
-## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
+## Common AI Mistakes
 
-| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
-|---------|---------|-----------|--------------|
-| **Using Annotations** | `@Route("/users")` | `#[Route('/users')]` | Annotations deprecated |
-| **Service Locator** | `$this->container->get()` | Constructor injection | Anti-pattern |
-| **Raw Arrays** | `return ['data' => $users];` | `return $this->json($users)` | No Response object |
-| **DB in Controller** | `$em->getRepository()->find()` | Inject service/repository | Breaks separation |
-| **No Serializer Groups** | Expose all entity fields | Use `#[Groups]` | Security risk |
+| Mistake | ❌ Wrong | ✅ Correct |
+|---------|---------|-----------|
+| **Annotations** | `@Route("/users")` | `#[Route('/users')]` |
+| **Service Locator** | `$this->get()` | Constructor injection |
+| **Raw Arrays** | `return ['data' => ...]` | `return $this->json()` |
+| **Controller Queries** | Query in controller | Repository/Service |
 
-### Anti-Pattern: Annotations (DEPRECATED)
-```php
-// ❌ WRONG - Annotations (deprecated)
-/**
- * @Route("/users", name="user_list")
- */
-public function list() {}
+## AI Self-Check
 
-// ✅ CORRECT - Attributes (PHP 8+)
-#[Route('/users', name: 'user_list')]
-public function list(): Response {}
-```
-
-### Anti-Pattern: Service Locator (ANTI-PATTERN)
-```php
-// ❌ WRONG - Service locator
-public function create(Request $request): Response
-{
-    $userService = $this->container->get('app.user_service');  // BAD!
-    $user = $userService->create($request->request->all());
-    return $this->json($user);
-}
-
-// ✅ CORRECT - Constructor injection
-public function __construct(
-    private UserService $userService
-) {}
-
-public function create(Request $request): Response
-{
-    $user = $this->userService->create($request->request->all());
-    return $this->json($user);
-}
-```
-
-## AI Self-Check (Verify BEFORE generating Symfony code)
-
-- [ ] Using attributes? (#[Route], NOT @Route annotations)
-- [ ] Constructor injection for dependencies?
-- [ ] Returning Response objects? (JsonResponse, Response)
-- [ ] Using serializer groups for API responses?
-- [ ] Doctrine entities with attributes?
-- [ ] No database queries in controllers?
-- [ ] ParamConverter for entity params?
-- [ ] Form types for validation?
-- [ ] Autowiring enabled in services.yaml?
-- [ ] Following Symfony best practices?
-
-## Configuration
-
-```yaml
-# config/services.yaml
-services:
-    _defaults:
-        autowire: true
-        autoconfigure: true
-
-    App\:
-        resource: '../src/'
-        exclude:
-            - '../src/DependencyInjection/'
-            - '../src/Entity/'
-            - '../src/Kernel.php'
-```
-
-## Console Commands
-
-```bash
-# Create controller
-symfony console make:controller UserController
-
-# Create entity
-symfony console make:entity User
-
-# Create migration
-symfony console make:migration
-symfony console doctrine:migrations:migrate
-
-# Clear cache
-symfony console cache:clear
-```
+- [ ] Using attributes?
+- [ ] Constructor autowiring?
+- [ ] Returning Response objects?
+- [ ] Doctrine ORM?
+- [ ] Serializer groups?
+- [ ] No annotations?
+- [ ] No service locator?
+- [ ] Validation with attributes?
+- [ ] Thin controllers?
+- [ ] Repository for queries?
 
 ## Key Features
 
-- **Dependency Injection**: Autowiring, service container
-- **Doctrine ORM**: Entity management, migrations
-- **Serializer**: JSON/XML serialization with groups
-- **Validator**: Constraint-based validation
-- **Forms**: Form building and validation
-- **Messenger**: Message queue/bus
+| Feature | Purpose |
+|---------|---------|
+| Attributes | Routing, validation |
+| Autowiring | DI |
+| Doctrine | ORM |
+| Serializer | API responses |
+| ParamConverter | Entity injection |
 
-## Key Libraries
+## Best Practices
 
-- **doctrine/orm**: Database ORM
-- **symfony/serializer**: Data serialization
-- **symfony/validator**: Data validation
-- **symfony/form**: Form handling
-- **symfony/messenger**: Message bus
+**MUST**: Attributes, autowiring, Response objects, Doctrine, serializer groups
+**SHOULD**: DTOs, validation attributes, repositories, thin controllers
+**AVOID**: Annotations, service locator, raw arrays, controller queries

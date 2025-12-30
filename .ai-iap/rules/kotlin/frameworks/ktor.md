@@ -1,6 +1,6 @@
 # Ktor Framework
 
-> **Scope**: Ktor applications
+> **Scope**: Ktor applications  
 > **Applies to**: Kotlin files in Ktor projects
 > **Extends**: kotlin/architecture.md, kotlin/code-style.md
 
@@ -8,11 +8,12 @@
 
 > **ALWAYS**: Use suspend functions for I/O
 > **ALWAYS**: Use content negotiation for JSON
-> **ALWAYS**: Use routing DSL for endpoints
+> **ALWAYS**: Use routing DSL
 > **ALWAYS**: Use DI (Koin recommended)
+> **ALWAYS**: Handle errors with StatusPages
 > 
 > **NEVER**: Use blocking I/O in handlers
-> **NEVER**: Skip authentication for protected routes
+> **NEVER**: Skip authentication
 > **NEVER**: Use global mutable state
 
 ## Core Patterns
@@ -50,8 +51,24 @@ fun Route.userRoutes() {
         
         post {
             val user = call.receive<CreateUserRequest>()
-            call.respond(HttpStatusCode.Created, userService.create(user))
+            val created = userService.create(user)
+            call.respond(HttpStatusCode.Created, created)
         }
+    }
+}
+```
+
+### Service
+
+```kotlin
+class UserService(private val repository: UserRepository) {
+    suspend fun getAll(): List<User> = repository.findAll()
+    
+    suspend fun getById(id: Int): User? = repository.findById(id)
+    
+    suspend fun create(request: CreateUserRequest): User {
+        val user = User(name = request.name, email = request.email)
+        return repository.save(user)
     }
 }
 ```
@@ -60,32 +77,25 @@ fun Route.userRoutes() {
 
 ```kotlin
 val appModule = module {
-    single<UserRepository> { UserRepositoryImpl(get()) }
-    single<UserService> { UserService(get()) }
+    single { DatabaseFactory }
+    single { UserRepository(get()) }
+    single { UserService(get()) }
 }
 
-fun Application.configureDI() {
-    install(Koin) {
-        modules(appModule)
-    }
-}
-
-fun Route.userRoutesWithDI() {
-    val userService by inject<UserService>()
-    get("/users") {
-        call.respond(userService.getAll())
-    }
+fun Application.main() {
+    install(Koin) { modules(appModule) }
+    module()
 }
 ```
 
-### Auth
+### Authentication
 
 ```kotlin
 install(Authentication) {
     jwt("auth-jwt") {
-        verifier(JWK...)
+        verifier(makeJwtVerifier())
         validate { credential ->
-            if (credential.payload.getClaim("username").asString() != "") {
+            if (credential.payload.getClaim("email").asString() != "") {
                 JWTPrincipal(credential.payload)
             } else null
         }
@@ -95,8 +105,7 @@ install(Authentication) {
 routing {
     authenticate("auth-jwt") {
         get("/protected") {
-            val principal = call.principal<JWTPrincipal>()
-            call.respondText("Hello ${principal?.payload?.getClaim("username")}")
+            call.respondText("Protected content")
         }
     }
 }
@@ -107,49 +116,33 @@ routing {
 | Mistake | ❌ Wrong | ✅ Correct |
 |---------|---------|-----------|
 | **Blocking I/O** | `Thread.sleep()` | `delay()` |
-| **No Content Negotiation** | Manual JSON | `install(ContentNegotiation)` |
-| **No DI** | `UserService()` | `inject<UserService>()` |
-| **No Error Handling** | Ignore exceptions | `install(StatusPages)` |
-
-### Anti-Pattern: Blocking I/O
-
-```kotlin
-// ❌ WRONG
-get("/users") {
-    Thread.sleep(1000)  // Blocks thread!
-    call.respond(users)
-}
-
-// ✅ CORRECT
-get("/users") {
-    delay(1000)  // Suspends, non-blocking
-    call.respond(users)
-}
-```
+| **No Error Handling** | Raw exceptions | StatusPages |
+| **No DI** | `UserService()` | Koin injection |
+| **No Auth** | Open endpoints | Authentication |
 
 ## AI Self-Check
 
-- [ ] suspend functions for I/O?
-- [ ] ContentNegotiation installed?
-- [ ] Routing DSL used?
-- [ ] DI configured (Koin)?
-- [ ] Authentication for protected routes?
-- [ ] StatusPages for error handling?
-- [ ] No blocking operations?
-- [ ] call.respond() for responses?
+- [ ] Using suspend functions?
+- [ ] Content negotiation?
+- [ ] Routing DSL?
+- [ ] DI configured?
+- [ ] StatusPages for errors?
+- [ ] Authentication setup?
+- [ ] No blocking I/O?
+- [ ] Proper error responses?
 
-## Key Plugins
+## Key Features
 
-| Plugin | Purpose |
-|--------|---------|
-| ContentNegotiation | JSON/XML serialization |
+| Feature | Purpose |
+|---------|---------|
+| Routing DSL | Route definition |
+| Content Negotiation | JSON serialization |
 | StatusPages | Error handling |
-| Authentication | JWT, OAuth |
-| Koin | Dependency injection |
-| CORS | Cross-origin requests |
+| Koin | DI |
+| Authentication | Security |
 
 ## Best Practices
 
-**MUST**: suspend functions, Content Negotiation, routing DSL, DI
-**SHOULD**: StatusPages, Authentication, type-safe routing
-**AVOID**: Blocking I/O, global state, skipping auth
+**MUST**: suspend functions, content negotiation, routing DSL, DI, error handling
+**SHOULD**: Koin, authentication, middleware, validation
+**AVOID**: Blocking I/O, global state, no error handling
