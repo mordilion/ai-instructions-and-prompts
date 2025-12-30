@@ -1,36 +1,27 @@
 # iOS Development with UIKit
 
-> **Scope**: iOS apps using UIKit (Apple's imperative UI framework, 2008-present)
+> **Scope**: iOS apps using UIKit  
 > **Applies to**: Swift files using UIKit
 > **Extends**: swift/architecture.md, swift/code-style.md
 > **Use When**: Existing apps, complex animations, iOS 12 and below
 
-## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
+## CRITICAL REQUIREMENTS
 
-> **ALWAYS**: Use dependency injection via initializers (NOT singletons)
-> **ALWAYS**: Use `[weak self]` in closures (prevent retain cycles)
+> **ALWAYS**: Use DI via initializers (NOT singletons)
+> **ALWAYS**: Use `[weak self]` in closures
 > **ALWAYS**: Clean up observers/delegates in deinit
-> **ALWAYS**: Respect safe area for modern iOS (notch, Dynamic Island)
-> **ALWAYS**: Use Auto Layout (NOT frame-based)
+> **ALWAYS**: Respect safe area
+> **ALWAYS**: Use Auto Layout
 > 
 > **NEVER**: Force unwrap without safety check
-> **NEVER**: Use singletons (makes testing difficult)
+> **NEVER**: Use singletons
 > **NEVER**: Put business logic in view controllers
-> **NEVER**: Create retain cycles in closures
-> **NEVER**: Ignore safe area layout guides
-
-## Pattern Selection
-
-| Pattern | Use When | Keywords |
-|---------|----------|----------|
-| **Diffable Data Source** | iOS 13+, modern apps | Type-safe, automatic animations |
-| **Traditional Data Source** | iOS 12 and below | Manual reloadData() |
-| **Coordinator** | Multi-screen navigation | Decoupled routing |
-| **Delegation** | Callbacks, events | Protocol-based communication |
+> **NEVER**: Create retain cycles
+> **NEVER**: Ignore safe area
 
 ## Core Patterns
 
-### View Controllers
+### View Controller
 
 ```swift
 class UserViewController: UIViewController {
@@ -48,8 +39,38 @@ class UserViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        setupConstraints()
-        setupBindings()
+        bindViewModel()
+    }
+    
+    private func bindViewModel() {
+        viewModel.onUpdate = { [weak self] data in
+            self?.updateUI(with: data)
+        }
+    }
+}
+```
+
+### Diffable Data Source (iOS 13+)
+
+```swift
+class UserListViewController: UIViewController {
+    enum Section { case main }
+    
+    private var dataSource: UITableViewDiffableDataSource<Section, User>!
+    
+    func setupDataSource() {
+        dataSource = UITableViewDiffableDataSource(tableView: tableView) { tableView, indexPath, user in
+            let cell = tableView.dequeueReusableCell(withIdentifier: "UserCell", for: indexPath)
+            cell.textLabel?.text = user.name
+            return cell
+        }
+    }
+    
+    func updateData(_ users: [User]) {
+        var snapshot = NSDiffableDataSourceSnapshot<Section, User>()
+        snapshot.appendSections([.main])
+        snapshot.appendItems(users)
+        dataSource.apply(snapshot, animatingDifferences: true)
     }
 }
 ```
@@ -59,186 +80,63 @@ class UserViewController: UIViewController {
 ```swift
 private func setupConstraints() {
     label.translatesAutoresizingMaskIntoConstraints = false
-    
     NSLayoutConstraint.activate([
-        label.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
+        label.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
         label.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
         label.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16)
     ])
 }
 ```
 
-### Diffable Data Source (iOS 13+)
-
-```kotlin
-class UserListViewController: UIViewController {
-    private enum Section { case main }
-    private var dataSource: UITableViewDiffableDataSource<Section, User>!
-    private let tableView = UITableView()
-    
-    private func configureDataSource() {
-        dataSource = UITableViewDiffableDataSource<Section, User>(tableView: tableView) { 
-            tableView, indexPath, user in
-            let cell = tableView.dequeueReusableCell(withIdentifier: "Cell") as! UserCell
-            cell.configure(with: user)
-            return cell
-        }
-    }
-    
-    private func applySnapshot(users: [User]) {
-        var snapshot = NSDiffableDataSourceSnapshot<Section, User>()
-        snapshot.appendSections([.main])
-        snapshot.appendItems(users)
-        dataSource.apply(snapshot, animatingDifferences: true)
-    }
-}
-```
-
-### Delegation Pattern
+### Delegation
 
 ```swift
-protocol UserSelectionDelegate: AnyObject {
-    func userViewController(_ controller: UserViewController, didSelect user: User)
+protocol UserViewDelegate: AnyObject {
+    func didSelectUser(_ user: User)
 }
 
-class UserViewController: UIViewController {
-    weak var delegate: UserSelectionDelegate?
+class UserView: UIView {
+    weak var delegate: UserViewDelegate?
     
-    private func handleSelection(_ user: User) {
-        delegate?.userViewController(self, didSelect: user)
+    private func handleTap() {
+        delegate?.didSelectUser(selectedUser)
     }
 }
 ```
 
-### Coordinator Pattern
+## Common AI Mistakes
 
-```swift
-protocol Coordinator: AnyObject {
-    var navigationController: UINavigationController { get }
-    func start()
-}
+| Mistake | ❌ Wrong | ✅ Correct |
+|---------|---------|-----------|
+| **Singleton** | `UserService.shared` | Constructor injection |
+| **Strong Self** | `self.update()` | `[weak self]` |
+| **Force Unwrap** | `user!` | `guard let user` |
+| **Frame Layout** | `view.frame = CGRect()` | Auto Layout |
 
-class UserCoordinator: Coordinator {
-    let navigationController: UINavigationController
-    
-    func start() {
-        let viewModel = UserViewModel()
-        let viewController = UserViewController(viewModel: viewModel)
-        navigationController.pushViewController(viewController, animated: true)
-    }
-}
-```
+## AI Self-Check
 
-## Networking
-
-```swift
-protocol NetworkService {
-    func fetch<T: Decodable>(_ endpoint: String) async throws -> T
-}
-
-class URLSessionNetworkService: NetworkService {
-    func fetch<T: Decodable>(_ endpoint: String) async throws -> T {
-        let url = baseURL.appendingPathComponent(endpoint)
-        let (data, response) = try await URLSession.shared.data(from: url)
-        
-        guard let httpResponse = response as? HTTPURLResponse,
-              (200...299).contains(httpResponse.statusCode) else {
-            throw NetworkError.invalidResponse
-        }
-        
-        return try JSONDecoder().decode(T.self, from: data)
-    }
-}
-```
-
-## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
-
-| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
-|---------|---------|-----------|--------------|
-| **Retain Cycles** | `self.updateUI()` in closure | `[weak self]` | Memory leak |
-| **Force Unwrapping** | `user!` | `guard let user = ...` | Crash risk |
-| **Singletons** | `UserService.shared` | Constructor injection | Hard to test |
-| **Massive ViewControllers** | 1000+ lines | Extract logic to services | Maintainability |
-| **Ignore Safe Area** | `view.topAnchor` | `view.safeAreaLayoutGuide.topAnchor` | Notch overlap |
-
-### Anti-Pattern: Retain Cycle (MEMORY LEAK)
-
-```swift
-// ❌ WRONG: Retain cycle
-viewModel.onUsersChanged = { users in
-    self.updateUI(with: users)  // ViewController → closure → self → ViewController
-}
-
-// ✅ CORRECT: [weak self] prevents retain cycle
-viewModel.onUsersChanged = { [weak self] users in
-    guard let self = self else { return }
-    self.updateUI(with: users)
-}
-```
-
-### Anti-Pattern: Singleton (TESTING DISASTER)
-
-```swift
-// ❌ WRONG: Singleton (hard to test, global state)
-class UserViewController: UIViewController {
-    private let viewModel = UserViewModel.shared
-}
-
-// ✅ CORRECT: Constructor injection
-class UserViewController: UIViewController {
-    private let viewModel: UserViewModel
-    
-    init(viewModel: UserViewModel) {
-        self.viewModel = viewModel
-        super.init(nibName: nil, bundle: nil)
-    }
-}
-```
-
-## AI Self-Check (Verify BEFORE generating UIKit code)
-
-- [ ] Dependency injection via initializers?
+- [ ] DI via initializers?
 - [ ] [weak self] in closures?
-- [ ] Auto Layout (not frame-based)?
-- [ ] Respecting safe area layout guides?
-- [ ] Delegation pattern for callbacks?
-- [ ] No force unwrapping without safety?
-- [ ] ViewControllers under 300 lines?
-- [ ] Cleanup in deinit?
-- [ ] async/await for networking (iOS 13+)?
+- [ ] Observer cleanup in deinit?
+- [ ] Safe area respected?
+- [ ] Auto Layout used?
 - [ ] No singletons?
+- [ ] No force unwraps?
+- [ ] Business logic in ViewModels?
+- [ ] No retain cycles?
 
-## Key Components
+## Key Features
 
-| Component | Purpose | Keywords |
-|-----------|---------|----------|
-| **ViewControllers** | Screen management | Lifecycle, navigation |
-| **Auto Layout** | Adaptive UI | Constraints, safe area |
-| **Diffable Data Source** | TableView/CollectionView | Type-safe, animations |
-| **Delegation** | Callbacks | Protocol, weak reference |
-| **Coordinator** | Navigation | Decoupled routing |
-| **URLSession** | Networking | async/await, Codable |
-| **UserDefaults** | Simple persistence | @propertyWrapper |
+| Feature | Purpose |
+|---------|---------|
+| Diffable Data Source | Modern lists |
+| Auto Layout | Responsive UI |
+| Delegation | Event handling |
+| DI | Testability |
+| Safe Area | Modern devices |
 
 ## Best Practices
 
-**MUST**:
-- Constructor injection (not singletons)
-- [weak self] in closures
-- Clean up observers in deinit
-- Safe area respect
-- Auto Layout
-
-**SHOULD**:
-- Diffable data sources (iOS 13+)
-- async/await (iOS 13+)
-- Coordinator pattern
-- Keep VCs under 300 lines
-- Use private for internals
-
-**AVOID**:
-- Retain cycles
-- Force unwrapping
-- Business logic in VCs
-- Singletons
-- Massive view controllers
+**MUST**: DI, [weak self], Auto Layout, safe area, observer cleanup
+**SHOULD**: Diffable data source, coordinator pattern, delegation
+**AVOID**: Singletons, retain cycles, force unwraps, frame layout
