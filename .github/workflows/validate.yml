@@ -133,11 +133,11 @@ jobs:
           total_chars=0
           file_count=0
           
-          find .ai-iap/rules -name "*.md" -type f | while read -r file; do
+          while IFS= read -r file; do
             chars=$(wc -c < "$file")
             total_chars=$((total_chars + chars))
             file_count=$((file_count + 1))
-          done
+          done < <(find .ai-iap/rules -name "*.md" -type f)
           
           tokens=$((total_chars / 4))
           echo "📊 Token Cost Summary:"
