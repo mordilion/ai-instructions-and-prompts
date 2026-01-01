@@ -1,3 +1,7 @@
+---
+alwaysApply: true
+---
+
 # Commit Message Standards
 
 > **Reference**: [Conventional Commits v1.0.0](https://www.conventionalcommits.org/en/v1.0.0/)
@@ -85,11 +89,37 @@ BREAKING CHANGE: response structure changed
 > **When**: Additional context needed  
 > **Format**: One blank line after description
 
+### Body Rules
+
+> **ALWAYS**: Use imperative mood (same as description)  
+> **ALWAYS**: Write prose paragraphs (2-3 sentences max per paragraph)  
+> **ALWAYS**: Focus on WHAT and WHY, not detailed HOW  
+> **NEVER**: Use bullet points, dashes, or numbered lists  
+> **NEVER**: Use section headers ("Changes:", "Details:", etc.)  
+> **NEVER**: Include code snippets or file lists
+
+### Body Examples
+
+**✅ Good**:
 ```
 feat(api): add pagination
 
 Implement cursor-based pagination for better performance
-with large datasets.
+with large datasets. This replaces offset-based pagination.
+```
+
+**❌ Bad** (lists, sections, too detailed):
+```
+feat(api): add pagination
+
+Changes:
+- Add cursor-based pagination
+- Update API endpoints
+- Add tests
+
+Process includes:
+- Modified src/api.ts
+- Updated documentation
 ```
 
 ---
@@ -122,15 +152,20 @@ Reviewed-by: Jane Doe
 | `fix: Resolve bug` | `fix: resolve bug` |
 | `docs: update.` | `docs: update` |
 | `feat: add auth, update docs` | Separate commits |
+| Body with bullet lists | Body with prose paragraphs |
+| Body with section headers | Body without sections |
 
 ---
 
 ## AI Self-Check
 
 - [ ] Valid type (`feat`, `fix`, `docs`, etc.)
-- [ ] Imperative mood ("add" not "added")
-- [ ] Lowercase start, no period
-- [ ] Under 72 characters
+- [ ] Imperative mood in description ("add" not "added")
+- [ ] Lowercase start, no period in description
+- [ ] Description under 72 characters
+- [ ] Body uses prose paragraphs (NO bullets/lists)
+- [ ] Body has NO section headers (NO "Changes:", etc.)
+- [ ] Body uses imperative mood throughout
 - [ ] Breaking changes marked (`!` or footer)
 - [ ] One logical change per commit
 - [ ] Scope provided when applicable
@@ -142,4 +177,3 @@ Reviewed-by: Jane Doe
 - **commitlint**: Enforce standards
 - **semantic-release**: Automate versioning  
 - **conventional-changelog**: Generate CHANGELOG
-
