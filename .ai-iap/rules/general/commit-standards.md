@@ -1,7 +1,3 @@
----
-alwaysApply: true
----
-
 # Commit Message Standards
 
 > **Reference**: [Conventional Commits v1.0.0](https://www.conventionalcommits.org/en/v1.0.0/)
