@@ -45,6 +45,34 @@
       "fileExtension": ".md",
       "useFrontmatter": false,
       "concatenate": true
+    },
+    "amazon-q": {
+      "name": "Amazon Q Developer",
+      "outputFile": "AMAZON_Q.md",
+      "fileExtension": ".md",
+      "useFrontmatter": false,
+      "concatenate": true
+    },
+    "tabnine": {
+      "name": "Tabnine",
+      "outputFile": "TABNINE.md",
+      "fileExtension": ".md",
+      "useFrontmatter": false,
+      "concatenate": true
+    },
+    "cody": {
+      "name": "Cody (Sourcegraph)",
+      "outputFile": ".cody/instructions.md",
+      "fileExtension": ".md",
+      "useFrontmatter": false,
+      "concatenate": true
+    },
+    "continue": {
+      "name": "Continue.dev",
+      "outputFile": ".continue/instructions.md",
+      "fileExtension": ".md",
+      "useFrontmatter": false,
+      "concatenate": true
     }
   },
   "languages": {

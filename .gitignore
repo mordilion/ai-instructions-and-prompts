@@ -27,6 +27,18 @@ CONVENTIONS.md
 # Google AI Studio
 GOOGLE_AI_STUDIO.md
 
+# Amazon Q Developer
+AMAZON_Q.md
+
+# Tabnine
+TABNINE.md
+
+# Cody (Sourcegraph)
+.cody/
+
+# Continue.dev
+.continue/
+
 # Test results
 test-results/
 

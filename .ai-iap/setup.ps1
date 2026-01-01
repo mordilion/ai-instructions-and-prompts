@@ -745,6 +745,18 @@ function New-ToolConfig {
         "google-ai-studio" {
             New-ConcatenatedConfig -Config $Config -ToolName "Google AI Studio" -OutputFile "GOOGLE_AI_STUDIO.md" -SelectedLanguages $SelectedLanguages -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
         }
+        "amazon-q" {
+            New-ConcatenatedConfig -Config $Config -ToolName "Amazon Q Developer" -OutputFile "AMAZON_Q.md" -SelectedLanguages $SelectedLanguages -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
+        }
+        "tabnine" {
+            New-ConcatenatedConfig -Config $Config -ToolName "Tabnine" -OutputFile "TABNINE.md" -SelectedLanguages $SelectedLanguages -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
+        }
+        "cody" {
+            New-ConcatenatedConfig -Config $Config -ToolName "Cody (Sourcegraph)" -OutputFile ".cody\instructions.md" -SelectedLanguages $SelectedLanguages -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
+        }
+        "continue" {
+            New-ConcatenatedConfig -Config $Config -ToolName "Continue.dev" -OutputFile ".continue\instructions.md" -SelectedLanguages $SelectedLanguages -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
+        }
         default {
             Write-WarningMessage "Unknown tool: $Tool"
         }

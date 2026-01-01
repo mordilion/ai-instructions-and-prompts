@@ -868,6 +868,18 @@ generate_tool() {
         google-ai-studio)
             generate_concatenated "Google AI Studio" "GOOGLE_AI_STUDIO.md" ""
             ;;
+        amazon-q)
+            generate_concatenated "Amazon Q Developer" "AMAZON_Q.md" ""
+            ;;
+        tabnine)
+            generate_concatenated "Tabnine" "TABNINE.md" ""
+            ;;
+        cody)
+            generate_concatenated "Cody (Sourcegraph)" ".cody/instructions.md" ""
+            ;;
+        continue)
+            generate_concatenated "Continue.dev" ".continue/instructions.md" ""
+            ;;
         *)
             print_warning "Unknown tool: $tool"
             ;;

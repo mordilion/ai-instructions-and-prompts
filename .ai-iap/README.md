@@ -28,7 +28,7 @@ Your Rules (one source) → Setup Script → All AI Tools Configured
 
 ## ✨ Features
 
-- **🔧 Multi-Tool Support** – Cursor, Claude CLI, GitHub Copilot, Windsurf, Aider, Google AI Studio
+- **🔧 Multi-Tool Support** – 10 AI coding assistants: Cursor, Claude CLI, GitHub Copilot, Windsurf, Aider, Google AI Studio, Amazon Q Developer, Tabnine, Cody, Continue.dev
 - **🌍 Multi-Language** – Kotlin, JavaScript, TypeScript, Java, Python, Dart/Flutter, .NET/C#, PHP, Swift, Node.js
 - **📦 Framework-Specific** – React, Next.js, NestJS, AdonisJS, Laravel, ASP.NET Core, Spring Boot, Django, FastAPI, and 50+ more
 - **🏗️ Structure Templates** – Clean Architecture, Vertical Slices, Feature-First, Modular, MVVM, MVI, DDD, and more
@@ -72,6 +72,10 @@ Select AI tools to configure:
   4. Windsurf
   5. Aider
   6. Google AI Studio
+  7. Amazon Q Developer
+  8. Tabnine
+  9. Cody (Sourcegraph)
+ 10. Continue.dev
 
   * = recommended
   a. All tools
@@ -87,12 +91,18 @@ That's it! Your AI tools are now configured with consistent coding standards.
 
 | Tool | Output | Description |
 |------|--------|-------------|
-| **Cursor** | `.cursor/rules/*.mdc` | Separate rule files with glob patterns |
-| **Claude CLI** | `CLAUDE.md` | Single concatenated file |
+| **Cursor** ⭐ | `.cursor/rules/*.mdc` | Separate rule files with glob patterns |
+| **Claude CLI** ⭐ | `CLAUDE.md` | Single concatenated file |
 | **GitHub Copilot** | `.github/copilot-instructions.md` | Repository-level instructions |
 | **Windsurf** | `.windsurfrules` | Single concatenated file |
 | **Aider** | `CONVENTIONS.md` | Convention file for Aider |
-| **Google AI Studio** | `GOOGLE_AI_STUDIO.md` | Single concatenated file for system instructions |
+| **Google AI Studio** | `GOOGLE_AI_STUDIO.md` | Single concatenated file for Gemini models |
+| **Amazon Q Developer** | `AMAZON_Q.md` | Single concatenated file for AWS AI assistant |
+| **Tabnine** | `TABNINE.md` | Single concatenated file for team sharing |
+| **Cody (Sourcegraph)** | `.cody/instructions.md` | Repository-level instructions |
+| **Continue.dev** | `.continue/instructions.md` | VS Code extension instructions |
+
+⭐ = Recommended
 
 ---
 
