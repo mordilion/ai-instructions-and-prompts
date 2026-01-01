@@ -124,6 +124,21 @@
           "name": "API Documentation (OpenAPI)",
           "file": "api-documentation-openapi",
           "description": "Auto-generate OpenAPI/Swagger API documentation"
+        },
+        "security-scanning": {
+          "name": "Security Scanning",
+          "file": "security-scanning",
+          "description": "SAST/DAST security vulnerability scanning"
+        },
+        "linting-formatting": {
+          "name": "Linting & Formatting",
+          "file": "linting-formatting",
+          "description": "Code quality linting and style formatting"
+        },
+        "code-coverage": {
+          "name": "Code Coverage",
+          "file": "code-coverage",
+          "description": "Automated code coverage tracking and thresholds"
         }
       },
       "frameworks": {
@@ -217,6 +232,21 @@
           "name": "API Documentation (OpenAPI)",
           "file": "api-documentation-openapi",
           "description": "Auto-generate OpenAPI/Swagger API documentation"
+        },
+        "security-scanning": {
+          "name": "Security Scanning",
+          "file": "security-scanning",
+          "description": "SAST/DAST security vulnerability scanning"
+        },
+        "linting-formatting": {
+          "name": "Linting & Formatting",
+          "file": "linting-formatting",
+          "description": "Code quality linting and style formatting"
+        },
+        "code-coverage": {
+          "name": "Code Coverage",
+          "file": "code-coverage",
+          "description": "Automated code coverage tracking and thresholds"
         }
       },
       "frameworks": {
@@ -384,6 +414,21 @@
           "name": "API Documentation (OpenAPI)",
           "file": "api-documentation-openapi",
           "description": "Auto-generate OpenAPI/Swagger API documentation"
+        },
+        "security-scanning": {
+          "name": "Security Scanning",
+          "file": "security-scanning",
+          "description": "SAST/DAST security vulnerability scanning"
+        },
+        "linting-formatting": {
+          "name": "Linting & Formatting",
+          "file": "linting-formatting",
+          "description": "Code quality linting and style formatting"
+        },
+        "code-coverage": {
+          "name": "Code Coverage",
+          "file": "code-coverage",
+          "description": "Automated code coverage tracking and thresholds"
         }
       },
       "frameworks": {
@@ -574,6 +619,21 @@
           "name": "API Documentation (OpenAPI)",
           "file": "api-documentation-openapi",
           "description": "Auto-generate OpenAPI/Swagger API documentation"
+        },
+        "security-scanning": {
+          "name": "Security Scanning",
+          "file": "security-scanning",
+          "description": "SAST/DAST security vulnerability scanning"
+        },
+        "linting-formatting": {
+          "name": "Linting & Formatting",
+          "file": "linting-formatting",
+          "description": "Code quality linting and style formatting"
+        },
+        "code-coverage": {
+          "name": "Code Coverage",
+          "file": "code-coverage",
+          "description": "Automated code coverage tracking and thresholds"
         }
       },
       "frameworks": {
@@ -683,6 +743,21 @@
           "name": "API Documentation (OpenAPI)",
           "file": "api-documentation-openapi",
           "description": "Auto-generate OpenAPI/Swagger API documentation"
+        },
+        "security-scanning": {
+          "name": "Security Scanning",
+          "file": "security-scanning",
+          "description": "SAST/DAST security vulnerability scanning"
+        },
+        "linting-formatting": {
+          "name": "Linting & Formatting",
+          "file": "linting-formatting",
+          "description": "Code quality linting and style formatting"
+        },
+        "code-coverage": {
+          "name": "Code Coverage",
+          "file": "code-coverage",
+          "description": "Automated code coverage tracking and thresholds"
         }
       },
       "frameworks": {
@@ -799,6 +874,21 @@
           "name": "API Documentation (OpenAPI)",
           "file": "api-documentation-openapi",
           "description": "Auto-generate OpenAPI/Swagger API documentation"
+        },
+        "security-scanning": {
+          "name": "Security Scanning",
+          "file": "security-scanning",
+          "description": "SAST/DAST security vulnerability scanning"
+        },
+        "linting-formatting": {
+          "name": "Linting & Formatting",
+          "file": "linting-formatting",
+          "description": "Code quality linting and style formatting"
+        },
+        "code-coverage": {
+          "name": "Code Coverage",
+          "file": "code-coverage",
+          "description": "Automated code coverage tracking and thresholds"
         }
       },
       "frameworks": {
@@ -907,6 +997,21 @@
           "name": "API Documentation (OpenAPI)",
           "file": "api-documentation-openapi",
           "description": "Auto-generate OpenAPI/Swagger API documentation"
+        },
+        "security-scanning": {
+          "name": "Security Scanning",
+          "file": "security-scanning",
+          "description": "SAST/DAST security vulnerability scanning"
+        },
+        "linting-formatting": {
+          "name": "Linting & Formatting",
+          "file": "linting-formatting",
+          "description": "Code quality linting and style formatting"
+        },
+        "code-coverage": {
+          "name": "Code Coverage",
+          "file": "code-coverage",
+          "description": "Automated code coverage tracking and thresholds"
         }
       },
       "frameworks": {
@@ -1031,6 +1136,21 @@
           "name": "API Documentation (OpenAPI)",
           "file": "api-documentation-openapi",
           "description": "Auto-generate OpenAPI/Swagger API documentation"
+        },
+        "security-scanning": {
+          "name": "Security Scanning",
+          "file": "security-scanning",
+          "description": "SAST/DAST security vulnerability scanning"
+        },
+        "linting-formatting": {
+          "name": "Linting & Formatting",
+          "file": "linting-formatting",
+          "description": "Code quality linting and style formatting"
+        },
+        "code-coverage": {
+          "name": "Code Coverage",
+          "file": "code-coverage",
+          "description": "Automated code coverage tracking and thresholds"
         }
       },
       "frameworks": {

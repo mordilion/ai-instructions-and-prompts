@@ -233,7 +233,7 @@ For supported frameworks, choose how you want to organize your code:
 │   ├── dart/                   # Dart-specific rules (includes security.md)
 │   ├── dotnet/                 # .NET-specific rules (includes security.md)
 │   └── php/                    # PHP-specific rules (includes security.md)
-├── processes/                  # Step-by-step workflow guides (53 files)
+├── processes/                  # Step-by-step workflow guides (77 files)
 │   ├── dotnet/                 # .NET processes
 │   │   ├── test-implementation.md          # NUnit testing setup
 │   │   ├── ci-cd-github-actions.md         # GitHub Actions CI/CD
@@ -241,14 +241,17 @@ For supported frameworks, choose how you want to organize your code:
 │   │   ├── docker-containerization.md      # Docker multi-stage builds
 │   │   ├── authentication-jwt-oauth.md     # JWT + OAuth 2.0
 │   │   ├── database-migrations.md          # EF Core Migrations
-│   │   └── api-documentation-openapi.md    # Swashbuckle/OpenAPI
-│   ├── typescript/             # TypeScript processes (7 files)
-│   ├── java/                   # Java processes (7 files)
-│   ├── python/                 # Python processes (7 files)
-│   ├── kotlin/                 # Kotlin processes (7 files)
-│   ├── swift/                  # Swift processes (7 files)
-│   ├── php/                    # PHP processes (7 files)
-│   └── dart/                   # Dart processes (4 files: no backend auth/migrations/API docs)
+│   │   ├── api-documentation-openapi.md    # Swashbuckle/OpenAPI
+│   │   ├── security-scanning.md            # SAST/DAST vulnerability scanning
+│   │   ├── linting-formatting.md           # Code quality & style
+│   │   └── code-coverage.md                # Coverage tracking & thresholds
+│   ├── typescript/             # TypeScript processes (10 files)
+│   ├── java/                   # Java processes (10 files)
+│   ├── python/                 # Python processes (10 files)
+│   ├── kotlin/                 # Kotlin processes (10 files)
+│   ├── swift/                  # Swift processes (10 files)
+│   ├── php/                    # PHP processes (10 files)
+│   └── dart/                   # Dart processes (7 files: frontend/mobile focus)
 ├── config.json                 # Tool & language definitions
 ├── setup.ps1                   # Windows setup script
 ├── setup.sh                    # macOS/Linux setup script
@@ -272,8 +275,11 @@ In addition to coding rules, this system includes **step-by-step workflow guides
 | **Authentication (JWT + OAuth)** | JWT auth, OAuth 2.0, RBAC, security hardening | ✅ 7 files (backend) |
 | **Database Migrations** | Version-controlled schema changes, rollbacks, seed data | ✅ 7 files (backend) |
 | **API Documentation (OpenAPI)** | Swagger/OpenAPI spec generation, auto-documentation | ✅ 7 files (backend, expanded) |
+| **Security Scanning** | SAST/DAST vulnerability scanning (OWASP, Snyk, Bandit, etc.) | ✅ 8 files |
+| **Linting & Formatting** | Code quality linting and style formatting | ✅ 8 files |
+| **Code Coverage** | Automated coverage tracking with thresholds | ✅ 8 files |
 
-**Total**: 53 process files across 8 languages (TypeScript, .NET, Java, Python, Kotlin, Swift, PHP, Dart)
+**Total**: 77 process files across 8 languages (TypeScript, .NET, Java, Python, Kotlin, Swift, PHP, Dart)
 
 ### Process Quality Features
 
