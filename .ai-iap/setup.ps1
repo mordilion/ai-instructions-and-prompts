@@ -254,6 +254,107 @@ function Select-Languages {
     return $selectedLanguages
 }
 
+function Select-Documentation {
+    param(
+        [PSCustomObject]$Config,
+        [string[]]$SelectedLanguages
+    )
+    
+    # Check if documentation options exist
+    if (-not $Config.languages.general.documentation) {
+        return @()
+    }
+    
+    $docKeys = @()
+    $docNames = @()
+    $docDescs = @()
+    $docRecs = @()
+    
+    foreach ($key in $Config.languages.general.documentation.PSObject.Properties.Name) {
+        $docKeys += $key
+        $docNames += $Config.languages.general.documentation.$key.name
+        $docDescs += $Config.languages.general.documentation.$key.description
+        $docRecs += $Config.languages.general.documentation.$key.recommended
+    }
+    
+    if ($docKeys.Count -eq 0) {
+        return @()
+    }
+    
+    # Determine project type based on selected languages
+    $hasBackend = $false
+    $hasFrontendOnly = $false
+    
+    foreach ($lang in $SelectedLanguages) {
+        switch ($lang) {
+            "dart" {
+                $hasFrontendOnly = $true
+            }
+            { $_ -in @("typescript", "python", "dotnet", "java", "php", "kotlin", "swift") } {
+                $hasBackend = $true
+            }
+        }
+    }
+    
+    Write-Host ""
+    Write-Host "Select documentation standards to include:" -ForegroundColor White
+    Write-Host "(Choose based on your project type)" -ForegroundColor DarkGray
+    Write-Host ""
+    
+    for ($i = 0; $i -lt $docKeys.Count; $i++) {
+        $suffix = ""
+        $key = $docKeys[$i]
+        
+        # Check if recommended
+        if ($docRecs[$i] -eq $true) {
+            $suffix = " ⭐"
+        }
+        
+        # Check applicability
+        $applicableTo = $Config.languages.general.documentation.$key.applicableTo
+        if ($applicableTo -contains "backend" -or $applicableTo -contains "fullstack") {
+            $suffix += " (backend/fullstack)" | Write-Host -ForegroundColor DarkGray -NoNewline
+            $suffix = ""
+        }
+        
+        Write-Host "  $($i + 1). $($docNames[$i])$suffix"
+        Write-Host "      $($docDescs[$i])" -ForegroundColor DarkGray
+    }
+    Write-Host ""
+    Write-Host "  ⭐ = recommended" -ForegroundColor DarkGray
+    Write-Host "  a. All documentation"
+    Write-Host "  s. Skip (no documentation standards)"
+    Write-Host ""
+    
+    # Provide smart default suggestion
+    if ($hasFrontendOnly -and -not $hasBackend) {
+        Write-Host "Suggestion for frontend-only project: 1 2 (code + project)" -ForegroundColor DarkGray
+    } elseif ($hasBackend) {
+        Write-Host "Suggestion for backend/fullstack project: a (all)" -ForegroundColor DarkGray
+    }
+    
+    $input = Read-Host "Enter choices (e.g., 1 2 or 'a' for all, 's' to skip)"
+    
+    $selectedDocumentation = @()
+    
+    if ($input -eq "s" -or $input -eq "S") {
+        return @()
+    } elseif ($input -eq "a" -or $input -eq "A") {
+        foreach ($key in $docKeys) {
+            $selectedDocumentation += $Config.languages.general.documentation.$key.file
+        }
+    } else {
+        foreach ($num in $input.Split(" ")) {
+            $idx = [int]$num - 1
+            if ($idx -ge 0 -and $idx -lt $docKeys.Count) {
+                $selectedDocumentation += $Config.languages.general.documentation.$($docKeys[$idx]).file
+            }
+        }
+    }
+    
+    return $selectedDocumentation
+}
+
 function Select-Frameworks {
     param(
         [PSCustomObject]$Config,
@@ -749,6 +850,7 @@ function New-ToolConfig {
         [PSCustomObject]$Config,
         [string]$Tool,
         [string[]]$SelectedLanguages,
+        [string[]]$SelectedDocumentation,
         [hashtable]$SelectedFrameworks,
         [hashtable]$SelectedStructures,
         [hashtable]$SelectedProcesses
@@ -756,34 +858,34 @@ function New-ToolConfig {
     
     switch ($Tool) {
         "cursor" {
-            New-CursorConfig -Config $Config -SelectedLanguages $SelectedLanguages -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
+            New-CursorConfig -Config $Config -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
         }
         "claude-cli" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Claude CLI" -OutputFile "CLAUDE.md" -SelectedLanguages $SelectedLanguages -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
+            New-ConcatenatedConfig -Config $Config -ToolName "Claude CLI" -OutputFile "CLAUDE.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
         }
         "github-copilot" {
-            New-ConcatenatedConfig -Config $Config -ToolName "GitHub Copilot" -OutputFile ".github\copilot-instructions.md" -SelectedLanguages $SelectedLanguages -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
+            New-ConcatenatedConfig -Config $Config -ToolName "GitHub Copilot" -OutputFile ".github\copilot-instructions.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
         }
         "windsurf" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Windsurf" -OutputFile ".windsurfrules" -SelectedLanguages $SelectedLanguages -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
+            New-ConcatenatedConfig -Config $Config -ToolName "Windsurf" -OutputFile ".windsurfrules" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
         }
         "aider" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Aider" -OutputFile "CONVENTIONS.md" -SelectedLanguages $SelectedLanguages -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
+            New-ConcatenatedConfig -Config $Config -ToolName "Aider" -OutputFile "CONVENTIONS.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
         }
         "google-ai-studio" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Google AI Studio" -OutputFile "GOOGLE_AI_STUDIO.md" -SelectedLanguages $SelectedLanguages -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
+            New-ConcatenatedConfig -Config $Config -ToolName "Google AI Studio" -OutputFile "GOOGLE_AI_STUDIO.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
         }
         "amazon-q" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Amazon Q Developer" -OutputFile "AMAZON_Q.md" -SelectedLanguages $SelectedLanguages -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
+            New-ConcatenatedConfig -Config $Config -ToolName "Amazon Q Developer" -OutputFile "AMAZON_Q.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
         }
         "tabnine" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Tabnine" -OutputFile "TABNINE.md" -SelectedLanguages $SelectedLanguages -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
+            New-ConcatenatedConfig -Config $Config -ToolName "Tabnine" -OutputFile "TABNINE.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
         }
         "cody" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Cody (Sourcegraph)" -OutputFile ".cody\instructions.md" -SelectedLanguages $SelectedLanguages -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
+            New-ConcatenatedConfig -Config $Config -ToolName "Cody (Sourcegraph)" -OutputFile ".cody\instructions.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
         }
         "continue" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Continue.dev" -OutputFile ".continue\instructions.md" -SelectedLanguages $SelectedLanguages -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
+            New-ConcatenatedConfig -Config $Config -ToolName "Continue.dev" -OutputFile ".continue\instructions.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
         }
         default {
             Write-WarningMessage "Unknown tool: $Tool"
@@ -863,6 +965,9 @@ function Main {
         exit 0
     }
     
+    # Documentation selection
+    $selectedDocumentation = Select-Documentation -Config $config -SelectedLanguages $selectedLanguages
+    
     # Framework selection
     $selectedFrameworks = Select-Frameworks -Config $config -SelectedLanguages $selectedLanguages
     
@@ -876,6 +981,9 @@ function Main {
     Write-Host "Configuration Summary:" -ForegroundColor White
     Write-Host "  Tools: $($selectedTools -join ', ')"
     Write-Host "  Languages: $($selectedLanguages -join ', ')"
+    if ($selectedDocumentation.Count -gt 0) {
+        Write-Host "  Documentation: $($selectedDocumentation -join ', ')"
+    }
     
     if ($selectedFrameworks.Count -gt 0) {
         foreach ($lang in $selectedFrameworks.Keys) {
@@ -904,7 +1012,7 @@ function Main {
     
     # Generate files
     foreach ($tool in $selectedTools) {
-        New-ToolConfig -Config $config -Tool $tool -SelectedLanguages $selectedLanguages -SelectedFrameworks $selectedFrameworks -SelectedStructures $selectedStructures -SelectedProcesses $selectedProcesses
+        New-ToolConfig -Config $config -Tool $tool -SelectedLanguages $selectedLanguages -SelectedDocumentation $selectedDocumentation -SelectedFrameworks $selectedFrameworks -SelectedStructures $selectedStructures -SelectedProcesses $selectedProcesses
     }
     
     # Gitignore prompt

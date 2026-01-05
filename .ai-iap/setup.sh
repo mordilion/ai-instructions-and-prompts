@@ -263,6 +263,30 @@ get_structure_file() {
     jq -r ".languages[\"$1\"].frameworks[\"$2\"].structures[\"$3\"].file" "$CONFIG_FILE"
 }
 
+get_documentation_keys() {
+    jq -r ".languages.general.documentation // empty | keys[]" "$CONFIG_FILE" 2>/dev/null || true
+}
+
+get_documentation_name() {
+    jq -r ".languages.general.documentation[\"$1\"].name" "$CONFIG_FILE"
+}
+
+get_documentation_description() {
+    jq -r ".languages.general.documentation[\"$1\"].description" "$CONFIG_FILE"
+}
+
+get_documentation_file() {
+    jq -r ".languages.general.documentation[\"$1\"].file" "$CONFIG_FILE"
+}
+
+get_documentation_recommended() {
+    jq -r ".languages.general.documentation[\"$1\"].recommended // false" "$CONFIG_FILE"
+}
+
+get_documentation_applicable_to() {
+    jq -r ".languages.general.documentation[\"$1\"].applicableTo[]" "$CONFIG_FILE" 2>/dev/null || echo "all"
+}
+
 # ============================================================================
 # Selection UI
 # ============================================================================
@@ -407,6 +431,101 @@ select_languages_simple() {
             SELECTED_LANGUAGES=("$always_lang" "${SELECTED_LANGUAGES[@]}")
         fi
     done
+}
+
+# Array to store selected documentation files
+SELECTED_DOCUMENTATION=()
+
+select_documentation() {
+    local doc_keys=()
+    local doc_names=()
+    local doc_descs=()
+    local doc_recs=()
+    
+    while IFS= read -r key; do
+        doc_keys+=("$key")
+        doc_names+=("$(get_documentation_name "$key")")
+        doc_descs+=("$(get_documentation_description "$key")")
+        doc_recs+=("$(get_documentation_recommended "$key")")
+    done < <(get_documentation_keys)
+    
+    if [[ ${#doc_keys[@]} -eq 0 ]]; then
+        return
+    fi
+    
+    # Determine project type based on selected languages
+    local has_backend=false
+    local has_frontend_only=false
+    
+    for lang in "${SELECTED_LANGUAGES[@]}"; do
+        case "$lang" in
+            dart)
+                has_frontend_only=true
+                ;;
+            typescript|python|dotnet|java|php|kotlin|swift)
+                # These could be backend or fullstack
+                has_backend=true
+                ;;
+        esac
+    done
+    
+    echo ""
+    echo -e "${BOLD}Select documentation standards to include:${NC}"
+    echo -e "${DIM}(Choose based on your project type)${NC}"
+    echo ""
+    
+    for ((i=0; i<${#doc_keys[@]}; i++)); do
+        local suffix=""
+        local key="${doc_keys[$i]}"
+        
+        # Check if recommended
+        if [[ "${doc_recs[$i]}" == "true" ]]; then
+            suffix=" ⭐"
+        fi
+        
+        # Check applicability
+        local applicable_to
+        applicable_to=$(get_documentation_applicable_to "$key")
+        
+        # Add applicability hint
+        if [[ "$applicable_to" == "backend" ]] || [[ "$applicable_to" == "fullstack" ]]; then
+            suffix="$suffix ${DIM}(backend/fullstack)${NC}"
+        fi
+        
+        echo -e "  $((i+1)). ${doc_names[$i]}$suffix"
+        echo -e "      ${DIM}${doc_descs[$i]}${NC}"
+    done
+    echo ""
+    echo -e "  ${DIM}⭐ = recommended${NC}"
+    echo "  a. All documentation"
+    echo "  s. Skip (no documentation standards)"
+    echo ""
+    
+    # Provide smart default suggestion
+    if [[ "$has_frontend_only" == "true" && "$has_backend" == "false" ]]; then
+        echo -e "${DIM}Suggestion for frontend-only project: 1 2 (code + project)${NC}"
+    elif [[ "$has_backend" == "true" ]]; then
+        echo -e "${DIM}Suggestion for backend/fullstack project: a (all)${NC}"
+    fi
+    
+    read -rp "Enter choices (e.g., 1 2 or 'a' for all, 's' to skip): " input
+    
+    SELECTED_DOCUMENTATION=()
+    
+    if [[ "$input" == "s" || "$input" == "S" ]]; then
+        return
+    elif [[ "$input" == "a" || "$input" == "A" ]]; then
+        for key in "${doc_keys[@]}"; do
+            SELECTED_DOCUMENTATION+=("$(get_documentation_file "$key")")
+        done
+    else
+        for num in $input; do
+            local idx=$((num - 1))
+            if [[ $idx -ge 0 && $idx -lt ${#doc_keys[@]} ]]; then
+                SELECTED_DOCUMENTATION+=("$(get_documentation_file "${doc_keys[$idx]}")")
+            fi
+        done
+    fi
 }
 
 # Associative array to store selected frameworks per language
@@ -698,6 +817,28 @@ generate_cursor() {
             print_success "Created $relative_path"
         done < <(get_language_files "$lang")
         
+        # Generate selected documentation files (only for general language)
+        if [[ "$lang" == "general" && ${#SELECTED_DOCUMENTATION[@]} -gt 0 ]]; then
+            for doc_file in "${SELECTED_DOCUMENTATION[@]}"; do
+                local output_file="$lang_dir/$doc_file.mdc"
+                local content
+                
+                content=$(read_instruction_file "$lang" "$doc_file") || continue
+                
+                # Create parent directory if it doesn't exist (for nested files)
+                mkdir -p "$(dirname "$output_file")"
+                
+                {
+                    generate_cursor_frontmatter "$lang" "$doc_file" "false"
+                    echo "$content"
+                } > "$output_file"
+                
+                # Show relative path
+                local relative_path="${output_file#"$PROJECT_ROOT/"}"
+                print_success "Created $relative_path"
+            done
+        fi
+        
         # Generate framework files for this language
         if [[ -n "${SELECTED_FRAMEWORKS[$lang]:-}" ]]; then
             for fw in ${SELECTED_FRAMEWORKS[$lang]}; do
@@ -799,6 +940,23 @@ generate_concatenated() {
                 echo "---"
                 echo ""
             done < <(get_language_files "$lang")
+            
+            # Selected documentation files (only for general language)
+            if [[ "$lang" == "general" && ${#SELECTED_DOCUMENTATION[@]} -gt 0 ]]; then
+                for doc_file in "${SELECTED_DOCUMENTATION[@]}"; do
+                    local content
+                    content=$(read_instruction_file "$lang" "$doc_file") || continue
+                    
+                    if [[ -n "$separator" ]]; then
+                        echo "$separator"
+                    fi
+                    
+                    echo "$content"
+                    echo ""
+                    echo "---"
+                    echo ""
+                done
+            fi
             
             # Framework files for this language
             if [[ -n "${SELECTED_FRAMEWORKS[$lang]:-}" ]]; then
@@ -954,6 +1112,9 @@ main() {
         exit 0
     fi
     
+    # Documentation selection
+    select_documentation
+    
     # Framework selection
     select_frameworks
     
@@ -967,6 +1128,9 @@ main() {
     echo -e "${BOLD}Configuration Summary:${NC}"
     echo "  Tools: ${SELECTED_TOOLS[*]}"
     echo "  Languages: ${SELECTED_LANGUAGES[*]}"
+    if [[ ${#SELECTED_DOCUMENTATION[@]} -gt 0 ]]; then
+        echo "  Documentation: ${SELECTED_DOCUMENTATION[*]}"
+    fi
     
     for lang in "${!SELECTED_FRAMEWORKS[@]}"; do
         echo "  Frameworks ($lang): ${SELECTED_FRAMEWORKS[$lang]}"

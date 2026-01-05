@@ -81,7 +81,30 @@
       "globs": "*",
       "alwaysApply": true,
       "description": "General coding standards",
-      "files": ["persona", "architecture", "code-style", "security", "commit-standards", "documentation/code", "documentation/project", "documentation/api"]
+      "files": ["persona", "architecture", "code-style", "security", "commit-standards"],
+      "documentation": {
+        "code": {
+          "name": "Code Documentation",
+          "file": "documentation/code",
+          "description": "Inline comments, docstrings, JSDoc, XML docs",
+          "recommended": true,
+          "applicableTo": ["all"]
+        },
+        "project": {
+          "name": "Project Documentation",
+          "file": "documentation/project",
+          "description": "README, CHANGELOG, CONTRIBUTING, LICENSE",
+          "recommended": true,
+          "applicableTo": ["all"]
+        },
+        "api": {
+          "name": "API Documentation",
+          "file": "documentation/api",
+          "description": "REST APIs, OpenAPI/Swagger, SDK documentation",
+          "recommended": true,
+          "applicableTo": ["backend", "fullstack"]
+        }
+      }
     },
     "dart": {
       "name": "Dart/Flutter",

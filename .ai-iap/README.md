@@ -33,8 +33,9 @@ Your Rules (one source) → Setup Script → All AI Tools Configured
 - **📦 Framework-Specific** – React, Next.js, NestJS, AdonisJS, Laravel, ASP.NET Core, Spring Boot, Django, FastAPI, and 50+ more
 - **🏗️ Structure Templates** – Clean Architecture, Vertical Slices, Feature-First, Modular, MVVM, MVI, DDD, and more
 - **🔒 Security Rules** – OWASP Top 10 coverage for all languages (token-optimized, 80% more efficient)
-- **🔄 Process Guides** – CI/CD, Testing, Logging, Docker, Auth, Migrations, API Docs (53 files, 8 languages, token-optimized)
-- **⚡ Interactive Setup** – Wizard guides you through configuration
+- **📚 Documentation Standards** – Optional code, project, and API documentation standards with smart suggestions
+- **🔄 Process Guides** – CI/CD, Testing, Logging, Docker, Auth, Migrations, API Docs (77 files, 8 languages, token-optimized)
+- **⚡ Interactive Setup** – Wizard guides you through configuration with context-aware suggestions
 - **🎯 Recommended Defaults** – Best practices marked with `⭐`
 - **✅ Quality Verified** – Conflict-free system verified across all 191 files (95% confidence)
 
@@ -63,25 +64,47 @@ chmod +x .ai-iap/setup.sh && ./.ai-iap/setup.sh
 
 ### 3. Follow the Wizard
 
+The setup wizard will guide you through:
+
+**Step 1: Select AI Tools**
 ```
 Select AI tools to configure:
+  1. Cursor ⭐
+  2. Claude CLI ⭐
+  ...
+```
 
-  1. Cursor *
-  2. Claude CLI *
-  3. GitHub Copilot
-  4. Windsurf
-  5. Aider
-  6. Google AI Studio
-  7. Amazon Q Developer
-  8. Tabnine
-  9. Cody (Sourcegraph)
- 10. Continue.dev
+**Step 2: Select Languages**
+```
+Select language instructions to include:
+  1. Dart/Flutter
+  2. JavaScript
+  3. TypeScript
+  ...
+```
 
-  * = recommended
-  a. All tools
+**Step 3: Select Documentation Standards** (Optional)
+```
+Select documentation standards to include:
+(Choose based on your project type)
+
+  1. Code Documentation ⭐
+      Inline comments, docstrings, JSDoc, XML docs
+  2. Project Documentation ⭐
+      README, CHANGELOG, CONTRIBUTING, LICENSE
+  3. API Documentation ⭐ (backend/fullstack)
+      REST APIs, OpenAPI/Swagger, SDK documentation
+
+  ⭐ = recommended
+  a. All documentation
+  s. Skip (no documentation standards)
+
+Suggestion for frontend-only project: 1 2 (code + project)
 
 Enter choices: 1 2
 ```
+
+**Step 4: Select Frameworks & Processes** (if applicable)
 
 That's it! Your AI tools are now configured with consistent coding standards.
 
@@ -222,7 +245,12 @@ For supported frameworks, choose how you want to organize your code:
 │   │   ├── persona.md          # AI behavior & personality
 │   │   ├── architecture.md     # Code structure guidelines
 │   │   ├── code-style.md       # Coding conventions
-│   │   └── security.md         # Security best practices (OWASP Top 10)
+│   │   ├── commit-standards.md # Conventional Commits specification
+│   │   ├── security.md         # Security best practices (OWASP Top 10)
+│   │   └── documentation/      # Documentation standards (always applied)
+│   │       ├── code.md         # Inline comments, docstrings, JSDoc, etc.
+│   │       ├── project.md      # README, CHANGELOG, CONTRIBUTING, LICENSE
+│   │       └── api.md          # REST APIs, OpenAPI/Swagger, SDK docs
 │   ├── javascript/             # JavaScript-specific rules
 │   ├── typescript/             # TypeScript-specific rules (includes security.md)
 │   ├── nodejs/                 # Node.js backend (shared JS/TS)
@@ -274,7 +302,7 @@ In addition to coding rules, this system includes **step-by-step workflow guides
 | **Docker Containerization** | Multi-stage Dockerfiles, docker-compose, production optimizations | ✅ 8 files |
 | **Authentication (JWT + OAuth)** | JWT auth, OAuth 2.0, RBAC, security hardening | ✅ 7 files (backend) |
 | **Database Migrations** | Version-controlled schema changes, rollbacks, seed data | ✅ 7 files (backend) |
-| **API Documentation (OpenAPI)** | Swagger/OpenAPI spec generation, auto-documentation | ✅ 7 files (backend, expanded) |
+| **API Documentation (OpenAPI)** | Swagger/OpenAPI spec generation, auto-documentation, SDK generation | ✅ 7 files (optimized 30%) |
 | **Security Scanning** | SAST/DAST vulnerability scanning (OWASP, Snyk, Bandit, etc.) | ✅ 8 files |
 | **Linting & Formatting** | Code quality linting and style formatting | ✅ 8 files |
 | **Code Coverage** | Automated coverage tracking with thresholds | ✅ 8 files |
@@ -285,13 +313,42 @@ In addition to coding rules, this system includes **step-by-step workflow guides
 
 1. **Phase-Based**: Each process divided into 4-5 clear phases with Git workflow pattern
 2. **Understandability-First**: Clarity prioritized over brevity - same result across GPT-3.5, GPT-4, Claude, Gemini, Codestral
-3. **Token-Optimized**: 35-40% shorter than traditional docs where clarity is maintained (CI/CD files optimized 38%)
+3. **Token-Optimized**: 30-40% shorter than traditional docs where clarity is maintained
+   - CI/CD files optimized 38%
+   - API Documentation files optimized 30-32% (removed duplication with general documentation standards)
 4. **AI-Optimized**: Explicit directives (`> **ALWAYS**`, `> **NEVER**`), 10-12 item self-check lists
 5. **Version Flexible**: No hardcoded versions - reads from project config files (.nvmrc, global.json, pom.xml, etc.)
 6. **Platform Guidance**: GitHub Actions primary, with guidance for GitLab CI, Azure DevOps, CircleCI, Jenkins
 7. **Consistent Structure**: Git Workflow reference, table format comparisons, troubleshooting sections
+8. **DRY Principle**: Process files reference general documentation standards instead of duplicating content
 
 > **Design Philosophy**: Files may exceed token guidelines when framework complexity requires it. All lengths are justified by the need for clear, unambiguous instructions that produce consistent results across different AI models.
+
+### Selecting Documentation Standards
+
+During setup, you'll be prompted to select documentation standards:
+
+```
+Select documentation standards to include:
+(Choose based on your project type)
+
+  1. Code Documentation ⭐
+      Inline comments, docstrings, JSDoc, XML docs
+  2. Project Documentation ⭐
+      README, CHANGELOG, CONTRIBUTING, LICENSE
+  3. API Documentation ⭐ (backend/fullstack)
+      REST APIs, OpenAPI/Swagger, SDK documentation
+
+  s. Skip (no documentation standards)
+  a. All documentation
+
+Enter choices: 1 2
+```
+
+**Smart Suggestions:**
+- **Frontend-only projects** (Dart/Flutter): `1 2` (code + project)
+- **Backend/Fullstack projects**: `a` (all documentation)
+- **Libraries**: `1` (code only)
 
 ### Selecting Processes
 
@@ -348,9 +405,9 @@ Understanding how many tokens your rule selection consumes helps optimize AI con
 
 ### Total Available Tokens by Language
 
-| Language | Base (+Security) | Frameworks | Structures | Processes (Optimized) | Total |
-|----------|------------------|------------|------------|-----------------------|-------|
-| **General** (always loaded) | 1,075 + 1,200 | – | – | – | **2,275** |
+| Language | Base (+Security) | Documentation (Optional) | Frameworks | Structures | Processes (Optimized) | Total |
+|----------|------------------|--------------------------|------------|------------|-----------------------|-------|
+| **General** (always loaded) | 1,075 + 1,200 | 3,850 (if all selected) | – | – | – | **2,275 - 6,125** |
 | **JavaScript** | 1,012 | 4,596 | 1,162 | – | **6,770** |
 | **TypeScript** | 852 + 1,050 | 11,000 | 5,800 | 1,540 | **20,240** |
 | **Node.js** | – | 2,879 | – | – | **2,879** |
@@ -361,9 +418,11 @@ Understanding how many tokens your rule selection consumes helps optimize AI con
 | **Dart** | 823 + 1,095 | 3,535 | 1,595 | 1,630 | **8,678** |
 | **.NET** | 844 + 1,020 | 5,008 | 1,356 | 1,540 | **9,768** |
 | **PHP** | 860 + 1,050 | 5,158 | 1,553 | 1,585 | **10,206** |
-| **Grand Total** | | | | | **~177,000** |
+| **Grand Total** | | | | | | **~177,000 - 181,000** |
 
-> **Process Files**: Token-optimized (6.7% reduction). Files standardized to 195-285 lines each with Git Workflow reference pattern, consolidated tables, and streamlined AI Self-Check (10-12 items). CI/CD files reduced 38%, Logging files standardized, API Documentation expanded with security & CI/CD integration.
+> **Documentation Standards**: Three optional files (~3,850 tokens total) provide baseline documentation standards for code comments, project documentation, and APIs. Selected during setup based on project type. Language-specific process files reference these standards to avoid duplication.
+
+> **Process Files**: Token-optimized (6.7% reduction overall). Files standardized to 195-285 lines each with Git Workflow reference pattern, consolidated tables, and streamlined AI Self-Check (10-12 items). CI/CD files reduced 38%, API Documentation files reduced 30-32% by referencing general documentation standards.
 
 > **Security Rules**: Token-optimized (80% reduction from code examples). Each language includes concise security guidance (~1,000-1,200 tokens) covering OWASP Top 10, authentication, SQL injection prevention, and framework-specific patterns.
 
@@ -371,7 +430,8 @@ Understanding how many tokens your rule selection consumes helps optimize AI con
 
 | Stack | Components | Tokens |
 |-------|------------|--------|
-| **React (TS)** | General + TypeScript + React + Modular | ~3,070 |
+| **React (TS)** | General + TypeScript + React + Modular + Docs (code, project) | ~5,800 |
+| **React (TS) with API Docs** | General + TypeScript + React + Modular + All Docs | ~7,000 |
 | **React (JS) + Express** | General + JavaScript + React + Node.js Express | ~3,770 |
 | **Next.js + Prisma** | General + TypeScript + Next.js + Prisma | ~4,150 |
 | **NestJS + Prisma** | General + TypeScript + NestJS + Prisma + Modular | ~5,200 |
@@ -398,14 +458,52 @@ Understanding how many tokens your rule selection consumes helps optimize AI con
 - **Select only what you need** – Don't include unused frameworks or processes
 - **Choose one structure** – Pick the best fit, not all options
 - **Node.js is shared** – Using Express with both JS/TS adds it only once
+- **Documentation is optional** – Skip API docs for frontend-only projects (saves ~1,150 tokens)
+- **Smart documentation selection**:
+  - Frontend-only (Dart/Flutter): Select code + project docs only (~2,700 tokens)
+  - Backend/Fullstack: Select all documentation (~3,850 tokens)
+  - Libraries: Select code docs only (~1,250 tokens)
 - **Processes are optional** – Only select the processes you're actively implementing
-- **Processes are token-efficient** – CI/CD files optimized 38%, Logging standardized, all ~200-285 lines
+- **Processes are token-efficient** – CI/CD files optimized 38%, API docs optimized 30-32%, all ~200-285 lines
 - **Security rules optimized** – Refactored for 80% token reduction (concise directives vs verbose code examples)
-- **Total optimization** – ~3,000 tokens saved across all process files (6.7% reduction from original)
+- **DRY principle** – Process files reference general documentation standards to eliminate duplication
 
 ---
 
 ## 🔧 Extending
+
+### Documentation Standards (Optional)
+
+The project includes three **optional** documentation rule files in `rules/general/documentation/`:
+
+1. **code.md** (~1,250 tokens) - Inline comments, docstrings, JSDoc, XML docs, PHPDoc
+   - Self-documenting code principles
+   - Comment types (explanatory, warning, TODOs)
+   - Language-specific examples (Python, TypeScript, C#, Java, Swift, PHP)
+   - **Recommended for**: All projects
+
+2. **project.md** (~1,450 tokens) - README, CHANGELOG, CONTRIBUTING, LICENSE
+   - README structure (12 sections)
+   - Keep a Changelog format
+   - Contributing guidelines
+   - License selection
+   - **Recommended for**: All projects
+
+3. **api.md** (~1,150 tokens) - REST APIs, OpenAPI/Swagger, SDK documentation
+   - HTTP status codes (standard table)
+   - Error response formats
+   - Authentication patterns
+   - Rate limiting
+   - API versioning strategies
+   - SDK/client library generation
+   - **Recommended for**: Backend and fullstack projects only
+
+During setup, you'll be prompted to select which documentation standards to include. The setup provides smart suggestions based on your selected languages:
+- Frontend-only projects → code + project
+- Backend/Fullstack projects → all documentation
+- Skip entirely if not needed
+
+Language-specific process files reference these standards to avoid duplication.
 
 ### Add a New Language
 
@@ -471,10 +569,12 @@ Understanding how many tokens your rule selection consumes helps optimize AI con
 **Process Best Practices**:
 - Use phase-based structure (Phase 1, Phase 2, etc.)
 - Include explicit ALWAYS/NEVER directives
-- Add AI Self-Check lists
-- Keep token-efficient (aim for 35-40% reduction vs verbose docs)
+- Add AI Self-Check lists (10-12 items, tailored to language/framework)
+- Keep token-efficient (aim for 30-40% reduction vs verbose docs)
+- Reference general documentation standards instead of duplicating content
 - Include Git workflow guidance (one branch per phase)
 - Never fix production bugs during infrastructure setup
+- For API documentation, reference `rules/general/documentation/api.md` for HTTP status codes, error formats, and best practices
 
 ---
 
