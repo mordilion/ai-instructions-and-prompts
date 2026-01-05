@@ -681,6 +681,33 @@ function New-CursorConfig {
             Write-SuccessMessage "Created $relativePath"
         }
         
+        # Generate selected documentation files (only for general language)
+        if ($lang -eq "general" -and $SelectedDocumentation.Count -gt 0) {
+            foreach ($docFile in $SelectedDocumentation) {
+                $content = Read-InstructionFile -Lang $lang -File $docFile
+                
+                if ($null -eq $content) {
+                    continue
+                }
+                
+                $outputFile = Join-Path $langDir "$docFile.mdc"
+                
+                # Create parent directory if it doesn't exist (for nested files)
+                $parentDir = Split-Path -Parent $outputFile
+                if (-not (Test-Path $parentDir)) {
+                    New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
+                }
+                
+                $frontmatter = New-CursorFrontmatter -Config $Config -Lang $lang -File $docFile
+                
+                $fullContent = $frontmatter + $content
+                $fullContent | Out-File -FilePath $outputFile -Encoding UTF8 -NoNewline
+                
+                $relativePath = $outputFile.Replace($Script:ProjectRoot, "").TrimStart("\", "/")
+                Write-SuccessMessage "Created $relativePath"
+            }
+        }
+        
         # Generate framework files for this language
         if ($SelectedFrameworks.ContainsKey($lang)) {
             foreach ($fw in $SelectedFrameworks[$lang]) {
@@ -801,6 +828,17 @@ function New-ConcatenatedConfig {
             
             if ($null -ne $fileContent) {
                 $content += $fileContent + "`n`n---`n`n"
+            }
+        }
+        
+        # Add selected documentation files (only for general language)
+        if ($lang -eq "general" -and $SelectedDocumentation.Count -gt 0) {
+            foreach ($docFile in $SelectedDocumentation) {
+                $docContent = Read-InstructionFile -Lang $lang -File $docFile
+                
+                if ($null -ne $docContent) {
+                    $content += $docContent + "`n`n---`n`n"
+                }
             }
         }
         
