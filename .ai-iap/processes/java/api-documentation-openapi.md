@@ -4,6 +4,8 @@
 
 > **Tool**: springdoc-openapi ⭐ (Spring Boot 3+)
 
+> **Reference**: See general documentation standards for HTTP status codes, error formats, and best practices
+
 ---
 
 ## Phase 1: Setup SpringDoc
@@ -123,6 +125,58 @@ public ResponseEntity<User> createUser(@RequestBody User user) { }
 public ResponseEntity<User> getUser(@PathVariable Long id) { }
 ```
 
+### 3.4 Consistent Error Response Format
+
+> **Reference**: See general documentation standards for recommended error format
+
+**Spring Boot Implementation**:
+```java
+@Data
+public class ErrorResponse {
+    private ErrorDetail error;
+}
+
+@Data
+public class ErrorDetail {
+    private String code;
+    private String message;
+    private List<ValidationError> details;
+    private String timestamp;
+    private String requestId;
+}
+
+@Data
+public class ValidationError {
+    private String field;
+    private String issue;
+}
+
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+    
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidation(
+        MethodArgumentNotValidException ex,
+        HttpServletRequest request
+    ) {
+        var details = ex.getBindingResult().getFieldErrors().stream()
+            .map(e -> new ValidationError(e.getField(), e.getDefaultMessage()))
+            .toList();
+            
+        var error = new ErrorDetail(
+            "VALIDATION_ERROR",
+            "Invalid input",
+            details,
+            Instant.now().toString(),
+            request.getHeader("X-Request-ID")
+        );
+        
+        return ResponseEntity.badRequest()
+            .body(new ErrorResponse(error));
+    }
+}
+```
+
 ---
 
 ## Phase 4: CI/CD Integration
@@ -151,6 +205,34 @@ public ResponseEntity<User> getUser(@PathVariable Long id) { }
 **Access Spec**:
 - JSON: http://localhost:8080/v3/api-docs
 - YAML: http://localhost:8080/v3/api-docs.yaml
+
+### 4.2 Generate Client SDKs
+
+> **ALWAYS**: Generate type-safe client SDKs from OpenAPI spec
+
+**Generate Java Client**:
+```bash
+openapi-generator-cli generate \
+  -i http://localhost:8080/v3/api-docs \
+  -g java \
+  -o sdks/java-client \
+  --library resttemplate
+```
+
+**Generate TypeScript Client**:
+```bash
+openapi-generator-cli generate \
+  -i http://localhost:8080/v3/api-docs \
+  -g typescript-axios \
+  -o sdks/typescript-client
+```
+
+**Usage Example**:
+```java
+ApiClient client = new ApiClient();
+UsersApi api = new UsersApi(client);
+User user = api.getUser(123L);
+```
 
 ---
 
@@ -192,11 +274,12 @@ public ResponseEntity<User> getUser(@PathVariable Long id) { }
 - [ ] Swagger UI accessible at `/swagger-ui.html`
 - [ ] All endpoints annotated with `@Operation`
 - [ ] JWT security configured and testable
-- [ ] Request/response schemas defined
-- [ ] Error responses documented (400, 401, 404, 500)
-- [ ] API versioning configured (if needed)
-- [ ] Examples provided for complex requests
+- [ ] Request/response schemas defined with examples
+- [ ] CI/CD generates and validates OpenAPI spec
+- [ ] Client SDKs generated for target languages
 - [ ] OpenAPI spec accessible at `/v3/api-docs`
+- [ ] Error responses follow consistent format (see general standards)
+- [ ] All status codes documented (see general standards)
 
 ---
 

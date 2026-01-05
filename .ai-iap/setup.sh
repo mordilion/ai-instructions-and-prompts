@@ -685,6 +685,9 @@ generate_cursor() {
             
             content=$(read_instruction_file "$lang" "$file") || continue
             
+            # Create parent directory if it doesn't exist (for nested files)
+            mkdir -p "$(dirname "$output_file")"
+            
             {
                 generate_cursor_frontmatter "$lang" "$file" "false"
                 echo "$content"
@@ -704,6 +707,9 @@ generate_cursor() {
                 
                 content=$(read_instruction_file "$lang" "$fw_file" "true") || continue
                 
+                # Create parent directory if it doesn't exist (for nested files)
+                mkdir -p "$(dirname "$output_file")"
+                
                 {
                     generate_cursor_frontmatter "$lang" "$fw" "true"
                     echo "$content"
@@ -720,6 +726,9 @@ generate_cursor() {
                     local struct_content
                     
                     struct_content=$(read_instruction_file "$lang" "$struct_file" "false" "true") || continue
+                    
+                    # Create parent directory if it doesn't exist (for nested files)
+                    mkdir -p "$(dirname "$struct_output")"
                     
                     {
                         generate_cursor_frontmatter "$lang" "$fw" "true"
@@ -740,6 +749,9 @@ generate_cursor() {
                 output_file="$lang_dir/$proc_file.mdc"
                 
                 content=$(read_instruction_file "$lang" "$proc_file" "false" "false" "true") || continue
+                
+                # Create parent directory if it doesn't exist (for nested files)
+                mkdir -p "$(dirname "$output_file")"
                 
                 {
                     generate_cursor_frontmatter "$lang" "$proc" "false"

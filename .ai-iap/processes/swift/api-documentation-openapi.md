@@ -4,11 +4,54 @@
 
 > **Tools**: VaporToOpenAPI, SwiftOpenAPI
 
+> **Reference**: See general documentation standards for HTTP status codes, error formats, and best practices
+
 ---
 
-## Phase 1: Manual OpenAPI
+## Phase 1: OpenAPI Generation Options
 
-**Create OpenAPI Spec** (openapi.yaml):
+### Option A: VaporToOpenAPI (Code-First) ⭐
+
+**Install**:
+```swift
+// Package.swift
+dependencies: [
+    .package(url: "https://github.com/dankinsoid/VaporToOpenAPI.git", from: "4.0.0")
+]
+```
+
+**Configure**:
+```swift
+import VaporToOpenAPI
+
+try app.openAPI(
+    info: .init(
+        title: "My API",
+        version: "1.0.0"
+    ),
+    servers: [.init(url: "http://localhost:8080")]
+)
+
+// Automatically generates OpenAPI from routes
+app.get("users", ":id") { req -> User in
+    // OpenAPI generated automatically from route and return type
+}
+
+// Access at: http://localhost:8080/openapi.json
+```
+
+### Option B: Swift OpenAPI Generator (Spec-First)
+
+**Install**:
+```swift
+// Package.swift
+dependencies: [
+    .package(url: "https://github.com/apple/swift-openapi-generator", from: "1.0.0"),
+    .package(url: "https://github.com/apple/swift-openapi-runtime", from: "1.0.0")
+]
+```
+
+**Create openapi.yaml** (specification):
 ```yaml
 openapi: 3.0.0
 info:
@@ -23,18 +66,33 @@ paths:
           in: path
           required: true
           schema:
-            type: integer
+            type: string
       responses:
         '200':
           description: User found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
 ```
 
-**Serve with Vapor**:
-```swift
-app.get("docs") { req in
-    return req.fileio.streamFile(at: "openapi.yaml")
-}
+**Generate Code**:
+```bash
+swift package plugin generate-openapi-code \
+  --input openapi.yaml \
+  --output Sources/Generated
 ```
+
+### Option C: Manual OpenAPI (Fallback)
+
+**Create OpenAPI Spec** (openapi.yaml) and serve via Vapor as static file.
 
 ---
 
@@ -106,6 +164,66 @@ let v2 = app.grouped("api", "v2")
 v2.get("users") { req in /* V2 logic */ }
 ```
 
+### 3.3 Consistent Error Response Format
+
+> **Reference**: See general documentation standards for recommended error format
+
+**Vapor Implementation**:
+```swift
+struct ErrorResponse: Content {
+    let error: ErrorDetail
+}
+
+struct ErrorDetail: Content {
+    let code: String
+    let message: String
+    let details: [ValidationError]
+    let timestamp: String
+    let requestId: String?
+}
+
+struct ValidationError: Content {
+    let field: String
+    let issue: String
+}
+
+// Middleware for consistent error handling
+app.middleware.use(ErrorMiddleware { req, error in
+    return req.eventLoop.makeSucceededFuture(
+        Response(
+            status: .badRequest,
+            body: .init(string: try! JSONEncoder().encode(ErrorResponse(
+                error: ErrorDetail(
+                    code: "VALIDATION_ERROR",
+                    message: error.localizedDescription,
+                    details: [],
+                    timestamp: ISO8601DateFormatter().string(from: Date()),
+                    requestId: req.headers.first(name: "X-Request-ID")
+                )
+            )).utf8String!)
+        )
+    )
+})
+```
+
+### 3.4 Rate Limiting Documentation
+
+**OpenAPI Spec**:
+```yaml
+paths:
+  /api/users:
+    get:
+      description: Rate limit 100 requests/minute per IP
+      responses:
+        '429':
+          description: Too many requests
+          headers:
+            X-RateLimit-Limit:
+              schema: { type: integer }
+            X-RateLimit-Remaining:
+              schema: { type: integer }
+```
+
 ---
 
 ## Phase 4: CI/CD Integration
@@ -126,6 +244,41 @@ npx @openapitools/openapi-generator-cli validate -i openapi.yaml
   run: |
     npm install -g @openapitools/openapi-generator-cli
     openapi-generator-cli validate -i openapi.yaml
+```
+
+### 4.2 Generate Client SDKs
+
+> **ALWAYS**: Generate type-safe client SDKs from OpenAPI spec
+
+**Generate Swift Client**:
+```bash
+openapi-generator-cli generate \
+  -i openapi.yaml \
+  -g swift5 \
+  -o sdks/swift-client
+```
+
+**Generate TypeScript Client**:
+```bash
+openapi-generator-cli generate \
+  -i openapi.yaml \
+  -g typescript-axios \
+  -o sdks/typescript-client
+```
+
+**Usage Example**:
+```swift
+import MyAPIClient
+
+let api = UsersAPI()
+api.getUser(userId: "123") { result in
+    switch result {
+    case .success(let user):
+        print(user.name)
+    case .failure(let error):
+        print(error)
+    }
+}
 ```
 
 ---
@@ -164,15 +317,16 @@ npx @openapitools/openapi-generator-cli validate -i openapi.yaml
 
 ## AI Self-Check
 
-- [ ] OpenAPI specification created (openapi.yaml)
+- [ ] VaporToOpenAPI or Swift OpenAPI Generator configured
+- [ ] OpenAPI specification created and validated
 - [ ] All endpoints documented with paths, methods, parameters
-- [ ] Response schemas defined (200, 400, 401, 404, 500)
 - [ ] JWT authentication documented in security schemes
 - [ ] Swagger UI configured and accessible
-- [ ] Examples provided for complex requests
-- [ ] API versioning strategy documented
-- [ ] OpenAPI spec validates without errors
+- [ ] CI/CD validates OpenAPI spec
+- [ ] Client SDKs generated for target languages
 - [ ] Spec version controlled in repository
+- [ ] Error responses follow consistent format (see general standards)
+- [ ] All status codes documented (see general standards)
 
 ---
 

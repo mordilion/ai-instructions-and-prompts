@@ -4,6 +4,8 @@
 
 > **Tool**: Swashbuckle.AspNetCore ⭐ (built-in with ASP.NET Core)
 
+> **Reference**: See general documentation standards for HTTP status codes, error formats, and best practices
+
 ---
 
 ## Phase 1: Setup Swashbuckle
@@ -136,6 +138,54 @@ options.SwaggerDoc("v2", new OpenApiInfo { Version = "v2", Title = "My API V2" }
 public ActionResult<User> GetUser(int id) { }
 ```
 
+### 3.4 Consistent Error Response Format
+
+> **Reference**: See general documentation standards for recommended error format
+
+**ASP.NET Core Implementation**:
+```csharp
+public class ErrorResponse
+{
+    public ErrorDetail Error { get; set; }
+}
+
+public class ErrorDetail
+{
+    public string Code { get; set; }
+    public string Message { get; set; }
+    public List<ValidationError> Details { get; set; }
+    public DateTime Timestamp { get; set; }
+    public string RequestId { get; set; }
+}
+
+public class ValidationError
+{
+    public string Field { get; set; }
+    public string Issue { get; set; }
+}
+
+// Global exception handler
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        var error = context.Features.Get<IExceptionHandlerFeature>();
+        var response = new ErrorResponse
+        {
+            Error = new ErrorDetail
+            {
+                Code = "INTERNAL_ERROR",
+                Message = error.Error.Message,
+                Timestamp = DateTime.UtcNow,
+                RequestId = context.TraceIdentifier
+            }
+        };
+        context.Response.StatusCode = 500;
+        await context.Response.WriteAsJsonAsync(response);
+    });
+});
+```
+
 ---
 
 ## Phase 4: CI/CD Integration
@@ -150,6 +200,31 @@ public ActionResult<User> GetUser(int id) { }
 ```bash
 dotnet build
 dotnet swagger tofile --output openapi.json bin/Debug/net8.0/MyApi.dll v1
+```
+
+### 4.2 Generate Client SDKs
+
+> **ALWAYS**: Generate type-safe client SDKs from OpenAPI spec
+
+**Generate C# Client**:
+```bash
+dotnet new tool-manifest
+dotnet tool install --local Kiota.ApiClient.Generator
+dotnet kiota generate -l CSharp -c MyApiClient -n MyApi.Client -d openapi.json -o ./sdks/csharp
+```
+
+**Generate TypeScript Client**:
+```bash
+npx @openapitools/openapi-generator-cli generate \
+  -i openapi.json \
+  -g typescript-axios \
+  -o sdks/typescript-client
+```
+
+**Usage Example**:
+```csharp
+var client = new MyApiClient();
+var user = await client.Users.GetByIdAsync("123");
 ```
 
 ---
@@ -186,13 +261,14 @@ dotnet swagger tofile --output openapi.json bin/Debug/net8.0/MyApi.dll v1
 
 - [ ] Swashbuckle.AspNetCore installed and configured
 - [ ] Swagger UI accessible at `/swagger`
-- [ ] All endpoints documented with XML comments
-- [ ] JWT authentication documented and testable
+- [ ] XML comments enabled for documentation
+- [ ] JWT authentication configured and testable
 - [ ] Response types documented with `[ProducesResponseType]`
-- [ ] Error responses documented (400, 401, 404, 500)
-- [ ] API versioning configured (if multi-version)
-- [ ] OpenAPI spec can be exported for CI/CD
+- [ ] CI/CD generates and validates OpenAPI spec
+- [ ] Client SDKs generated for target languages
 - [ ] No warnings about missing XML comments
+- [ ] Error responses follow consistent format (see general standards)
+- [ ] All status codes documented (see general standards)
 
 ---
 

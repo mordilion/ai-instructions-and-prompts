@@ -564,6 +564,13 @@ function New-CursorConfig {
             }
             
             $outputFile = Join-Path $langDir "$file.mdc"
+            
+            # Create parent directory if it doesn't exist (for nested files)
+            $parentDir = Split-Path -Parent $outputFile
+            if (-not (Test-Path $parentDir)) {
+                New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
+            }
+            
             $frontmatter = New-CursorFrontmatter -Config $Config -Lang $lang -File $file
             
             $fullContent = $frontmatter + $content
@@ -584,6 +591,13 @@ function New-CursorConfig {
                 }
                 
                 $outputFile = Join-Path $langDir "$($fwConfig.file).mdc"
+                
+                # Create parent directory if it doesn't exist (for nested files)
+                $parentDir = Split-Path -Parent $outputFile
+                if (-not (Test-Path $parentDir)) {
+                    New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
+                }
+                
                 $frontmatter = New-CursorFrontmatter -Config $Config -Lang $lang -File $fw -IsFramework $true
                 
                 $fullContent = $frontmatter + $content
@@ -600,6 +614,13 @@ function New-CursorConfig {
                     
                     if ($null -ne $structContent) {
                         $structOutputFile = Join-Path $langDir "$structFile.mdc"
+                        
+                        # Create parent directory if it doesn't exist (for nested files)
+                        $parentDir = Split-Path -Parent $structOutputFile
+                        if (-not (Test-Path $parentDir)) {
+                            New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
+                        }
+                        
                         $structFrontmatter = New-CursorFrontmatter -Config $Config -Lang $lang -File $fw -IsFramework $true
                         
                         $fullStructContent = $structFrontmatter + $structContent
@@ -623,6 +644,13 @@ function New-CursorConfig {
                 }
                 
                 $outputFile = Join-Path $langDir "$($procConfig.file).mdc"
+                
+                # Create parent directory if it doesn't exist (for nested files)
+                $parentDir = Split-Path -Parent $outputFile
+                if (-not (Test-Path $parentDir)) {
+                    New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
+                }
+                
                 $frontmatter = New-CursorFrontmatter -Config $Config -Lang $lang -File $proc
                 
                 $fullContent = $frontmatter + $content

@@ -4,6 +4,8 @@
 
 > **Tools**: SpringDoc ⭐ (Spring Boot), Ktor OpenAPI
 
+> **Reference**: See general documentation standards for HTTP status codes, error formats, and best practices
+
 ---
 
 ## Phase 1: Spring Boot (Same as Java)
@@ -102,6 +104,80 @@ install(SwaggerUI) {
 }
 ```
 
+### 3.4 Consistent Error Response Format
+
+> **Reference**: See general documentation standards for recommended error format
+
+**Spring Boot Implementation**:
+```kotlin
+data class ErrorResponse(val error: ErrorDetail)
+
+data class ErrorDetail(
+    val code: String,
+    val message: String,
+    val details: List<ValidationError> = emptyList(),
+    val timestamp: String,
+    val requestId: String?
+)
+
+data class ValidationError(
+    val field: String,
+    val issue: String
+)
+
+@RestControllerAdvice
+class GlobalExceptionHandler {
+    
+    @ExceptionHandler(MethodArgumentNotValidException::class)
+    fun handleValidation(
+        ex: MethodArgumentNotValidException,
+        request: HttpServletRequest
+    ): ResponseEntity<ErrorResponse> {
+        val details = ex.bindingResult.fieldErrors.map {
+            ValidationError(it.field, it.defaultMessage ?: "Invalid value")
+        }
+        
+        val error = ErrorDetail(
+            code = "VALIDATION_ERROR",
+            message = "Invalid input",
+            details = details,
+            timestamp = Instant.now().toString(),
+            requestId = request.getHeader("X-Request-ID")
+        )
+        
+        return ResponseEntity.badRequest().body(ErrorResponse(error))
+    }
+}
+```
+
+**Ktor Implementation**:
+```kotlin
+install(StatusPages) {
+    exception<Throwable> { call, cause ->
+        call.respond(HttpStatusCode.InternalServerError, ErrorResponse(
+            error = ErrorDetail(
+                code = "INTERNAL_ERROR",
+                message = cause.message ?: "Unknown error",
+                timestamp = Clock.System.now().toString(),
+                requestId = call.request.header("X-Request-ID")
+            )
+        ))
+    }
+}
+```
+
+### 3.5 Rate Limiting Documentation
+
+> **Document rate limits**:
+```kotlin
+@Operation(
+    summary = "Get user",
+    description = "Rate limit: 100 requests/minute per user"
+)
+@ApiResponse(responseCode = "429", description = "Too many requests")
+fun getUser(@PathVariable id: Long): User { }
+```
+
 ---
 
 ## Phase 4: CI/CD Integration
@@ -120,6 +196,32 @@ tasks.register("generateOpenApi") {
         println("OpenAPI spec generated")
     }
 }
+```
+
+### 4.2 Generate Client SDKs
+
+> **ALWAYS**: Generate type-safe client SDKs from OpenAPI spec
+
+**Generate Kotlin Client**:
+```bash
+openapi-generator-cli generate \
+  -i openapi.json \
+  -g kotlin \
+  -o sdks/kotlin-client
+```
+
+**Generate TypeScript Client**:
+```bash
+openapi-generator-cli generate \
+  -i openapi.json \
+  -g typescript-axios \
+  -o sdks/typescript-client
+```
+
+**Usage Example**:
+```kotlin
+val api = UsersApi()
+val user = api.getUser("123")
 ```
 
 ---
@@ -155,15 +257,16 @@ tasks.register("generateOpenApi") {
 
 ## AI Self-Check
 
-- [ ] OpenAPI documentation configured
+- [ ] SpringDoc or Ktor OpenAPI configured
 - [ ] Swagger UI accessible
-- [ ] All endpoints documented with summaries
+- [ ] All endpoints documented with annotations
 - [ ] JWT/OAuth security documented
-- [ ] Request/response schemas defined
-- [ ] Error responses documented (400, 401, 404, 500)
-- [ ] API versioning configured (if needed)
+- [ ] Request/response schemas defined with data classes
+- [ ] CI/CD generates and validates OpenAPI spec
+- [ ] Client SDKs generated for target languages
 - [ ] Try-it-out functionality works
-- [ ] OpenAPI spec can be exported
+- [ ] Error responses follow consistent format (see general standards)
+- [ ] All status codes documented (see general standards)
 
 ---
 

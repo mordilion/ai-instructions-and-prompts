@@ -4,6 +4,8 @@
 
 > **Tools**: Swagger UI, NestJS Swagger, tsoa, express-openapi
 
+> **Reference**: See general documentation standards for HTTP status codes, error formats, and best practices
+
 ---
 
 ## Phase 1: Setup Swagger
@@ -161,6 +163,45 @@ export class ProtectedController { }
 })
 ```
 
+### 3.4 Consistent Error Response Format
+
+> **Reference**: See general documentation standards for recommended error format
+
+**NestJS Implementation**:
+```typescript
+export class ErrorResponseDto {
+  @ApiProperty()
+  error: {
+    code: string;
+    message: string;
+    details?: Array<{ field: string; issue: string }>;
+    timestamp: string;
+    request_id: string;
+  };
+}
+
+@ApiResponse({ 
+  status: 400, 
+  description: 'Validation error',
+  type: ErrorResponseDto 
+})
+```
+
+**Express.js Implementation**:
+```typescript
+app.use((err, req, res, next) => {
+  res.status(err.status || 500).json({
+    error: {
+      code: err.code || 'INTERNAL_ERROR',
+      message: err.message,
+      details: err.details || [],
+      timestamp: new Date().toISOString(),
+      request_id: req.id
+    }
+  });
+});
+```
+
 ---
 
 ## Phase 4: CI/CD Integration
@@ -189,6 +230,34 @@ export class ProtectedController { }
 > - **ReDoc**: Alternative UI at `/redoc`
 > - **Postman**: Import OpenAPI spec
 > - **API Portal**: AWS API Gateway, Azure APIM
+
+### 4.3 Generate Client SDKs
+
+> **ALWAYS**: Generate type-safe client SDKs from OpenAPI spec
+
+**Generate TypeScript Client**:
+```bash
+npx @openapitools/openapi-generator-cli generate \
+  -i openapi.json \
+  -g typescript-axios \
+  -o sdks/typescript-client
+```
+
+**Generate Python Client**:
+```bash
+npx @openapitools/openapi-generator-cli generate \
+  -i openapi.json \
+  -g python \
+  -o sdks/python-client
+```
+
+**Usage Example**:
+```typescript
+import { UsersApi } from './sdks/typescript-client';
+
+const api = new UsersApi();
+const user = await api.getUser('123');
+```
 
 ---
 
@@ -229,16 +298,15 @@ export class ProtectedController { }
 ## AI Self-Check
 
 - [ ] OpenAPI/Swagger configured and accessible
-- [ ] All endpoints documented with summaries
-- [ ] Authentication/security schemes documented
-- [ ] Request/response schemas defined with examples
-- [ ] Error responses documented (400, 401, 404, 500)
+- [ ] NestJS or Express.js setup complete
+- [ ] All endpoints annotated with decorators
+- [ ] JWT/Bearer authentication configured
+- [ ] CI/CD generates and validates OpenAPI spec
+- [ ] Client SDKs generated for target languages
+- [ ] Swagger UI Try-it-out functionality works
+- [ ] Error responses follow consistent format (see general standards)
+- [ ] All status codes documented (see general standards)
 - [ ] Rate limiting documented (if applicable)
-- [ ] API versioning strategy documented
-- [ ] Try-it-out functionality works
-- [ ] OpenAPI spec validates without errors
-- [ ] CI/CD generates and validates spec
-- [ ] Docs kept in sync with code changes
 
 ---
 

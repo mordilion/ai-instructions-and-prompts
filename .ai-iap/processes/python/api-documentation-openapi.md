@@ -4,6 +4,8 @@
 
 > **Tools**: FastAPI ⭐ (built-in), drf-spectacular (Django REST), flask-smorest (Flask)
 
+> **Reference**: See general documentation standards for HTTP status codes, error formats, and best practices
+
 ---
 
 ## Phase 1: FastAPI (Built-in)
@@ -153,6 +155,57 @@ async def get_users():
     pass
 ```
 
+### 4.4 Consistent Error Response Format
+
+> **Reference**: See general documentation standards for recommended error format
+
+**FastAPI Implementation**:
+```python
+from pydantic import BaseModel
+from datetime import datetime
+
+class ErrorDetail(BaseModel):
+    field: str
+    issue: str
+
+class ErrorResponse(BaseModel):
+    error: dict[str, any]
+
+@app.exception_handler(ValidationError)
+async def validation_exception_handler(request: Request, exc: ValidationError):
+    return JSONResponse(
+        status_code=400,
+        content={
+            "error": {
+                "code": "VALIDATION_ERROR",
+                "message": "Invalid input",
+                "details": [{"field": e["loc"][-1], "issue": e["msg"]} for e in exc.errors()],
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "request_id": request.state.request_id
+            }
+        }
+    )
+```
+
+**Django REST Framework**:
+```python
+from rest_framework.views import exception_handler
+
+def custom_exception_handler(exc, context):
+    response = exception_handler(exc, context)
+    if response is not None:
+        response.data = {
+            "error": {
+                "code": exc.default_code.upper(),
+                "message": str(exc),
+                "details": response.data if isinstance(response.data, list) else [],
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "request_id": context['request'].META.get('HTTP_X_REQUEST_ID')
+            }
+        }
+    return response
+```
+
 ---
 
 ## Phase 5: CI/CD Integration
@@ -177,6 +230,35 @@ with open("openapi.json", "w") as f:
   run: |
     python -c "import json; from app import app; json.dump(app.openapi(), open('openapi.json', 'w'))"
     npx @openapitools/openapi-generator-cli validate -i openapi.json
+```
+
+### 5.2 Generate Client SDKs
+
+> **ALWAYS**: Generate type-safe client SDKs from OpenAPI spec
+
+**Generate Python Client**:
+```bash
+openapi-generator-cli generate \
+  -i openapi.json \
+  -g python \
+  -o sdks/python-client
+```
+
+**Generate TypeScript Client**:
+```bash
+openapi-generator-cli generate \
+  -i openapi.json \
+  -g typescript-axios \
+  -o sdks/typescript-client
+```
+
+**Usage Example**:
+```python
+from python_client import ApiClient, UsersApi
+
+client = ApiClient(configuration)
+api = UsersApi(client)
+user = api.get_user('123')
 ```
 
 ---
@@ -216,16 +298,16 @@ with open("openapi.json", "w") as f:
 
 ## AI Self-Check
 
-- [ ] OpenAPI documentation auto-generated
+- [ ] FastAPI/Django/Flask OpenAPI configured
 - [ ] Swagger UI accessible at `/docs`
 - [ ] ReDoc accessible at `/redoc` (FastAPI)
-- [ ] All endpoints documented with docstrings
-- [ ] Pydantic models used for schemas
+- [ ] Pydantic models used for request/response schemas
 - [ ] Authentication/security documented
-- [ ] Error responses documented (400, 401, 404, 422, 500)
-- [ ] API versioning configured (if needed)
-- [ ] OpenAPI spec can be exported for CI/CD
+- [ ] CI/CD generates and validates OpenAPI spec
+- [ ] Client SDKs generated for target languages
 - [ ] Try-it-out functionality works
+- [ ] Error responses follow consistent format (see general standards)
+- [ ] All status codes documented (see general standards)
 
 ---
 
