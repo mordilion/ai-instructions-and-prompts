@@ -641,7 +641,7 @@ The verification script tests:
 - Script integration (merge functions)
 - Config structure validity
 
-**Result**: 16 tests should pass with 0 failures.
+**Result**: 15 tests should pass with 0 failures.
 
 ### Automated Testing
 

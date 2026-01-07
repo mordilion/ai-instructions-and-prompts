@@ -32,29 +32,26 @@ function Test-Item {
 # Test 1: Core config exists
 Test-Item "Core config exists" (Test-Path ".ai-iap/config.json")
 
-# Test 2: Custom config exists
-Test-Item "Custom config exists" (Test-Path ".ai-iap-custom/config.json")
+# Test 2: Example config exists (required for git)
+$exampleConfig = Test-Path ".ai-iap-custom/config.example.json"
+Test-Item "Example config exists" $exampleConfig
 
-# Test 3: Custom config is valid JSON
+# Test 3: Example config is valid JSON
 try {
-    $customConfig = Get-Content .ai-iap-custom/config.json -Raw | ConvertFrom-Json
-    Test-Item "Custom config is valid JSON" $true
+    $customConfig = Get-Content .ai-iap-custom/config.example.json -Raw | ConvertFrom-Json
+    Test-Item "Example config is valid JSON" $true
 } catch {
-    Test-Item "Custom config is valid JSON" $false
+    Test-Item "Example config is valid JSON" $false
     Write-Host "  Error: $_" -ForegroundColor DarkRed
 }
 
-# Test 4: Custom files exist
-$tsCustomFile = Test-Path ".ai-iap-custom/rules/typescript/company-standards.md"
-Test-Item "Custom rule file exists (company-standards.md)" $tsCustomFile
+# Test 4: Example rule file exists
+$tsExampleRule = Test-Path ".ai-iap-custom/rules/typescript/company-standards.example.md"
+Test-Item "Example rule file exists (company-standards.example.md)" $tsExampleRule
 
-# Test 5: Custom process exists
-$tsCustomProc = Test-Path ".ai-iap-custom/processes/typescript/deploy-internal.md"
-Test-Item "Custom process file exists (deploy-internal.md)" $tsCustomProc
-
-# Test 6: Example files still exist (shouldn't be deleted)
-$exampleConfig = Test-Path ".ai-iap-custom/config.example.json"
-Test-Item "Example config preserved" $exampleConfig
+# Test 5: Example process file exists
+$tsExampleProc = Test-Path ".ai-iap-custom/processes/typescript/deploy-internal.example.md"
+Test-Item "Example process file exists (deploy-internal.example.md)" $tsExampleProc
 
 # Test 7: GitIgnore configured
 $gitignoreContent = Get-Content .gitignore -Raw
