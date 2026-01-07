@@ -19,6 +19,7 @@ Copilot, Windsurf, Aider, Google AI Studio, Amazon Q, Tabnine, Cody, and Continu
 - 🏗️ **Structure Templates** – Clean Architecture, MVVM, MVI, Vertical Slices, Feature-First, DDD, Modular
 - 🔒 **Security Rules** – OWASP Top 10 coverage for all languages (token-optimized)
 - 🔄 **Process Guides** – CI/CD, Testing, Logging, Docker, Authentication, Migrations, API Documentation (all languages)
+- 🎨 **Extension System** – Add company standards, override rules, custom processes (update-safe)
 - ⚡ **Interactive Setup** – Wizard guides you through configuration
 - ✅ **Quality Verified** – 95%+ compliant, understandability-first (same result across all AIs)
 - 🎯 **Conflict-Free** – Verified consistent across all 191 files
@@ -44,6 +45,7 @@ chmod +x .ai-iap/setup.sh && ./.ai-iap/setup.sh
 - [Project Structures](.ai-iap/README.md#️-project-structure-options)
 - [Token Costs](.ai-iap/README.md#-token-cost-analysis)
 - [Configuration](.ai-iap/README.md#️-configuration)
+- [**Customization Guide**](CUSTOMIZATION.md) ⭐ – Extend with company standards (update-safe)
 - [Troubleshooting](.ai-iap/TROUBLESHOOTING.md)
 - [Extending](.ai-iap/README.md#-extending)
 - [Contributing](.ai-iap/README.md#-contributing)

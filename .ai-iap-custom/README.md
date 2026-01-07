@@ -135,4 +135,6 @@ Run validation to check your custom files:
 
 ## 📚 More Information
 
-See [CUSTOMIZATION.md](../CUSTOMIZATION.md) in the root directory for detailed documentation.
+- **[CUSTOMIZATION.md](../CUSTOMIZATION.md)** – Complete guide with examples and troubleshooting
+- **[Main README](.ai-iap/README.md)** – Full project documentation
+- **[Core Config](../.ai-iap/config.json)** – See core configuration structure

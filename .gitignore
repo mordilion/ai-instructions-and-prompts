@@ -75,3 +75,22 @@ yarn-error.log*
 # ============================================================================
 # .ai-iap/
 
+# ============================================================================
+# Custom AI Instructions (User-Specific)
+# ============================================================================
+# The .ai-iap-custom/ directory allows you to extend or override core files
+# without modifying .ai-iap/ (ensures safe updates from upstream)
+#
+# Options:
+# - Option A (Default): Keep custom files local (git ignored)
+# - Option B: Share with team (remove .ai-iap-custom/ from gitignore)
+# - Option C: Separate repo (use git submodule)
+# ============================================================================
+
+# Ignore custom files (keep local only)
+.ai-iap-custom/
+
+# BUT: Always include example files for reference
+!.ai-iap-custom/*.example.*
+!.ai-iap-custom/**/*.example.*
+!.ai-iap-custom/README.md
