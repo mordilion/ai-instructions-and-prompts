@@ -35,6 +35,7 @@ Your Rules (one source) → Setup Script → All AI Tools Configured
 - **🔒 Security Rules** – OWASP Top 10 coverage for all languages (token-optimized, 80% more efficient)
 - **📚 Documentation Standards** – Optional code, project, and API documentation standards with smart suggestions
 - **🔄 Process Guides** – CI/CD, Testing, Logging, Docker, Auth, Migrations, API Docs (77 files, 8 languages, token-optimized)
+- **🎨 Extension System** – Add company standards, override rules, custom processes without modifying core (update-safe)
 - **⚡ Interactive Setup** – Wizard guides you through configuration with context-aware suggestions
 - **🎯 Recommended Defaults** – Best practices marked with `⭐`
 - **✅ Quality Verified** – Conflict-free system verified across all 191 files (95% confidence)
@@ -107,6 +108,78 @@ Enter choices: 1 2
 **Step 4: Select Frameworks & Processes** (if applicable)
 
 That's it! Your AI tools are now configured with consistent coding standards.
+
+---
+
+## 🎨 Customization & Extensions
+
+Want to add company-specific standards, internal processes, or override core rules? Use the **extension system**:
+
+### Create Custom Config
+
+```
+.ai-iap-custom/
+├── config.json                    # Your customizations
+├── rules/
+│   └── typescript/
+│       └── company-standards.md   # Company-specific rules
+└── processes/
+    └── typescript/
+        └── deploy-internal.md     # Internal deployment guide
+```
+
+### Three Ways to Extend
+
+1. **Add Custom Rules** – Extend core rules with company standards
+   ```json
+   {
+     "languages": {
+       "typescript": {
+         "customFiles": ["company-standards"]
+       }
+     }
+   }
+   ```
+
+2. **Add Custom Processes** – Internal tools and platforms
+   ```json
+   {
+     "languages": {
+       "typescript": {
+         "customProcesses": {
+           "deploy-internal": {
+             "name": "Deploy to Internal Platform",
+             "file": "deploy-internal"
+           }
+         }
+       }
+     }
+   }
+   ```
+
+3. **Override Core Files** – Replace core rules with team preferences
+   ```
+   .ai-iap-custom/rules/typescript/code-style.md
+   → Overrides .ai-iap/rules/typescript/code-style.md
+   ```
+
+### Update Strategies
+
+| Strategy | Setup | Best For |
+|----------|-------|----------|
+| **Local** (Default) | `.ai-iap-custom/` git-ignored | Individual developers |
+| **Team Sharing** | Commit `.ai-iap-custom/` | Teams with shared standards |
+| **Separate Repo** | Maintain as submodule | Large orgs, company-wide |
+
+### Benefits
+
+- ✅ Pull updates from main repo without conflicts
+- ✅ Keep company secrets/processes private
+- ✅ Share customizations across team (optional)
+- ✅ Test beta frameworks before core inclusion
+- ✅ Maintain compliance requirements separately
+
+**📚 Full Documentation**: See [CUSTOMIZATION.md](../CUSTOMIZATION.md) for complete guide with examples.
 
 ---
 
