@@ -1,6 +1,7 @@
 # Customization Guide
 
-This guide explains how to extend or override AI instructions without modifying core files, ensuring safe updates from the main repository.
+This guide explains how to extend or override AI instructions without modifying core files,
+ensuring safe updates from the main repository.
 
 ---
 
@@ -41,7 +42,7 @@ The `.ai-iap-custom/` directory allows you to:
 
 ## Directory Structure
 
-```
+```text
 .ai-iap-custom/
 ├── README.md                           # Quick reference
 ├── config.json                         # Custom configuration
@@ -96,11 +97,11 @@ The `.ai-iap-custom/` directory allows you to:
 
 ### Configuration Properties
 
-| Property | Type | Purpose | Example |
-|----------|------|---------|---------|
-| `customFiles` | array | Additional rules to include | `["company-standards"]` |
-| `customProcesses` | object | Custom implementation processes | Deploy to internal platform |
-| `customFrameworks` | object | Beta or company-specific frameworks | Internal UI framework |
+| Property          | Type   | Purpose                             | Example                     |
+| ----------------- | ------ | ----------------------------------- | --------------------------- |
+| `customFiles`     | array  | Additional rules to include         | `["company-standards"]`     |
+| `customProcesses` | object | Custom implementation processes     | Deploy to internal platform |
+| `customFrameworks`| object | Beta or company-specific frameworks | Internal UI framework       |
 
 ---
 
@@ -293,12 +294,14 @@ Override core files by creating a file with the **exact same path**.
 ### Example: Override TypeScript Code Style
 
 **Core file** (don't modify):
-```
+
+```text
 .ai-iap/rules/typescript/code-style.md
 ```
 
 **Your override** (will be used instead):
-```
+
+```text
 .ai-iap-custom/rules/typescript/code-style.md
 ```
 
@@ -519,6 +522,7 @@ function MyComponent() {
 **Problem**: Custom rules/processes don't show up after running setup
 
 **Solutions**:
+
 1. Validate JSON: `jq empty .ai-iap-custom/config.json`
 2. Check file paths match exactly
 3. Ensure file extensions are `.md`
@@ -531,6 +535,7 @@ function MyComponent() {
 **Problem**: "Custom config file contains invalid JSON"
 
 **Solutions**:
+
 1. Use a JSON validator: [jsonlint.com](https://jsonlint.com)
 2. Common issues:
    - Missing commas between properties
@@ -546,11 +551,14 @@ function MyComponent() {
 **Problem**: Core file still being used instead of custom file
 
 **Solutions**:
+
 1. Verify exact path match:
-   ```
+
+   ```text
    Core:   .ai-iap/rules/typescript/code-style.md
    Custom: .ai-iap-custom/rules/typescript/code-style.md  ✓
    ```
+
 2. Check file is not empty
 3. Ensure `.md` extension
 4. Re-run setup script
@@ -581,6 +589,7 @@ git checkout origin/main -- .ai-iap/
 **Problem**: Custom process doesn't appear in selection menu
 
 **Solutions**:
+
 1. Check `customProcesses` is under correct language
 2. Verify process file exists at specified path
 3. Ensure `file` property matches filename (without `.md`)
@@ -625,6 +634,7 @@ Before or after making changes, verify the extension system is working:
 ```
 
 The verification script tests:
+
 - File structure (example files exist)
 - Git configuration (proper ignores)
 - Documentation completeness
@@ -636,6 +646,7 @@ The verification script tests:
 ### Automated Testing
 
 The extension system is tested automatically:
+
 - ✅ On every commit via GitHub Actions
 - ✅ On every pull request
 - ✅ Cross-platform (Linux + Windows)
