@@ -18,12 +18,12 @@ NC='\033[0m' # No Color
 
 write_error() {
     echo -e "${RED}[ERROR]${NC} $1"
-    ((ERROR_COUNT++))
+    ERROR_COUNT=$((ERROR_COUNT + 1))
 }
 
 write_warning() {
     echo -e "${YELLOW}[WARNING]${NC} $1"
-    ((WARNING_COUNT++))
+    WARNING_COUNT=$((WARNING_COUNT + 1))
 }
 
 write_success() {
@@ -191,7 +191,7 @@ for lang_key in $(jq -r '.languages | keys[]' .ai-iap/config.json); do
             
             # Validate structures
             for struct_key in $(jq -r ".languages[\"$lang_key\"].frameworks[\"$fw_key\"].structures // {} | keys[]" .ai-iap/config.json); do
-                ((struct_count++))
+                struct_count=$((struct_count + 1))
                 
                 struct_name=$(jq -r ".languages[\"$lang_key\"].frameworks[\"$fw_key\"].structures[\"$struct_key\"].name" .ai-iap/config.json)
                 if [[ "$struct_name" == "null" ]]; then
