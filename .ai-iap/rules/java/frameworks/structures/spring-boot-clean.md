@@ -41,96 +41,14 @@ src/main/java/com/app/
 
 ## Core Patterns
 
-### Domain Model (Pure)
+| Layer | Pattern | Annotations |
+|-------|---------|-------------|
+| **Domain** | Immutable models + Repository interfaces | None (pure Java) |
+| **Application** | Use cases with execute() method | @Service |
+| **Infrastructure** | Repository adapters + JPA entities | @Repository + mapper |
+| **Presentation** | REST controllers | @RestController + @Valid DTOs |
 
-```java
-// domain/model/User.java
-public class User {
-    private final Long id;
-    private final String email;
-    private final String name;
-    
-    public User(Long id, String email, String name) {
-        if (!email.contains("@")) throw new IllegalArgumentException("Invalid email");
-        this.id = id;
-        this.email = email;
-        this.name = name;
-    }
-    
-    // Getters only, no setters (immutable)
-}
-```
-
-### Repository Interface
-
-```java
-// domain/repository/UserRepository.java
-public interface UserRepository {
-    Optional<User> findById(Long id);
-    User save(User user);
-    List<User> findAll();
-}
-```
-
-### Use Case
-
-```java
-// application/usecase/CreateUserUseCase.java
-@Service
-public class CreateUserUseCase {
-    private final UserRepository repository;
-    
-    public CreateUserUseCase(UserRepository repository) {
-        this.repository = repository;
-    }
-    
-    public User execute(String email, String name) {
-        User user = new User(null, email, name);
-        return repository.save(user);
-    }
-}
-```
-
-### Repository Implementation
-
-```java
-// infrastructure/persistence/repository/JpaUserRepository.java
-@Repository
-public class JpaUserRepositoryAdapter implements UserRepository {
-    private final JpaUserRepository jpaRepo;
-    private final UserMapper mapper;
-    
-    @Override
-    public Optional<User> findById(Long id) {
-        return jpaRepo.findById(id).map(mapper::toDomain);
-    }
-    
-    @Override
-    public User save(User user) {
-        UserEntity entity = mapper.toEntity(user);
-        UserEntity saved = jpaRepo.save(entity);
-        return mapper.toDomain(saved);
-    }
-}
-```
-
-### Controller
-
-```java
-// presentation/controller/UserController.java
-@RestController
-@RequestMapping("/api/users")
-public class UserController {
-    private final CreateUserUseCase createUserUseCase;
-    
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public UserResponse create(@Valid @RequestBody CreateUserRequest request) {
-        User user = createUserUseCase.execute(request.getEmail(), request.getName());
-        return UserResponse.from(user);
-    }
-}
-```
+**Flow**: Controller → Use Case (@Service) → Repository Interface → Adapter (@Repository) → JPA
 
 ## Common AI Mistakes
 
