@@ -70,18 +70,11 @@
 
 ### 1.2 Coverage Reporting
 
-> **ALWAYS**:
-> - Use pytest-cov or coverage.py
-> - Generate XML/HTML reports
-> - Upload to Codecov/Coveralls
-> - Set minimum coverage threshold (80%+)
+Use pytest-cov, generate XML/HTML reports, upload to Codecov/Coveralls, set 80%+ threshold.
 
-**Coverage Commands**:
 ```bash
-pytest --cov=src --cov-report=xml --cov-report=html --cov-report=term
+pytest --cov=src --cov-report=xml --cov-report=html
 ```
-
-**Verify**: Pipeline runs, linting passes, all tests pass, coverage report generated, pip cache working
 
 ---
 
@@ -91,52 +84,15 @@ pytest --cov=src --cov-report=xml --cov-report=html --cov-report=term
 
 ### 2.1 Code Quality Analysis
 
-> **ALWAYS include**:
-> - Ruff (fast linter/formatter) or flake8 + black
-> - mypy for type checking
-> - isort for import sorting
-> - Fail build on violations
+Tools: **Ruff** ⭐ (all-in-one: linter/formatter/import sorting), **mypy** (type checking), **bandit** (security). Fail build on violations.
 
-> **NEVER**: Suppress errors globally, skip type hints, allow unused imports
+### 2.2 Dependency Security
 
-**Tools**:
-- **Ruff** ⭐: All-in-one linter (replaces flake8, black, isort)
-- **mypy**: Static type checker
-- **bandit**: Security linter
-
-### 2.2 Dependency Security Scanning
-
-> **ALWAYS include**:
-> - Dependabot configuration (`.github/dependabot.yml`)
-> - `pip-audit` or `safety` for vulnerability scanning
-> - Fail on known vulnerabilities
-
-**Dependabot Config**:
-```yaml
-version: 2
-updates:
-  - package-ecosystem: "pip"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-```
-
-**Security Commands**:
-```bash
-pip-audit
-# Or: safety check --full-report
-```
+Dependabot (`.github/dependabot.yml`: weekly pip updates), `pip-audit` or `safety` for vulnerability scanning, fail on known CVEs.
 
 ### 2.3 Static Analysis (SAST)
 
-> **ALWAYS**:
-> - Add CodeQL analysis (`.github/workflows/codeql.yml`)
-> - Configure language: python
-> - Run on schedule (weekly) + push to main
-
-> **Optional but recommended**: SonarCloud, Snyk
-
-**Verify**: Linting passes, type checking succeeds, Dependabot creates PRs, CodeQL scan completes, security issues reported
+CodeQL analysis (`.github/workflows/codeql.yml`), run weekly + on push to main. Optional: SonarCloud, Snyk.
 
 ---
 
