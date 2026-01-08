@@ -229,3 +229,69 @@ Before completing this process, verify:
 
 **Process Complete** ✅
 
+
+## Usage - Copy This Complete Prompt
+
+> **Type**: One-time setup process (multi-phase)  
+> **When to use**: When implementing authentication system with JWT and OAuth
+
+### Complete Implementation Prompt
+
+```
+CONTEXT:
+You are implementing authentication system with JWT and OAuth for this project.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS use strong JWT secret (min 256 bits, from environment variable)
+- ALWAYS set appropriate token expiration (15-60 minutes for access, days for refresh)
+- ALWAYS validate tokens on protected endpoints
+- ALWAYS hash passwords with bcrypt/Argon2
+- NEVER store passwords in plain text
+- NEVER commit secrets to version control
+- Use team's Git workflow
+
+IMPLEMENTATION PHASES:
+
+PHASE 1 - JWT AUTHENTICATION:
+1. Install JWT library
+2. Configure JWT secret (from environment variable)
+3. Implement token generation (login endpoint)
+4. Implement token validation middleware
+5. Set up token expiration and refresh mechanism
+
+Deliverable: JWT authentication working
+
+PHASE 2 - USER MANAGEMENT:
+1. Create User model/entity
+2. Implement password hashing
+3. Create registration endpoint
+4. Create login endpoint
+5. Implement password reset flow
+
+Deliverable: User management complete
+
+PHASE 3 - OAUTH INTEGRATION (Optional):
+1. Choose OAuth providers (Google, GitHub, etc.)
+2. Register application with providers
+3. Implement OAuth callback handling
+4. Link OAuth accounts with local users
+
+Deliverable: OAuth authentication working
+
+PHASE 4 - ROLE-BASED ACCESS CONTROL:
+1. Define user roles
+2. Implement role checking middleware
+3. Protect endpoints by role
+4. Add role management endpoints
+
+Deliverable: RBAC implemented
+
+SECURITY BEST PRACTICES:
+- Use HTTPS only in production
+- Implement rate limiting
+- Add account lockout after failed attempts
+- Log authentication events
+- Use secure cookie flags (httpOnly, secure, sameSite)
+
+START: Execute Phase 1. Install JWT library and configure token generation.
+```

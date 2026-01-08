@@ -262,3 +262,56 @@ jobs:
 | PHPStan | Free | Static analysis | ✅ | Type safety |
 | Snyk | Free/Paid | Deps + Code | ✅ | Comprehensive |
 
+
+## Usage - Copy This Complete Prompt
+
+> **Type**: One-time setup process (simple)  
+> **When to use**: When setting up security vulnerability scanning
+
+### Complete Implementation Prompt
+
+```
+CONTEXT:
+You are configuring security vulnerability scanning for this project.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS scan dependencies for known vulnerabilities
+- ALWAYS integrate with CI/CD pipeline
+- ALWAYS configure to fail on high/critical vulnerabilities
+- ALWAYS keep scanning tools updated
+
+IMPLEMENTATION STEPS:
+
+1. CHOOSE SCANNING TOOLS:
+   Select tools for the language (see Tech Stack section):
+   - Dependency scanning (npm audit, safety, etc.)
+   - SAST (CodeQL, Snyk, SonarQube)
+   - Container scanning (Trivy, Grype)
+
+2. CONFIGURE DEPENDENCY SCANNING:
+   Enable dependency vulnerability scanning
+   Set severity thresholds
+   Configure auto-fix for known vulnerabilities
+
+3. CONFIGURE SAST:
+   Set up static application security testing
+   Configure scan rules
+   Integrate with CI/CD
+
+4. CONFIGURE CONTAINER SCANNING:
+   Scan Docker images for vulnerabilities
+   Fail builds on critical issues
+
+5. SET UP MONITORING:
+   Configure security alerts
+   Set up regular scanning schedule
+   Create remediation workflow
+
+DELIVERABLE:
+- Dependency scanning active
+- SAST integrated
+- Container scanning configured
+- Security alerts enabled
+
+START: Choose scanning tools and configure dependency scanning.
+```

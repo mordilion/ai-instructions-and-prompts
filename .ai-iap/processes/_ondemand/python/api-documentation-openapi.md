@@ -266,3 +266,62 @@ user = api.get_user('123')
 
 **Process Complete** ✅
 
+
+## Usage - Copy This Complete Prompt
+
+> **Type**: One-time setup process (simple)  
+> **When to use**: When setting up OpenAPI/Swagger API documentation
+
+### Complete Implementation Prompt
+
+```
+CONTEXT:
+You are setting up auto-generated OpenAPI/Swagger API documentation for this project.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS use OpenAPI 3.x specification
+- ALWAYS document all endpoints with descriptions
+- ALWAYS include request/response schemas
+- ALWAYS document authentication requirements
+- Use team's Git workflow
+
+IMPLEMENTATION STEPS:
+
+1. INSTALL TOOLS:
+   Install OpenAPI/Swagger library for the language (see Tech Stack section)
+
+2. CONFIGURE BASIC SETUP:
+   Set up Swagger/OpenAPI generator
+   Configure API metadata (title, version, description)
+   Set up UI endpoint (e.g., /api-docs, /swagger)
+
+3. DOCUMENT AUTHENTICATION:
+   Configure security schemes (JWT, OAuth, API Key)
+   Document authentication flows
+
+4. ADD ENDPOINT DOCUMENTATION:
+   Document each endpoint:
+   - HTTP method and path
+   - Parameters (query, path, header)
+   - Request body schema
+   - Response schemas (success/error)
+   - Example requests/responses
+
+5. CONFIGURE AUTO-GENERATION:
+   Use framework decorators/annotations
+   Enable auto-discovery of endpoints
+   Generate schemas from models/DTOs
+
+6. ADD TO CI/CD (Optional):
+   Generate OpenAPI spec file in CI
+   Validate API spec
+   Deploy documentation to hosting
+
+DELIVERABLE:
+- Swagger UI accessible
+- All endpoints documented
+- Request/response schemas complete
+- Authentication documented
+
+START: Install OpenAPI tools and configure basic setup with API metadata.
+```

@@ -281,3 +281,50 @@ git push origin main --tags
 ---
 
 **Process Complete** ✅
+
+## Usage - Copy This Complete Prompt
+
+> **Type**: One-time setup process (multi-phase)  
+> **When to use**: When setting up logging and monitoring infrastructure
+
+### Complete Implementation Prompt
+
+```
+CONTEXT:
+You are implementing logging and observability infrastructure for this project.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS use structured logging (JSON format)
+- ALWAYS include correlation IDs for request tracing
+- ALWAYS configure log levels per environment
+- NEVER log sensitive data (PII, passwords, tokens)
+- Use team's Git workflow
+
+IMPLEMENTATION PHASES:
+
+PHASE 1 - STRUCTURED LOGGING:
+1. Choose logging library for the language
+2. Configure structured logging (JSON output)
+3. Set up log levels (DEBUG, INFO, WARN, ERROR)
+4. Add correlation ID middleware/decorator
+
+Deliverable: Structured logging configured
+
+PHASE 2 - LOG AGGREGATION:
+1. Configure log shipping (Filebeat, Fluentd, etc.)
+2. Set up centralized logging (ELK, Loki, CloudWatch)
+3. Create log retention policies
+4. Set up log search and filtering
+
+Deliverable: Centralized log aggregation
+
+PHASE 3 - MONITORING & ALERTS:
+1. Define key metrics to track
+2. Set up health check endpoints
+3. Configure alerting rules
+4. Set up dashboards
+
+Deliverable: Monitoring and alerting active
+
+START: Choose logging library, configure structured logging.
+```

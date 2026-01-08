@@ -226,3 +226,78 @@ git push --tags
 ---
 
 **Process Complete** ✅
+
+## Usage - Copy This Complete Prompt
+
+> **Type**: One-time setup process (multi-phase)  
+> **When to use**: When setting up CI/CD pipeline with GitHub Actions
+
+### Complete Implementation Prompt
+
+```
+CONTEXT:
+You are implementing CI/CD pipeline with GitHub Actions for this project.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS detect language version from project files
+- ALWAYS match detected version in GitHub Actions workflow
+- ALWAYS use caching for dependencies
+- NEVER hardcode secrets in workflow files (use GitHub Secrets)
+- Use team's Git workflow (adapt to existing branching strategy)
+
+PLATFORM NOTE:
+This guide uses GitHub Actions. For other platforms (GitLab CI, Azure DevOps, CircleCI, Jenkins), adapt the workflow syntax while keeping the same phases and objectives.
+
+---
+
+PHASE 1 - BASIC CI PIPELINE:
+Objective: Set up basic build and test workflow
+
+1. Create .github/workflows/ci.yml
+2. Detect and configure language version
+3. Set up dependency caching
+4. Add build and test steps with coverage
+5. Configure triggers (push/pull request)
+
+Deliverable: Basic CI pipeline running on every push
+
+---
+
+PHASE 2 - CODE QUALITY & SECURITY:
+Objective: Add linting and security scanning
+
+1. Add linting step
+2. Add dependency security scanning
+3. Add SAST scanning (CodeQL, Snyk, etc.)
+4. Configure to fail on critical issues
+
+Deliverable: Automated code quality and security checks
+
+---
+
+PHASE 3 - DEPLOYMENT PIPELINE (Optional):
+Objective: Add deployment automation
+
+1. Configure deployment environments
+2. Add deployment steps with approval gates
+3. Configure secrets
+4. Add deployment verification
+
+Deliverable: Automated deployment on successful builds
+
+---
+
+PHASE 4 - ADVANCED FEATURES (Optional):
+Objective: Add advanced CI/CD capabilities
+
+1. Matrix testing (multiple versions/platforms)
+2. Performance testing
+3. Release automation
+4. Notifications
+
+Deliverable: Production-grade CI/CD pipeline
+
+---
+
+START: Execute Phase 1. Detect language version, create basic CI workflow.
+```

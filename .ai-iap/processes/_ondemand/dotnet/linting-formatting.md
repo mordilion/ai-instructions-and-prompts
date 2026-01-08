@@ -246,3 +246,53 @@ jobs:
 | EditorConfig | Config | N/A | ⭐⭐⭐ | Cross-IDE |
 | ReSharper | Both | Medium | ⭐⭐⭐ | Commercial |
 
+
+## Usage - Copy This Complete Prompt
+
+> **Type**: One-time setup process (simple)  
+> **When to use**: When setting up code linting and formatting tools
+
+### Complete Implementation Prompt
+
+```
+CONTEXT:
+You are configuring code linting and formatting for this project.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS configure both linting (quality) and formatting (style)
+- ALWAYS integrate with pre-commit hooks
+- ALWAYS add to CI/CD pipeline
+- ALWAYS use consistent configuration across team
+
+IMPLEMENTATION STEPS:
+
+1. CHOOSE TOOLS:
+   Select appropriate linter and formatter for the language (see Tech Stack section)
+
+2. CONFIGURE LINTER:
+   Create configuration file (.eslintrc, ruff.toml, etc.)
+   Set rules (recommended: start with recommended preset)
+
+3. CONFIGURE FORMATTER:
+   Create configuration file (if separate from linter)
+   Set style rules (indentation, line length, etc.)
+
+4. INTEGRATE WITH EDITOR:
+   Configure IDE/editor plugins
+   Enable format-on-save
+
+5. ADD PRE-COMMIT HOOKS:
+   Install pre-commit hooks (husky, pre-commit, etc.)
+   Configure to run linter and formatter
+
+6. ADD TO CI/CD:
+   Add linting step to pipeline
+   Fail build on linting errors
+
+DELIVERABLE:
+- Linter and formatter configured
+- Pre-commit hooks active
+- CI/CD integration complete
+
+START: Choose tools and create configuration files.
+```

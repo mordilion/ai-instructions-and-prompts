@@ -163,3 +163,48 @@ koverReport {
 | IntelliJ | Fast | Built-in | ⚠️ | IDE only |
 | Codecov | N/A | Easy | ✅ | Reporting |
 
+
+## Usage - Copy This Complete Prompt
+
+> **Type**: One-time setup process (simple)  
+> **When to use**: When configuring code coverage tracking and reporting
+
+### Complete Implementation Prompt
+
+```
+CONTEXT:
+You are configuring code coverage tracking for this project.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS detect language version from project files
+- ALWAYS configure coverage thresholds (recommended: 80% line, 75% branch)
+- ALWAYS integrate with CI/CD pipeline
+- NEVER lower coverage thresholds without justification
+
+IMPLEMENTATION STEPS:
+
+1. DETECT VERSION:
+   Scan project files for language/framework version
+
+2. CHOOSE COVERAGE TOOL:
+   Select appropriate tool for the language (see Tech Stack section above)
+
+3. CONFIGURE TOOL:
+   Add coverage configuration to project
+   Set thresholds (line, branch, function)
+
+4. INTEGRATE WITH CI/CD:
+   Add coverage step to pipeline
+   Configure to fail build if below thresholds
+
+5. CONFIGURE REPORTING:
+   Generate coverage reports (HTML, XML, lcov)
+   Optional: Upload to coverage service (Codecov, Coveralls)
+
+DELIVERABLE:
+- Coverage tool configured
+- Thresholds enforced in CI/CD
+- Coverage reports generated
+
+START: Detect language version and configure coverage tool.
+```
