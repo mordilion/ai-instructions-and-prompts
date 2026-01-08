@@ -247,15 +247,123 @@ class UserControllerIntegrationTest {
 - **PROJECT_MEMORY.md**: Detected Java version + Spring detection + lessons learned
 - **LOGIC_ANOMALIES.md**: Found bugs (audit only, don't fix)
 
-## Usage
+## Usage - Copy This Complete Prompt
 
-**Start**:
-```
-Implement Java testing. Detect Java version, analyze structure, execute Phase 1.
-```
+> **Type**: One-time setup process (iterative, multi-phase)  
+> **When to use**: When establishing testing infrastructure in a Java project
 
-**Continue**:
+### Complete Implementation Prompt
+
 ```
-Continue testing implementation. Check STATUS-DETAILS.md for next phase/component.
+CONTEXT:
+You are implementing comprehensive Java testing infrastructure for this project.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS detect Java version from pom.xml or build.gradle
+- ALWAYS detect Spring Boot usage (affects test setup)
+- ALWAYS match detected version in Docker images, pipelines, and test projects
+- NEVER fix production code bugs found during testing (log in LOGIC_ANOMALIES.md only)
+- Use team's Git workflow (no prescribed branch names or commit patterns)
+
+TECH STACK TO CHOOSE:
+Test Framework (choose one):
+- JUnit 5 ⭐ (recommended) - Modern, widely adopted
+- TestNG - Advanced features, parallel execution
+- Spock - Groovy-based, BDD style
+
+Assertions (choose one):
+- AssertJ ⭐ (recommended) - Fluent, readable
+- Hamcrest - Matcher-based
+- Built-in (JUnit assertions)
+
+Mocking (choose one):
+- Mockito ⭐ (recommended) - Most popular, simple
+- MockK - Kotlin-friendly (if using Kotlin)
+- EasyMock - Older, still used
+
+For Spring Boot projects:
+- Use @SpringBootTest for integration tests
+- Use @WebMvcTest for controller tests
+- Use @DataJpaTest for repository tests
+
+---
+
+PHASE 1 - ANALYSIS:
+Objective: Understand project structure and choose test framework
+
+1. Detect Java version from pom.xml or build.gradle
+2. Detect if Spring Boot project (check for spring-boot-starter dependencies)
+3. Document in process-docs/PROJECT_MEMORY.md
+4. Identify existing test framework or choose based on team preference
+5. Analyze current test infrastructure (if any)
+6. Report findings and proposed framework choices
+
+Deliverable: Testing strategy documented, framework chosen
+
+---
+
+PHASE 2 - INFRASTRUCTURE (Optional - skip if using cloud CI/CD):
+Objective: Set up test infrastructure
+
+1. Create Dockerfile.tests with detected Java version
+2. Create docker-compose.tests.yml for test execution
+3. Add/update CI/CD pipeline test step (merge with existing, don't overwrite)
+4. Configure test reporting (JaCoCo for coverage)
+
+Deliverable: Tests can run in CI/CD environment
+
+Infrastructure Templates:
+- Dockerfile: FROM eclipse-temurin:{VERSION}-jdk
+- Maven: Use maven-surefire-plugin for tests
+- Gradle: Use test task with JaCoCo plugin
+
+---
+
+PHASE 3 - TEST PROJECTS:
+Objective: Create test project structure
+
+1. Create test source directories:
+   - src/test/java (unit tests)
+   - src/integration-test/java (integration tests - optional separate)
+
+2. Implement shared test utilities:
+   - TestDataBuilder for test data generation
+   - BaseIntegrationTest for Spring Boot tests
+   - Common test fixtures and helpers
+
+3. Configure test dependencies in pom.xml or build.gradle
+
+Deliverable: Test project structure in place with shared utilities
+
+---
+
+PHASE 4 - TEST IMPLEMENTATION (Iterative):
+Objective: Write tests for all components
+
+For each component:
+1. Identify component to test (from STATUS-DETAILS.md)
+2. Understand component intent and behavior
+3. Write unit tests (fast, isolated, mocked dependencies)
+4. Write integration tests if applicable (full-stack, real dependencies)
+5. For Spring Boot: Use appropriate test slices (@WebMvcTest, @DataJpaTest, etc.)
+6. Run tests locally - must pass
+7. If bugs found: Log to LOGIC_ANOMALIES.md (DON'T fix production code)
+8. Update STATUS-DETAILS.md with completion status
+9. Propose commit using team's commit format
+10. Wait for user confirmation
+11. Repeat for next component
+
+Deliverable: Comprehensive test coverage for all components
+
+---
+
+DOCUMENTATION (create in process-docs/):
+- STATUS-DETAILS.md: Component test checklist (track progress)
+- PROJECT_MEMORY.md: Detected Java version, Spring Boot status, chosen frameworks, lessons learned
+- LOGIC_ANOMALIES.md: Bugs found during testing (audit only, don't fix)
+
+---
+
+START: Execute Phase 1. Analyze project, detect Java version and Spring Boot usage, propose test framework choices.
 ```
 

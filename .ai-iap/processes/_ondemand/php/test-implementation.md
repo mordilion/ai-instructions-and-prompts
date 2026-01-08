@@ -374,15 +374,103 @@ class UserControllerTest extends WebTestCase
 - **PROJECT_MEMORY.md**: Detected PHP version + framework + lessons learned
 - **LOGIC_ANOMALIES.md**: Found bugs (audit only, don't fix)
 
-## Usage
+## Usage - Copy This Complete Prompt
 
-**Start**:
-```
-Implement PHP testing. Detect PHP version, analyze structure, execute Phase 1.
-```
+> **Type**: One-time setup process (iterative, multi-phase)  
+> **When to use**: When establishing testing infrastructure in a PHP project
 
-**Continue**:
+### Complete Implementation Prompt
+
 ```
-Continue testing implementation. Check STATUS-DETAILS.md for next phase/component.
+CONTEXT:
+You are implementing comprehensive PHP testing infrastructure for this project.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS detect PHP version from composer.json
+- ALWAYS detect framework (Laravel, Symfony, plain PHP)
+- ALWAYS match detected version in Docker images, pipelines, and environments
+- NEVER fix production code bugs found during testing (log in LOGIC_ANOMALIES.md only)
+- Use team's Git workflow (no prescribed branch names or commit patterns)
+
+TECH STACK TO CHOOSE:
+Test Framework (choose one):
+- PHPUnit ⭐ (recommended) - Industry standard
+- Codeception - Full-stack testing
+- Pest - Laravel-friendly, elegant syntax
+- PHPSpec - BDD-style specification testing
+
+Mocking (choose one):
+- PHPUnit mocks ⭐ (built-in)
+- Mockery - More expressive mocking
+- Prophecy - Highly opinionated mocking
+
+---
+
+PHASE 1 - ANALYSIS:
+Objective: Understand project structure and choose test framework
+
+1. Detect PHP version from composer.json
+2. Detect framework (Laravel, Symfony, or none)
+3. Document in process-docs/PROJECT_MEMORY.md
+4. Identify existing test framework or choose based on project
+5. Analyze current test infrastructure (if any)
+6. Report findings and proposed framework choices
+
+Deliverable: Testing strategy documented, framework chosen
+
+---
+
+PHASE 2 - INFRASTRUCTURE (Optional - skip if using cloud CI/CD):
+Objective: Set up test infrastructure
+
+1. Create Dockerfile.tests with detected PHP version
+2. Create docker-compose.tests.yml
+3. Add/update CI/CD pipeline test step
+4. Configure phpunit.xml or pest.php
+5. Configure code coverage (PHPUnit --coverage)
+
+Deliverable: Tests can run in CI/CD environment
+
+---
+
+PHASE 3 - TEST PROJECTS:
+Objective: Create test project structure
+
+1. Create tests/ directory structure
+2. For Laravel: Use artisan make:test commands
+3. Implement shared test utilities and traits
+4. Set up test database configuration
+5. Create factories and seeders for test data
+
+Deliverable: Test project structure in place
+
+---
+
+PHASE 4 - TEST IMPLEMENTATION (Iterative):
+Objective: Write tests for all components
+
+For each component:
+1. Identify component to test
+2. Write unit tests (isolated, fast)
+3. Write feature/integration tests if applicable
+4. For Laravel: Use database transactions for cleanup
+5. Run tests - must pass
+6. If bugs found: Log to LOGIC_ANOMALIES.md (DON'T fix code)
+7. Update STATUS-DETAILS.md
+8. Propose commit
+9. Repeat for next component
+
+Deliverable: Comprehensive test coverage
+
+---
+
+DOCUMENTATION (create in process-docs/):
+- STATUS-DETAILS.md: Component test checklist
+- PROJECT_MEMORY.md: Detected PHP version, framework, chosen test framework, lessons learned
+- LOGIC_ANOMALIES.md: Bugs found (audit only)
+
+---
+
+START: Execute Phase 1. Analyze project, detect PHP version and framework, propose test framework choices.
 ```
 

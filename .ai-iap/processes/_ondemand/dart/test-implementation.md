@@ -110,8 +110,94 @@
 - **PROJECT_MEMORY.md**: Detected Dart/Flutter version + state management + lessons learned
 - **LOGIC_ANOMALIES.md**: Found bugs (audit only, don't fix)
 
-## Usage
+## Usage - Copy This Complete Prompt
 
-**Initial**: Detect Dart/Flutter version, analyze project structure, create testing strategy  
-**Continue**: Implement phases iteratively, write tests for each component
+> **Type**: One-time setup process (iterative, multi-phase)  
+> **When to use**: When establishing testing infrastructure in a Dart/Flutter project
+
+### Complete Implementation Prompt
+
+```
+CONTEXT:
+You are implementing comprehensive Dart/Flutter testing infrastructure for this project.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS detect Dart/Flutter version from pubspec.yaml
+- ALWAYS match detected version in Docker images and CI/CD pipelines
+- NEVER fix production code bugs found during testing (log in LOGIC_ANOMALIES.md only)
+- Use team's Git workflow (no prescribed branch names or commit patterns)
+
+TECH STACK:
+Test Framework:
+- flutter_test ⭐ (Flutter projects) - Official Flutter testing
+- test package (Dart packages) - Official Dart testing
+
+Mocking (choose one):
+- mockito ⭐ (recommended) - Code generation based
+- mocktail - No code generation needed
+
+---
+
+PHASE 1 - ANALYSIS:
+Objective: Understand project structure
+
+1. Detect Dart/Flutter version from pubspec.yaml
+2. Identify project type (Flutter app or Dart package)
+3. Document in process-docs/PROJECT_MEMORY.md
+4. Analyze current test infrastructure (if any)
+5. Report findings
+
+Deliverable: Testing strategy documented
+
+---
+
+PHASE 2 - INFRASTRUCTURE (Optional):
+Objective: Set up test infrastructure
+
+1. Create Dockerfile.tests with Flutter/Dart version
+2. Configure CI/CD pipeline (use cirrusci/flutter Docker image)
+3. Set up flutter test or dart test commands
+
+Deliverable: Tests can run in CI/CD environment
+
+---
+
+PHASE 3 - TEST PROJECTS:
+Objective: Create test project structure
+
+1. Create test/ directory
+2. Implement shared test utilities
+3. Set up mockito code generation (if using)
+4. Create test fixtures
+
+Deliverable: Test project structure in place
+
+---
+
+PHASE 4 - TEST IMPLEMENTATION (Iterative):
+Objective: Write tests for all components
+
+For each component:
+1. Identify component to test
+2. Write unit tests
+3. Write widget tests if applicable (Flutter)
+4. Run flutter test or dart test - must pass
+5. If bugs found: Log to LOGIC_ANOMALIES.md (DON'T fix code)
+6. Update STATUS-DETAILS.md
+7. Propose commit
+8. Repeat for next component
+
+Deliverable: Comprehensive test coverage
+
+---
+
+DOCUMENTATION (create in process-docs/):
+- STATUS-DETAILS.md: Component test checklist
+- PROJECT_MEMORY.md: Detected versions, project type, lessons learned
+- LOGIC_ANOMALIES.md: Bugs found (audit only)
+
+---
+
+START: Execute Phase 1. Analyze project, detect Dart/Flutter version.
+```
 

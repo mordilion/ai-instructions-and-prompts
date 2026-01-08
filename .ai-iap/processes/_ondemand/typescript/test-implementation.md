@@ -236,15 +236,103 @@ describe('API Endpoints', () => {
 - **PROJECT_MEMORY.md**: Detected Node.js version + test framework choice + lessons learned
 - **LOGIC_ANOMALIES.md**: Found bugs (audit only, don't fix)
 
-## Usage
+## Usage - Copy This Complete Prompt
 
-**Start**:
-```
-Implement TypeScript testing. Detect Node version, analyze structure, execute Phase 1.
-```
+> **Type**: One-time setup process (iterative, multi-phase)  
+> **When to use**: When establishing testing infrastructure in a TypeScript/Node.js project
 
-**Continue**:
+### Complete Implementation Prompt
+
 ```
-Continue testing implementation. Check STATUS-DETAILS.md for next phase/component.
+CONTEXT:
+You are implementing comprehensive TypeScript testing infrastructure for this project.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS detect Node.js version from package.json engines or .nvmrc
+- ALWAYS match detected version in Docker images, pipelines, and CI/CD
+- NEVER fix production code bugs found during testing (log in LOGIC_ANOMALIES.md only)
+- Use team's Git workflow (no prescribed branch names or commit patterns)
+
+TECH STACK TO CHOOSE:
+Test Framework (choose one):
+- Jest ⭐ (recommended) - Most popular, zero-config for TS
+- Vitest - Fast, Vite-native
+- Mocha + Chai - Traditional, flexible
+
+Assertions:
+- Jest matchers ⭐ (recommended) - Built-in, comprehensive
+- Chai - BDD/TDD style
+- Vitest expect - Similar to Jest
+
+Mocking:
+- Jest mocks ⭐ (recommended) - Built-in, powerful
+- Sinon - Standalone mocking library
+- ts-mockito - TypeScript-first mocking
+
+---
+
+PHASE 1 - ANALYSIS:
+Objective: Understand project structure and choose test framework
+
+1. Detect Node.js version from package.json engines or .nvmrc
+2. Document in process-docs/PROJECT_MEMORY.md
+3. Identify existing test framework or choose based on project setup
+4. Analyze current test infrastructure (if any)
+5. Report findings and proposed framework choices
+
+Deliverable: Testing strategy documented, framework chosen
+
+---
+
+PHASE 2 - INFRASTRUCTURE (Optional - skip if using cloud CI/CD):
+Objective: Set up test infrastructure
+
+1. Create Dockerfile.tests with detected Node.js version
+2. Create docker-compose.tests.yml
+3. Add/update CI/CD pipeline test step
+4. Configure jest.config.ts or vitest.config.ts
+5. Configure coverage (built-in with Jest/Vitest)
+
+Deliverable: Tests can run in CI/CD environment
+
+---
+
+PHASE 3 - TEST PROJECTS:
+Objective: Create test project structure
+
+1. Create test directories (e.g., src/__tests__/ or tests/)
+2. Implement shared test utilities
+3. Configure TypeScript for tests (tsconfig.test.json)
+4. Set up test helpers and mocks
+
+Deliverable: Test project structure in place
+
+---
+
+PHASE 4 - TEST IMPLEMENTATION (Iterative):
+Objective: Write tests for all components
+
+For each component:
+1. Identify component to test
+2. Write unit tests (isolated, mocked dependencies)
+3. Write integration tests if applicable
+4. Run tests - must pass
+5. If bugs found: Log to LOGIC_ANOMALIES.md (DON'T fix code)
+6. Update STATUS-DETAILS.md
+7. Propose commit
+8. Repeat for next component
+
+Deliverable: Comprehensive test coverage
+
+---
+
+DOCUMENTATION (create in process-docs/):
+- STATUS-DETAILS.md: Component test checklist
+- PROJECT_MEMORY.md: Detected Node version, chosen frameworks, lessons learned
+- LOGIC_ANOMALIES.md: Bugs found (audit only)
+
+---
+
+START: Execute Phase 1. Analyze project, detect Node.js version, propose test framework choices.
 ```
 

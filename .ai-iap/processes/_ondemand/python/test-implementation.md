@@ -275,15 +275,102 @@ class TestAsyncService:
 - **PROJECT_MEMORY.md**: Detected Python version + framework + lessons learned
 - **LOGIC_ANOMALIES.md**: Found bugs (audit only, don't fix)
 
-## Usage
+## Usage - Copy This Complete Prompt
 
-**Start**:
-```
-Implement Python testing. Detect Python version, analyze structure, execute Phase 1.
-```
+> **Type**: One-time setup process (iterative, multi-phase)  
+> **When to use**: When establishing testing infrastructure in a Python project
 
-**Continue**:
+### Complete Implementation Prompt
+
 ```
-Continue testing implementation. Check STATUS-DETAILS.md for next phase/component.
+CONTEXT:
+You are implementing comprehensive Python testing infrastructure for this project.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS detect Python version from pyproject.toml, setup.py, or .python-version
+- ALWAYS match detected version in Docker images, pipelines, and virtual environments
+- NEVER fix production code bugs found during testing (log in LOGIC_ANOMALIES.md only)
+- Use team's Git workflow (no prescribed branch names or commit patterns)
+
+TECH STACK TO CHOOSE:
+Test Framework (choose one):
+- pytest ⭐ (recommended) - Most popular, rich plugin ecosystem
+- unittest - Python standard library
+- nose2 - Extension of unittest
+
+Assertions:
+- pytest assertions ⭐ (recommended) - Rich assertion introspection
+- unittest.TestCase assertions - Standard library
+
+Mocking (choose one):
+- pytest-mock ⭐ (recommended) - pytest wrapper for unittest.mock
+- unittest.mock - Standard library
+- responses - HTTP mocking
+
+---
+
+PHASE 1 - ANALYSIS:
+Objective: Understand project structure and choose test framework
+
+1. Detect Python version from pyproject.toml, setup.py, or .python-version
+2. Document in process-docs/PROJECT_MEMORY.md
+3. Identify existing test framework or choose pytest (recommended)
+4. Analyze current test infrastructure (if any)
+5. Report findings
+
+Deliverable: Testing strategy documented, framework chosen
+
+---
+
+PHASE 2 - INFRASTRUCTURE (Optional - skip if using cloud CI/CD):
+Objective: Set up test infrastructure
+
+1. Create Dockerfile.tests with detected Python version
+2. Create docker-compose.tests.yml
+3. Add/update CI/CD pipeline test step
+4. Configure pytest.ini or pyproject.toml
+5. Configure coverage.py for coverage reporting
+
+Deliverable: Tests can run in CI/CD environment
+
+---
+
+PHASE 3 - TEST PROJECTS:
+Objective: Create test project structure
+
+1. Create tests/ directory with __init__.py
+2. Create conftest.py for shared fixtures
+3. Implement shared test utilities
+4. Configure pytest plugins (pytest-cov, pytest-mock, etc.)
+
+Deliverable: Test project structure in place
+
+---
+
+PHASE 4 - TEST IMPLEMENTATION (Iterative):
+Objective: Write tests for all components
+
+For each component:
+1. Identify component to test
+2. Write unit tests using pytest fixtures
+3. Write integration tests if applicable
+4. Run pytest - must pass
+5. If bugs found: Log to LOGIC_ANOMALIES.md (DON'T fix code)
+6. Update STATUS-DETAILS.md
+7. Propose commit
+8. Repeat for next component
+
+Deliverable: Comprehensive test coverage
+
+---
+
+DOCUMENTATION (create in process-docs/):
+- STATUS-DETAILS.md: Component test checklist
+- PROJECT_MEMORY.md: Detected Python version, chosen frameworks, lessons learned
+- LOGIC_ANOMALIES.md: Bugs found (audit only)
+
+---
+
+START: Execute Phase 1. Analyze project, detect Python version, propose test framework choices.
 ```
 

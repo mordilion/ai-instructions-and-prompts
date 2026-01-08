@@ -357,15 +357,104 @@ final class UserRoutesTests: XCTestCase {
 - **PROJECT_MEMORY.md**: Detected Swift version + project type + lessons learned
 - **LOGIC_ANOMALIES.md**: Found bugs (audit only, don't fix)
 
-## Usage
+## Usage - Copy This Complete Prompt
 
-**Start**:
-```
-Implement Swift testing. Detect Swift version, analyze project type, execute Phase 1.
-```
+> **Type**: One-time setup process (iterative, multi-phase)  
+> **When to use**: When establishing testing infrastructure in a Swift project
 
-**Continue**:
+### Complete Implementation Prompt
+
 ```
-Continue testing implementation. Check STATUS-DETAILS.md for next phase/component.
+CONTEXT:
+You are implementing comprehensive Swift testing infrastructure for this project.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS detect Swift version from Package.swift or Xcode project
+- ALWAYS identify project type (iOS app, SPM library, UIKit, SwiftUI)
+- ALWAYS match detected version in CI/CD pipelines
+- NEVER fix production code bugs found during testing (log in LOGIC_ANOMALIES.md only)
+- Use team's Git workflow (no prescribed branch names or commit patterns)
+
+TECH STACK TO CHOOSE:
+Test Framework:
+- XCTest ⭐ (Apple's official framework) - Standard for all Swift projects
+- Quick/Nimble - BDD-style testing (optional addition)
+
+Project Types:
+- iOS App (UIKit) - Use XCUITest for UI testing
+- iOS App (SwiftUI) - Use SwiftUI testing APIs
+- SPM Library - Use swift test command
+- macOS/watchOS/tvOS - Platform-specific considerations
+
+---
+
+PHASE 1 - ANALYSIS:
+Objective: Understand project structure and type
+
+1. Detect Swift version from Package.swift or Xcode project settings
+2. Identify project type (iOS app, library, platform)
+3. Detect UI framework (UIKit, SwiftUI, or both)
+4. Document in process-docs/PROJECT_MEMORY.md
+5. Analyze current test infrastructure (if any)
+6. Report findings
+
+Deliverable: Testing strategy documented
+
+---
+
+PHASE 2 - INFRASTRUCTURE (Optional):
+Objective: Set up test infrastructure
+
+For iOS apps:
+1. Create UI test target in Xcode (XCUITest)
+2. Configure test schemes
+3. Set up CI/CD with xcodebuild or Fastlane
+
+For SPM libraries:
+1. Configure Package.swift with test targets
+2. Use swift test for execution
+3. Set up CI/CD with Swift Docker images
+
+Deliverable: Tests can run in CI/CD environment
+
+---
+
+PHASE 3 - TEST PROJECTS:
+Objective: Create test project structure
+
+1. Create test targets/directories
+2. Implement shared test utilities
+3. Create mock objects and test doubles
+4. Set up test fixtures
+
+Deliverable: Test project structure in place
+
+---
+
+PHASE 4 - TEST IMPLEMENTATION (Iterative):
+Objective: Write tests for all components
+
+For each component:
+1. Identify component to test
+2. Write unit tests (XCTestCase subclasses)
+3. Write UI tests if applicable (XCUITest)
+4. Run tests - must pass
+5. If bugs found: Log to LOGIC_ANOMALIES.md (DON'T fix code)
+6. Update STATUS-DETAILS.md
+7. Propose commit
+8. Repeat for next component
+
+Deliverable: Comprehensive test coverage
+
+---
+
+DOCUMENTATION (create in process-docs/):
+- STATUS-DETAILS.md: Component test checklist
+- PROJECT_MEMORY.md: Detected Swift version, project type, UI framework, lessons learned
+- LOGIC_ANOMALIES.md: Bugs found (audit only)
+
+---
+
+START: Execute Phase 1. Analyze project, detect Swift version and project type.
 ```
 
