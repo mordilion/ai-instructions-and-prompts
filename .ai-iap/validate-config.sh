@@ -100,6 +100,24 @@ for tool_key in $(jq -r '.tools | keys[]' .ai-iap/config.json); do
             write_warning "Tool 'cursor': Should have 'supportsSubfolders: true'"
         fi
     fi
+    
+    # Claude Code-specific checks
+    if [[ "$tool_key" == "claude-code" ]]; then
+        skill_filename=$(jq -r ".tools[\"claude-code\"].skillFilename // \"null\"" .ai-iap/config.json)
+        if [[ "$skill_filename" == "null" ]]; then
+            write_warning "Tool 'claude-code': Missing 'skillFilename' property (should be 'SKILL.md')"
+        fi
+        
+        supports_subfolders=$(jq -r ".tools[\"claude-code\"].supportsSubfolders // false" .ai-iap/config.json)
+        if [[ "$supports_subfolders" != "true" ]]; then
+            write_warning "Tool 'claude-code': Should have 'supportsSubfolders: true'"
+        fi
+        
+        supports_globs=$(jq -r ".tools[\"claude-code\"].supportsGlobs // false" .ai-iap/config.json)
+        if [[ "$supports_globs" == "true" ]]; then
+            write_warning "Tool 'claude-code': Should have 'supportsGlobs: false' (uses directory-based skills)"
+        fi
+    fi
 done
 
 write_success "Validated $TOOL_COUNT tools"

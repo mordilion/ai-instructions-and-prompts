@@ -984,6 +984,194 @@ generate_cursor() {
     done
 }
 
+get_skill_description() {
+    local lang="$1"
+    local file="$2"
+    local framework="$3"
+    local structure="$4"
+    local process="$5"
+    
+    # Generate appropriate description based on what we're documenting
+    if [[ -n "$process" ]]; then
+        local proc_name
+        proc_name=$(get_process_name "$lang" "$process")
+        echo "$proc_name process for $lang projects. Use when ${proc_name,,}."
+    elif [[ -n "$structure" ]]; then
+        echo "Project structure guidelines for $framework with $structure architecture. Use when setting up or organizing $lang projects."
+    elif [[ -n "$framework" ]]; then
+        local fw_name
+        fw_name=$(get_framework_name "$lang" "$framework")
+        echo "$fw_name framework standards and best practices for $lang. Use when working with $fw_name."
+    else
+        # For general rules and documentation
+        local filename
+        filename=$(basename "$file")
+        case "$filename" in
+            code-style*) echo "Code style and formatting standards for $lang. Use when writing or reviewing code." ;;
+            security*) echo "Security best practices for $lang projects. Use when implementing authentication, handling data, or reviewing security." ;;
+            testing*) echo "Testing standards and practices for $lang. Use when writing or reviewing tests." ;;
+            documentation-api*) echo "API documentation standards using OpenAPI/Swagger. Use when documenting REST APIs or working with API specs." ;;
+            documentation-code*) echo "Code documentation and commenting standards. Use when writing docstrings, comments, or documentation." ;;
+            documentation-project*) echo "Project documentation standards (README, CHANGELOG, etc.). Use when creating or updating project documentation." ;;
+            *) echo "$lang development standards. Use when working with $lang code." ;;
+        esac
+    fi
+}
+
+generate_claude_code() {
+    local output_dir="$PROJECT_ROOT/.claude/skills"
+    
+    print_info "Generating Claude Code skills..."
+    
+    for lang in "${SELECTED_LANGUAGES[@]}"; do
+        # Generate base language files as skills
+        while IFS= read -r file; do
+            local content
+            content=$(read_instruction_file "$lang" "$file") || continue
+            
+            # Create skill folder (e.g., .claude/skills/general-code-style)
+            local skill_name
+            if [[ "$lang" == "general" ]]; then
+                skill_name="${file//\//-}"
+            else
+                skill_name="$lang-${file//\//-}"
+            fi
+            local skill_dir="$output_dir/$skill_name"
+            mkdir -p "$skill_dir"
+            
+            local output_file="$skill_dir/SKILL.md"
+            local description
+            description=$(get_skill_description "$lang" "$file" "" "" "")
+            
+            {
+                echo "---"
+                echo "name: $skill_name"
+                echo "description: $description"
+                echo "---"
+                echo ""
+                echo "$content"
+            } > "$output_file"
+            
+            local relative_path="${output_file#"$PROJECT_ROOT/"}"
+            print_success "Created $relative_path"
+        done < <(get_language_files "$lang")
+        
+        # Generate selected documentation files (only for general language)
+        if [[ "$lang" == "general" && ${#SELECTED_DOCUMENTATION[@]} -gt 0 ]]; then
+            for doc_file in "${SELECTED_DOCUMENTATION[@]}"; do
+                local content
+                content=$(read_instruction_file "$lang" "$doc_file") || continue
+                
+                local skill_name="${doc_file//\//-}"
+                local skill_dir="$output_dir/$skill_name"
+                mkdir -p "$skill_dir"
+                
+                local output_file="$skill_dir/SKILL.md"
+                local description
+                description=$(get_skill_description "$lang" "$doc_file" "" "" "")
+                
+                {
+                    echo "---"
+                    echo "name: $skill_name"
+                    echo "description: $description"
+                    echo "---"
+                    echo ""
+                    echo "$content"
+                } > "$output_file"
+                
+                local relative_path="${output_file#"$PROJECT_ROOT/"}"
+                print_success "Created $relative_path"
+            done
+        fi
+        
+        # Generate framework files as skills
+        if [[ -n "${SELECTED_FRAMEWORKS[$lang]:-}" ]]; then
+            for fw in ${SELECTED_FRAMEWORKS[$lang]}; do
+                local fw_file content
+                fw_file=$(get_framework_file "$lang" "$fw")
+                content=$(read_instruction_file "$lang" "$fw_file" "true") || continue
+                
+                local skill_name="$lang-framework-$fw"
+                local skill_dir="$output_dir/$skill_name"
+                mkdir -p "$skill_dir"
+                
+                local output_file="$skill_dir/SKILL.md"
+                local description
+                description=$(get_skill_description "$lang" "" "$fw" "" "")
+                
+                {
+                    echo "---"
+                    echo "name: $skill_name"
+                    echo "description: $description"
+                    echo "---"
+                    echo ""
+                    echo "$content"
+                } > "$output_file"
+                
+                local relative_path="${output_file#"$PROJECT_ROOT/"}"
+                print_success "Created $relative_path"
+                
+                # Generate structure file if selected
+                local struct_key="$lang-$fw"
+                if [[ -n "${SELECTED_STRUCTURES[$struct_key]:-}" ]]; then
+                    local struct_file="${SELECTED_STRUCTURES[$struct_key]}"
+                    local struct_content
+                    struct_content=$(read_instruction_file "$lang" "$struct_file" "false" "true") || continue
+                    
+                    local struct_skill_name="$lang-$fw-${struct_file//\//-}"
+                    local struct_skill_dir="$output_dir/$struct_skill_name"
+                    mkdir -p "$struct_skill_dir"
+                    
+                    local struct_output="$struct_skill_dir/SKILL.md"
+                    local struct_description
+                    struct_description=$(get_skill_description "$lang" "" "$fw" "$struct_file" "")
+                    
+                    {
+                        echo "---"
+                        echo "name: $struct_skill_name"
+                        echo "description: $struct_description"
+                        echo "---"
+                        echo ""
+                        echo "$struct_content"
+                    } > "$struct_output"
+                    
+                    local relative_path="${struct_output#"$PROJECT_ROOT/"}"
+                    print_success "Created $relative_path"
+                fi
+            done
+        fi
+        
+        # Generate process files as skills
+        if [[ -n "${SELECTED_PROCESSES[$lang]:-}" ]]; then
+            for proc in ${SELECTED_PROCESSES[$lang]}; do
+                local proc_file content
+                proc_file=$(get_process_file "$lang" "$proc")
+                content=$(read_instruction_file "$lang" "$proc_file" "false" "false" "true") || continue
+                
+                local skill_name="$lang-process-$proc"
+                local skill_dir="$output_dir/$skill_name"
+                mkdir -p "$skill_dir"
+                
+                local output_file="$skill_dir/SKILL.md"
+                local description
+                description=$(get_skill_description "$lang" "" "" "" "$proc")
+                
+                {
+                    echo "---"
+                    echo "name: $skill_name"
+                    echo "description: $description"
+                    echo "---"
+                    echo ""
+                    echo "$content"
+                } > "$output_file"
+                
+                local relative_path="${output_file#"$PROJECT_ROOT/"}"
+                print_success "Created $relative_path"
+            done
+        fi
+    done
+}
+
 generate_concatenated() {
     local tool="$1"
     local output_file="$2"
@@ -1103,6 +1291,9 @@ generate_tool() {
             ;;
         claude-cli)
             generate_concatenated "Claude CLI" "CLAUDE.md" ""
+            ;;
+        claude-code)
+            generate_claude_code
             ;;
         github-copilot)
             generate_concatenated "GitHub Copilot" ".github/copilot-instructions.md" ""

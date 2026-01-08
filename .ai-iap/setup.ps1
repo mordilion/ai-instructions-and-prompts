@@ -857,6 +857,236 @@ function New-CursorConfig {
     }
 }
 
+function New-ClaudeCodeConfig {
+    param(
+        [PSCustomObject]$Config,
+        [string[]]$SelectedLanguages,
+        [hashtable]$SelectedFrameworks,
+        [hashtable]$SelectedStructures,
+        [hashtable]$SelectedProcesses
+    )
+    
+    $outputDir = Join-Path $Script:ProjectRoot ".claude\skills"
+    
+    Write-InfoMessage "Generating Claude Code skills..."
+    
+    foreach ($lang in $SelectedLanguages) {
+        # Generate base language files as skills
+        $files = $Config.languages.$lang.files
+        
+        foreach ($file in $files) {
+            $content = Read-InstructionFile -Lang $lang -File $file
+            
+            if ($null -eq $content) {
+                continue
+            }
+            
+            # Create skill folder (e.g., .claude/skills/general-code-style)
+            $skillName = if ($lang -eq "general") { $file -replace "/", "-" } else { "$lang-$($file -replace '/', '-')" }
+            $skillDir = Join-Path $outputDir $skillName
+            
+            if (-not (Test-Path $skillDir)) {
+                New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
+            }
+            
+            $outputFile = Join-Path $skillDir "SKILL.md"
+            
+            # Generate skill frontmatter (name and description)
+            $description = Get-SkillDescription -Lang $lang -File $file -Config $Config
+            $frontmatter = @"
+---
+name: $skillName
+description: $description
+---
+
+"@
+            
+            $fullContent = $frontmatter + $content
+            $fullContent | Out-File -FilePath $outputFile -Encoding UTF8 -NoNewline
+            
+            $relativePath = $outputFile.Replace($Script:ProjectRoot, "").TrimStart("\", "/")
+            Write-SuccessMessage "Created $relativePath"
+        }
+        
+        # Generate selected documentation files (only for general language)
+        if ($lang -eq "general" -and $SelectedDocumentation.Count -gt 0) {
+            foreach ($docFile in $SelectedDocumentation) {
+                $content = Read-InstructionFile -Lang $lang -File $docFile
+                
+                if ($null -eq $content) {
+                    continue
+                }
+                
+                $skillName = $docFile -replace "/", "-"
+                $skillDir = Join-Path $outputDir $skillName
+                
+                if (-not (Test-Path $skillDir)) {
+                    New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
+                }
+                
+                $outputFile = Join-Path $skillDir "SKILL.md"
+                
+                $description = Get-SkillDescription -Lang $lang -File $docFile -Config $Config
+                $frontmatter = @"
+---
+name: $skillName
+description: $description
+---
+
+"@
+                
+                $fullContent = $frontmatter + $content
+                $fullContent | Out-File -FilePath $outputFile -Encoding UTF8 -NoNewline
+                
+                $relativePath = $outputFile.Replace($Script:ProjectRoot, "").TrimStart("\", "/")
+                Write-SuccessMessage "Created $relativePath"
+            }
+        }
+        
+        # Generate framework files as skills
+        if ($SelectedFrameworks.ContainsKey($lang)) {
+            foreach ($fw in $SelectedFrameworks[$lang]) {
+                $fwConfig = $Config.languages.$lang.frameworks.$fw
+                $content = Read-InstructionFile -Lang $lang -File $fwConfig.file -IsFramework $true
+                
+                if ($null -eq $content) {
+                    continue
+                }
+                
+                $skillName = "$lang-framework-$fw"
+                $skillDir = Join-Path $outputDir $skillName
+                
+                if (-not (Test-Path $skillDir)) {
+                    New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
+                }
+                
+                $outputFile = Join-Path $skillDir "SKILL.md"
+                
+                $description = Get-SkillDescription -Lang $lang -Framework $fw -Config $Config
+                $frontmatter = @"
+---
+name: $skillName
+description: $description
+---
+
+"@
+                
+                $fullContent = $frontmatter + $content
+                $fullContent | Out-File -FilePath $outputFile -Encoding UTF8 -NoNewline
+                
+                $relativePath = $outputFile.Replace($Script:ProjectRoot, "").TrimStart("\", "/")
+                Write-SuccessMessage "Created $relativePath"
+                
+                # Generate structure file if selected
+                $structKey = "$lang-$fw"
+                if ($SelectedStructures.ContainsKey($structKey)) {
+                    $structFile = $SelectedStructures[$structKey]
+                    $structContent = Read-InstructionFile -Lang $lang -File $structFile -IsStructure $true
+                    
+                    if ($null -ne $structContent) {
+                        $structSkillName = "$lang-$fw-$($structFile -replace '/', '-')"
+                        $structSkillDir = Join-Path $outputDir $structSkillName
+                        
+                        if (-not (Test-Path $structSkillDir)) {
+                            New-Item -ItemType Directory -Path $structSkillDir -Force | Out-Null
+                        }
+                        
+                        $structOutputFile = Join-Path $structSkillDir "SKILL.md"
+                        
+                        $structDescription = Get-SkillDescription -Lang $lang -Framework $fw -Structure $structFile -Config $Config
+                        $structFrontmatter = @"
+---
+name: $structSkillName
+description: $structDescription
+---
+
+"@
+                        
+                        $structFullContent = $structFrontmatter + $structContent
+                        $structFullContent | Out-File -FilePath $structOutputFile -Encoding UTF8 -NoNewline
+                        
+                        $relativePath = $structOutputFile.Replace($Script:ProjectRoot, "").TrimStart("\", "/")
+                        Write-SuccessMessage "Created $relativePath"
+                    }
+                }
+            }
+        }
+        
+        # Generate process files as skills
+        if ($SelectedProcesses.ContainsKey($lang)) {
+            foreach ($proc in $SelectedProcesses[$lang]) {
+                $procConfig = $Config.languages.$lang.processes.$proc
+                $content = Read-InstructionFile -Lang $lang -File $procConfig.file -IsProcess $true
+                
+                if ($null -eq $content) {
+                    continue
+                }
+                
+                $skillName = "$lang-process-$proc"
+                $skillDir = Join-Path $outputDir $skillName
+                
+                if (-not (Test-Path $skillDir)) {
+                    New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
+                }
+                
+                $outputFile = Join-Path $skillDir "SKILL.md"
+                
+                $description = Get-SkillDescription -Lang $lang -Process $proc -Config $Config
+                $frontmatter = @"
+---
+name: $skillName
+description: $description
+---
+
+"@
+                
+                $fullContent = $frontmatter + $content
+                $fullContent | Out-File -FilePath $outputFile -Encoding UTF8 -NoNewline
+                
+                $relativePath = $outputFile.Replace($Script:ProjectRoot, "").TrimStart("\", "/")
+                Write-SuccessMessage "Created $relativePath"
+            }
+        }
+    }
+}
+
+function Get-SkillDescription {
+    param(
+        [string]$Lang,
+        [string]$File,
+        [string]$Framework,
+        [string]$Structure,
+        [string]$Process,
+        [PSCustomObject]$Config
+    )
+    
+    # Generate appropriate description based on what we're documenting
+    if ($Process) {
+        $procConfig = $Config.languages.$Lang.processes.$Process
+        return "$($procConfig.name) process for $Lang projects. Use when $($procConfig.name.ToLower())."
+    }
+    elseif ($Structure) {
+        return "Project structure guidelines for $Framework with $Structure architecture. Use when setting up or organizing $Lang projects."
+    }
+    elseif ($Framework) {
+        $fwConfig = $Config.languages.$Lang.frameworks.$Framework
+        return "$($fwConfig.name) framework standards and best practices for $Lang. Use when working with $($fwConfig.name)."
+    }
+    else {
+        # For general rules and documentation
+        $fileName = Split-Path -Leaf $File
+        switch -Regex ($fileName) {
+            "code-style" { return "Code style and formatting standards for $Lang. Use when writing or reviewing code." }
+            "security" { return "Security best practices for $Lang projects. Use when implementing authentication, handling data, or reviewing security." }
+            "testing" { return "Testing standards and practices for $Lang. Use when writing or reviewing tests." }
+            "documentation-api" { return "API documentation standards using OpenAPI/Swagger. Use when documenting REST APIs or working with API specs." }
+            "documentation-code" { return "Code documentation and commenting standards. Use when writing docstrings, comments, or documentation." }
+            "documentation-project" { return "Project documentation standards (README, CHANGELOG, etc.). Use when creating or updating project documentation." }
+            default { return "$Lang development standards. Use when working with $Lang code." }
+        }
+    }
+}
+
 function New-ConcatenatedConfig {
     param(
         [PSCustomObject]$Config,
@@ -966,6 +1196,9 @@ function New-ToolConfig {
         }
         "claude-cli" {
             New-ConcatenatedConfig -Config $Config -ToolName "Claude CLI" -OutputFile "CLAUDE.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
+        }
+        "claude-code" {
+            New-ClaudeCodeConfig -Config $Config -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses
         }
         "github-copilot" {
             New-ConcatenatedConfig -Config $Config -ToolName "GitHub Copilot" -OutputFile ".github\copilot-instructions.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses

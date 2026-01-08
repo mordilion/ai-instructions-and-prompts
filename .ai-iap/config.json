@@ -18,6 +18,16 @@
       "concatenate": true,
       "recommended": true
     },
+    "claude-code": {
+      "name": "Claude Code",
+      "outputDir": ".claude/skills",
+      "fileExtension": ".md",
+      "useFrontmatter": true,
+      "supportsGlobs": false,
+      "supportsSubfolders": true,
+      "skillFilename": "SKILL.md",
+      "recommended": true
+    },
     "github-copilot": {
       "name": "GitHub Copilot",
       "outputFile": ".github/copilot-instructions.md",

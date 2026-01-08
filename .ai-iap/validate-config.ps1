@@ -76,6 +76,19 @@ foreach ($toolKey in $config.tools.PSObject.Properties.Name) {
             Write-Issue "WARNING" "Tool 'cursor': Should have 'supportsSubfolders: true'"
         }
     }
+    
+    # Claude Code-specific checks
+    if ($toolKey -eq "claude-code") {
+        if (-not $tool.skillFilename) {
+            Write-Issue "WARNING" "Tool 'claude-code': Missing 'skillFilename' property (should be 'SKILL.md')"
+        }
+        if (-not $tool.supportsSubfolders) {
+            Write-Issue "WARNING" "Tool 'claude-code': Should have 'supportsSubfolders: true'"
+        }
+        if ($tool.supportsGlobs) {
+            Write-Issue "WARNING" "Tool 'claude-code': Should have 'supportsGlobs: false' (uses directory-based skills)"
+        }
+    }
 }
 Write-Success "Validated $toolCount tools"
 
