@@ -3,7 +3,7 @@
 > **Purpose**: Establish comprehensive CI/CD pipeline with GitHub Actions for Python applications
 
 > **Platform**: This guide uses **GitHub Actions** examples.  
-> **Adaptation required** for other platforms - see [Git Workflow Adaptation](../_templates/git-workflow-adaptation.md#cicd-platform-adaptation) for:
+> **Adaptation required** for other platforms:
 > - GitLab CI (`.gitlab-ci.yml`)
 > - Azure DevOps (`azure-pipelines.yml`)
 > - Jenkins (`Jenkinsfile`)
@@ -29,8 +29,6 @@
 > - Branch naming (feature/, PROJ-123/, or trunk-based)
 > - Commit format (conventional commits, JIRA format, etc.)
 > - Deployment platforms (adapt GitHub Actions examples to your platform)
-> 
-> See [Git Workflow Adaptation Guide](../_templates/git-workflow-adaptation.md) for complete guidance
 
 **For each phase below**: Apply your team's workflow, not the example branch names.
 

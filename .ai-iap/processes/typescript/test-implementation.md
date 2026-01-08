@@ -6,7 +6,7 @@
 
 > **ALWAYS**: Detect Node.js version from `package.json` engines or `.nvmrc`
 > **ALWAYS**: Match detected version in Docker images, pipelines, and CI/CD  
-> **ALWAYS**: Use your team's workflow for branching and commits (see [Workflow Adaptation](#workflow-adaptation))  
+> **ALWAYS**: Use your team's workflow for branching and commits  
 > **NEVER**: Fix production code bugs found during testing (log only)
 
 ## Workflow Adaptation
@@ -17,8 +17,6 @@
 > - Commit patterns (conventional commits, JIRA format, etc.)
 > - Docker usage (skip if using serverless/PaaS)
 > - CI/CD platform (adapt GitHub Actions examples)
-> 
-> See [Git Workflow Adaptation Guide](../_templates/git-workflow-adaptation.md) for complete guidance
 
 ## Tech Stack
 
@@ -102,7 +100,7 @@ test:
 
 ## Implementation Phases
 
-> **For each phase**: Use your team's workflow ([see adaptation guide](../_templates/git-workflow-adaptation.md))
+> **For each phase**: Use your team's workflow
 
 ### Phase 1: Analysis
 

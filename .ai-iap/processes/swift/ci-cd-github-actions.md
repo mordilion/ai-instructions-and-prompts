@@ -19,8 +19,7 @@
 
 ## Workflow Adaptation
 
-> **IMPORTANT**: Phases below focus on OBJECTIVES. Use your team's workflow.  
-> See [Git Workflow Adaptation Guide](../_templates/git-workflow-adaptation.md) for examples.
+> **IMPORTANT**: Phases below focus on OBJECTIVES. Use your team's workflow.
 
 ---
 

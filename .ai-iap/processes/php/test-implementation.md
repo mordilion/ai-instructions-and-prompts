@@ -12,8 +12,7 @@
 ## Workflow Adaptation
 
 > **IMPORTANT**: This guide focuses on OBJECTIVES, not specific workflows.  
-> **Your team's conventions take precedence** for Git, commits, Docker, CI/CD.  
-> See [Git Workflow Adaptation Guide](../_templates/git-workflow-adaptation.md)
+> **Your team's conventions take precedence** for Git, commits, Docker, CI/CD.
 
 ## Tech Stack
 
@@ -109,7 +108,7 @@ test:
 
 ## Implementation Phases
 
-> **For each phase**: Use your team's workflow ([see adaptation guide](../_templates/git-workflow-adaptation.md))
+> **For each phase**: Use your team's workflow
 
 ### Phase 1: Analysis
 
