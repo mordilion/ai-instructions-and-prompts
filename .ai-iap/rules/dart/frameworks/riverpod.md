@@ -61,67 +61,19 @@ lib/
 ```
 
 ## 3. Provider Declaration
-- **Top-level**: Declare providers as global final variables.
-- **Naming**: Use descriptive names ending with `Provider`.
-- **Code Generation**: Prefer `@riverpod` annotation (riverpod_generator).
-
-```dart
-// ✅ Good - With code generation
-@riverpod
-class Auth extends _$Auth {
-  @override
-  AuthState build() => const AuthState.initial();
-
-  Future<void> login(String email, String password) async {
-    state = const AuthState.loading();
-    try {
-      final user = await ref.read(authRepositoryProvider).login(email, password);
-      state = AuthState.authenticated(user);
-    } catch (e) {
-      state = AuthState.error(e.toString());
-    }
-  }
-}
-
-// ✅ Good - Without code generation
-final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  return AuthNotifier(ref.read(authRepositoryProvider));
-});
-```
+**Pattern**: Top-level `final` + `@riverpod` annotation (code generation) or manual `StateNotifierProvider`
 
 ## 4. State Classes
-- **Freezed**: Use freezed for immutable state classes.
-- **Union Types**: Model different states as union types.
-
-```dart
-@freezed
-class AuthState with _$AuthState {
-  const factory AuthState.initial() = _Initial;
-  const factory AuthState.loading() = _Loading;
-  const factory AuthState.authenticated(User user) = _Authenticated;
-  const factory AuthState.error(String message) = _Error;
-}
-```
+**Pattern**: `@freezed` + union types for different states (initial/loading/success/error)
 
 ## 5. Reading Providers
-- **ref.watch**: In build methods (rebuilds on change).
-- **ref.read**: For one-time reads (in callbacks, methods).
-- **ref.listen**: For side effects.
+| Method | When | Usage |
+|--------|------|-------|
+| **ref.watch** | Build methods | Rebuilds on change |
+| **ref.read** | Callbacks/methods | One-time read |
+| **ref.listen** | Side effects | Listen for changes |
 
-```dart
-// ✅ Good
-class LoginPage extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authProvider);  // Rebuilds on change
-
-    return authState.when(
-      initial: () => LoginForm(
-        onSubmit: (email, password) {
-          ref.read(authProvider.notifier).login(email, password);  // One-time read
-        },
-      ),
-      loading: () => const CircularProgressIndicator(),
+**Pattern**: `ConsumerWidget` + `ref.watch(provider)` + `.when()` for pattern matching
       authenticated: (user) => Text('Welcome, ${user.name}'),
       error: (message) => Text('Error: $message'),
     );
