@@ -208,8 +208,6 @@ These may conflict with established practices:
 
 - [ ] Provide 30-min training session
 
-- [ ] Share [Git Workflow Adaptation](.ai-iap/processes/_templates/git-workflow-adaptation.md)
-
 - [ ] Set up support channel (Slack #ai-standards)
 
 - [ ] Monitor for 2 weeks, gather feedback
@@ -257,8 +255,6 @@ Track these after 30-60 days:
 - **Customization**: See [CUSTOMIZATION.md](CUSTOMIZATION.md)
 
 - **Extension System**: `.ai-iap-custom/` examples
-
-- **Git Workflow Adaptation**: [_templates/git-workflow-adaptation.md](.ai-iap/processes/_templates/git-workflow-adaptation.md)
 
 - **Issues**: Report conflicts/bugs to [GitHub Issues]
 
