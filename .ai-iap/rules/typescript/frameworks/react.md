@@ -6,17 +6,35 @@
 
 ## CRITICAL REQUIREMENTS
 
-> **ALWAYS**: Use functional components with hooks
-> **ALWAYS**: Use TypeScript for props/state
-> **ALWAYS**: Clean up effects with return function
-> **ALWAYS**: Use key prop for lists
-> **ALWAYS**: Follow Rules of Hooks
+> **ALWAYS**: Use functional components with hooks  
+> **Why**: React 18+ optimizations (Concurrent Rendering, Suspense, Transitions) work best with hooks. Cleaner code, better composition.
 > 
-> **NEVER**: Use class components (legacy)
-> **NEVER**: Mutate state directly
-> **NEVER**: Call hooks conditionally
-> **NEVER**: Forget effect dependencies
-> **NEVER**: Use index as key for dynamic lists
+> **ALWAYS**: Use TypeScript for props/state  
+> **Why**: Catches prop/state errors at compile-time, improves IDE autocomplete, self-documenting interfaces.
+> 
+> **ALWAYS**: Clean up effects with return function  
+> **Why**: Prevents memory leaks, race conditions, and stale closures when components unmount or re-render.
+> 
+> **ALWAYS**: Use key prop for lists  
+> **Why**: React needs stable identity to efficiently update/reorder list items without re-creating DOM nodes.
+> 
+> **ALWAYS**: Follow Rules of Hooks  
+> **Why**: React relies on hook call order to maintain state. Conditional hooks break this contract and cause bugs.
+> 
+> **NEVER**: Use class components (NEW code)  
+> **Why**: Deprecated pattern. Verbose, harder to test, can't use hooks, no concurrent features. **Exception**: Error boundaries until React 19.
+> 
+> **NEVER**: Mutate state directly  
+> **Why**: React uses reference equality to detect changes. Mutation bypasses React's reconciliation, causing missed updates.
+> 
+> **NEVER**: Call hooks conditionally  
+> **Why**: Violates Rules of Hooks. React tracks hooks by call order - conditionals break this, causing state mismatch.
+> 
+> **NEVER**: Forget effect dependencies  
+> **Why**: Stale closures capture old values, causing bugs. Linter (`react-hooks/exhaustive-deps`) catches these.
+> 
+> **NEVER**: Use index as key for dynamic lists  
+> **Why**: Index changes when items reorder, causing React to recreate components instead of moving them. Use stable IDs.
 
 ## Core Patterns
 

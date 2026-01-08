@@ -12,14 +12,27 @@
 
 ## Tech Stack
 
-**Required**:
-- **Test Framework**: NUnit
-- **Assertions**: FluentAssertions
-- **Mocking**: Moq
-- **Runtime**: Match detected .NET version
+**Test Framework** (choose one):
+- **xUnit** ⭐ - Most popular, .NET Core default, used by Microsoft
+- **NUnit** - Mature, feature-rich, good for migration from Java
+- **MSTest** - Microsoft official, good IDE integration
 
-**Forbidden**:
-- xUnit, MSTest (migrate if found)
+**Why xUnit is recommended**:
+- Default in .NET templates (`dotnet new xunit`)
+- Used by .NET Core team and most open-source projects
+- Modern async/await support, theory tests, clean syntax
+
+**Assertions** (choose one):
+- **FluentAssertions** ⭐ - Readable, extensible
+- **Shouldly** - Similar to FluentAssertions
+- **Built-in** (xUnit.Assert, NUnit.Assert, MSTest.Assert)
+
+**Mocking** (choose one):
+- **Moq** ⭐ - Most popular, simple API
+- **NSubstitute** - Clean syntax, less magic strings
+- **FakeItEasy** - Discoverable API
+
+**Runtime**: Match detected .NET version
 
 ## Infrastructure Templates
 

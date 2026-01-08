@@ -2,7 +2,12 @@
 
 > **Purpose**: Establish comprehensive CI/CD pipeline with GitHub Actions for Python applications
 
-> **Platform**: This guide is for **GitHub Actions**. For GitLab CI, Azure DevOps, CircleCI, or Jenkins, adapt the workflow syntax accordingly.
+> **Platform**: This guide uses **GitHub Actions** examples.  
+> **Adaptation required** for other platforms - see [Git Workflow Adaptation](../_templates/git-workflow-adaptation.md#cicd-platform-adaptation) for:
+> - GitLab CI (`.gitlab-ci.yml`)
+> - Azure DevOps (`azure-pipelines.yml`)
+> - Jenkins (`Jenkinsfile`)
+> - CircleCI (`.circleci/config.yml`)
 
 ---
 

@@ -6,9 +6,19 @@
 
 > **ALWAYS**: Detect Node.js version from `package.json` engines or `.nvmrc`
 > **ALWAYS**: Match detected version in Docker images, pipelines, and CI/CD
-> **ALWAYS**: Create new branch for each phase: `poc/test-establishing/{phase-name}`
+> **ALWAYS**: Create new branch for each phase (adapt naming to your workflow - see [Git Workflow Adaptation](../_templates/git-workflow-adaptation.md))
 > **NEVER**: Combine multiple phases in one commit
 > **NEVER**: Fix production code bugs found during testing (log only)
+
+## Workflow Adaptation
+
+> **Important**: This guide uses example branch names (`poc/test-establishing/{phase-name}`).  
+> **Your team's Git conventions take precedence**.  
+> See [Git Workflow Adaptation Guide](../_templates/git-workflow-adaptation.md) for adapting to:
+> - JIRA/Linear integration
+> - Trunk-based development
+> - GitFlow, GitHub Flow
+> - Your custom naming conventions
 
 ## Tech Stack
 
@@ -26,9 +36,14 @@
 
 ## Infrastructure Templates
 
-> **ALWAYS**: Replace `{NODE_VERSION}` with detected version before creating files
+> **Docker is OPTIONAL**. Skip this section if you're using:
+> - Serverless platforms (Vercel, Netlify, AWS Lambda)
+> - PaaS (Heroku, Fly.io, Railway)
+> - Your organization's existing containers
 
-**File**: `docker/Dockerfile.tests`
+> **IF using Docker**: Replace `{NODE_VERSION}` with detected version before creating files
+
+**File**: `docker/Dockerfile.tests` (optional)
 ```dockerfile
 FROM node:{NODE_VERSION}-alpine AS build
 WORKDIR /app

@@ -45,6 +45,7 @@ chmod +x .ai-iap/setup.sh && ./.ai-iap/setup.sh
 - [Project Structures](.ai-iap/README.md#️-project-structure-options)
 - [Token Costs](.ai-iap/README.md#-token-cost-analysis)
 - [Configuration](.ai-iap/README.md#️-configuration)
+- [**Team Adoption Guide**](TEAM_ADOPTION_GUIDE.md) ⭐ – For engineering teams evaluating this project
 - [**Customization Guide**](CUSTOMIZATION.md) ⭐ – Extend with company standards (update-safe)
 - [Troubleshooting](.ai-iap/TROUBLESHOOTING.md)
 - [Extending](.ai-iap/README.md#-extending)
