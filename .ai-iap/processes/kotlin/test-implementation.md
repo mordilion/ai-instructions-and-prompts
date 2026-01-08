@@ -31,61 +31,11 @@
 
 ## Infrastructure Templates
 
-> **ALWAYS**: Replace `{KOTLIN_VERSION}` and `{JVM_VERSION}` with detected versions
+**Docker**: Multi-stage `Dockerfile.tests` (gradle:8-jdk{JVM_VERSION}, cache dependencies, run `gradle build -x test`)  
+**docker-compose.tests.yml**: Mount volumes for test-results & coverage, run `gradle test jacocoTestReport`
 
-**File**: `docker/Dockerfile.tests`
-```dockerfile
-FROM gradle:8-jdk{JVM_VERSION} AS build
-WORKDIR /app
-COPY build.gradle.kts settings.gradle.kts ./
-COPY gradle ./gradle
-RUN gradle dependencies --no-daemon
-COPY src ./src
-RUN gradle build -x test --no-daemon
-
-FROM build AS test
-WORKDIR /app
-RUN mkdir -p /test-results /coverage
-```
-
-**File**: `docker/docker-compose.tests.yml`
-```yaml
-services:
-  tests:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.tests
-    command: gradle test jacocoTestReport --no-daemon
-    volumes:
-      - ../build/test-results:/test-results
-      - ../build/reports/jacoco:/coverage
-```
-
-**CI/CD Integration**:
-
-> **NEVER**: Overwrite existing pipeline. Merge this step only.
-
-**GitHub Actions**:
-```yaml
-- name: Run Tests
-  run: |
-    ./gradlew test jacocoTestReport
-  env:
-    JVM_VERSION: {JVM_VERSION}
-```
-
-**GitLab CI**:
-```yaml
-test:
-  image: gradle:8-jdk{JVM_VERSION}
-  script:
-    - gradle test jacocoTestReport
-  artifacts:
-    reports:
-      junit: build/test-results/test/TEST-*.xml
-    paths:
-      - build/reports/jacoco/
-```
+**CI/CD Integration**: Run `./gradlew test jacocoTestReport`, publish JUnit XML artifacts (build/test-results) and JaCoCo reports  
+**NEVER**: Overwrite existing pipeline
 
 ## Implementation Phases
 

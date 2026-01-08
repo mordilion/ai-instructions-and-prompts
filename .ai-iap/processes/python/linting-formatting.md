@@ -23,110 +23,17 @@
 
 ## Phase 2: Linter Configuration
 
-### Ruff Setup (Recommended All-in-One)
+**Ruff** ⭐ (All-in-one): `pip install ruff`, `ruff check .`, `ruff check --fix`, `ruff format .`  
+**Config** (`pyproject.toml`): Set `line-length=100`, `target-version="py311"`, select rules (E/W/F/I/N/UP/B/C4), ignore E501
 
-```bash
-# Install
-pip install ruff
-
-# Lint
-ruff check .
-
-# Fix
-ruff check --fix .
-
-# Format
-ruff format .
-```
-
-**Configuration** (`pyproject.toml`):
-```toml
-[tool.ruff]
-line-length = 100
-target-version = "py311"
-
-[tool.ruff.lint]
-select = [
-    "E",  # pycodestyle errors
-    "W",  # pycodestyle warnings
-    "F",  # pyflakes
-    "I",  # isort
-    "N",  # pep8-naming
-    "UP", # pyupgrade
-    "B",  # flake8-bugbear
-    "C4", # flake8-comprehensions
-]
-ignore = [
-    "E501",  # line too long (handled by formatter)
-]
-
-[tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401"]  # Unused imports OK in __init__.py
-"tests/**/*.py" = ["S101"] # Use of assert OK in tests
-```
-
-### flake8 Setup (Alternative)
-
-```bash
-# Install
-pip install flake8
-
-# Lint
-flake8 .
-```
-
-**Configuration** (`.flake8`):
-```ini
-[flake8]
-max-line-length = 100
-exclude = .git,__pycache__,venv,.venv,build,dist
-ignore = E203,W503
-per-file-ignores =
-    __init__.py:F401
-```
+**flake8** (Alternative): `pip install flake8`, `flake8 .`, config `.flake8` (max-line-length, ignore E203/W503)
 
 ---
 
 ## Phase 3: Formatter Configuration
 
-### Ruff Format (Built-in with Ruff)
-
-```bash
-# Format
-ruff format .
-
-# Check formatting
-ruff format --check .
-```
-
-### Black Setup (Alternative)
-
-```bash
-# Install
-pip install black
-
-# Format
-black .
-
-# Check formatting
-black --check .
-```
-
-**Configuration** (`pyproject.toml`):
-```toml
-[tool.black]
-line-length = 100
-target-version = ['py311']
-include = '\.pyi?$'
-extend-exclude = '''
-/(
-    \.git
-  | \.venv
-  | build
-  | dist
-)/
-'''
-```
+**Ruff Format** ⭐: `ruff format .`, `ruff format --check` (built-in with Ruff)  
+**Black** (Alternative): `pip install black`, `black .`, `black --check`, config `[tool.black]` (line-length, target-version, exclude)
 
 ### isort Setup (Import Sorting)
 
@@ -153,105 +60,17 @@ skip_gitignore = true
 
 ## Phase 4: IDE Integration & Pre-commit Hooks
 
-### VS Code Setup
+**VS Code**: Extensions (`charliermarsh.ruff`), settings (`formatOnSave: true`, `defaultFormatter: "charliermarsh.ruff"`, `codeActionsOnSave`)
 
-**Extensions** (`.vscode/extensions.json`):
-```json
-{
-  "recommendations": [
-    "charliermarsh.ruff",
-    "ms-python.python",
-    "ms-python.vscode-pylance"
-  ]
-}
-```
-
-**Settings** (`.vscode/settings.json`):
-```json
-{
-  "editor.formatOnSave": true,
-  "[python]": {
-    "editor.defaultFormatter": "charliermarsh.ruff",
-    "editor.codeActionsOnSave": {
-      "source.fixAll": true,
-      "source.organizeImports": true
-    }
-  },
-  "ruff.lint.args": ["--config=pyproject.toml"]
-}
-```
-
-### Pre-commit Hooks
-
-```bash
-# Install
-pip install pre-commit
-
-# Initialize
-pre-commit install
-```
-
-**Configuration** (`.pre-commit-config.yaml`):
-```yaml
-repos:
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.9
-    hooks:
-      - id: ruff
-        args: [--fix]
-      - id: ruff-format
-  
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
-    hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
-      - id: check-yaml
-      - id: check-added-large-files
-```
+**Pre-commit**: `pip install pre-commit && pre-commit install`  
+**Config** (`.pre-commit-config.yaml`): Add ruff hooks (`ruff`, `ruff-format`), standard hooks (trailing-whitespace, end-of-file-fixer)
 
 ---
 
 ## Phase 5: CI/CD Integration
 
-### GitHub Actions
-
-```yaml
-# .github/workflows/lint.yml
-name: Lint & Format Check
-
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-
-jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version-file: '.python-version'
-          cache: 'pip'
-      
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install ruff mypy
-          pip install -r requirements.txt
-      
-      - name: Run Ruff Linter
-        run: ruff check .
-      
-      - name: Run Ruff Formatter Check
-        run: ruff format --check .
-      
-      - name: Run mypy
-        run: mypy src/
-```
+**GitHub Actions**: Install `ruff` + `mypy`, run `ruff check .`, `ruff format --check .`, `mypy src/`  
+**Key Commands**: `pip install ruff mypy`, cache pip dependencies
 
 ---
 
