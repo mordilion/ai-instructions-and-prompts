@@ -19,210 +19,34 @@
 
 ---
 
-## Phase 2: Coverage Tool Configuration
+## Phase 2: Tool Configuration
 
-### Xcode Code Coverage Setup
-
-**Enable in Xcode**:
-1. Select scheme → Edit Scheme
-2. Go to Test tab
-3. Check "Gather coverage for: All targets" or select specific targets
-
-**Command line**:
-```bash
-# Run tests with coverage
-xcodebuild test \
-  -scheme YourScheme \
-  -destination 'platform=iOS Simulator,name=iPhone 15' \
-  -enableCodeCoverage YES
-
-# Or with Swift Package Manager
-swift test --enable-code-coverage
-```
-
-### Slather Setup (Report Generation)
-
-```bash
-# Install
-gem install slather
-
-# Generate HTML report
-slather coverage \
-  --html \
-  --scheme YourScheme \
-  --output-directory coverage \
-  YourProject.xcodeproj
-
-# Generate Cobertura XML
-slather coverage \
-  --cobertura-xml \
-  --scheme YourScheme \
-  --output-directory coverage \
-  YourProject.xcodeproj
-```
-
-**Configuration** (`.slather.yml`):
-```yaml
-coverage_service: cobertura_xml
-xcodeproj: YourProject.xcodeproj
-scheme: YourScheme
-output_directory: coverage
-ignore:
-  - Tests/*
-  - Pods/*
-  - Generated/*
-  - Mocks/*
-```
+**Xcode**: Edit Scheme → Test tab → "Gather coverage for: All targets"  
+**CLI**: `xcodebuild test -enableCodeCoverage YES` or `swift test --enable-code-coverage`  
+**Slather** (Reports): Install with `gem install slather`, generate HTML/Cobertura XML reports
 
 ---
 
-## Phase 3: Coverage Thresholds & Reporting
+## Phase 3: Exclusions & Thresholds
 
-### Package.swift Configuration (SPM)
-
-```swift
-// Package.swift
-let package = Package(
-    name: "YourPackage",
-    platforms: [
-        .iOS(.v15),
-        .macOS(.v12)
-    ],
-    products: [
-        .library(name: "YourPackage", targets: ["YourPackage"])
-    ],
-    targets: [
-        .target(name: "YourPackage"),
-        .testTarget(
-            name: "YourPackageTests",
-            dependencies: ["YourPackage"]
-        )
-    ]
-)
-```
-
-### Exclude Code from Coverage
-
-```swift
-// No native way to exclude, use separate target or build configuration
-
-#if DEBUG
-// This code won't be counted in release builds
-func debugOnlyFunction() { }
-#endif
-```
+**Exclude** (`.slather.yml`): `Tests/*`, `Pods/*`, `Generated/*`, `Mocks/*`  
+**Thresholds**: LINE 80% (use custom script or CI tooling to enforce)  
+**Code Exclusions**: Use `#if DEBUG` or separate targets (no native exclusion support)
 
 ---
 
 ## Phase 4: CI/CD Integration
 
-### GitHub Actions
-
-```yaml
-# .github/workflows/test.yml
-name: Test & Coverage
-
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-
-jobs:
-  test:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Xcode
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version-file: '.xcode-version'
-      
-      - name: Install dependencies
-        run: |
-          gem install slather
-          gem install xcpretty
-      
-      - name: Run tests with coverage
-        run: |
-          xcodebuild test \
-            -scheme YourScheme \
-            -destination 'platform=iOS Simulator,name=iPhone 15' \
-            -enableCodeCoverage YES \
-            | xcpretty
-      
-      - name: Generate coverage report
-        run: |
-          slather coverage \
-            --cobertura-xml \
-            --scheme YourScheme \
-            --output-directory coverage \
-            YourProject.xcodeproj
-      
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage/cobertura.xml
-          fail_ci_if_error: true
-      
-      - name: Generate HTML report
-        run: |
-          slather coverage \
-            --html \
-            --scheme YourScheme \
-            --output-directory coverage/html \
-            YourProject.xcodeproj
-      
-      - name: Archive coverage report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: coverage-report
-          path: coverage/html/
-```
-
-**For Swift Package Manager**:
-```yaml
-- name: Run tests with coverage
-  run: swift test --enable-code-coverage
-
-- name: Generate coverage report
-  run: |
-    xcrun llvm-cov export -format="lcov" \
-      .build/debug/YourPackagePackageTests.xctest/Contents/MacOS/YourPackagePackageTests \
-      -instr-profile .build/debug/codecov/default.profdata \
-      > coverage.lcov
-```
+**GitHub Actions**: Run `xcodebuild test -enableCodeCoverage YES` or `swift test --enable-code-coverage`, generate reports with Slather, upload to Codecov  
+**Report Paths**: Slather: `coverage/cobertura.xml`, SPM: `.build/debug/codecov/default.profdata` (convert with `xcrun llvm-cov`)
 
 ---
 
-## Phase 5: Coverage Analysis & Improvement
+## Phase 5: Analysis & Improvement
 
-### Identify Uncovered Code
-
-**Xcode**:
-1. Run tests with coverage enabled
-2. Go to Report Navigator (⌘9)
-3. Select latest test run
-4. Click Coverage tab
-5. Expand targets to see file-by-file coverage
-
-**Command line**:
-```bash
-# Generate HTML report
-slather coverage --html --scheme YourScheme YourProject.xcodeproj
-open coverage/index.html
-```
-
-### Prioritize Critical Paths
-
-**Coverage priorities (high to low)**:
-1. Business logic (domain models, use cases)
-2. Data validation (input/output)
-3. Error handling
-4. ViewModels (MVVM)
-5. UI components (SwiftUI views)
+**Xcode UI**: Report Navigator (⌘9) → Coverage tab  
+**Prioritize**: Business logic > Validation > Error handling > ViewModels > SwiftUI views  
+**iOS-Specific Exclusions**: UIViewControllers (hard to test), Storyboards, AppDelegate/SceneDelegate
 
 ### UI Testing Considerations
 

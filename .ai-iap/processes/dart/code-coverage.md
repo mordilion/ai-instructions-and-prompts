@@ -19,105 +19,17 @@
 
 ---
 
-## Phase 2: Coverage Tool Configuration
+## Phase 2: Tool Configuration
 
-### dart test with Coverage
-
-```bash
-# Run tests with coverage
-dart test --coverage=coverage
-
-# Or for Flutter
-flutter test --coverage
-
-# Generate LCOV report
-dart run coverage:format_coverage \
-  --lcov \
-  --in=coverage \
-  --out=coverage/lcov.info \
-  --packages=.dart_tool/package_config.json \
-  --report-on=lib
-```
-
-### lcov Setup (HTML Reports)
-
-```bash
-# Install lcov (macOS)
-brew install lcov
-
-# Install lcov (Linux)
-sudo apt install lcov
-
-# Generate HTML report
-genhtml coverage/lcov.info -o coverage/html
-
-# Open report
-open coverage/html/index.html
-```
+**Dart**: `dart test --coverage=coverage` or `flutter test --coverage`, format with `dart run coverage:format_coverage --lcov`  
+**HTML Reports**: Install `lcov`, run `genhtml coverage/lcov.info -o coverage/html`
 
 ---
 
-## Phase 3: Coverage Thresholds & Reporting
+## Phase 3: Exclusions & Thresholds
 
-### Custom Coverage Check Script
-
-**Script** (`scripts/check_coverage.sh`):
-```bash
-#!/bin/bash
-
-# Run tests with coverage
-flutter test --coverage
-
-# Generate HTML report
-genhtml coverage/lcov.info -o coverage/html
-
-# Extract coverage percentage
-COVERAGE=$(lcov --summary coverage/lcov.info | grep "lines" | awk '{print $2}' | sed 's/%//')
-
-# Check threshold
-THRESHOLD=80
-
-if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
-  echo "❌ Coverage $COVERAGE% is below threshold $THRESHOLD%"
-  exit 1
-else
-  echo "✅ Coverage $COVERAGE% meets threshold $THRESHOLD%"
-  exit 0
-fi
-```
-
-### Exclude Code from Coverage
-
-**Ignore generated files** (`.lcovrc`):
-```
-# .lcovrc
-geninfo_adjust_src_path = /path/to/project
-
-# Exclude generated files
-lcov_excl_line = LCOV_EXCL_LINE
-lcov_excl_br_line = LCOV_EXCL_BR_LINE
-
-# Patterns to exclude
-lcov_excl_line = ignore: coverage
-```
-
-**In code**:
-```dart
-// Exclude entire block
-// coverage:ignore-start
-void debugFunction() {
-  print('Debug');
-}
-// coverage:ignore-end
-
-// Exclude single line
-void someFunction() {
-  print('Not counted'); // coverage:ignore-line
-}
-
-// Exclude file
-// coverage:ignore-file
-```
+**Exclude**: `// coverage:ignore-file`, `// coverage:ignore-line`, `// coverage:ignore-start/end`  
+**Thresholds**: LINE 80% (use custom script to parse `lcov --summary` and fail if below threshold)
 
 ---
 
@@ -178,40 +90,16 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/lcov_filtered.info
-          fail_ci_if_error: true
-      
-      - name: Archive coverage report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: coverage-report
-          path: coverage/html/
 ```
+
+**Report Path**: `coverage/lcov.info` (filter: `**/*.g.dart`, `**/*.freezed.dart`, `**/generated/**`)
 
 ---
 
-## Phase 5: Coverage Analysis & Improvement
+## Phase 5: Analysis & Improvement
 
-### Identify Uncovered Code
-
-```bash
-# Run tests with coverage
-flutter test --coverage
-
-# Remove generated files
-lcov --remove coverage/lcov.info \
-  '**/*.g.dart' \
-  '**/*.freezed.dart' \
-  -o coverage/lcov_filtered.info
-
-# Generate HTML report
-genhtml coverage/lcov_filtered.info -o coverage/html
-
-# Open report
-open coverage/html/index.html
-```
+**Prioritize**: Business logic > Validation > Error handling > Widgets (test with `testWidgets`) > Repositories
 
 ### Prioritize Critical Paths
 

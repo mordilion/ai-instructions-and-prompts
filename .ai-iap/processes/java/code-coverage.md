@@ -20,208 +20,26 @@
 
 ---
 
-## Phase 2: Coverage Tool Configuration
+## Phase 2: Tool Configuration
 
-### JaCoCo Setup (Maven)
+**Maven**: Add `jacoco-maven-plugin` with executions: `prepare-agent`, `report`, `check` (LINE 0.80, BRANCH 0.75)  
+**Gradle**: Apply `jacoco` plugin, configure `jacocoTestReport` (xml/html), `jacocoTestCoverageVerification` (minimum 0.80)
 
-```xml
-<!-- pom.xml -->
-<build>
-  <plugins>
-    <plugin>
-      <groupId>org.jacoco</groupId>
-      <artifactId>jacoco-maven-plugin</artifactId>
-      <version>0.8.11</version>
-      <executions>
-        <execution>
-          <id>prepare-agent</id>
-          <goals>
-            <goal>prepare-agent</goal>
-          </goals>
-        </execution>
-        <execution>
-          <id>report</id>
-          <phase>test</phase>
-          <goals>
-            <goal>report</goal>
-          </goals>
-        </execution>
-        <execution>
-          <id>check</id>
-          <goals>
-            <goal>check</goal>
-          </goals>
-          <configuration>
-            <rules>
-              <rule>
-                <element>BUNDLE</element>
-                <limits>
-                  <limit>
-                    <counter>LINE</counter>
-                    <value>COVEREDRATIO</value>
-                    <minimum>0.80</minimum>
-                  </limit>
-                  <limit>
-                    <counter>BRANCH</counter>
-                    <value>COVEREDRATIO</value>
-                    <minimum>0.75</minimum>
-                  </limit>
-                </limits>
-              </rule>
-            </rules>
-          </configuration>
-        </execution>
-      </executions>
-    </plugin>
-  </plugins>
-</build>
-```
-
-### JaCoCo Setup (Gradle)
-
-```groovy
-// build.gradle
-plugins {
-    id 'jacoco'
-}
-
-jacoco {
-    toolVersion = "0.8.11"
-}
-
-jacocoTestReport {
-    dependsOn test
-    reports {
-        xml.required = true
-        html.required = true
-        csv.required = false
-    }
-}
-
-jacocoTestCoverageVerification {
-    violationRules {
-        rule {
-            limit {
-                minimum = 0.80
-            }
-        }
-        rule {
-            element = 'CLASS'
-            limit {
-                counter = 'BRANCH'
-                value = 'COVEREDRATIO'
-                minimum = 0.75
-            }
-        }
-    }
-}
-
-test {
-    finalizedBy jacocoTestReport
-}
-
-check {
-    dependsOn jacocoTestCoverageVerification
-}
-```
-
-**Commands**:
-```bash
-# Maven
-mvn clean test jacoco:report
-
-# Gradle
-./gradlew test jacocoTestReport
-```
+**Commands**: `mvn test jacoco:report` or `./gradlew test jacocoTestReport`
 
 ---
 
-## Phase 3: Coverage Thresholds & Reporting
+## Phase 3: Exclusions & Thresholds
 
-### Exclude Code from Coverage
-
-**Maven** (`jacoco-maven-plugin`):
-```xml
-<configuration>
-  <excludes>
-    <exclude>**/generated/**</exclude>
-    <exclude>**/dto/**</exclude>
-    <exclude>**/config/**</exclude>
-  </excludes>
-</configuration>
-```
-
-**Gradle**:
-```groovy
-jacocoTestReport {
-    afterEvaluate {
-        classDirectories.setFrom(files(classDirectories.files.collect {
-            fileTree(dir: it, exclude: [
-                '**/generated/**',
-                '**/dto/**',
-                '**/config/**'
-            ])
-        }))
-    }
-}
-```
+**Exclude**: `**/generated/**`, `**/dto/**`, `**/config/**` (configure in plugin)  
+**Thresholds**: LINE 80%, BRANCH 75%, METHOD 70% (adjust per project)
 
 ---
 
 ## Phase 4: CI/CD Integration
 
-### GitHub Actions
-
-```yaml
-# .github/workflows/test.yml
-name: Test & Coverage
-
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version-file: '.java-version'
-          cache: 'maven'
-      
-      - name: Run tests with coverage
-        run: mvn clean test jacoco:report
-      
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./target/site/jacoco/jacoco.xml
-          fail_ci_if_error: true
-      
-      - name: Archive coverage report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: coverage-report
-          path: target/site/jacoco/
-```
-
-**For Gradle**:
-```yaml
-- name: Run tests with coverage
-  run: ./gradlew test jacocoTestReport
-
-- name: Upload coverage to Codecov
-  uses: codecov/codecov-action@v4
-  with:
-    files: ./build/reports/jacoco/test/jacocoTestReport.xml
-```
+**GitHub Actions**: Run `mvn test jacoco:report` or `./gradlew test jacocoTestReport`, upload to Codecov/Coveralls  
+**Report Paths**: Maven: `target/site/jacoco/jacoco.xml`, Gradle: `build/reports/jacoco/test/jacocoTestReport.xml`
 
 ---
 

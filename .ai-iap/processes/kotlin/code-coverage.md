@@ -20,122 +20,19 @@
 
 ---
 
-## Phase 2: Coverage Tool Configuration
+## Phase 2: Tool Configuration
 
-### Kover Setup (Recommended for Kotlin)
+**Kover** ⭐ (Kotlin): Apply plugin, configure `koverReport` with html/xml, exclude `*.generated`, verify minBound(80 LINE, 75 BRANCH)  
+**JaCoCo** (Alternative): Apply `jacoco` plugin, configure `jacocoTestReport` (xml/html), verification (minimum 0.80)
 
-```kotlin
-// build.gradle.kts
-plugins {
-    id("org.jetbrains.kotlinx.kover") version "0.7.5"
-}
-
-koverReport {
-    defaults {
-        html {
-            onCheck = true
-        }
-        xml {
-            onCheck = true
-        }
-    }
-    
-    filters {
-        excludes {
-            classes("*.BuildConfig", "*.Companion")
-            packages("*.generated")
-            annotatedBy("Generated")
-        }
-    }
-    
-    verify {
-        rule {
-            minBound(80)
-        }
-        rule {
-            minBound(75, coverageUnits = kotlinx.kover.gradle.plugin.dsl.CoverageUnit.BRANCH)
-        }
-    }
-}
-```
-
-**Commands**:
-```bash
-# Run tests with coverage
-./gradlew koverHtmlReport
-
-# Verify thresholds
-./gradlew koverVerify
-
-# Generate XML report
-./gradlew koverXmlReport
-```
-
-### JaCoCo Setup (Alternative)
-
-```kotlin
-// build.gradle.kts
-plugins {
-    id("jacoco")
-}
-
-jacoco {
-    toolVersion = "0.8.11"
-}
-
-tasks.jacocoTestReport {
-    dependsOn(tasks.test)
-    reports {
-        xml.required.set(true)
-        html.required.set(true)
-        csv.required.set(false)
-    }
-}
-
-tasks.jacocoTestCoverageVerification {
-    violationRules {
-        rule {
-            limit {
-                minimum = "0.80".toBigDecimal()
-            }
-        }
-    }
-}
-
-tasks.test {
-    finalizedBy(tasks.jacocoTestReport)
-}
-```
+**Commands**: `./gradlew koverHtmlReport koverVerify` or `./gradlew test jacocoTestReport`
 
 ---
 
-## Phase 3: Coverage Thresholds & Reporting
+## Phase 3: Exclusions & Thresholds
 
-### Kover Thresholds
-
-```kotlin
-koverReport {
-    verify {
-        rule {
-            name = "Minimal line coverage"
-            minBound(80)
-        }
-        rule {
-            name = "Minimal branch coverage"
-            minBound(75, coverageUnits = kotlinx.kover.gradle.plugin.dsl.CoverageUnit.BRANCH)
-        }
-        rule {
-            name = "Critical packages"
-            filters {
-                includes {
-                    packages("com.example.critical")
-                }
-            }
-            minBound(90)
-        }
-    }
-}
-```
+**Exclude**: `*.BuildConfig`, `*.Companion`, `*.generated` packages, `@Generated` annotated  
+**Thresholds**: LINE 80%, BRANCH 75%, critical packages 90%
 
 ### Exclude Code from Coverage
 
@@ -164,98 +61,15 @@ koverReport {
 
 ## Phase 4: CI/CD Integration
 
-### GitHub Actions
-
-```yaml
-# .github/workflows/test.yml
-name: Test & Coverage
-
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version-file: '.java-version'
-          cache: 'gradle'
-      
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-      
-      - name: Run tests with coverage
-        run: ./gradlew test koverXmlReport koverHtmlReport
-      
-      - name: Verify coverage thresholds
-        run: ./gradlew koverVerify
-      
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./build/reports/kover/report.xml
-          fail_ci_if_error: true
-      
-      - name: Archive coverage report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: coverage-report
-          path: build/reports/kover/html/
-```
+**GitHub Actions**: Run `./gradlew test koverXmlReport koverVerify`, upload to Codecov  
+**Report Paths**: Kover: `build/reports/kover/report.xml`, JaCoCo: `build/reports/jacoco/test/jacocoTestReport.xml`
 
 ---
 
-## Phase 5: Coverage Analysis & Improvement
+## Phase 5: Analysis & Improvement
 
-### Identify Uncovered Code
-
-```bash
-# Generate HTML report
-./gradlew koverHtmlReport
-
-# Open report
-open build/reports/kover/html/index.html
-```
-
-### Prioritize Critical Paths
-
-**Coverage priorities (high to low)**:
-1. Business logic (domain, use cases)
-2. Data validation (validators, mappers)
-3. Error handling
-4. ViewModels (Android) / Controllers (Ktor)
-5. Repositories
-
-### Android-Specific Exclusions
-
-```kotlin
-koverReport {
-    filters {
-        excludes {
-            // Android components (hard to test)
-            classes("*Activity", "*Fragment", "*Application")
-            
-            // Jetpack Compose
-            annotatedBy("androidx.compose.runtime.Composable")
-            
-            // Dependency injection
-            packages("*.di", "*.injection")
-            
-            // Generated code
-            classes("*_Factory", "*_MembersInjector")
-        }
-    }
-}
-```
+**Prioritize**: Business logic > Validation > Error handling > ViewModels/Controllers > Repositories  
+**Android Exclusions**: `*Activity`, `*Fragment`, `@Composable`, `*.di`, `*_Factory`
 
 ---
 
