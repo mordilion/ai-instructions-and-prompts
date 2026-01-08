@@ -1,43 +1,42 @@
-# Linting & Formatting Setup (TypeScript)
+# TypeScript Linting & Formatting - Copy This Prompt
 
-> **Goal**: Establish automated code linting and formatting in existing TypeScript projects
-
-## Phase 1: Choose Linting & Formatting Tools
-
-> **ALWAYS**: Use a linter (code quality) + formatter (code style)
-> **ALWAYS**: Run linter/formatter in CI/CD pipeline
-> **NEVER**: Mix multiple formatters (choose one)
-> **NEVER**: Skip pre-commit hooks
-
-### Recommended Tools
-
-| Tool | Type | Use Case | Setup |
-|------|------|----------|-------|
-| **ESLint** ⭐ | Linter | Code quality, errors | `npm install --save-dev eslint` |
-| **Prettier** ⭐ | Formatter | Code style | `npm install --save-dev prettier` |
-| **TypeScript Compiler** | Type checker | Type safety | Built-in (`tsc`) |
-| **Biome** | Linter + Formatter | All-in-one | `npm install --save-dev @biomejs/biome` |
+> **Type**: One-time setup process  
+> **When to use**: Setting up linting and code formatting  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 2: Linter Configuration
+## 📋 Complete Self-Contained Prompt
 
-### ESLint Setup
+```
+========================================
+TYPESCRIPT LINTING & FORMATTING
+========================================
 
+CONTEXT:
+You are setting up linting and code formatting for a TypeScript/Node.js project.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS use ESLint + Prettier
+- NEVER ignore errors without justification
+- Use .eslintrc and .prettierrc for configuration
+- Enforce in CI pipeline
+
+========================================
+PHASE 1 - ESLINT
+========================================
+
+Install:
 ```bash
-# Install
 npm install --save-dev eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin
-
-# Initialize
-npx eslint --init
 ```
 
-**Configuration** (`.eslintrc.json`):
+Create .eslintrc.json:
 ```json
 {
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "ecmaVersion": "latest",
+    "ecmaVersion": 2022,
     "sourceType": "module",
     "project": "./tsconfig.json"
   },
@@ -48,30 +47,36 @@ npx eslint --init
     "plugin:@typescript-eslint/recommended-requiring-type-checking"
   ],
   "rules": {
-    "@typescript-eslint/no-unused-vars": "error",
-    "@typescript-eslint/no-explicit-any": "warn",
-    "@typescript-eslint/explicit-function-return-type": "off",
-    "no-console": "warn"
+    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    "@typescript-eslint/explicit-function-return-type": "warn",
+    "@typescript-eslint/no-explicit-any": "error"
   },
-  "ignorePatterns": ["dist/", "build/", "node_modules/"]
+  "ignorePatterns": ["dist/", "node_modules/", "*.js"]
 }
 ```
 
----
-
-## Phase 3: Formatter Configuration
-
-### Prettier Setup
-
-```bash
-# Install
-npm install --save-dev prettier
-
-# Create config
-echo {} > .prettierrc.json
+Add scripts to package.json:
+```json
+{
+  "scripts": {
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix"
+  }
+}
 ```
 
-**Configuration** (`.prettierrc.json`):
+Deliverable: ESLint configured
+
+========================================
+PHASE 2 - PRETTIER
+========================================
+
+Install:
+```bash
+npm install --save-dev prettier eslint-config-prettier
+```
+
+Create .prettierrc:
 ```json
 {
   "semi": true,
@@ -79,86 +84,75 @@ echo {} > .prettierrc.json
   "singleQuote": true,
   "printWidth": 100,
   "tabWidth": 2,
-  "useTabs": false,
-  "arrowParens": "always",
-  "endOfLine": "lf"
+  "useTabs": false
 }
 ```
 
-**Ignore** (`.prettierignore`):
-```
-dist
-build
-node_modules
-coverage
-*.md
-```
-
-### ESLint + Prettier Integration
-
-```bash
-# Install integration
-npm install --save-dev eslint-config-prettier eslint-plugin-prettier
-```
-
-**Update** (`.eslintrc.json`):
+Update .eslintrc.json:
 ```json
 {
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
-    "plugin:prettier/recommended"
+    "prettier"
   ]
 }
 ```
 
----
-
-## Phase 4: IDE Integration & Pre-commit Hooks
-
-### VS Code Setup
-
-**Extensions** (`.vscode/extensions.json`):
+Add scripts:
 ```json
 {
-  "recommendations": [
-    "dbaeumer.vscode-eslint",
-    "esbenp.prettier-vscode"
-  ]
+  "scripts": {
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\""
+  }
 }
 ```
 
-**Settings** (`.vscode/settings.json`):
+Deliverable: Prettier configured
+
+========================================
+PHASE 3 - CI INTEGRATION
+========================================
+
+Add to .github/workflows/ci.yml:
+```yaml
+- name: Lint
+  run: npm run lint
+
+- name: Format check
+  run: npm run format:check
+
+- name: Type check
+  run: npm run type-check
+```
+
+Add to package.json:
 ```json
 {
-  "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true
-  },
-  "eslint.validate": ["javascript", "typescript"]
+  "scripts": {
+    "type-check": "tsc --noEmit"
+  }
 }
 ```
 
-### Pre-commit Hooks (Husky + lint-staged)
+Deliverable: Automated checks in CI
 
+========================================
+PHASE 4 - PRE-COMMIT HOOKS
+========================================
+
+Install husky and lint-staged:
 ```bash
-# Install
 npm install --save-dev husky lint-staged
 npx husky init
 ```
 
-**Configuration** (`package.json`):
+Update package.json:
 ```json
 {
-  "scripts": {
-    "lint": "eslint . --ext .ts,.tsx",
-    "lint:fix": "eslint . --ext .ts,.tsx --fix",
-    "format": "prettier --write \"src/**/*.{ts,tsx,json,md}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,tsx,json,md}\""
-  },
   "lint-staged": {
-    "*.{ts,tsx}": [
+    "*.ts": [
       "eslint --fix",
       "prettier --write"
     ]
@@ -166,148 +160,42 @@ npx husky init
 }
 ```
 
-**Husky Hook** (`.husky/pre-commit`):
+Create .husky/pre-commit:
 ```bash
 #!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
 npx lint-staged
 ```
 
----
+Deliverable: Pre-commit hooks enabled
 
-## Phase 5: CI/CD Integration
+========================================
+BEST PRACTICES
+========================================
 
-### GitHub Actions
+- Use ESLint + Prettier
+- Disable conflicting rules (eslint-config-prettier)
+- Enable strict TypeScript rules
+- Add pre-commit hooks
+- Fail CI on violations
+- Exclude dist and node_modules
 
-```yaml
-# .github/workflows/lint.yml
-name: Lint & Format Check
+========================================
+EXECUTION
+========================================
 
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-
-jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Run ESLint
-        run: npm run lint
-      
-      - name: Run Prettier Check
-        run: npm run format:check
-      
-      - name: Run TypeScript Compiler
-        run: npx tsc --noEmit
+START: Configure ESLint (Phase 1)
+CONTINUE: Configure Prettier (Phase 2)
+CONTINUE: Add CI checks (Phase 3)
+OPTIONAL: Add pre-commit hooks (Phase 4)
+REMEMBER: Strict rules, enforce in CI
 ```
 
 ---
 
-## Troubleshooting
+## Quick Reference
 
-| Issue | Solution |
-|-------|----------|
-| **ESLint slow** | Use `--cache` flag, exclude `node_modules` |
-| **Prettier conflicts** | Use `eslint-config-prettier` to disable style rules |
-| **TypeScript errors in tests** | Add separate `tsconfig.spec.json` |
-| **Husky hooks not running** | Run `npx husky install` after clone |
-
----
-
-## Best Practices
-
-> **ALWAYS**: Format code before commit (pre-commit hooks)
-> **ALWAYS**: Run linter in CI/CD
-> **ALWAYS**: Fix all linter errors before merge
-> **ALWAYS**: Use consistent style across team (.editorconfig)
-> **NEVER**: Disable linter rules without team discussion
-> **NEVER**: Commit code with linter errors
-> **NEVER**: Mix tabs and spaces
-
----
-
-## AI Self-Check
-
-- [ ] ESLint configured with TypeScript support?
-- [ ] Prettier configured with consistent style?
-- [ ] ESLint + Prettier integrated (no conflicts)?
-- [ ] Pre-commit hooks installed (Husky + lint-staged)?
-- [ ] VS Code extensions configured?
-- [ ] CI/CD runs linter and formatter checks?
-- [ ] All linter errors fixed?
-- [ ] TypeScript compiler (`tsc --noEmit`) passing?
-- [ ] `.editorconfig` file present?
-- [ ] Team trained on linting/formatting standards?
-
----
-
-## Tools Comparison
-
-| Tool | Type | Speed | Extensibility | Best For |
-|------|------|-------|---------------|----------|
-| ESLint | Linter | Medium | ⭐⭐⭐ | Code quality |
-| Prettier | Formatter | Fast | ⭐ | Code style |
-| TypeScript | Type checker | Medium | N/A | Type safety |
-| Biome | Both | Very Fast | ⭐⭐ | All-in-one |
-
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (simple)  
-> **When to use**: When setting up code linting and formatting tools
-
-### Complete Implementation Prompt
-
-```
-CONTEXT:
-You are configuring code linting and formatting for this project.
-
-CRITICAL REQUIREMENTS:
-- ALWAYS configure both linting (quality) and formatting (style)
-- ALWAYS integrate with pre-commit hooks
-- ALWAYS add to CI/CD pipeline
-- ALWAYS use consistent configuration across team
-
-IMPLEMENTATION STEPS:
-
-1. CHOOSE TOOLS:
-   Select appropriate linter and formatter for the language (see Tech Stack section)
-
-2. CONFIGURE LINTER:
-   Create configuration file (.eslintrc, ruff.toml, etc.)
-   Set rules (recommended: start with recommended preset)
-
-3. CONFIGURE FORMATTER:
-   Create configuration file (if separate from linter)
-   Set style rules (indentation, line length, etc.)
-
-4. INTEGRATE WITH EDITOR:
-   Configure IDE/editor plugins
-   Enable format-on-save
-
-5. ADD PRE-COMMIT HOOKS:
-   Install pre-commit hooks (husky, pre-commit, etc.)
-   Configure to run linter and formatter
-
-6. ADD TO CI/CD:
-   Add linting step to pipeline
-   Fail build on linting errors
-
-DELIVERABLE:
-- Linter and formatter configured
-- Pre-commit hooks active
-- CI/CD integration complete
-
-START: Choose tools and create configuration files.
-```
+**What you get**: Complete linting and formatting setup  
+**Time**: 30 minutes  
+**Output**: ESLint, Prettier, husky, lint-staged, CI integration

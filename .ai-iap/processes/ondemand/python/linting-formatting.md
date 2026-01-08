@@ -1,135 +1,139 @@
-# Linting & Formatting Setup (Python)
+# Python Linting & Formatting - Copy This Prompt
 
-> **Goal**: Establish automated code linting and formatting in existing Python projects
-
-## Phase 1: Choose Linting & Formatting Tools
-
-> **ALWAYS**: Use a linter (code quality) + formatter (code style)
-> **ALWAYS**: Run linter/formatter in CI/CD pipeline
-> **NEVER**: Mix multiple formatters (choose one)
-> **NEVER**: Skip pre-commit hooks
-
-### Recommended Tools
-
-| Tool | Type | Use Case | Setup |
-|------|------|----------|-------|
-| **Ruff** ⭐ | Linter + Formatter | All-in-one, fast | `pip install ruff` |
-| **Black** | Formatter | Code style | `pip install black` |
-| **isort** | Import sorter | Import organization | `pip install isort` |
-| **flake8** | Linter | Code quality | `pip install flake8` |
-| **mypy** | Type checker | Type safety | `pip install mypy` |
+> **Type**: One-time setup process  
+> **When to use**: Setting up linting and code formatting  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 2: Linter Configuration
+## 📋 Complete Self-Contained Prompt
 
-**Ruff** ⭐ (All-in-one):
+```
+========================================
+PYTHON LINTING & FORMATTING
+========================================
+
+CONTEXT:
+You are setting up linting and code formatting for a Python project.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS use Ruff (replaces Black, isort, flake8)
+- NEVER ignore errors without justification
+- Use pyproject.toml for configuration
+- Enforce in CI pipeline
+
+========================================
+PHASE 1 - RUFF SETUP
+========================================
+
+Install:
 ```bash
 pip install ruff
-ruff check .           # Lint
-ruff check --fix .     # Auto-fix
-ruff format .          # Format
+# Or add to requirements-dev.txt
 ```
 
-**Configuration** (`pyproject.toml`):
+Create pyproject.toml:
 ```toml
 [tool.ruff]
 line-length = 100
 target-version = "py311"
 
 [tool.ruff.lint]
-select = ["E", "W", "F", "I", "N", "UP", "B", "C4"]
-ignore = ["E501"]  # line too long (handled by formatter)
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+]
 
-[tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401"]  # Unused imports OK
-"tests/**/*.py" = ["S101"]  # assert OK in tests
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.ruff.lint.isort]
+known-first-party = ["myapp"]
 ```
 
-**flake8** (Alternative):
+Run:
 ```bash
-pip install flake8
-flake8 .
+# Lint
+ruff check .
+
+# Fix
+ruff check --fix .
+
+# Format
+ruff format .
 ```
 
-**Configuration** (`.flake8`):
-```ini
-[flake8]
-max-line-length = 100
-ignore = E203,W503
-exclude = .git,__pycache__,venv
-```
+Deliverable: Ruff configured
 
----
+========================================
+PHASE 2 - TYPE CHECKING
+========================================
 
-## Phase 3: Formatter Configuration
-
-**Ruff Format** ⭐ (built-in):
+Install mypy:
 ```bash
-ruff format .           # Format
-ruff format --check .   # Check only
+pip install mypy
 ```
 
-**Black** (Alternative):
-```bash
-pip install black
-black .                 # Format
-black --check .         # Check only
-```
-
-**Configuration** (`pyproject.toml`):
+Configure in pyproject.toml:
 ```toml
-[tool.black]
-line-length = 100
-target-version = ['py311']
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+exclude = [
+    "tests/",
+    "migrations/",
+]
 ```
 
-### isort Setup (Import Sorting)
-
+Run:
 ```bash
-# Install
-pip install isort
-
-# Sort imports
-isort .
-
-# Check sorting
-isort --check-only .
+mypy .
 ```
 
-**Configuration** (`pyproject.toml`):
-```toml
-[tool.isort]
-profile = "black"
-line_length = 100
-skip_gitignore = true
+Deliverable: Type checking enabled
+
+========================================
+PHASE 3 - CI INTEGRATION
+========================================
+
+Add to .github/workflows/ci.yml:
+```yaml
+- name: Install dev dependencies
+  run: pip install ruff mypy
+
+- name: Lint
+  run: ruff check .
+
+- name: Format check
+  run: ruff format --check .
+
+- name: Type check
+  run: mypy .
 ```
 
----
+Deliverable: Automated checks in CI
 
-## Phase 4: IDE Integration & Pre-commit Hooks
+========================================
+PHASE 4 - PRE-COMMIT HOOKS
+========================================
 
-**VS Code** (`.vscode/settings.json`):
-```json
-{
-  "editor.formatOnSave": true,
-  "[python]": {
-    "editor.defaultFormatter": "charliermarsh.ruff",
-    "editor.codeActionsOnSave": {
-      "source.fixAll": true,
-      "source.organizeImports": true
-    }
-  }
-}
-```
-
-**Pre-commit Hooks**:
+Install pre-commit:
 ```bash
 pip install pre-commit
-pre-commit install
 ```
 
-**Configuration** (`.pre-commit-config.yaml`):
+Create .pre-commit-config.yaml:
 ```yaml
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
@@ -138,116 +142,46 @@ repos:
       - id: ruff
         args: [--fix]
       - id: ruff-format
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.8.0
     hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
+      - id: mypy
+```
+
+Install:
+```bash
+pre-commit install
+```
+
+Deliverable: Pre-commit checks enabled
+
+========================================
+BEST PRACTICES
+========================================
+
+- Use Ruff (faster, replaces multiple tools)
+- Enable type checking with mypy
+- Configure in pyproject.toml
+- Add pre-commit hooks
+- Fail CI on violations
+- Exclude tests from strict typing
+
+========================================
+EXECUTION
+========================================
+
+START: Configure Ruff (Phase 1)
+CONTINUE: Add mypy (Phase 2)
+CONTINUE: Add CI checks (Phase 3)
+OPTIONAL: Add pre-commit hooks (Phase 4)
+REMEMBER: Use Ruff, enforce types, CI checks
 ```
 
 ---
 
-## Phase 5: CI/CD Integration
+## Quick Reference
 
-**GitHub Actions**: Install `ruff` + `mypy`, run `ruff check .`, `ruff format --check .`, `mypy src/`  
-**Key Commands**: `pip install ruff mypy`, cache pip dependencies
-
----
-
-## Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| **Ruff not found** | Install: `pip install ruff` |
-| **Black conflicts with isort** | Use Ruff (includes both) or set `profile = "black"` in isort |
-| **mypy type errors** | Add `# type: ignore` comments or configure `mypy.ini` |
-| **CI fails on formatting** | Run `ruff format .` locally before commit |
-
----
-
-## Best Practices
-
-> **ALWAYS**: Format code before commit (pre-commit hooks)
-> **ALWAYS**: Run linter in CI/CD
-> **ALWAYS**: Fix all linter errors before merge
-> **ALWAYS**: Use type hints and mypy
-> **NEVER**: Disable linter rules without justification
-> **NEVER**: Commit code with linter errors
-> **NEVER**: Mix tabs and spaces (use spaces)
-
----
-
-## AI Self-Check
-
-- [ ] Ruff or flake8 configured and passing?
-- [ ] Ruff format or Black configured?
-- [ ] isort configured (or Ruff with import sorting)?
-- [ ] mypy configured for type checking?
-- [ ] Pre-commit hooks installed?
-- [ ] VS Code extensions configured?
-- [ ] CI/CD runs linter and formatter checks?
-- [ ] All linter errors fixed?
-- [ ] Type hints added to functions?
-- [ ] Team trained on coding standards?
-
----
-
-## Tools Comparison
-
-| Tool | Type | Speed | Extensibility | Best For |
-|------|------|-------|---------------|----------|
-| Ruff | Both | Very Fast | ⭐⭐ | All-in-one |
-| Black | Formatter | Fast | ⭐ | Code style |
-| flake8 | Linter | Medium | ⭐⭐⭐ | Code quality |
-| mypy | Type checker | Medium | ⭐⭐ | Type safety |
-
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (simple)  
-> **When to use**: When setting up code linting and formatting tools
-
-### Complete Implementation Prompt
-
-```
-CONTEXT:
-You are configuring code linting and formatting for this project.
-
-CRITICAL REQUIREMENTS:
-- ALWAYS configure both linting (quality) and formatting (style)
-- ALWAYS integrate with pre-commit hooks
-- ALWAYS add to CI/CD pipeline
-- ALWAYS use consistent configuration across team
-
-IMPLEMENTATION STEPS:
-
-1. CHOOSE TOOLS:
-   Select appropriate linter and formatter for the language (see Tech Stack section)
-
-2. CONFIGURE LINTER:
-   Create configuration file (.eslintrc, ruff.toml, etc.)
-   Set rules (recommended: start with recommended preset)
-
-3. CONFIGURE FORMATTER:
-   Create configuration file (if separate from linter)
-   Set style rules (indentation, line length, etc.)
-
-4. INTEGRATE WITH EDITOR:
-   Configure IDE/editor plugins
-   Enable format-on-save
-
-5. ADD PRE-COMMIT HOOKS:
-   Install pre-commit hooks (husky, pre-commit, etc.)
-   Configure to run linter and formatter
-
-6. ADD TO CI/CD:
-   Add linting step to pipeline
-   Fail build on linting errors
-
-DELIVERABLE:
-- Linter and formatter configured
-- Pre-commit hooks active
-- CI/CD integration complete
-
-START: Choose tools and create configuration files.
-```
+**What you get**: Complete linting and formatting setup with Ruff  
+**Time**: 30 minutes  
+**Output**: Ruff, mypy, pre-commit hooks, CI integration
