@@ -166,45 +166,7 @@ v2.get("users") { req in /* V2 logic */ }
 
 ### 3.3 Consistent Error Response Format
 
-> **Reference**: See general documentation standards for recommended error format
-
-**Vapor Implementation**:
-```swift
-struct ErrorResponse: Content {
-    let error: ErrorDetail
-}
-
-struct ErrorDetail: Content {
-    let code: String
-    let message: String
-    let details: [ValidationError]
-    let timestamp: String
-    let requestId: String?
-}
-
-struct ValidationError: Content {
-    let field: String
-    let issue: String
-}
-
-// Middleware for consistent error handling
-app.middleware.use(ErrorMiddleware { req, error in
-    return req.eventLoop.makeSucceededFuture(
-        Response(
-            status: .badRequest,
-            body: .init(string: try! JSONEncoder().encode(ErrorResponse(
-                error: ErrorDetail(
-                    code: "VALIDATION_ERROR",
-                    message: error.localizedDescription,
-                    details: [],
-                    timestamp: ISO8601DateFormatter().string(from: Date()),
-                    requestId: req.headers.first(name: "X-Request-ID")
-                )
-            )).utf8String!)
-        )
-    )
-})
-```
+> **Reference**: See general documentation standards for recommended error format and implementation
 
 ### 3.4 Rate Limiting Documentation
 

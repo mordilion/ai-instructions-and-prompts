@@ -157,54 +157,7 @@ async def get_users():
 
 ### 4.4 Consistent Error Response Format
 
-> **Reference**: See general documentation standards for recommended error format
-
-**FastAPI Implementation**:
-```python
-from pydantic import BaseModel
-from datetime import datetime
-
-class ErrorDetail(BaseModel):
-    field: str
-    issue: str
-
-class ErrorResponse(BaseModel):
-    error: dict[str, any]
-
-@app.exception_handler(ValidationError)
-async def validation_exception_handler(request: Request, exc: ValidationError):
-    return JSONResponse(
-        status_code=400,
-        content={
-            "error": {
-                "code": "VALIDATION_ERROR",
-                "message": "Invalid input",
-                "details": [{"field": e["loc"][-1], "issue": e["msg"]} for e in exc.errors()],
-                "timestamp": datetime.utcnow().isoformat() + "Z",
-                "request_id": request.state.request_id
-            }
-        }
-    )
-```
-
-**Django REST Framework**:
-```python
-from rest_framework.views import exception_handler
-
-def custom_exception_handler(exc, context):
-    response = exception_handler(exc, context)
-    if response is not None:
-        response.data = {
-            "error": {
-                "code": exc.default_code.upper(),
-                "message": str(exc),
-                "details": response.data if isinstance(response.data, list) else [],
-                "timestamp": datetime.utcnow().isoformat() + "Z",
-                "request_id": context['request'].META.get('HTTP_X_REQUEST_ID')
-            }
-        }
-    return response
-```
+> **Reference**: See general documentation standards for recommended error format and implementation
 
 ---
 

@@ -165,42 +165,7 @@ export class ProtectedController { }
 
 ### 3.4 Consistent Error Response Format
 
-> **Reference**: See general documentation standards for recommended error format
-
-**NestJS Implementation**:
-```typescript
-export class ErrorResponseDto {
-  @ApiProperty()
-  error: {
-    code: string;
-    message: string;
-    details?: Array<{ field: string; issue: string }>;
-    timestamp: string;
-    request_id: string;
-  };
-}
-
-@ApiResponse({ 
-  status: 400, 
-  description: 'Validation error',
-  type: ErrorResponseDto 
-})
-```
-
-**Express.js Implementation**:
-```typescript
-app.use((err, req, res, next) => {
-  res.status(err.status || 500).json({
-    error: {
-      code: err.code || 'INTERNAL_ERROR',
-      message: err.message,
-      details: err.details || [],
-      timestamp: new Date().toISOString(),
-      request_id: req.id
-    }
-  });
-});
-```
+> **Reference**: See general documentation standards for recommended error format and implementation
 
 ---
 

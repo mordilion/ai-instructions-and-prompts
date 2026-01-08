@@ -165,61 +165,7 @@ Route::prefix('v2')->group(function () {
 
 ### 3.4 Consistent Error Response Format
 
-> **Reference**: See general documentation standards for recommended error format
-
-**Laravel Implementation**:
-```php
-namespace App\Exceptions;
-
-use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
-
-class Handler extends ExceptionHandler
-{
-    public function render($request, Throwable $exception)
-    {
-        if ($request->expectsJson()) {
-            return response()->json([
-                'error' => [
-                    'code' => $this->getErrorCode($exception),
-                    'message' => $exception->getMessage(),
-                    'details' => $this->getErrorDetails($exception),
-                    'timestamp' => now()->toIso8601String(),
-                    'request_id' => $request->id()
-                ]
-            ], $this->getStatusCode($exception));
-        }
-        
-        return parent::render($request, $exception);
-    }
-}
-```
-
-**Symfony Implementation**:
-```php
-namespace App\EventListener;
-
-use Symfony\Component\HttpKernel\Event\ExceptionEvent;
-
-class ExceptionListener
-{
-    public function onKernelException(ExceptionEvent $event): void
-    {
-        $exception = $event->getThrowable();
-        
-        $response = new JsonResponse([
-            'error' => [
-                'code' => $exception->getCode() ?: 'INTERNAL_ERROR',
-                'message' => $exception->getMessage(),
-                'details' => [],
-                'timestamp' => (new \DateTime())->format('c'),
-                'request_id' => $event->getRequest()->headers->get('X-Request-ID')
-            ]
-        ], $exception->getCode() ?: 500);
-        
-        $event->setResponse($response);
-    }
-}
-```
+> **Reference**: See general documentation standards for recommended error format and implementation
 
 ---
 
