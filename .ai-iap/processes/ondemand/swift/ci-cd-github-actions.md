@@ -1,277 +1,171 @@
-# CI/CD Implementation Process - Swift (GitHub Actions)
+# Swift CI/CD with GitHub Actions - Copy This Prompt
 
-> **Purpose**: Establish comprehensive CI/CD pipeline with GitHub Actions for Swift applications (iOS, macOS, Server/Vapor)
-
-> **Platform**: This guide is for **GitHub Actions**. For GitLab CI, Azure DevOps, CircleCI, Bitrise, or Codemagic, adapt the workflow syntax accordingly.
-
----
-
-## Prerequisites
-
-> **BEFORE starting**:
-> - Working Swift application (iOS, macOS, or Vapor)
-> - Git repository with remote (GitHub)
-> - Xcode project or Swift Package configured
-> - Tests exist (XCTest)
-> - Swift/Xcode version defined in .xcode-version or .swift-version
+> **Type**: One-time setup process  
+> **When to use**: Setting up CI/CD pipeline for Swift project  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Workflow Adaptation
-
-> **IMPORTANT**: Phases below focus on OBJECTIVES. Use your team's workflow.
-
----
-
-## Phase 1: Basic CI Pipeline
-
-**Objective**: Establish foundational CI pipeline with build, lint, and test automation
-
-### 1.1 Basic Build & Test Workflow
-
-> **ALWAYS include**:
-> - Swift/Xcode version (read from `.xcode-version` or `.swift-version`)
-> - iOS: Use macos-latest runner
-> - Server (Vapor): Can use ubuntu-latest with Swift Docker
-> - Build: `xcodebuild` or `swift build`
-> - Run tests: `xcodebuild test` or `swift test`
-> - Collect coverage: Xcode Code Coverage or llvm-cov
-
-> **Version Strategy**:
-> - **Best**: Use `.xcode-version` file for Xcode version
-> - **Good**: Specify in workflow with `xcode-version` parameter
-> - **iOS**: Match minimum deployment target in project
-
-> **NEVER**:
-> - Hardcode Xcode version without project config
-> - Skip code signing setup for iOS builds
-> - Run tests without simulator selection (iOS)
-> - Ignore compiler warnings
-
-**Key Workflow Structure**:
-- Trigger: push (main/develop), pull_request
-- Runner: macos-latest (iOS/macOS) or ubuntu-latest (Vapor)
-- Jobs: lint → test → build
-- Cache: Swift Package Manager dependencies
-
-### 1.2 Coverage Reporting
-
-> **ALWAYS**:
-> - Enable code coverage in scheme (Xcode)
-> - Generate coverage reports
-> - Upload to Codecov/Coveralls
-> - Set minimum coverage threshold (80%+)
-
-**Coverage Commands**:
-```bash
-# Xcode
-xcodebuild test -scheme MyApp -enableCodeCoverage YES -resultBundlePath ./TestResults
-
-# Vapor/SPM
-swift test --enable-code-coverage
-```
-
-**Verify**: Pipeline runs, builds succeed, tests pass, coverage generated, dependencies cached
-
----
-
-## Phase 2: Code Quality & Security
-
-**Objective**: Add code quality and security scanning to CI pipeline
-
-### 2.1 Code Quality & Security
-
-> **ALWAYS**: SwiftLint, SwiftFormat, Dependabot (Swift Package Manager), CodeQL (swift), fail on lint errors
-> **NEVER**: Suppress warnings globally, allow force unwrapping without justification
-
-```yaml
-# .github/dependabot.yml
-version: 2
-updates:
-  - package-ecosystem: "swift"
-    directory: "/"
-    schedule: { interval: "weekly" }
-```
-
-**Verify**: SwiftLint passes, SwiftFormat applied, Dependabot creates PRs, CodeQL completes
-
----
-
-## Phase 3: Deployment Pipeline
-
-**Objective**: Automate app deployment to relevant environments/platforms
-
-### 3.1 Environment Configuration
-
-> **ALWAYS**:
-> - Define environments: development, staging, production
-> - Use GitHub Environments with protection rules
-> - Store secrets: certificates, provisioning profiles, API keys
-> - Use Xcode configurations for environment-specific builds
-
-**Protection Rules**: Production (require approval, restrict to main), Staging (auto-deploy to TestFlight), Development (internal distribution)
-
-### 3.2 Code Signing, Build & Deployment
-
-**Code Signing**: Store certificates/profiles as secrets, fastlane match, decode+import to keychain  
-**Archive**: `xcodebuild archive` + `exportArchive`, version with build number  
-**Platforms**: App Store Connect/TestFlight (fastlane), Firebase App Distribution, Vapor (Docker/AWS)  
-**Smoke Tests**: Health check (Vapor), UI tests on TestFlight (iOS/macOS)  
-**NEVER**: Include dev certificates in production, ship with debug symbols
-
-**Verify**: Code signing works, archive succeeds, TestFlight upload succeeds, smoke tests pass
-
----
-
-## Phase 4: Advanced Features
-
-**Objective**: Add advanced CI/CD capabilities (integration tests, release automation)
-
-### 4.1 Advanced Testing & Automation
-
-**UI Testing**: Separate workflow, simulators (multiple iOS versions), run nightly  
-**Performance**: XCTest measureBlock, track launch time/memory, fail if regresses >10%  
-**Release**: fastlane increment_build_number, release notes, GitHub Releases, App Store submission
-
-### 4.2 Notifications
-
-> **ALWAYS**: Slack webhook on build/deploy success/failure, Email for TestFlight uploads
-
-**Verify**: UI tests run on schedule, performance tracked, releases automated, notifications received
-
----
-
-## Platform-Specific Notes
-
-| Platform | Notes |
-|----------|-------|
-| **iOS App** | Code sign with certificates; Upload to App Store Connect; Use fastlane for automation |
-| **macOS App** | Notarize with Apple; Code sign with Developer ID; Distribute via DMG or Mac App Store |
-| **Vapor (Server)** | Build on Linux (ubuntu-latest); Deploy to AWS/Heroku; Use Docker for consistency |
-| **Swift Package** | Build with `swift build`; Test with `swift test`; Publish to Swift Package Index |
-
----
-
-## Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| **Code signing fails in CI** | Verify certificates base64-encoded correctly, check keychain password, ensure provisioning profile matches bundle ID |
-| **Tests fail only in CI** | Check simulator availability, ensure Xcode version matches, verify test scheme settings |
-| **Archive export fails** | Validate ExportOptions.plist, check entitlements, verify provisioning profile type |
-| **Slow builds in CI** | Enable caching for DerivedData and SPM, use incremental builds |
-| **Want to use Bitrise / Codemagic** | Bitrise/Codemagic: Specialized for mobile, better simulator support, simpler code signing - core concepts remain same |
-
----
-
-## AI Self-Check
-
-- [ ] CI pipeline runs on push and PR
-- [ ] Xcode/Swift version pinned
-- [ ] SwiftLint passes
-- [ ] All tests pass with coverage ≥80%
-- [ ] Code signing configured (iOS/macOS)
-- [ ] Archive builds successfully
-- [ ] Upload to TestFlight/App Store works (iOS)
-- [ ] Deployment succeeds (Vapor/server)
-- [ ] Performance tests tracked
-- [ ] UI tests run on schedule (iOS/macOS)
-
----
-
-## Documentation Updates
-
-> **AFTER all phases complete**:
-> - Update README.md with CI/CD badges
-> - Document deployment process
-> - Add runbook for common issues
-> - Onboarding guide for new developers
-
----
-
-## Final Commit
-
-```bash
-# Merge all phases and tag release using your team's workflow
-git tag -a v1.0.0-ci -m "CI/CD pipeline implemented"
-git push --tags
-```
-
----
-
-**Process Complete** ✅
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (multi-phase)  
-> **When to use**: When setting up CI/CD pipeline with GitHub Actions
-
-### Complete Implementation Prompt
+## 📋 Complete Self-Contained Prompt
 
 ```
+========================================
+SWIFT CI/CD - GITHUB ACTIONS
+========================================
+
 CONTEXT:
-You are implementing CI/CD pipeline with GitHub Actions for this project.
+You are implementing CI/CD pipeline with GitHub Actions for a Swift project.
 
 CRITICAL REQUIREMENTS:
-- ALWAYS detect language version from project files
-- ALWAYS match detected version in GitHub Actions workflow
-- ALWAYS use caching for dependencies
-- NEVER hardcode secrets in workflow files (use GitHub Secrets)
-- Use team's Git workflow (adapt to existing branching strategy)
+- ALWAYS detect Swift version from .swift-version
+- ALWAYS use SPM or CocoaPods caching
+- NEVER hardcode secrets in workflows
+- Use team's Git workflow
 
-PLATFORM NOTE:
-This guide uses GitHub Actions. For other platforms (GitLab CI, Azure DevOps, CircleCI, Jenkins), adapt the workflow syntax while keeping the same phases and objectives.
+========================================
+PHASE 1 - BASIC CI PIPELINE
+========================================
 
----
+Create .github/workflows/ci.yml:
 
-PHASE 1 - BASIC CI PIPELINE:
-Objective: Set up basic build and test workflow
+```yaml
+name: CI
 
-1. Create .github/workflows/ci.yml
-2. Detect and configure language version
-3. Set up dependency caching
-4. Add build and test steps with coverage
-5. Configure triggers (push/pull request)
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
 
-Deliverable: Basic CI pipeline running on every push
-
----
-
-PHASE 2 - CODE QUALITY & SECURITY:
-Objective: Add linting and security scanning
-
-1. Add linting step
-2. Add dependency security scanning
-3. Add SAST scanning (CodeQL, Snyk, etc.)
-4. Configure to fail on critical issues
-
-Deliverable: Automated code quality and security checks
-
----
-
-PHASE 3 - DEPLOYMENT PIPELINE (Optional):
-Objective: Add deployment automation
-
-1. Configure deployment environments
-2. Add deployment steps with approval gates
-3. Configure secrets
-4. Add deployment verification
-
-Deliverable: Automated deployment on successful builds
-
----
-
-PHASE 4 - ADVANCED FEATURES (Optional):
-Objective: Add advanced CI/CD capabilities
-
-1. Matrix testing (multiple versions/platforms)
-2. Performance testing
-3. Release automation
-4. Notifications
-
-Deliverable: Production-grade CI/CD pipeline
-
----
-
-START: Execute Phase 1. Detect language version, create basic CI workflow.
+jobs:
+  test:
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: '15.0'
+    
+    - name: Cache SPM
+      uses: actions/cache@v3
+      with:
+        path: .build
+        key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+    
+    - name: Build
+      run: swift build
+    
+    - name: Test
+      run: swift test --enable-code-coverage
+    
+    - name: Coverage
+      run: |
+        xcrun llvm-cov export -format="lcov" \
+          .build/debug/*PackageTests.xctest/Contents/MacOS/*PackageTests \
+          -instr-profile .build/debug/codecov/default.profdata > coverage.lcov
+    
+    - name: Upload coverage
+      uses: codecov/codecov-action@v3
+      with:
+        files: coverage.lcov
 ```
+
+For iOS projects with Xcode:
+```yaml
+    - name: Build and Test
+      run: |
+        xcodebuild test \
+          -scheme YourApp \
+          -destination 'platform=iOS Simulator,name=iPhone 14' \
+          -enableCodeCoverage YES
+```
+
+Deliverable: Basic CI pipeline running
+
+========================================
+PHASE 2 - CODE QUALITY
+========================================
+
+Add to workflow:
+
+```yaml
+    - name: SwiftLint
+      run: |
+        brew install swiftlint
+        swiftlint
+    
+    - name: SwiftFormat
+      run: |
+        brew install swiftformat
+        swiftformat --lint .
+```
+
+Deliverable: Automated code quality checks
+
+========================================
+PHASE 3 - DEPLOYMENT (Optional)
+========================================
+
+Add deployment to TestFlight:
+
+```yaml
+  deploy:
+    needs: test
+    runs-on: macos-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build Archive
+      run: |
+        xcodebuild archive \
+          -scheme YourApp \
+          -archivePath build/YourApp.xcarchive
+    - name: Export IPA
+      run: |
+        xcodebuild -exportArchive \
+          -archivePath build/YourApp.xcarchive \
+          -exportPath build \
+          -exportOptionsPlist ExportOptions.plist
+    - name: Upload to TestFlight
+      uses: apple-actions/upload-testflight-build@v1
+      with:
+        app-path: build/YourApp.ipa
+        issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+        api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
+        api-private-key: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+```
+
+Deliverable: Automated deployment
+
+========================================
+BEST PRACTICES
+========================================
+
+- Cache SPM/CocoaPods dependencies
+- Use SwiftLint for code quality
+- Run tests on iOS Simulator
+- Collect code coverage
+- Use fastlane for deployment
+- Set up branch protection
+
+========================================
+EXECUTION
+========================================
+
+START: Create basic CI pipeline (Phase 1)
+CONTINUE: Add quality checks (Phase 2)
+OPTIONAL: Add deployment (Phase 3)
+REMEMBER: Detect version, use caching
+```
+
+---
+
+## Quick Reference
+
+**What you get**: Complete CI/CD pipeline with Xcode and Swift tooling  
+**Time**: 1-2 hours  
+**Output**: .github/workflows/ci.yml

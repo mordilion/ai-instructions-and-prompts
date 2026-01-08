@@ -1,292 +1,148 @@
-# CI/CD Implementation Process - PHP (GitHub Actions)
+# PHP CI/CD with GitHub Actions - Copy This Prompt
 
-> **Purpose**: Establish comprehensive CI/CD pipeline with GitHub Actions for PHP applications
-
-> **Platform**: This guide is for **GitHub Actions**. For GitLab CI, Azure DevOps, CircleCI, or Jenkins, adapt the workflow syntax accordingly.
-
----
-
-## Prerequisites
-
-> **BEFORE starting**:
-> - Working PHP application
-> - Git repository with remote (GitHub)
-> - Composer configured (composer.json)
-> - Tests exist (PHPUnit, Pest)
-> - PHP version defined in composer.json
+> **Type**: One-time setup process  
+> **When to use**: Setting up CI/CD pipeline for PHP project  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Workflow Adaptation
-
-> **IMPORTANT**: Phases below focus on OBJECTIVES. Use your team's workflow.
-
----
-
-## Phase 1: Basic CI Pipeline
-
-**Objective**: Establish foundational CI pipeline with build, lint, and test automation
-
-### 1.1 Basic Build & Test Workflow
-
-> **ALWAYS include**:
-> - PHP version from project (read from composer.json `require.php` or `platform.php`)
-> - Setup with shivammathur/setup-php@v2
-> - Composer caching (~/.composer/cache)
-> - Install dependencies: `composer install --prefer-dist --no-progress`
-> - Run linter (PHP_CodeSniffer, PHP CS Fixer)
-> - Run tests with PHPUnit/Pest
-> - Collect coverage with Xdebug or PCOV
-
-> **Version Strategy**:
-> - **Best**: Use composer.json `require.php` constraint (e.g., "php": "^8.2")
-> - **Good**: Use composer.json `platform.php` for CI consistency
-> - **Matrix**: Test against multiple versions (8.1, 8.2, 8.3) if library
-
-> **NEVER**:
-> - Use `composer install` without `--no-dev` in production
-> - Skip autoloader optimization (`--optimize-autoloader`)
-> - Ignore PSR standards
-> - Run without specifying PHP extensions
-
-**Key Workflow Structure**:
-- Trigger: push (main/develop), pull_request
-- Jobs: lint → test → build
-- Setup: shivammathur/setup-php with extensions (mbstring, xml, ctype, iconv, pdo, etc.)
-- Cache: Composer dependencies
-
-### 1.2 Coverage Reporting
-
-> **ALWAYS**:
-> - Use PHPUnit with Xdebug or PCOV
-> - Generate XML/HTML reports
-> - Upload to Codecov/Coveralls
-> - Set minimum coverage threshold (80%+)
-
-**Coverage Commands**:
-```bash
-vendor/bin/phpunit --coverage-text --coverage-clover=coverage.xml
-# Or with PCOV: php -d pcov.enabled=1 vendor/bin/phpunit --coverage-xml=coverage
-```
-
-**Verify**: Pipeline runs, builds succeed across PHP versions, tests execute with results, coverage report generated, Composer cache working
-
----
-
-## Phase 2: Code Quality & Security
-
-**Objective**: Add code quality and security scanning to CI pipeline
-
-### 2.1 Code Quality & Security
-
-> **ALWAYS**: phpcs (PSR-12), PHP CS Fixer, PHPStan/Psalm (level 8+), Dependabot, `composer audit`, CodeQL (php), fail on violations
-> **NEVER**: Suppress errors globally
-
-```yaml
-# .github/dependabot.yml
-version: 2
-updates:
-  - package-ecosystem: "composer"
-    directory: "/"
-    schedule: { interval: "weekly" }
-```
-
-**Verify**: phpcs/PHPStan pass, Dependabot creates PRs, CodeQL completes
-
----
-
-## Phase 3: Deployment Pipeline
-
-**Objective**: Automate app deployment to relevant environments/platforms
-
-### 3.1 Environment Configuration
-
-> **ALWAYS**:
-> - Define environments: development, staging, production
-> - Use GitHub Environments with protection rules
-> - Store secrets per environment (.env files as secrets)
-> - Never commit .env files
-
-**Protection Rules**: Production (require approval, restrict to main), Staging (auto-deploy on merge to develop), Development (auto-deploy on feature branches)
-
-### 3.2 Build & Optimize
-
-> **ALWAYS**:
-> - Install with `composer install --no-dev --optimize-autoloader`
-> - Cache config/routes (Laravel: php artisan config:cache)
-> - Compile assets (npm run build)
-> - Version with Git SHA or semantic version
-
-> **NEVER**: Include vendor/ directory in git, deploy without autoloader optimization, ship development dependencies, forget to clear old caches
-
-**Build Commands**:
-```bash
-composer install --no-dev --optimize-autoloader --no-interaction
-php artisan config:cache # Laravel
-php artisan route:cache # Laravel
-npm run build # If frontend assets
-```
-
-### 3.3 Deployment & Verification
-
-**Platforms**: FTP/SFTP, VPS/SSH, AWS, Azure, Heroku, Laravel Forge, Docker  
-**Migrations**: Laravel (`php artisan migrate --force`), Doctrine, Phinx, run before deployment  
-**Smoke Tests**: Health check, DB/Redis connectivity, external APIs  
-**NEVER**: Auto-run migrations on app boot in production
-
-**Verify**: Deployment succeeds, migrations applied, smoke tests pass
-
----
-
-## Phase 4: Advanced Features
-
-**Objective**: Add advanced CI/CD capabilities (integration tests, release automation)
-
-### 4.1 Advanced Testing & Automation
-
-**Performance**: k6/Apache Bench/Gatling, Xdebug/Blackfire profiling, fail if degrades >10%  
-**Integration**: Separate workflow, Docker containers, run nightly  
-**Release**: semantic-release/tags, CHANGELOG, GitHub Releases, Packagist (libraries)  
-**NEVER**: Use production DBs, run integration on every PR
-
-### 4.2 Notifications
-
-> **ALWAYS**: Slack/Teams webhook on deploy success/failure, GitHub Status Checks for PR reviews, Email notifications for security alerts
-
-**Verify**: Performance tests run and tracked, integration tests pass in isolation, releases created automatically, Packagist auto-updates (if applicable), notifications received
-
----
-
-## Framework-Specific Notes
-
-| Framework | Notes |
-|-----------|-------|
-| **Laravel** | Cache: `php artisan config:cache`, `route:cache`, `view:cache`; Queue: `php artisan queue:work` (use Supervisor); Migrations: `php artisan migrate --force`; Health: Laravel built-in health checks |
-| **Symfony** | Cache: `php bin/console cache:clear --env=prod`; Assets: `php bin/console assets:install --env=prod`; Migrations: `php bin/console doctrine:migrations:migrate --no-interaction`; Health: FOSHealthCheckBundle |
-| **WordPress** | Use Composer for plugin/theme dependencies; Deploy with wp-cli; Use WP-CLI for cache clearing; Avoid committing wp-content/uploads/ |
-
----
-
-## Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| **Composer install fails with memory limit** | Increase memory: `php -d memory_limit=-1 $(which composer) install` |
-| **Tests pass locally but fail in CI** | Check .env.testing, database config, file permissions |
-| **Coverage not collected** | Install Xdebug or PCOV, verify phpunit.xml coverage config |
-| **Deployment fails with permission error** | Set correct ownership (www-data), chmod storage/ and bootstrap/cache/ |
-| **Migrations fail with timeout** | Increase timeout, optimize migrations, check database connection |
-
----
-
-## AI Self-Check
-
-- [ ] CI pipeline runs on push and PR
-- [ ] PHP version pinned or matrix tested
-- [ ] Composer dependencies cached
-- [ ] All tests pass with coverage ≥80%
-- [ ] Code quality tools enabled (phpcs, PHPStan)
-- [ ] Security scanning enabled (CodeQL, Dependabot, composer audit)
-- [ ] Build optimized (--no-dev, --optimize-autoloader)
-- [ ] Deployment to at least one environment works
-- [ ] Database migrations tested and automated
-- [ ] Smoke tests validate deployment health
-
----
-
-## Documentation Updates
-
-> **AFTER all phases complete**:
-> - Update README.md with CI/CD badges
-> - Document deployment process
-> - Add runbook for common issues
-> - Onboarding guide for new developers
-
----
-
-## Final Commit
-
-```bash
-# Merge all phases and tag release using your team's workflow
-git tag -a v1.0.0-ci -m "CI/CD pipeline implemented"
-git push --tags
-```
-
----
-
-**Process Complete** ✅
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (multi-phase)  
-> **When to use**: When setting up CI/CD pipeline with GitHub Actions
-
-### Complete Implementation Prompt
+## 📋 Complete Self-Contained Prompt
 
 ```
+========================================
+PHP CI/CD - GITHUB ACTIONS
+========================================
+
 CONTEXT:
-You are implementing CI/CD pipeline with GitHub Actions for this project.
+You are implementing CI/CD pipeline with GitHub Actions for a PHP project.
 
 CRITICAL REQUIREMENTS:
-- ALWAYS detect language version from project files
-- ALWAYS match detected version in GitHub Actions workflow
-- ALWAYS use caching for dependencies
-- NEVER hardcode secrets in workflow files (use GitHub Secrets)
-- Use team's Git workflow (adapt to existing branching strategy)
+- ALWAYS detect PHP version from composer.json
+- ALWAYS use caching for Composer
+- NEVER hardcode secrets in workflows
+- Use team's Git workflow
 
-PLATFORM NOTE:
-This guide uses GitHub Actions. For other platforms (GitLab CI, Azure DevOps, CircleCI, Jenkins), adapt the workflow syntax while keeping the same phases and objectives.
+========================================
+PHASE 1 - BASIC CI PIPELINE
+========================================
 
----
+Create .github/workflows/ci.yml:
 
-PHASE 1 - BASIC CI PIPELINE:
-Objective: Set up basic build and test workflow
+```yaml
+name: CI
 
-1. Create .github/workflows/ci.yml
-2. Detect and configure language version
-3. Set up dependency caching
-4. Add build and test steps with coverage
-5. Configure triggers (push/pull request)
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
 
-Deliverable: Basic CI pipeline running on every push
-
----
-
-PHASE 2 - CODE QUALITY & SECURITY:
-Objective: Add linting and security scanning
-
-1. Add linting step
-2. Add dependency security scanning
-3. Add SAST scanning (CodeQL, Snyk, etc.)
-4. Configure to fail on critical issues
-
-Deliverable: Automated code quality and security checks
-
----
-
-PHASE 3 - DEPLOYMENT PIPELINE (Optional):
-Objective: Add deployment automation
-
-1. Configure deployment environments
-2. Add deployment steps with approval gates
-3. Configure secrets
-4. Add deployment verification
-
-Deliverable: Automated deployment on successful builds
-
----
-
-PHASE 4 - ADVANCED FEATURES (Optional):
-Objective: Add advanced CI/CD capabilities
-
-1. Matrix testing (multiple versions/platforms)
-2. Performance testing
-3. Release automation
-4. Notifications
-
-Deliverable: Production-grade CI/CD pipeline
-
----
-
-START: Execute Phase 1. Detect language version, create basic CI workflow.
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'  # Detect from composer.json
+        extensions: mbstring, xml, ctype, json
+        coverage: xdebug
+    
+    - name: Cache Composer
+      uses: actions/cache@v3
+      with:
+        path: vendor
+        key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+    
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-progress
+    
+    - name: Test
+      run: vendor/bin/phpunit --coverage-clover coverage.xml
+    
+    - name: Upload coverage
+      uses: codecov/codecov-action@v3
+      with:
+        files: coverage.xml
 ```
+
+Deliverable: Basic CI pipeline running
+
+========================================
+PHASE 2 - CODE QUALITY
+========================================
+
+Add to workflow:
+
+```yaml
+    - name: PHP CS Fixer
+      run: vendor/bin/php-cs-fixer fix --dry-run --diff
+    
+    - name: PHPStan
+      run: vendor/bin/phpstan analyse src tests --level max
+    
+    - name: Security check
+      run: composer audit
+```
+
+Deliverable: Automated code quality checks
+
+========================================
+PHASE 3 - DEPLOYMENT (Optional)
+========================================
+
+Add deployment:
+
+```yaml
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    - name: Deploy
+      uses: appleboy/ssh-action@v0.1.10
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        script: |
+          cd /var/www/html
+          git pull origin main
+          composer install --no-dev --optimize-autoloader
+```
+
+Deliverable: Automated deployment
+
+========================================
+BEST PRACTICES
+========================================
+
+- Cache Composer dependencies
+- Use PHPUnit for testing
+- Run PHP CS Fixer and PHPStan
+- Check for security vulnerabilities
+- Use matrix for multi-version testing
+- Set up branch protection
+
+========================================
+EXECUTION
+========================================
+
+START: Create basic CI pipeline (Phase 1)
+CONTINUE: Add quality checks (Phase 2)
+OPTIONAL: Add deployment (Phase 3)
+REMEMBER: Detect version, use caching
+```
+
+---
+
+## Quick Reference
+
+**What you get**: Complete CI/CD pipeline with Composer and PHP tooling  
+**Time**: 1-2 hours  
+**Output**: .github/workflows/ci.yml
