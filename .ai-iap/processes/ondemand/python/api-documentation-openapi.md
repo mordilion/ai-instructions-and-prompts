@@ -1,327 +1,217 @@
-# API Documentation Process - Python (OpenAPI/Swagger)
+# Python API Documentation (OpenAPI) - Copy This Prompt
 
-> **Purpose**: Auto-generate interactive API documentation
-
-> **Tools**: FastAPI ⭐ (built-in), drf-spectacular (Django REST), flask-smorest (Flask)
-
-> **Reference**: See general documentation standards for HTTP status codes, error formats, and best practices
+> **Type**: One-time setup process  
+> **When to use**: Setting up OpenAPI/Swagger documentation for Python API  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 1: FastAPI (Built-in)
+## 📋 Complete Self-Contained Prompt
 
-**FastAPI auto-generates OpenAPI docs!**
+```
+========================================
+PYTHON API DOCUMENTATION - OPENAPI
+========================================
 
+CONTEXT:
+You are implementing OpenAPI/Swagger documentation for a Python REST API (FastAPI/Flask).
+
+CRITICAL REQUIREMENTS:
+- ALWAYS use FastAPI (automatic docs) or flask-smorest
+- ALWAYS keep docs in sync with code
+- NEVER document internal/private endpoints
+- Use type hints and Pydantic models
+
+========================================
+PHASE 1 - BASIC SETUP
+========================================
+
+For FastAPI (automatic documentation):
+
+```bash
+pip install fastapi[all]
+```
+
+Create API:
 ```python
 from fastapi import FastAPI
+from pydantic import BaseModel
 
 app = FastAPI(
     title="My API",
-    description="API description",
-    version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc"
+    description="API documentation",
+    version="1.0.0"
 )
 
-@app.get("/users/{user_id}", summary="Get user by ID")
-async def get_user(user_id: int) -> User:
-    """
-    Get a user by their ID.
-    
-    - **user_id**: User ID (integer)
-    """
-    return User(id=user_id)
+# Docs automatically available at:
+# /docs (Swagger UI)
+# /redoc (ReDoc)
+# /openapi.json (OpenAPI spec)
 ```
 
-> **Access**: 
-> - Swagger UI: http://localhost:8000/docs
-> - ReDoc: http://localhost:8000/redoc
-
----
-
-## Phase 2: Django REST Framework
-
-**Install**:
-```bash
-pip install drf-spectacular
-```
-
-**Configure** (settings.py):
-```python
-INSTALLED_APPS = ['drf_spectacular']
-
-REST_FRAMEWORK = {
-    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
-}
-
-SPECTACULAR_SETTINGS = {
-    'TITLE': 'My API',
-    'VERSION': '1.0.0',
-}
-```
-
-**URLs**:
-```python
-from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
-
-urlpatterns = [
-    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema')),
-]
-```
-
----
-
-## Phase 3: Flask
-
-**Install**:
+For Flask:
 ```bash
 pip install flask-smorest
 ```
 
-**Configure**:
+Deliverable: Interactive docs at /docs
+
+========================================
+PHASE 2 - DOCUMENT ENDPOINTS
+========================================
+
+Use FastAPI with type hints:
+
 ```python
-from flask_smorest import Api, Blueprint
+from typing import List
+from fastapi import FastAPI, HTTPException, status
+from pydantic import BaseModel, Field, EmailStr
 
-app.config['API_TITLE'] = 'My API'
-app.config['API_VERSION'] = 'v1'
-app.config['OPENAPI_VERSION'] = '3.0.2'
-api = Api(app)
+class CreateUserDto(BaseModel):
+    name: str = Field(..., min_length=3, max_length=100, example="John Doe")
+    email: EmailStr = Field(..., example="john@example.com")
 
-blp = Blueprint('users', __name__, url_prefix='/api/users')
+class User(BaseModel):
+    id: int
+    name: str
+    email: str
 
-@blp.route('/<int:user_id>')
-@blp.response(200, UserSchema)
-def get_user(user_id):
-    """Get user by ID"""
-    pass
+@app.get("/users", 
+    response_model=List[User],
+    summary="Get all users",
+    description="Returns a list of all users",
+    tags=["Users"]
+)
+async def get_users():
+    return users
+
+@app.post("/users",
+    response_model=User,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create user",
+    description="Creates a new user",
+    responses={
+        201: {"description": "User created"},
+        400: {"description": "Invalid input"}
+    },
+    tags=["Users"]
+)
+async def create_user(user: CreateUserDto):
+    # Implementation
+    return created_user
 ```
 
----
+Deliverable: Documented endpoints with types
 
-## Phase 4: Security & Versioning
+========================================
+PHASE 3 - ENHANCED DOCUMENTATION
+========================================
 
-### 4.1 Document Authentication (FastAPI)
+Add detailed descriptions:
 
-**JWT Security**:
+```python
+from fastapi import Path, Query
+
+@app.get("/users/{user_id}",
+    response_model=User,
+    summary="Get user by ID",
+    responses={
+        200: {"description": "User found"},
+        404: {"description": "User not found"}
+    }
+)
+async def get_user(
+    user_id: int = Path(..., description="The ID of the user", gt=0, example=1)
+):
+    """
+    Get a user by ID:
+    
+    - **user_id**: Unique identifier for the user
+    
+    Returns the user object if found.
+    """
+    if user := find_user(user_id):
+        return user
+    raise HTTPException(status_code=404, detail="User not found")
+
+@app.get("/search",
+    response_model=List[User],
+    summary="Search users"
+)
+async def search_users(
+    q: str = Query(..., min_length=3, description="Search query", example="John"),
+    limit: int = Query(10, ge=1, le=100, description="Max results")
+):
+    """Search users by name or email"""
+    return search(q, limit)
+```
+
+Deliverable: Enhanced docs with examples
+
+========================================
+PHASE 4 - AUTHENTICATION
+========================================
+
+Add JWT authentication:
+
 ```python
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 security = HTTPBearer()
 
-@app.get("/protected", dependencies=[Depends(security)])
+@app.get("/protected",
+    dependencies=[Depends(security)],
+    summary="Protected endpoint"
+)
 async def protected_route():
-    """Protected endpoint requiring JWT token"""
-    pass
+    return {"message": "authenticated"}
 ```
 
-**OAuth 2.0**:
+Configure security globally:
 ```python
-from fastapi.security import OAuth2PasswordBearer
+app = FastAPI(
+    title="My API",
+    version="1.0.0",
+    swagger_ui_init_oauth={
+        "usePkceWithAuthorizationCodeGrant": True,
+    }
+)
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
-@app.get("/users/me")
-async def read_users_me(token: str = Depends(oauth2_scheme)):
-    """Get current user. Requires OAuth 2.0 token"""
-    pass
+# Add to specific endpoints
+@app.get("/users", dependencies=[Depends(security)])
 ```
 
-### 4.2 API Versioning
+Deliverable: Authentication in docs
 
-**URL Versioning**:
-```python
-app = FastAPI()
+========================================
+BEST PRACTICES
+========================================
 
-v1 = FastAPI(title="My API V1", version="1.0.0")
-v2 = FastAPI(title="My API V2", version="2.0.0")
+- Use FastAPI for automatic docs
+- Use Pydantic for models
+- Add type hints everywhere
+- Include descriptions and examples
+- Document error responses
+- Use tags to organize endpoints
+- Add authentication schemes
+- Export OpenAPI spec for clients
+- Keep models in sync
 
-app.mount("/api/v1", v1)
-app.mount("/api/v2", v2)
-```
+========================================
+EXECUTION
+========================================
 
-### 4.3 Rate Limiting Documentation
-
-**Document Limits**:
-```python
-@app.get("/users", 
-    summary="Get users",
-    description="Rate limit: 100 requests/minute per user",
-    responses={
-        200: {"description": "Success"},
-        429: {"description": "Too Many Requests"}
-    })
-async def get_users():
-    pass
-```
-
-### 4.4 Consistent Error Response Format
-
-> **Reference**: See general documentation standards for recommended error format and implementation
-
----
-
-## Phase 5: CI/CD Integration
-
-> **ALWAYS**:
-> - Export OpenAPI JSON/YAML
-> - Validate spec in CI/CD
-> - Version control the spec
-
-**Export Spec** (FastAPI):
-```python
-import json
-from app import app
-
-with open("openapi.json", "w") as f:
-    json.dump(app.openapi(), f)
-```
-
-**CI/CD**:
-```yaml
-- name: Generate OpenAPI Spec
-  run: |
-    python -c "import json; from app import app; json.dump(app.openapi(), open('openapi.json', 'w'))"
-    npx @openapitools/openapi-generator-cli validate -i openapi.json
-```
-
-### 5.2 Generate Client SDKs
-
-> **ALWAYS**: Generate type-safe client SDKs from OpenAPI spec
-
-**Generate Python Client**:
-```bash
-openapi-generator-cli generate \
-  -i openapi.json \
-  -g python \
-  -o sdks/python-client
-```
-
-**Generate TypeScript Client**:
-```bash
-openapi-generator-cli generate \
-  -i openapi.json \
-  -g typescript-axios \
-  -o sdks/typescript-client
-```
-
-**Usage Example**:
-```python
-from python_client import ApiClient, UsersApi
-
-client = ApiClient(configuration)
-api = UsersApi(client)
-user = api.get_user('123')
+START: Set up FastAPI (Phase 1)
+CONTINUE: Document with type hints (Phase 2)
+CONTINUE: Enhance descriptions (Phase 3)
+CONTINUE: Add authentication (Phase 4)
+REMEMBER: Type hints, Pydantic models, automatic
 ```
 
 ---
 
-## Best Practices
+## Quick Reference
 
-> **ALWAYS**:
-> - Use Pydantic models for request/response schemas
-> - Add docstrings to all endpoints (auto-included in docs)
-> - Document all response codes with `responses` parameter
-> - Use `tags` to group related endpoints
-> - Provide examples with `example` in schema fields
-
-> **NEVER**:
-> - Return raw dict without Pydantic model (breaks schema generation)
-> - Include sensitive data in examples
-> - Skip documenting error responses
-> - Use generic descriptions ("Get data")
-
----
-
-## Troubleshooting
-
-### Issue: Docs not showing at /docs
-- **Solution**: Ensure `docs_url="/docs"` in FastAPI(), check if disabled in production
-
-### Issue: Schemas not appearing correctly
-- **Solution**: Use Pydantic models, not plain dicts; ensure `response_model` specified
-
-### Issue: Authentication not working in Try-it-out
-- **Solution**: Add security scheme configuration, check CORS settings
-
-### Issue: Want to customize Swagger UI
-- **Solution**: Use `swagger_ui_parameters` in FastAPI() for custom configuration
-
----
-
-## AI Self-Check
-
-- [ ] FastAPI/Django/Flask OpenAPI configured
-- [ ] Swagger UI accessible at `/docs`
-- [ ] ReDoc accessible at `/redoc` (FastAPI)
-- [ ] Pydantic models used for request/response schemas
-- [ ] Authentication/security documented
-- [ ] CI/CD generates and validates OpenAPI spec
-- [ ] Client SDKs generated for target languages
-- [ ] Try-it-out functionality works
-- [ ] Error responses follow consistent format (see general standards)
-- [ ] All status codes documented (see general standards)
-
----
-
-**Process Complete** ✅
-
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (simple)  
-> **When to use**: When setting up OpenAPI/Swagger API documentation
-
-### Complete Implementation Prompt
-
-```
-CONTEXT:
-You are setting up auto-generated OpenAPI/Swagger API documentation for this project.
-
-CRITICAL REQUIREMENTS:
-- ALWAYS use OpenAPI 3.x specification
-- ALWAYS document all endpoints with descriptions
-- ALWAYS include request/response schemas
-- ALWAYS document authentication requirements
-- Use team's Git workflow
-
-IMPLEMENTATION STEPS:
-
-1. INSTALL TOOLS:
-   Install OpenAPI/Swagger library for the language (see Tech Stack section)
-
-2. CONFIGURE BASIC SETUP:
-   Set up Swagger/OpenAPI generator
-   Configure API metadata (title, version, description)
-   Set up UI endpoint (e.g., /api-docs, /swagger)
-
-3. DOCUMENT AUTHENTICATION:
-   Configure security schemes (JWT, OAuth, API Key)
-   Document authentication flows
-
-4. ADD ENDPOINT DOCUMENTATION:
-   Document each endpoint:
-   - HTTP method and path
-   - Parameters (query, path, header)
-   - Request body schema
-   - Response schemas (success/error)
-   - Example requests/responses
-
-5. CONFIGURE AUTO-GENERATION:
-   Use framework decorators/annotations
-   Enable auto-discovery of endpoints
-   Generate schemas from models/DTOs
-
-6. ADD TO CI/CD (Optional):
-   Generate OpenAPI spec file in CI
-   Validate API spec
-   Deploy documentation to hosting
-
-DELIVERABLE:
-- Swagger UI accessible
-- All endpoints documented
-- Request/response schemas complete
-- Authentication documented
-
-START: Install OpenAPI tools and configure basic setup with API metadata.
-```
+**What you get**: Automatic OpenAPI docs from FastAPI type hints  
+**Time**: 1-2 hours  
+**Output**: OpenAPI spec, Swagger UI, ReDoc

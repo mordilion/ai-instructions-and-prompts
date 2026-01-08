@@ -1,338 +1,238 @@
-# API Documentation Process - TypeScript/Node.js (OpenAPI/Swagger)
+# TypeScript API Documentation (OpenAPI) - Copy This Prompt
 
-> **Purpose**: Auto-generate interactive API documentation with OpenAPI/Swagger
-
-> **Tools**: Swagger UI, NestJS Swagger, tsoa, express-openapi
-
-> **Reference**: See general documentation standards for HTTP status codes, error formats, and best practices
+> **Type**: One-time setup process  
+> **When to use**: Setting up OpenAPI/Swagger documentation for TypeScript API  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 1: Setup Swagger
+## 📋 Complete Self-Contained Prompt
 
-### NestJS (Recommended)
+```
+========================================
+TYPESCRIPT API DOCUMENTATION - OPENAPI
+========================================
 
-**Install**:
+CONTEXT:
+You are implementing OpenAPI/Swagger documentation for a TypeScript REST API.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS use OpenAPI 3.0+ specification
+- ALWAYS keep docs in sync with code
+- NEVER document internal/private endpoints
+- Use code-first approach (generate from code)
+
+========================================
+PHASE 1 - BASIC SETUP
+========================================
+
+For Express with tsoa:
+
+```bash
+npm install --save tsoa swagger-ui-express
+npm install --save-dev @types/swagger-ui-express
+```
+
+Create tsoa.json:
+```json
+{
+  "entryFile": "src/app.ts",
+  "noImplicitAdditionalProperties": "throw-on-extras",
+  "controllerPathGlobs": ["src/controllers/**/*.ts"],
+  "spec": {
+    "outputDirectory": "build",
+    "specVersion": 3
+  },
+  "routes": {
+    "routesDir": "build"
+  }
+}
+```
+
+Create controller with annotations:
+```typescript
+import { Controller, Get, Post, Route, Body, Tags } from 'tsoa';
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+}
+
+@Route("users")
+@Tags("Users")
+export class UserController extends Controller {
+  /**
+   * Retrieves all users
+   * @summary Get all users
+   */
+  @Get()
+  public async getUsers(): Promise<User[]> {
+    // Implementation
+  }
+
+  /**
+   * Creates a new user
+   * @summary Create user
+   */
+  @Post()
+  public async createUser(@Body() user: Omit<User, 'id'>): Promise<User> {
+    // Implementation
+  }
+}
+```
+
+Generate OpenAPI spec:
+```bash
+npx tsoa spec-and-routes
+```
+
+Deliverable: OpenAPI spec generated
+
+========================================
+PHASE 2 - SWAGGER UI
+========================================
+
+Add Swagger UI to Express:
+
+```typescript
+import swaggerUi from 'swagger-ui-express';
+import swaggerDocument from '../build/swagger.json';
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+```
+
+Alternative: For NestJS:
+
 ```bash
 npm install @nestjs/swagger
 ```
 
-**Configure** (main.ts):
+Configure in main.ts:
 ```typescript
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 const config = new DocumentBuilder()
-  .setTitle('My API')
-  .setDescription('API description')
+  .setTitle('API Documentation')
+  .setDescription('The API description')
   .setVersion('1.0')
   .addBearerAuth()
   .build();
 
 const document = SwaggerModule.createDocument(app, config);
-SwaggerModule.setup('api/docs', app, document);
+SwaggerModule.setup('api-docs', app, document);
 ```
 
-**Annotate Controllers**:
+Deliverable: Interactive API documentation at /api-docs
+
+========================================
+PHASE 3 - ENHANCE DOCUMENTATION
+========================================
+
+Add detailed annotations:
+
 ```typescript
-@ApiTags('users')
+import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsEmail, MinLength } from 'class-validator';
+
+export class CreateUserDto {
+  @ApiProperty({ 
+    description: 'User full name',
+    example: 'John Doe',
+    minLength: 3,
+    maxLength: 100
+  })
+  @IsString()
+  @MinLength(3)
+  name: string;
+
+  @ApiProperty({
+    description: 'User email address',
+    example: 'john@example.com'
+  })
+  @IsEmail()
+  email: string;
+}
+
+@ApiTags('Users')
 @Controller('users')
-export class UsersController {
+export class UserController {
   @Get(':id')
   @ApiOperation({ summary: 'Get user by ID' })
-  @ApiResponse({ status: 200, description: 'User found', type: UserDto })
-  @ApiResponse({ status: 404, description: 'User not found' })
-  findOne(@Param('id') id: string) { }
+  @ApiParam({ name: 'id', description: 'User ID' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'User found',
+    type: User
+  })
+  @ApiResponse({ 
+    status: 404, 
+    description: 'User not found'
+  })
+  async getUser(@Param('id') id: string): Promise<User> {
+    // Implementation
+  }
 }
 ```
 
-> **Access**: http://localhost:3000/api/docs
+Deliverable: Enhanced documentation with examples
 
----
+========================================
+PHASE 4 - CI INTEGRATION
+========================================
 
-## Phase 2: Express.js Setup
-
-**Install**:
-```bash
-npm install swagger-jsdoc swagger-ui-express
-npm install --save-dev @types/swagger-jsdoc @types/swagger-ui-express
+Add to package.json:
+```json
+{
+  "scripts": {
+    "docs:generate": "tsoa spec-and-routes",
+    "docs:lint": "swagger-cli validate build/swagger.json"
+  }
+}
 ```
 
-**Configure**:
-```typescript
-import swaggerJsdoc from 'swagger-jsdoc';
-import swaggerUi from 'swagger-ui-express';
-
-const options = {
-  definition: {
-    openapi: '3.0.0',
-    info: { title: 'My API', version: '1.0.0' },
-    components: {
-      securitySchemes: {
-        bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }
-      }
-    }
-  },
-  apis: ['./src/routes/*.ts']
-};
-
-const specs = swaggerJsdoc(options);
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
-```
-
-**Annotate Routes**:
-```typescript
-/**
- * @openapi
- * /users/{id}:
- *   get:
- *     summary: Get user by ID
- *     parameters:
- *       - name: id
- *         in: path
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: User found
- */
-app.get('/users/:id', getUser);
-```
-
----
-
-## Phase 3: Security & Versioning
-
-### 3.1 Document Authentication
-
-> **ALWAYS document**:
-> - JWT bearer token format
-> - OAuth 2.0 flows (if applicable)
-> - API key requirements
-> - Refresh token endpoints
-
-**NestJS Security**:
-```typescript
-@ApiSecurity('bearer')
-@ApiBearerAuth()
-@Controller('protected')
-export class ProtectedController { }
-```
-
-**Express.js Security**:
-```typescript
-/**
- * @openapi
- * components:
- *   securitySchemes:
- *     bearerAuth:
- *       type: http
- *       scheme: bearer
- *       bearerFormat: JWT
- * security:
- *   - bearerAuth: []
- */
-```
-
-### 3.2 API Versioning
-
-> **ALWAYS include version in**:
-> - URL path (`/api/v1/users`)
-> - Or header (`Accept: application/vnd.myapi.v1+json`)
-
-**Document Version Changes**:
-```typescript
-@ApiOperation({
-  summary: 'Get user',
-  deprecated: false,
-  description: 'v2: Added email field. v1: Only returns id and name'
-})
-```
-
-### 3.3 Rate Limiting Documentation
-
-> **Document rate limits**:
-```typescript
-@ApiHeader({
-  name: 'X-RateLimit-Limit',
-  description: 'Request limit per hour'
-})
-@ApiHeader({
-  name: 'X-RateLimit-Remaining',
-  description: 'Remaining requests'
-})
-```
-
-### 3.4 Consistent Error Response Format
-
-> **Reference**: See general documentation standards for recommended error format and implementation
-
----
-
-## Phase 4: CI/CD Integration
-
-### 4.1 Auto-Generate & Validate
-
-> **ALWAYS**:
-> - Generate OpenAPI spec in CI/CD
-> - Validate spec (use Spectral, openapi-generator-cli)
-> - Export spec as artifact
-> - Version control generated spec
-
-**CI/CD Example**:
+Add to .github/workflows/ci.yml:
 ```yaml
-- name: Generate OpenAPI Spec
-  run: |
-    npm run build
-    npm run generate-openapi
-    npx @openapitools/openapi-generator-cli validate -i openapi.json
+    - name: Generate OpenAPI spec
+      run: npm run docs:generate
+    
+    - name: Validate OpenAPI spec
+      run: |
+        npm install -g @apidevtools/swagger-cli
+        swagger-cli validate build/swagger.json
 ```
 
-### 4.2 Publish Documentation
+Deliverable: Automated doc generation in CI
 
-> **Options**:
-> - **Swagger UI**: Self-hosted on `/docs`
-> - **ReDoc**: Alternative UI at `/redoc`
-> - **Postman**: Import OpenAPI spec
-> - **API Portal**: AWS API Gateway, Azure APIM
+========================================
+BEST PRACTICES
+========================================
 
-### 4.3 Generate Client SDKs
+- Use code-first approach (annotations)
+- Keep OpenAPI spec version-controlled
+- Validate spec in CI
+- Document all public endpoints
+- Include examples and descriptions
+- Document error responses
+- Use semantic versioning
+- Host interactive docs (Swagger UI)
+- Export spec for client generation
 
-> **ALWAYS**: Generate type-safe client SDKs from OpenAPI spec
+========================================
+EXECUTION
+========================================
 
-**Generate TypeScript Client**:
-```bash
-npx @openapitools/openapi-generator-cli generate \
-  -i openapi.json \
-  -g typescript-axios \
-  -o sdks/typescript-client
-```
-
-**Generate Python Client**:
-```bash
-npx @openapitools/openapi-generator-cli generate \
-  -i openapi.json \
-  -g python \
-  -o sdks/python-client
-```
-
-**Usage Example**:
-```typescript
-import { UsersApi } from './sdks/typescript-client';
-
-const api = new UsersApi();
-const user = await api.getUser('123');
+START: Set up tsoa or NestJS Swagger (Phase 1)
+CONTINUE: Add Swagger UI (Phase 2)
+CONTINUE: Enhance with annotations (Phase 3)
+CONTINUE: Add CI validation (Phase 4)
+REMEMBER: Code-first, validate in CI, keep in sync
 ```
 
 ---
 
-## Best Practices
+## Quick Reference
 
-> **ALWAYS**:
-> - Document all endpoints (including internal APIs)
-> - Include realistic request/response examples
-> - Document all error codes (400, 401, 403, 404, 500)
-> - Add descriptions to parameters and schemas
-> - Use tags to group related endpoints
-> - Keep docs in sync with code (auto-generation preferred)
-
-> **NEVER**:
-> - Hardcode sensitive data in examples (use `"<API_KEY>"` placeholders)
-> - Skip documenting deprecated endpoints (mark as deprecated)
-> - Forget to document query parameters and headers
-> - Use vague descriptions ("Gets data")
-
----
-
-## Troubleshooting
-
-### Issue: Swagger UI not loading
-- **Solution**: Check CORS settings, ensure `/docs` route not blocked, verify base URL
-
-### Issue: Endpoints not appearing in docs
-- **Solution**: Verify decorators/annotations present, check include/exclude paths, rebuild docs
-
-### Issue: Authentication not working in Try-it-out
-- **Solution**: Add `@ApiSecurity` decorator, configure auth in OpenAPI config, check CORS
-
-### Issue: Schemas not showing types
-- **Solution**: Use DTO/Schema classes with decorators, enable metadata reflection
-
----
-
-## AI Self-Check
-
-- [ ] OpenAPI/Swagger configured and accessible
-- [ ] NestJS or Express.js setup complete
-- [ ] All endpoints annotated with decorators
-- [ ] JWT/Bearer authentication configured
-- [ ] CI/CD generates and validates OpenAPI spec
-- [ ] Client SDKs generated for target languages
-- [ ] Swagger UI Try-it-out functionality works
-- [ ] Error responses follow consistent format (see general standards)
-- [ ] All status codes documented (see general standards)
-- [ ] Rate limiting documented (if applicable)
-
----
-
-**Process Complete** ✅
-
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (simple)  
-> **When to use**: When setting up OpenAPI/Swagger API documentation
-
-### Complete Implementation Prompt
-
-```
-CONTEXT:
-You are setting up auto-generated OpenAPI/Swagger API documentation for this project.
-
-CRITICAL REQUIREMENTS:
-- ALWAYS use OpenAPI 3.x specification
-- ALWAYS document all endpoints with descriptions
-- ALWAYS include request/response schemas
-- ALWAYS document authentication requirements
-- Use team's Git workflow
-
-IMPLEMENTATION STEPS:
-
-1. INSTALL TOOLS:
-   Install OpenAPI/Swagger library for the language (see Tech Stack section)
-
-2. CONFIGURE BASIC SETUP:
-   Set up Swagger/OpenAPI generator
-   Configure API metadata (title, version, description)
-   Set up UI endpoint (e.g., /api-docs, /swagger)
-
-3. DOCUMENT AUTHENTICATION:
-   Configure security schemes (JWT, OAuth, API Key)
-   Document authentication flows
-
-4. ADD ENDPOINT DOCUMENTATION:
-   Document each endpoint:
-   - HTTP method and path
-   - Parameters (query, path, header)
-   - Request body schema
-   - Response schemas (success/error)
-   - Example requests/responses
-
-5. CONFIGURE AUTO-GENERATION:
-   Use framework decorators/annotations
-   Enable auto-discovery of endpoints
-   Generate schemas from models/DTOs
-
-6. ADD TO CI/CD (Optional):
-   Generate OpenAPI spec file in CI
-   Validate API spec
-   Deploy documentation to hosting
-
-DELIVERABLE:
-- Swagger UI accessible
-- All endpoints documented
-- Request/response schemas complete
-- Authentication documented
-
-START: Install OpenAPI tools and configure basic setup with API metadata.
-```
+**What you get**: Auto-generated OpenAPI documentation from TypeScript code  
+**Time**: 2-3 hours  
+**Output**: OpenAPI spec, Swagger UI, validated in CI

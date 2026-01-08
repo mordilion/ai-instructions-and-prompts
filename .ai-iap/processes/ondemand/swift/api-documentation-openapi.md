@@ -1,355 +1,223 @@
-# API Documentation Process - Swift (Vapor)
+# Swift API Documentation (OpenAPI) - Copy This Prompt
 
-> **Purpose**: Auto-generate API documentation for Vapor applications
-
-> **Tools**: VaporToOpenAPI, SwiftOpenAPI
-
-> **Reference**: See general documentation standards for HTTP status codes, error formats, and best practices
+> **Type**: One-time setup process  
+> **When to use**: Setting up OpenAPI/Swagger documentation for Swift server API  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 1: OpenAPI Generation Options
+## 📋 Complete Self-Contained Prompt
 
-### Option A: VaporToOpenAPI (Code-First) ⭐
+```
+========================================
+SWIFT API DOCUMENTATION - OPENAPI
+========================================
 
-**Install**:
+CONTEXT:
+You are implementing OpenAPI/Swagger documentation for a Swift server API (Vapor).
+
+CRITICAL REQUIREMENTS:
+- ALWAYS use VaporOpenAPI package
+- ALWAYS keep docs in sync with code
+- NEVER document internal/private endpoints
+- Use Swift types for automatic schema generation
+
+========================================
+PHASE 1 - BASIC SETUP
+========================================
+
+Add VaporOpenAPI to Package.swift:
+
 ```swift
-// Package.swift
 dependencies: [
-    .package(url: "https://github.com/dankinsoid/VaporToOpenAPI.git", from: "4.0.0")
+    .package(url: "https://github.com/vapor-community/VaporOpenAPI.git", from: "0.1.0")
+]
+
+targets: [
+    .target(
+        name: "App",
+        dependencies: [
+            .product(name: "Vapor", package: "vapor"),
+            .product(name: "VaporOpenAPI", package: "VaporOpenAPI")
+        ]
+    )
 ]
 ```
 
-**Configure**:
+Configure in configure.swift:
 ```swift
-import VaporToOpenAPI
+import Vapor
+import VaporOpenAPI
 
-try app.openAPI(
-    info: .init(
+public func configure(_ app: Application) throws {
+    app.openAPI.info = .init(
         title: "My API",
+        description: "API documentation",
         version: "1.0.0"
-    ),
-    servers: [.init(url: "http://localhost:8080")]
-)
-
-// Automatically generates OpenAPI from routes
-app.get("users", ":id") { req -> User in
-    // OpenAPI generated automatically from route and return type
-}
-
-// Access at: http://localhost:8080/openapi.json
-```
-
-### Option B: Swift OpenAPI Generator (Spec-First)
-
-**Install**:
-```swift
-// Package.swift
-dependencies: [
-    .package(url: "https://github.com/apple/swift-openapi-generator", from: "1.0.0"),
-    .package(url: "https://github.com/apple/swift-openapi-runtime", from: "1.0.0")
-]
-```
-
-**Create openapi.yaml** (specification):
-```yaml
-openapi: 3.0.0
-info:
-  title: My API
-  version: 1.0.0
-paths:
-  /users/{id}:
-    get:
-      summary: Get user by ID
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: User found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-components:
-  schemas:
-    User:
-      type: object
-      properties:
-        id: { type: string }
-        name: { type: string }
-```
-
-**Generate Code**:
-```bash
-swift package plugin generate-openapi-code \
-  --input openapi.yaml \
-  --output Sources/Generated
-```
-
-### Option C: Manual OpenAPI (Fallback)
-
-**Create OpenAPI Spec** (openapi.yaml) and serve via Vapor as static file.
-
----
-
-## Phase 2: Swagger UI
-
-**Add Swagger UI** (static files):
-- Download Swagger UI dist
-- Serve from Public/swagger-ui/
-- Point to openapi.yaml
-
-**Route**:
-```swift
-app.get("api-docs") { req in
-    return req.view.render("swagger-ui")
+    )
+    
+    // Serve OpenAPI spec
+    app.get("openapi.json") { req async throws -> Response in
+        let spec = try req.application.openAPI.document()
+        return Response(status: .ok, body: .init(string: spec))
+    }
+    
+    try routes(app)
 }
 ```
 
----
+Deliverable: OpenAPI spec at /openapi.json
 
-## Phase 3: Security & Authentication
+========================================
+PHASE 2 - DOCUMENT ENDPOINTS
+========================================
 
-### 3.1 Document JWT Authentication
+Document routes in routes.swift:
 
-**OpenAPI Spec**:
-```yaml
-components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-security:
-  - bearerAuth: []
-```
-
-**Vapor Route Documentation**:
 ```swift
-// Document in comments or separate spec
-// GET /api/users/{id}
-// Security: Bearer token required
-// Responses:
-//   200: User found
-//   401: Unauthorized
-//   404: Not found
-app.get("api", "users", ":id") { req -> User in
-    // ...
+import Vapor
+
+struct CreateUserDTO: Content {
+    var name: String
+    var email: String
+}
+
+struct User: Content {
+    var id: UUID
+    var name: String
+    var email: String
+}
+
+func routes(_ app: Application) throws {
+    app.get("users") { req async throws -> [User] in
+        // Implementation
+    }
+    .openAPI(
+        summary: "Get all users",
+        description: "Returns a list of all users",
+        response: .type([User].self)
+    )
+    
+    app.post("users") { req async throws -> User in
+        let dto = try req.content.decode(CreateUserDTO.self)
+        // Implementation
+    }
+    .openAPI(
+        summary: "Create user",
+        description: "Creates a new user",
+        body: .type(CreateUserDTO.self),
+        response: .type(User.self, status: .created)
+    )
+    
+    app.get("users", ":id") { req async throws -> User in
+        guard let id = req.parameters.get("id", as: UUID.self) else {
+            throw Abort(.badRequest)
+        }
+        // Implementation
+    }
+    .openAPI(
+        summary: "Get user by ID",
+        description: "Returns a single user",
+        parameters: [.path("id", type: .string)],
+        response: .type(User.self),
+        responses: [
+            .notFound: .init(description: "User not found")
+        ]
+    )
 }
 ```
 
-### 3.2 API Versioning
+Deliverable: Documented endpoints
 
-**URL-based Versioning**:
-```yaml
-paths:
-  /api/v1/users:
-    get:
-      summary: Get users (V1)
-  /api/v2/users:
-    get:
-      summary: Get users (V2 - includes email field)
-```
+========================================
+PHASE 3 - SCHEMA DEFINITIONS
+========================================
 
-**Vapor Implementation**:
+Add schema descriptions:
+
 ```swift
-let v1 = app.grouped("api", "v1")
-v1.get("users") { req in /* V1 logic */ }
+extension User: OpenAPIDescribed {
+    static var openAPIDescription: OpenAPIDescription {
+        .init(
+            description: "User entity",
+            example: User(
+                id: UUID(),
+                name: "John Doe",
+                email: "john@example.com"
+            )
+        )
+    }
+}
 
-let v2 = app.grouped("api", "v2")
-v2.get("users") { req in /* V2 logic */ }
-```
-
-### 3.3 Consistent Error Response Format
-
-> **Reference**: See general documentation standards for recommended error format and implementation
-
-### 3.4 Rate Limiting Documentation
-
-**OpenAPI Spec**:
-```yaml
-paths:
-  /api/users:
-    get:
-      description: Rate limit 100 requests/minute per IP
-      responses:
-        '429':
-          description: Too many requests
-          headers:
-            X-RateLimit-Limit:
-              schema: { type: integer }
-            X-RateLimit-Remaining:
-              schema: { type: integer }
-```
-
----
-
-## Phase 4: CI/CD Integration
-
-> **ALWAYS**:
-> - Version control openapi.yaml
-> - Validate spec in CI/CD
-> - Generate client SDKs from spec
-
-**Validate Spec**:
-```bash
-npx @openapitools/openapi-generator-cli validate -i openapi.yaml
-```
-
-**CI/CD Example**:
-```yaml
-- name: Validate OpenAPI Spec
-  run: |
-    npm install -g @openapitools/openapi-generator-cli
-    openapi-generator-cli validate -i openapi.yaml
-```
-
-### 4.2 Generate Client SDKs
-
-> **ALWAYS**: Generate type-safe client SDKs from OpenAPI spec
-
-**Generate Swift Client**:
-```bash
-openapi-generator-cli generate \
-  -i openapi.yaml \
-  -g swift5 \
-  -o sdks/swift-client
-```
-
-**Generate TypeScript Client**:
-```bash
-openapi-generator-cli generate \
-  -i openapi.yaml \
-  -g typescript-axios \
-  -o sdks/typescript-client
-```
-
-**Usage Example**:
-```swift
-import MyAPIClient
-
-let api = UsersAPI()
-api.getUser(userId: "123") { result in
-    switch result {
-    case .success(let user):
-        print(user.name)
-    case .failure(let error):
-        print(error)
+extension CreateUserDTO: OpenAPIDescribed {
+    static var openAPIDescription: OpenAPIDescription {
+        .init(
+            description: "User creation DTO",
+            example: CreateUserDTO(
+                name: "John Doe",
+                email: "john@example.com"
+            )
+        )
     }
 }
 ```
 
----
+Deliverable: Schema documentation
 
-## Best Practices
+========================================
+PHASE 4 - AUTHENTICATION
+========================================
 
-> **ALWAYS**:
-> - Keep OpenAPI spec in sync with routes
-> - Document all HTTP status codes
-> - Include request/response examples
-> - Use `$ref` for reusable schemas
-> - Document authentication requirements
+Add JWT authentication:
 
-> **NEVER**:
-> - Hardcode secrets in examples
-> - Skip documenting error responses
-> - Forget to update spec when routes change
+```swift
+app.openAPI.securitySchemes["bearerAuth"] = .http(
+    scheme: "bearer",
+    bearerFormat: "JWT"
+)
 
----
-
-## Troubleshooting
-
-### Issue: Swagger UI not loading
-- **Solution**: Check static file serving, verify swagger-ui dist files present
-
-### Issue: CORS errors in Try-it-out
-- **Solution**: Configure CORS middleware in Vapor to allow swagger-ui origin
-
-### Issue: Spec not validating
-- **Solution**: Use online validator (swagger.io/tools/swagger-editor), check for syntax errors
-
-### Issue: Want auto-generation from code
-- **Solution**: Consider using VaporToOpenAPI package (experimental) or maintain spec manually
-
----
-
-## AI Self-Check
-
-- [ ] VaporToOpenAPI or Swift OpenAPI Generator configured
-- [ ] OpenAPI specification created and validated
-- [ ] All endpoints documented with paths, methods, parameters
-- [ ] JWT authentication documented in security schemes
-- [ ] Swagger UI configured and accessible
-- [ ] CI/CD validates OpenAPI spec
-- [ ] Client SDKs generated for target languages
-- [ ] Spec version controlled in repository
-- [ ] Error responses follow consistent format (see general standards)
-- [ ] All status codes documented (see general standards)
-
----
-
-**Process Complete** ✅
-
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (simple)  
-> **When to use**: When setting up OpenAPI/Swagger API documentation
-
-### Complete Implementation Prompt
-
+// Protect routes
+app.grouped(JWTMiddleware())
+    .get("protected") { req async throws -> String in
+        return "Protected"
+    }
+    .openAPI(
+        summary: "Protected endpoint",
+        security: [.bearerAuth: []]
+    )
 ```
-CONTEXT:
-You are setting up auto-generated OpenAPI/Swagger API documentation for this project.
 
-CRITICAL REQUIREMENTS:
-- ALWAYS use OpenAPI 3.x specification
-- ALWAYS document all endpoints with descriptions
-- ALWAYS include request/response schemas
-- ALWAYS document authentication requirements
-- Use team's Git workflow
+Deliverable: Authentication in docs
 
-IMPLEMENTATION STEPS:
+========================================
+BEST PRACTICES
+========================================
 
-1. INSTALL TOOLS:
-   Install OpenAPI/Swagger library for the language (see Tech Stack section)
+- Use VaporOpenAPI for Vapor projects
+- Document all public routes
+- Add descriptions and examples
+- Use Swift types for schemas
+- Include authentication schemes
+- Serve OpenAPI spec at /openapi.json
+- Use Swagger UI with CDN
+- Keep models in sync
+- Version your API
 
-2. CONFIGURE BASIC SETUP:
-   Set up Swagger/OpenAPI generator
-   Configure API metadata (title, version, description)
-   Set up UI endpoint (e.g., /api-docs, /swagger)
+========================================
+EXECUTION
+========================================
 
-3. DOCUMENT AUTHENTICATION:
-   Configure security schemes (JWT, OAuth, API Key)
-   Document authentication flows
-
-4. ADD ENDPOINT DOCUMENTATION:
-   Document each endpoint:
-   - HTTP method and path
-   - Parameters (query, path, header)
-   - Request body schema
-   - Response schemas (success/error)
-   - Example requests/responses
-
-5. CONFIGURE AUTO-GENERATION:
-   Use framework decorators/annotations
-   Enable auto-discovery of endpoints
-   Generate schemas from models/DTOs
-
-6. ADD TO CI/CD (Optional):
-   Generate OpenAPI spec file in CI
-   Validate API spec
-   Deploy documentation to hosting
-
-DELIVERABLE:
-- Swagger UI accessible
-- All endpoints documented
-- Request/response schemas complete
-- Authentication documented
-
-START: Install OpenAPI tools and configure basic setup with API metadata.
+START: Add VaporOpenAPI (Phase 1)
+CONTINUE: Document routes (Phase 2)
+CONTINUE: Add schema descriptions (Phase 3)
+CONTINUE: Configure authentication (Phase 4)
+REMEMBER: Swift types, automatic schema generation
 ```
+
+---
+
+## Quick Reference
+
+**What you get**: OpenAPI documentation from Swift Vapor code  
+**Time**: 2-3 hours  
+**Output**: OpenAPI spec at /openapi.json

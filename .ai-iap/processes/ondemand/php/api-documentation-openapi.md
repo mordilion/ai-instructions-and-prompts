@@ -1,86 +1,207 @@
-# API Documentation Process - PHP (OpenAPI/Swagger)
+# PHP API Documentation (OpenAPI) - Copy This Prompt
 
-> **Purpose**: Auto-generate interactive API documentation
-
-> **Tools**: L5-Swagger ⭐ (Laravel), NelmioApiDocBundle (Symfony)
-
-> **Reference**: See general documentation standards for HTTP status codes, error formats, and best practices
+> **Type**: One-time setup process  
+> **When to use**: Setting up OpenAPI/Swagger documentation for PHP API  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 1: Laravel (L5-Swagger)
+## 📋 Complete Self-Contained Prompt
 
-**Install**:
+```
+========================================
+PHP API DOCUMENTATION - OPENAPI
+========================================
+
+CONTEXT:
+You are implementing OpenAPI/Swagger documentation for a PHP REST API.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS use swagger-php annotations
+- ALWAYS keep docs in sync with code
+- NEVER document internal/private endpoints
+- Use PHPDoc comments for descriptions
+
+========================================
+PHASE 1 - BASIC SETUP
+========================================
+
+Install swagger-php:
+
 ```bash
-composer require darkaonline/l5-swagger
-php artisan vendor:publish --provider "L5Swagger\L5SwaggerServiceProvider"
+composer require zircote/swagger-php
 ```
 
-**Annotate Controllers**:
+Generate OpenAPI spec:
+```bash
+vendor/bin/openapi src -o openapi.json
+```
+
+Add Swagger UI (using CDN):
 ```php
+<!-- public/api-docs.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Documentation</title>
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css">
+</head>
+<body>
+    <div id="swagger-ui"></div>
+    <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
+    <script>
+        SwaggerUIBundle({
+            url: '/openapi.json',
+            dom_id: '#swagger-ui'
+        })
+    </script>
+</body>
+</html>
+```
+
+Deliverable: Swagger UI accessible
+
+========================================
+PHASE 2 - DOCUMENT ENDPOINTS
+========================================
+
+Add OpenAPI annotations to controllers:
+
+```php
+use OpenApi\Annotations as OA;
+
 /**
- * @OA\Get(
- *     path="/api/users/{id}",
- *     summary="Get user by ID",
- *     @OA\Parameter(
- *         name="id",
- *         in="path",
- *         required=true,
- *         @OA\Schema(type="integer")
- *     ),
- *     @OA\Response(response=200, description="User found"),
- *     @OA\Response(response=404, description="Not found")
+ * @OA\Info(
+ *     version="1.0.0",
+ *     title="My API",
+ *     description="API Documentation"
  * )
  */
-public function show($id) { }
+class Controller {}
+
+/**
+ * @OA\Get(
+ *     path="/api/users",
+ *     summary="Get all users",
+ *     tags={"Users"},
+ *     @OA\Response(
+ *         response=200,
+ *         description="Successful operation",
+ *         @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/User"))
+ *     )
+ * )
+ */
+public function index()
+{
+    // Implementation
+}
+
+/**
+ * @OA\Post(
+ *     path="/api/users",
+ *     summary="Create user",
+ *     tags={"Users"},
+ *     @OA\RequestBody(
+ *         required=true,
+ *         @OA\JsonContent(ref="#/components/schemas/CreateUserDto")
+ *     ),
+ *     @OA\Response(
+ *         response=201,
+ *         description="User created",
+ *         @OA\JsonContent(ref="#/components/schemas/User")
+ *     ),
+ *     @OA\Response(
+ *         response=400,
+ *         description="Invalid input"
+ *     )
+ * )
+ */
+public function store(Request $request)
+{
+    // Implementation
+}
 ```
 
-**Generate Docs**:
-```bash
-php artisan l5-swagger:generate
-```
+Deliverable: Documented endpoints
 
-> **Access**: http://localhost:8000/api/documentation
+========================================
+PHASE 3 - SCHEMA DEFINITIONS
+========================================
 
----
+Define schemas in models:
 
-## Phase 2: Symfony (NelmioApiDocBundle)
-
-**Install**:
-```bash
-composer require nelmio/api-doc-bundle
-```
-
-**Configure** (config/packages/nelmio_api_doc.yaml):
-```yaml
-nelmio_api_doc:
-    documentation:
-        info:
-            title: My API
-            version: 1.0.0
-    areas:
-        path_patterns:
-            - ^/api(?!/doc$)
-```
-
-**Annotate Controllers**:
 ```php
-use OpenApi\Attributes as OA;
+/**
+ * @OA\Schema(
+ *     schema="User",
+ *     type="object",
+ *     title="User",
+ *     description="User entity",
+ *     required={"id", "name", "email"}
+ * )
+ */
+class User
+{
+    /**
+     * @OA\Property(
+     *     property="id",
+     *     type="integer",
+     *     description="User ID",
+     *     example=1
+     * )
+     */
+    public int $id;
+    
+    /**
+     * @OA\Property(
+     *     property="name",
+     *     type="string",
+     *     description="User full name",
+     *     example="John Doe"
+     * )
+     */
+    public string $name;
+    
+    /**
+     * @OA\Property(
+     *     property="email",
+     *     type="string",
+     *     format="email",
+     *     description="User email",
+     *     example="john@example.com"
+     * )
+     */
+    public string $email;
+}
 
-#[OA\Get(path: '/api/users/{id}', summary: 'Get user')]
-#[OA\Response(response: 200, description: 'Success')]
-public function getUser(int $id): Response { }
+/**
+ * @OA\Schema(
+ *     schema="CreateUserDto",
+ *     required={"name", "email"}
+ * )
+ */
+class CreateUserDto
+{
+    /**
+     * @OA\Property(example="John Doe")
+     */
+    public string $name;
+    
+    /**
+     * @OA\Property(example="john@example.com")
+     */
+    public string $email;
+}
 ```
 
-> **Access**: http://localhost:8000/api/doc
+Deliverable: Schema documentation
 
----
+========================================
+PHASE 4 - AUTHENTICATION
+========================================
 
-## Phase 3: Security & Versioning
+Add security definitions:
 
-### 3.1 Document JWT Authentication
-
-**Laravel (L5-Swagger)**:
 ```php
 /**
  * @OA\SecurityScheme(
@@ -90,244 +211,46 @@ public function getUser(int $id): Response { }
  *     bearerFormat="JWT"
  * )
  */
-class Controller extends BaseController
-{
-    /**
-     * @OA\Get(
-     *     path="/api/users",
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Response(response=401, description="Unauthorized")
-     * )
-     */
-    public function index() { }
-}
-```
-
-**Symfony (Nelmio)**:
-```php
-use OpenApi\Attributes as OA;
-
-#[OA\SecurityScheme(
-    securityScheme: 'bearerAuth',
-    type: 'http',
-    scheme: 'bearer',
-    bearerFormat: 'JWT'
-)]
-class SecurityConfig {}
-
-#[OA\Get(path: '/api/users', security: [['bearerAuth' => []]])]
-public function getUsers(): Response { }
-```
-
-### 3.2 API Versioning
-
-**URL-based**:
-```php
-/**
- * @OA\Get(
- *     path="/api/v1/users",
- *     tags={"Users V1"},
- *     deprecated=false
- * )
- */
-Route::prefix('v1')->group(function () {
-    Route::get('/users', [UserController::class, 'index']);
-});
 
 /**
  * @OA\Get(
- *     path="/api/v2/users",
- *     tags={"Users V2"},
- *     description="V2 includes additional email field"
- * )
- */
-Route::prefix('v2')->group(function () {
-    Route::get('/users', [UserControllerV2::class, 'index']);
-});
-```
-
-### 3.3 Rate Limiting Documentation
-
-**Document Headers**:
-```php
-/**
- * @OA\Get(
- *     path="/api/users",
- *     @OA\Header(
- *         header="X-RateLimit-Limit",
- *         description="Request limit per hour",
- *         @OA\Schema(type="integer")
- *     ),
- *     @OA\Response(response=429, description="Too Many Requests")
+ *     path="/api/protected",
+ *     security={{"bearerAuth":{}}},
+ *     ...
  * )
  */
 ```
 
-### 3.4 Consistent Error Response Format
+Deliverable: Authentication in docs
 
-> **Reference**: See general documentation standards for recommended error format and implementation
+========================================
+BEST PRACTICES
+========================================
 
----
+- Use swagger-php annotations
+- Document all public endpoints
+- Add descriptions and examples
+- Define schemas for all DTOs
+- Include authentication schemes
+- Generate spec in CI
+- Version your API
+- Keep annotations up to date
 
-## Phase 4: CI/CD Integration
+========================================
+EXECUTION
+========================================
 
-> **ALWAYS**:
-> - Generate OpenAPI spec in CI/CD
-> - Validate with Spectral or swagger-cli
-> - Export as artifact
-
-**Laravel**:
-```yaml
-- name: Generate API Docs
-  run: |
-    php artisan l5-swagger:generate
-    npx @openapitools/openapi-generator-cli validate -i storage/api-docs/api-docs.json
-```
-
-**Symfony**:
-```yaml
-- name: Generate API Docs
-  run: |
-    php bin/console nelmio:apidoc:dump > openapi.json
-    npx swagger-cli validate openapi.json
-```
-
-### 4.2 Generate Client SDKs
-
-> **ALWAYS**: Generate type-safe client SDKs from OpenAPI spec
-
-**Generate PHP Client**:
-```bash
-openapi-generator-cli generate \
-  -i storage/api-docs/api-docs.json \
-  -g php \
-  -o sdks/php-client
-```
-
-**Generate JavaScript Client**:
-```bash
-openapi-generator-cli generate \
-  -i storage/api-docs/api-docs.json \
-  -g javascript \
-  -o sdks/js-client
-```
-
-**Usage Example**:
-```php
-use MyApi\Client\Api\UsersApi;
-
-$api = new UsersApi();
-$user = $api->getUser('123');
+START: Install swagger-php (Phase 1)
+CONTINUE: Document endpoints (Phase 2)
+CONTINUE: Add schema annotations (Phase 3)
+CONTINUE: Configure authentication (Phase 4)
+REMEMBER: Annotations in PHPDoc, regenerate spec
 ```
 
 ---
 
-## Best Practices
+## Quick Reference
 
-> **ALWAYS**:
-> - Annotate all endpoints with `@OA\` or `#[OA\]`
-> - Document request validation rules
-> - Include realistic examples
-> - Document all status codes (200, 400, 401, 403, 404, 422, 500)
-> - Use resource classes for consistent response formats (Laravel)
-
-> **NEVER**:
-> - Include API keys or passwords in examples
-> - Skip documenting validation errors (422)
-> - Expose internal/admin endpoints without security annotations
-> - Forget to regenerate docs after API changes
-
----
-
-## Troubleshooting
-
-### Issue: Swagger UI shows 404
-- **Solution**: Run `php artisan l5-swagger:generate`, check config/l5-swagger.php routes
-
-### Issue: Annotations not appearing in docs
-- **Solution**: Verify annotation syntax, ensure controllers scanned in config, regenerate docs
-
-### Issue: CORS errors in Try-it-out
-- **Solution**: Configure CORS middleware, ensure Swagger UI origin allowed
-
-### Issue: Want to exclude endpoints from docs
-- **Solution**: Use `@OA\PathItem(path="/internal/...", description="Internal")` or configure exclude patterns
-
----
-
-## AI Self-Check
-
-- [ ] L5-Swagger (Laravel) or Nelmio (Symfony) installed
-- [ ] Swagger UI accessible at `/api/documentation` or `/api/doc`
-- [ ] All endpoints annotated with OpenAPI attributes
-- [ ] JWT authentication documented with security scheme
-- [ ] Request/response schemas documented
-- [ ] CI/CD generates and validates OpenAPI spec
-- [ ] Client SDKs generated for target languages
-- [ ] Try-it-out functionality works
-- [ ] Error responses follow consistent format (see general standards)
-- [ ] All status codes documented (see general standards)
-
----
-
-**Process Complete** ✅
-
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (simple)  
-> **When to use**: When setting up OpenAPI/Swagger API documentation
-
-### Complete Implementation Prompt
-
-```
-CONTEXT:
-You are setting up auto-generated OpenAPI/Swagger API documentation for this project.
-
-CRITICAL REQUIREMENTS:
-- ALWAYS use OpenAPI 3.x specification
-- ALWAYS document all endpoints with descriptions
-- ALWAYS include request/response schemas
-- ALWAYS document authentication requirements
-- Use team's Git workflow
-
-IMPLEMENTATION STEPS:
-
-1. INSTALL TOOLS:
-   Install OpenAPI/Swagger library for the language (see Tech Stack section)
-
-2. CONFIGURE BASIC SETUP:
-   Set up Swagger/OpenAPI generator
-   Configure API metadata (title, version, description)
-   Set up UI endpoint (e.g., /api-docs, /swagger)
-
-3. DOCUMENT AUTHENTICATION:
-   Configure security schemes (JWT, OAuth, API Key)
-   Document authentication flows
-
-4. ADD ENDPOINT DOCUMENTATION:
-   Document each endpoint:
-   - HTTP method and path
-   - Parameters (query, path, header)
-   - Request body schema
-   - Response schemas (success/error)
-   - Example requests/responses
-
-5. CONFIGURE AUTO-GENERATION:
-   Use framework decorators/annotations
-   Enable auto-discovery of endpoints
-   Generate schemas from models/DTOs
-
-6. ADD TO CI/CD (Optional):
-   Generate OpenAPI spec file in CI
-   Validate API spec
-   Deploy documentation to hosting
-
-DELIVERABLE:
-- Swagger UI accessible
-- All endpoints documented
-- Request/response schemas complete
-- Authentication documented
-
-START: Install OpenAPI tools and configure basic setup with API metadata.
-```
+**What you get**: OpenAPI documentation from PHP annotations  
+**Time**: 2-3 hours  
+**Output**: OpenAPI spec, Swagger UI

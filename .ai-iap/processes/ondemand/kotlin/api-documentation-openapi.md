@@ -1,333 +1,227 @@
-# API Documentation Process - Kotlin (OpenAPI/Swagger)
+# Kotlin API Documentation (OpenAPI) - Copy This Prompt
 
-> **Purpose**: Auto-generate interactive API documentation
-
-> **Tools**: SpringDoc ⭐ (Spring Boot), Ktor OpenAPI
-
-> **Reference**: See general documentation standards for HTTP status codes, error formats, and best practices
+> **Type**: One-time setup process  
+> **When to use**: Setting up OpenAPI/Swagger documentation for Kotlin API  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 1: Spring Boot (Same as Java)
+## 📋 Complete Self-Contained Prompt
 
-**Dependencies** (Gradle):
+```
+========================================
+KOTLIN API DOCUMENTATION - OPENAPI
+========================================
+
+CONTEXT:
+You are implementing OpenAPI/Swagger documentation for a Kotlin REST API (Ktor or Spring Boot).
+
+CRITICAL REQUIREMENTS:
+- ALWAYS use springdoc-openapi (Spring) or ktor-swagger (Ktor)
+- ALWAYS keep docs in sync with code
+- NEVER document internal/private endpoints
+- Use KDoc comments for descriptions
+
+========================================
+PHASE 1 - BASIC SETUP
+========================================
+
+For Ktor with ktor-swagger:
+
 ```kotlin
-implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
+dependencies {
+    implementation("io.github.smiley4:ktor-swagger-ui:2.7.4")
+}
 ```
 
-**Annotate Controllers**:
+Configure in Application.kt:
+```kotlin
+fun Application.module() {
+    install(SwaggerUI) {
+        swagger {
+            swaggerUrl = "swagger"
+            forwardRoot = false
+        }
+        info {
+            title = "My API"
+            version = "1.0"
+            description = "API documentation"
+        }
+    }
+}
+```
+
+For Spring Boot (use same as Java):
+```kotlin
+implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0")
+```
+
+Deliverable: Swagger UI running
+
+========================================
+PHASE 2 - DOCUMENT ENDPOINTS
+========================================
+
+For Ktor:
+
+```kotlin
+routing {
+    get("/users") {
+        call.respond(users)
+    } swaggerDoc {
+        description = "Get all users"
+        response {
+            HttpStatusCode.OK to {
+                description = "List of users"
+                body<List<User>>()
+            }
+        }
+    }
+    
+    post("/users") {
+        val user = call.receive<CreateUserDto>()
+        call.respond(HttpStatusCode.Created, createUser(user))
+    } swaggerDoc {
+        description = "Create a new user"
+        request {
+            body<CreateUserDto>()
+        }
+        response {
+            HttpStatusCode.Created to {
+                description = "User created"
+                body<User>()
+            }
+            HttpStatusCode.BadRequest to {
+                description = "Invalid input"
+            }
+        }
+    }
+}
+```
+
+For Spring Boot with Kotlin:
 ```kotlin
 @RestController
 @RequestMapping("/api/users")
-@Tag(name = "Users")
+@Tag(name = "Users", description = "User management")
 class UserController {
     
-    @GetMapping("/{id}")
-    @Operation(summary = "Get user by ID")
-    fun getUser(@PathVariable id: Long): User { }
-}
-```
-
-> **Access**: http://localhost:8080/swagger-ui.html
-
----
-
-## Phase 2: Ktor OpenAPI
-
-**Install**:
-```kotlin
-implementation("io.github.smiley4:ktor-swagger-ui:$version")
-```
-
-**Configure**:
-```kotlin
-install(SwaggerUI) {
-    swagger {
-        swaggerUrl = "swagger-ui"
-        forwardRoot = true
+    @GetMapping
+    @Operation(summary = "Get all users")
+    @ApiResponse(responseCode = "200", description = "Success")
+    fun getAllUsers(): List<User> {
+        // Implementation
     }
-    info {
-        title = "My API"
-        version = "1.0.0"
+    
+    @PostMapping
+    @Operation(summary = "Create user")
+    fun createUser(@RequestBody @Valid user: CreateUserDto): User {
+        // Implementation
     }
 }
 ```
 
----
+Deliverable: Documented endpoints
 
-## Phase 3: Security & Versioning
+========================================
+PHASE 3 - SCHEMA DEFINITIONS
+========================================
 
-### 3.1 Document JWT Authentication (Spring Boot)
+Define data classes with annotations:
 
-**Security Configuration**:
 ```kotlin
-@Bean
-fun customOpenAPI(): OpenAPI {
-    return OpenAPI()
-        .info(Info().title("My API").version("1.0"))
-        .addSecurityItem(SecurityRequirement().addList("Bearer"))
-        .components(Components()
-            .addSecuritySchemes("Bearer", SecurityScheme()
-                .type(SecurityScheme.Type.HTTP)
-                .scheme("bearer")
-                .bearerFormat("JWT")))
-}
+@Schema(description = "User entity")
+data class User(
+    @field:Schema(description = "User ID", example = "1")
+    val id: Long,
+    
+    @field:Schema(description = "User name", example = "John Doe")
+    val name: String,
+    
+    @field:Schema(description = "Email address", example = "john@example.com")
+    val email: String
+)
+
+@Schema(description = "User creation DTO")
+data class CreateUserDto(
+    @field:Schema(description = "User name", required = true)
+    @field:NotBlank
+    val name: String,
+    
+    @field:Schema(description = "Email address", required = true)
+    @field:Email
+    val email: String
+)
 ```
 
-### 3.2 API Versioning
+Deliverable: Schema documentation
 
-**URL-based**:
-```kotlin
-@RestController
-@RequestMapping("/api/v1/users")
-@Tag(name = "Users V1")
-class UserControllerV1
+========================================
+PHASE 4 - AUTHENTICATION
+========================================
 
-@RestController
-@RequestMapping("/api/v2/users")
-@Tag(name = "Users V2")
-class UserControllerV2
-```
+For Ktor:
 
-### 3.3 Ktor Security Documentation
-
-**Configure JWT**:
 ```kotlin
 install(SwaggerUI) {
     security {
-        securityScheme("JWT") {
-            type = HttpSecuritySchemeType.HTTP
-            scheme = HttpAuthScheme.BEARER
+        securityScheme("BearerAuth") {
+            type = AuthType.HTTP
+            scheme = AuthScheme.BEARER
             bearerFormat = "JWT"
         }
     }
 }
 ```
 
-### 3.4 Consistent Error Response Format
-
-> **Reference**: See general documentation standards for recommended error format
-
-**Spring Boot Implementation**:
+For Spring Boot:
 ```kotlin
-data class ErrorResponse(val error: ErrorDetail)
-
-data class ErrorDetail(
-    val code: String,
-    val message: String,
-    val details: List<ValidationError> = emptyList(),
-    val timestamp: String,
-    val requestId: String?
-)
-
-data class ValidationError(
-    val field: String,
-    val issue: String
-)
-
-@RestControllerAdvice
-class GlobalExceptionHandler {
-    
-    @ExceptionHandler(MethodArgumentNotValidException::class)
-    fun handleValidation(
-        ex: MethodArgumentNotValidException,
-        request: HttpServletRequest
-    ): ResponseEntity<ErrorResponse> {
-        val details = ex.bindingResult.fieldErrors.map {
-            ValidationError(it.field, it.defaultMessage ?: "Invalid value")
-        }
-        
-        val error = ErrorDetail(
-            code = "VALIDATION_ERROR",
-            message = "Invalid input",
-            details = details,
-            timestamp = Instant.now().toString(),
-            requestId = request.getHeader("X-Request-ID")
-        )
-        
-        return ResponseEntity.badRequest().body(ErrorResponse(error))
-    }
+@Configuration
+class OpenAPIConfig {
+    @Bean
+    fun customOpenAPI() = OpenAPI()
+        .info(Info()
+            .title("My API")
+            .version("1.0"))
+        .addSecurityItem(SecurityRequirement().addList("bearerAuth"))
+        .components(Components()
+            .addSecuritySchemes("bearerAuth",
+                SecurityScheme()
+                    .type(SecurityScheme.Type.HTTP)
+                    .scheme("bearer")
+                    .bearerFormat("JWT")))
 }
 ```
 
-**Ktor Implementation**:
-```kotlin
-install(StatusPages) {
-    exception<Throwable> { call, cause ->
-        call.respond(HttpStatusCode.InternalServerError, ErrorResponse(
-            error = ErrorDetail(
-                code = "INTERNAL_ERROR",
-                message = cause.message ?: "Unknown error",
-                timestamp = Clock.System.now().toString(),
-                requestId = call.request.header("X-Request-ID")
-            )
-        ))
-    }
-}
-```
+Deliverable: Authentication in docs
 
-### 3.5 Rate Limiting Documentation
+========================================
+BEST PRACTICES
+========================================
 
-> **Document rate limits**:
-```kotlin
-@Operation(
-    summary = "Get user",
-    description = "Rate limit: 100 requests/minute per user"
-)
-@ApiResponse(responseCode = "429", description = "Too many requests")
-fun getUser(@PathVariable id: Long): User { }
+- Use ktor-swagger for Ktor, springdoc for Spring Boot
+- Document all public endpoints
+- Add descriptions to data classes
+- Include authentication schemes
+- Generate spec in CI
+- Version your API
+- Validate spec
+
+========================================
+EXECUTION
+========================================
+
+START: Install dependencies (Phase 1)
+CONTINUE: Document endpoints (Phase 2)
+CONTINUE: Add schema annotations (Phase 3)
+CONTINUE: Configure authentication (Phase 4)
+REMEMBER: Framework-specific, validate in CI
 ```
 
 ---
 
-## Phase 4: CI/CD Integration
+## Quick Reference
 
-> **ALWAYS**:
-> - Generate OpenAPI spec during build
-> - Validate with Spectral or swagger-cli
-> - Export as artifact
-
-**Gradle Task**:
-```kotlin
-tasks.register("generateOpenApi") {
-    dependsOn("build")
-    doLast {
-        // Export OpenAPI JSON from running app or use springdoc plugin
-        println("OpenAPI spec generated")
-    }
-}
-```
-
-### 4.2 Generate Client SDKs
-
-> **ALWAYS**: Generate type-safe client SDKs from OpenAPI spec
-
-**Generate Kotlin Client**:
-```bash
-openapi-generator-cli generate \
-  -i openapi.json \
-  -g kotlin \
-  -o sdks/kotlin-client
-```
-
-**Generate TypeScript Client**:
-```bash
-openapi-generator-cli generate \
-  -i openapi.json \
-  -g typescript-axios \
-  -o sdks/typescript-client
-```
-
-**Usage Example**:
-```kotlin
-val api = UsersApi()
-val user = api.getUser("123")
-```
-
----
-
-## Best Practices
-
-> **ALWAYS**:
-> - Use data classes for request/response models
-> - Add KDoc comments to endpoints (included in docs)
-> - Document all HTTP status codes
-> - Group endpoints with `@Tag`
-> - Use `@Parameter` for path/query params
-
-> **NEVER**:
-> - Expose internal endpoints without security
-> - Include tokens/passwords in examples
-> - Skip error response documentation
-
----
-
-## Troubleshooting
-
-### Issue: Swagger UI not loading (Spring Boot)
-- **Solution**: Check `springdoc.swagger-ui.enabled=true`, verify path
-
-### Issue: Endpoints missing (Ktor)
-- **Solution**: Ensure routes are registered before SwaggerUI plugin
-
-### Issue: Security schemes not appearing
-- **Solution**: Verify both security scheme and requirement configured
-
----
-
-## AI Self-Check
-
-- [ ] SpringDoc or Ktor OpenAPI configured
-- [ ] Swagger UI accessible
-- [ ] All endpoints documented with annotations
-- [ ] JWT/OAuth security documented
-- [ ] Request/response schemas defined with data classes
-- [ ] CI/CD generates and validates OpenAPI spec
-- [ ] Client SDKs generated for target languages
-- [ ] Try-it-out functionality works
-- [ ] Error responses follow consistent format (see general standards)
-- [ ] All status codes documented (see general standards)
-
----
-
-**Process Complete** ✅
-
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (simple)  
-> **When to use**: When setting up OpenAPI/Swagger API documentation
-
-### Complete Implementation Prompt
-
-```
-CONTEXT:
-You are setting up auto-generated OpenAPI/Swagger API documentation for this project.
-
-CRITICAL REQUIREMENTS:
-- ALWAYS use OpenAPI 3.x specification
-- ALWAYS document all endpoints with descriptions
-- ALWAYS include request/response schemas
-- ALWAYS document authentication requirements
-- Use team's Git workflow
-
-IMPLEMENTATION STEPS:
-
-1. INSTALL TOOLS:
-   Install OpenAPI/Swagger library for the language (see Tech Stack section)
-
-2. CONFIGURE BASIC SETUP:
-   Set up Swagger/OpenAPI generator
-   Configure API metadata (title, version, description)
-   Set up UI endpoint (e.g., /api-docs, /swagger)
-
-3. DOCUMENT AUTHENTICATION:
-   Configure security schemes (JWT, OAuth, API Key)
-   Document authentication flows
-
-4. ADD ENDPOINT DOCUMENTATION:
-   Document each endpoint:
-   - HTTP method and path
-   - Parameters (query, path, header)
-   - Request body schema
-   - Response schemas (success/error)
-   - Example requests/responses
-
-5. CONFIGURE AUTO-GENERATION:
-   Use framework decorators/annotations
-   Enable auto-discovery of endpoints
-   Generate schemas from models/DTOs
-
-6. ADD TO CI/CD (Optional):
-   Generate OpenAPI spec file in CI
-   Validate API spec
-   Deploy documentation to hosting
-
-DELIVERABLE:
-- Swagger UI accessible
-- All endpoints documented
-- Request/response schemas complete
-- Authentication documented
-
-START: Install OpenAPI tools and configure basic setup with API metadata.
-```
+**What you get**: Auto-generated OpenAPI documentation from Kotlin code  
+**Time**: 2 hours  
+**Output**: OpenAPI spec, Swagger UI

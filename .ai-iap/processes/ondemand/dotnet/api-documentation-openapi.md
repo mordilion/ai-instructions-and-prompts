@@ -1,21 +1,38 @@
-# API Documentation Process - .NET/C# (OpenAPI/Swagger)
+# .NET API Documentation (OpenAPI) - Copy This Prompt
 
-> **Purpose**: Auto-generate interactive API documentation with Swashbuckle
-
-> **Tool**: Swashbuckle.AspNetCore ⭐ (built-in with ASP.NET Core)
-
-> **Reference**: See general documentation standards for HTTP status codes, error formats, and best practices
+> **Type**: One-time setup process  
+> **When to use**: Setting up OpenAPI/Swagger documentation for .NET API  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 1: Setup Swashbuckle
+## 📋 Complete Self-Contained Prompt
 
-**Install** (if not already):
+```
+========================================
+.NET API DOCUMENTATION - OPENAPI
+========================================
+
+CONTEXT:
+You are implementing OpenAPI/Swagger documentation for a .NET REST API.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS use Swashbuckle for .NET
+- ALWAYS keep docs in sync with code
+- NEVER document internal/private endpoints
+- Use XML comments for descriptions
+
+========================================
+PHASE 1 - BASIC SETUP
+========================================
+
+Install Swashbuckle:
+
 ```bash
 dotnet add package Swashbuckle.AspNetCore
 ```
 
-**Configure** (Program.cs):
+Configure in Program.cs:
 ```csharp
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -24,75 +41,94 @@ builder.Services.AddSwaggerGen(options =>
     {
         Version = "v1",
         Title = "My API",
-        Description = "API for my application"
-    });
-    
-    // JWT Auth
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.Http,
-        Scheme = "bearer",
-        BearerFormat = "JWT"
+        Description = "An ASP.NET Core Web API",
+        Contact = new OpenApiContact
+        {
+            Name = "Your Name",
+            Url = new Uri("https://example.com")
+        }
     });
 });
 
-app.UseSwagger();
-app.UseSwaggerUI();
-```
-
-**Annotate Controllers**:
-```csharp
-[ApiController]
-[Route("api/[controller]")]
-[Produces("application/json")]
-public class UsersController : ControllerBase
+// After app.Build()
+if (app.Environment.IsDevelopment())
 {
-    [HttpGet("{id}")]
-    [ProducesResponseType(typeof(User), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<User> GetUser(int id) { }
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 ```
 
-> **Access**: https://localhost:5001/swagger
+Deliverable: Swagger UI at /swagger
 
----
+========================================
+PHASE 2 - XML COMMENTS
+========================================
 
-## Phase 2: XML Comments
+Enable XML documentation in .csproj:
 
-**Enable XML Documentation**:
 ```xml
 <PropertyGroup>
-  <GenerateDocumentationFile>true</GenerateDocumentationFile>
-  <NoWarn>$(NoWarn);1591</NoWarn>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
 </PropertyGroup>
 ```
 
-**Include in Swagger**:
+Update Swagger configuration:
 ```csharp
-options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, "MyApi.xml"));
+options.SwaggerDoc("v1", new OpenApiInfo { ... });
+
+var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
 ```
 
-**Document with XML**:
+Add XML comments to controllers:
 ```csharp
 /// <summary>
-/// Gets a user by ID
+/// Gets all users
 /// </summary>
-/// <param name="id">User ID</param>
-/// <returns>User object</returns>
-[HttpGet("{id}")]
-public ActionResult<User> GetUser(int id) { }
+/// <returns>A list of users</returns>
+/// <response code="200">Returns the list of users</response>
+[HttpGet]
+[ProducesResponseType(typeof(IEnumerable<User>), StatusCodes.Status200OK)]
+public async Task<ActionResult<IEnumerable<User>>> GetUsers()
+{
+    // Implementation
+}
+
+/// <summary>
+/// Creates a new user
+/// </summary>
+/// <param name="user">The user to create</param>
+/// <returns>The created user</returns>
+/// <response code="201">Returns the newly created user</response>
+/// <response code="400">If the user is invalid</response>
+[HttpPost]
+[ProducesResponseType(typeof(User), StatusCodes.Status201Created)]
+[ProducesResponseType(StatusCodes.Status400BadRequest)]
+public async Task<ActionResult<User>> CreateUser([FromBody] CreateUserDto user)
+{
+    // Implementation
+}
 ```
 
----
+Deliverable: Enhanced documentation with descriptions
 
-## Phase 3: Security & Versioning
+========================================
+PHASE 3 - AUTHENTICATION
+========================================
 
-### 3.1 Document Authentication
+Add JWT bearer authentication:
 
-**JWT Configuration**:
 ```csharp
+options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+{
+    Description = "JWT Authorization header using the Bearer scheme",
+    Name = "Authorization",
+    In = ParameterLocation.Header,
+    Type = SecuritySchemeType.Http,
+    Scheme = "bearer"
+});
+
 options.AddSecurityRequirement(new OpenApiSecurityRequirement
 {
     {
@@ -109,227 +145,62 @@ options.AddSecurityRequirement(new OpenApiSecurityRequirement
 });
 ```
 
-### 3.2 API Versioning
+Deliverable: Authentication in Swagger UI
 
-**Install**:
-```bash
-dotnet add package Asp.Versioning.Mvc
-dotnet add package Asp.Versioning.Mvc.ApiExplorer
+========================================
+PHASE 4 - CI INTEGRATION
+========================================
+
+Generate OpenAPI spec file:
+
+Add to .github/workflows/ci.yml:
+```yaml
+    - name: Generate OpenAPI spec
+      run: dotnet swagger tofile --output openapi.json build/MyApi.dll v1
+    
+    - name: Validate spec
+      run: |
+        npm install -g @apidevtools/swagger-cli
+        swagger-cli validate openapi.json
+    
+    - name: Upload spec
+      uses: actions/upload-artifact@v3
+      with:
+        name: openapi-spec
+        path: openapi.json
 ```
 
-**Configure**:
-```csharp
-builder.Services.AddApiVersioning(options =>
-{
-    options.DefaultApiVersion = new ApiVersion(1, 0);
-    options.AssumeDefaultVersionWhenUnspecified = true;
-});
+Deliverable: OpenAPI spec in CI artifacts
 
-options.SwaggerDoc("v1", new OpenApiInfo { Version = "v1", Title = "My API V1" });
-options.SwaggerDoc("v2", new OpenApiInfo { Version = "v2", Title = "My API V2" });
-```
+========================================
+BEST PRACTICES
+========================================
 
-### 3.3 Rate Limiting (ASP.NET Core 7+)
+- Use XML comments for descriptions
+- Document all public endpoints
+- Include request/response examples
+- Document error responses
+- Add authentication schemes
+- Use ProducesResponseType attributes
+- Generate spec in CI
+- Version your API
+- Host Swagger UI only in development
 
-**Document**:
-```csharp
-[RateLimiting("fixed")]
-[ProducesResponseType(StatusCodes.Status429TooManyRequests)]
-public ActionResult<User> GetUser(int id) { }
-```
+========================================
+EXECUTION
+========================================
 
-### 3.4 Consistent Error Response Format
-
-> **Reference**: See general documentation standards for recommended error format
-
-**ASP.NET Core Implementation**:
-```csharp
-public class ErrorResponse
-{
-    public ErrorDetail Error { get; set; }
-}
-
-public class ErrorDetail
-{
-    public string Code { get; set; }
-    public string Message { get; set; }
-    public List<ValidationError> Details { get; set; }
-    public DateTime Timestamp { get; set; }
-    public string RequestId { get; set; }
-}
-
-public class ValidationError
-{
-    public string Field { get; set; }
-    public string Issue { get; set; }
-}
-
-// Global exception handler
-app.UseExceptionHandler(errorApp =>
-{
-    errorApp.Run(async context =>
-    {
-        var error = context.Features.Get<IExceptionHandlerFeature>();
-        var response = new ErrorResponse
-        {
-            Error = new ErrorDetail
-            {
-                Code = "INTERNAL_ERROR",
-                Message = error.Error.Message,
-                Timestamp = DateTime.UtcNow,
-                RequestId = context.TraceIdentifier
-            }
-        };
-        context.Response.StatusCode = 500;
-        await context.Response.WriteAsJsonAsync(response);
-    });
-});
+START: Install Swashbuckle (Phase 1)
+CONTINUE: Add XML comments (Phase 2)
+CONTINUE: Add authentication (Phase 3)
+CONTINUE: Add CI generation (Phase 4)
+REMEMBER: XML comments, validate in CI
 ```
 
 ---
 
-## Phase 4: CI/CD Integration
+## Quick Reference
 
-> **ALWAYS**:
-> - Generate OpenAPI JSON during build
-> - Validate with Spectral or similar
-> - Version control the spec
-> - Export as build artifact
-
-**Generate Spec**:
-```bash
-dotnet build
-dotnet swagger tofile --output openapi.json bin/Debug/net8.0/MyApi.dll v1
-```
-
-### 4.2 Generate Client SDKs
-
-> **ALWAYS**: Generate type-safe client SDKs from OpenAPI spec
-
-**Generate C# Client**:
-```bash
-dotnet new tool-manifest
-dotnet tool install --local Kiota.ApiClient.Generator
-dotnet kiota generate -l CSharp -c MyApiClient -n MyApi.Client -d openapi.json -o ./sdks/csharp
-```
-
-**Generate TypeScript Client**:
-```bash
-npx @openapitools/openapi-generator-cli generate \
-  -i openapi.json \
-  -g typescript-axios \
-  -o sdks/typescript-client
-```
-
-**Usage Example**:
-```csharp
-var client = new MyApiClient();
-var user = await client.Users.GetByIdAsync("123");
-```
-
----
-
-## Best Practices
-
-> **ALWAYS**:
-> - Use XML comments for descriptions
-> - Document all status codes with `[ProducesResponseType]`
-> - Group endpoints with `[ApiExplorerSettings(GroupName = "...")]`
-> - Add examples with `[SwaggerRequestExample]`
-
-> **NEVER**:
-> - Expose internal APIs in docs (use `[ApiExplorerSettings(IgnoreApi = true)]`)
-> - Include sensitive data in examples
-> - Skip documenting error responses
-
----
-
-## Troubleshooting
-
-### Issue: Swagger UI shows 404
-- **Solution**: Ensure `app.UseSwagger()` before `app.UseSwaggerUI()`, check route template
-
-### Issue: XML comments not appearing
-- **Solution**: Verify `<GenerateDocumentationFile>true</GenerateDocumentationFile>` in .csproj, check file path in options
-
-### Issue: JWT auth button not showing
-- **Solution**: Add both `AddSecurityDefinition` and `AddSecurityRequirement`
-
----
-
-## AI Self-Check
-
-- [ ] Swashbuckle.AspNetCore installed and configured
-- [ ] Swagger UI accessible at `/swagger`
-- [ ] XML comments enabled for documentation
-- [ ] JWT authentication configured and testable
-- [ ] Response types documented with `[ProducesResponseType]`
-- [ ] CI/CD generates and validates OpenAPI spec
-- [ ] Client SDKs generated for target languages
-- [ ] No warnings about missing XML comments
-- [ ] Error responses follow consistent format (see general standards)
-- [ ] All status codes documented (see general standards)
-
----
-
-**Process Complete** ✅
-
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (simple)  
-> **When to use**: When setting up OpenAPI/Swagger API documentation
-
-### Complete Implementation Prompt
-
-```
-CONTEXT:
-You are setting up auto-generated OpenAPI/Swagger API documentation for this project.
-
-CRITICAL REQUIREMENTS:
-- ALWAYS use OpenAPI 3.x specification
-- ALWAYS document all endpoints with descriptions
-- ALWAYS include request/response schemas
-- ALWAYS document authentication requirements
-- Use team's Git workflow
-
-IMPLEMENTATION STEPS:
-
-1. INSTALL TOOLS:
-   Install OpenAPI/Swagger library for the language (see Tech Stack section)
-
-2. CONFIGURE BASIC SETUP:
-   Set up Swagger/OpenAPI generator
-   Configure API metadata (title, version, description)
-   Set up UI endpoint (e.g., /api-docs, /swagger)
-
-3. DOCUMENT AUTHENTICATION:
-   Configure security schemes (JWT, OAuth, API Key)
-   Document authentication flows
-
-4. ADD ENDPOINT DOCUMENTATION:
-   Document each endpoint:
-   - HTTP method and path
-   - Parameters (query, path, header)
-   - Request body schema
-   - Response schemas (success/error)
-   - Example requests/responses
-
-5. CONFIGURE AUTO-GENERATION:
-   Use framework decorators/annotations
-   Enable auto-discovery of endpoints
-   Generate schemas from models/DTOs
-
-6. ADD TO CI/CD (Optional):
-   Generate OpenAPI spec file in CI
-   Validate API spec
-   Deploy documentation to hosting
-
-DELIVERABLE:
-- Swagger UI accessible
-- All endpoints documented
-- Request/response schemas complete
-- Authentication documented
-
-START: Install OpenAPI tools and configure basic setup with API metadata.
-```
+**What you get**: Auto-generated OpenAPI documentation from .NET code  
+**Time**: 2 hours  
+**Output**: OpenAPI spec, Swagger UI, CI integration
