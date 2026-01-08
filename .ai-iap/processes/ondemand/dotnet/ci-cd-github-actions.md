@@ -23,6 +23,33 @@ CRITICAL REQUIREMENTS:
 - Use team's Git workflow
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+
+1. Read PROJECT-MEMORY.md if it exists:
+   - .NET version used
+   - CI/CD setup decisions
+   - Deployment target
+   - Lessons learned
+
+2. Read LOGIC-ANOMALIES.md if it exists:
+   - Build/deployment issues found
+   - Configuration problems
+
+3. Read CI-CD-SETUP.md if it exists:
+   - Current pipeline configuration
+   - Workflows already set up
+
+Use this information to:
+- Continue from where previous work stopped
+- Avoid recreating existing workflows
+- Build upon existing pipelines
+
+If no docs exist: Start fresh and create them.
+
+========================================
 PHASE 1 - BASIC CI PIPELINE
 ========================================
 
@@ -128,13 +155,45 @@ BEST PRACTICES
 - Set up branch protection
 
 ========================================
+DOCUMENTATION
+========================================
+
+Create/update these files for team catch-up:
+
+**PROJECT-MEMORY.md**, **LOGIC-ANOMALIES.md**, **CI-CD-SETUP.md**:
+```markdown
+# CI/CD Setup Guide
+
+## Quick Start
+\```bash
+dotnet build            # Test locally
+dotnet test             # Run tests
+gh workflow run ci.yml  # Trigger workflow
+\```
+
+## Configuration
+- .NET version: {from .csproj}
+- Workflows: .github/workflows/ci.yml
+- Cache: NuGet packages
+
+## Secrets (if deploying)
+- AZURE_CREDENTIALS
+- NUGET_API_KEY
+
+## Maintenance
+- Update .NET: Edit .csproj TargetFramework
+\```
+
+========================================
 EXECUTION
 ========================================
 
-START: Create basic CI pipeline (Phase 1)
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Create basic CI pipeline (Phase 1)
 CONTINUE: Add quality checks (Phase 2)
 OPTIONAL: Add deployment (Phase 3)
-REMEMBER: Detect version from .csproj, use caching
+FINISH: Update all documentation files
+REMEMBER: Detect version from .csproj, use caching, document for catch-up
 ```
 
 ---

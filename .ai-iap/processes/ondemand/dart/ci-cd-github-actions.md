@@ -23,6 +23,36 @@ CRITICAL REQUIREMENTS:
 - Use team's Git workflow
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+
+1. Read PROJECT-MEMORY.md if it exists:
+   - Dart/Flutter version used
+   - CI/CD setup decisions
+   - Deployment target
+   - Lessons learned
+
+2. Read LOGIC-ANOMALIES.md if it exists:
+   - Build/deployment issues found
+   - Configuration problems
+   - Areas needing attention
+
+3. Read CI-CD-SETUP.md if it exists:
+   - Current pipeline configuration
+   - Workflows already set up
+   - Secrets configured
+
+Use this information to:
+- Continue from where previous work stopped
+- Maintain consistency with existing setup
+- Avoid recreating existing workflows
+- Build upon existing pipelines
+
+If no docs exist: Start fresh and create them.
+
+========================================
 PHASE 1 - BASIC CI PIPELINE
 ========================================
 
@@ -133,13 +163,94 @@ BEST PRACTICES
 - Set up branch protection rules
 
 ========================================
+DOCUMENTATION
+========================================
+
+Create/update these files for team catch-up:
+
+**PROJECT-MEMORY.md** (Universal):
+```markdown
+# CI/CD Implementation Memory
+
+## Detected Versions
+- Dart/Flutter: {version from pubspec.yaml}
+
+## Pipeline Choices
+- CI Tool: GitHub Actions
+- Runners: ubuntu-latest
+- Why: {reasons}
+
+## Key Decisions
+- Workflows: .github/workflows/
+- Caching: pub cache
+- Deployment: {target if any}
+
+## Lessons Learned
+- {Challenges}
+- {Solutions}
+\```
+
+**LOGIC-ANOMALIES.md** (Universal):
+```markdown
+# Logic Anomalies Found
+
+## Build/Deploy Issues
+1. **File**: {workflow file}
+   **Issue**: Description
+   **Impact**: Severity
+   **Note**: Logged for resolution
+
+## Configuration Problems
+- {Areas needing attention}
+\```
+
+**CI-CD-SETUP.md** (Process-specific):
+```markdown
+# CI/CD Setup Guide
+
+## Quick Start
+\```bash
+# Test workflow locally (if using act)
+act push
+
+# Trigger manually
+gh workflow run ci.yml
+\```
+
+## Pipeline Configuration
+- Main workflow: .github/workflows/ci.yml
+- Dart/Flutter version: {version}
+- Cache: pub dependencies
+
+## Workflows
+- **ci.yml**: Analyze, test, build
+
+## Secrets Required
+- None for basic CI
+- Add if deploying:
+  - DEPLOY_KEY
+  - FIREBASE_TOKEN (if using Firebase)
+
+## Troubleshooting
+- **Flutter version mismatch**: Check pubspec.yaml
+- **Cache issues**: Clear cache in Actions UI
+- **Build fails**: Test locally first
+
+## Maintenance
+- Update Flutter: Edit pubspec.yaml and workflow
+- Monitor runs: Actions tab in GitHub
+\```
+
+========================================
 EXECUTION
 ========================================
 
-START: Create basic CI pipeline (Phase 1)
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Create basic CI pipeline (Phase 1)
 CONTINUE: Add quality checks (Phase 2)
 OPTIONAL: Add builds (Phase 3)
-REMEMBER: Detect version from pubspec.yaml, use caching
+FINISH: Update all documentation files
+REMEMBER: Detect version from pubspec.yaml, use caching, document for catch-up
 ```
 
 ---

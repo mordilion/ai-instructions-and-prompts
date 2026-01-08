@@ -23,6 +23,15 @@ CRITICAL REQUIREMENTS:
 - Use team's Git workflow
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+1. Read PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, CI-CD-SETUP.md if they exist
+
+Use this to continue from where work stopped. If no docs: Start fresh.
+
+========================================
 PHASE 1 - BASIC CI PIPELINE
 ========================================
 
@@ -132,13 +141,27 @@ BEST PRACTICES
 - Set up branch protection
 
 ========================================
+DOCUMENTATION
+========================================
+
+Create/update: PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, CI-CD-SETUP.md
+
+========================================
+DOCUMENTATION
+========================================
+
+Create/update: PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, CI-CD-SETUP.md
+
+========================================
 EXECUTION
 ========================================
 
-START: Create basic CI pipeline (Phase 1)
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Create basic CI pipeline (Phase 1)
 CONTINUE: Add quality checks (Phase 2)
 OPTIONAL: Add deployment (Phase 3)
-REMEMBER: Detect version, use caching
+FINISH: Update all documentation files
+REMEMBER: Detect version, use caching, document for catch-up
 ```
 
 ---

@@ -23,6 +23,38 @@ CRITICAL REQUIREMENTS:
 - Use team's Git workflow
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+
+1. Read PROJECT-MEMORY.md if it exists:
+   - Node.js version used
+   - Package manager (npm/yarn/pnpm)
+   - Deployment target
+   - Key decisions made
+   - Lessons learned
+
+2. Read LOGIC-ANOMALIES.md if it exists:
+   - Build/deployment issues found
+   - Configuration problems
+   - Areas needing attention
+
+3. Read CI-CD-SETUP.md if it exists:
+   - Current pipeline configuration
+   - Workflows already set up
+   - Secrets configured
+   - Deployment process
+
+Use this information to:
+- Continue from where previous work stopped
+- Maintain consistency with existing setup
+- Avoid recreating existing workflows
+- Build upon existing pipelines
+
+If no docs exist: Start fresh and create them.
+
+========================================
 PHASE 1 - BASIC CI PIPELINE
 ========================================
 
@@ -140,13 +172,105 @@ BEST PRACTICES
 - Set up branch protection
 
 ========================================
+DOCUMENTATION
+========================================
+
+Create/update these files for team catch-up:
+
+**PROJECT-MEMORY.md** (Universal):
+```markdown
+# CI/CD Implementation Memory
+
+## Detected Versions
+- Node.js: {version from .nvmrc or package.json}
+- Package Manager: {npm/yarn/pnpm} v{version}
+
+## Pipeline Choices
+- CI Tool: GitHub Actions
+- Runners: ubuntu-latest
+- Deployment: {target environment}
+- Why: {reasons}
+
+## Key Decisions
+- Workflows: .github/workflows/ci.yml
+- Caching strategy: {choice}
+- Branch protection: {rules}
+
+## Lessons Learned
+- {Challenges}
+- {Solutions}
+\```
+
+**LOGIC-ANOMALIES.md** (Universal):
+```markdown
+# Logic Anomalies Found
+
+## Build/Deploy Issues
+1. **File**: {workflow file}
+   **Issue**: Description
+   **Impact**: Severity
+   **Note**: Logged for resolution
+
+## Configuration Problems
+- {Areas needing attention}
+
+## Missing Steps
+- {Pipeline gaps identified}
+\```
+
+**CI-CD-SETUP.md** (Process-specific):
+```markdown
+# CI/CD Setup Guide
+
+## Quick Start
+\```bash
+# Local workflow testing
+act                       # Use act to test workflows locally
+npm run build             # Test build locally
+npm test                  # Test before pushing
+\```
+
+## Pipeline Configuration
+- Workflows: .github/workflows/
+- Main workflow: ci.yml
+- Node.js version: {version}
+- Package manager: {npm/yarn/pnpm}
+
+## Workflows
+- **ci.yml**: Build, lint, test on push/PR
+- **deploy.yml**: Deploy to {environment} (if exists)
+
+## Secrets Required
+- None (for basic CI)
+- Add deployment secrets if needed:
+  - DEPLOY_KEY
+  - API_TOKEN
+
+## Branch Protection
+- main: Require PR, status checks
+- develop: Require status checks
+
+## Troubleshooting
+- **Workflow fails**: Check Node version matches
+- **Cache not working**: Clear cache and re-run
+- **Tests timeout**: Increase timeout in workflow
+
+## Maintenance
+- Update Node version: Edit .nvmrc and workflow
+- Update dependencies: dependabot or renovate
+- Monitor workflow runs: Actions tab
+\```
+
+========================================
 EXECUTION
 ========================================
 
-START: Create basic CI pipeline (Phase 1)
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Create basic CI pipeline (Phase 1)
 CONTINUE: Add quality checks (Phase 2)
 OPTIONAL: Add deployment (Phase 3)
-REMEMBER: Detect version, use caching
+FINISH: Update all documentation files
+REMEMBER: Detect version, use caching, document for catch-up
 ```
 
 ---
