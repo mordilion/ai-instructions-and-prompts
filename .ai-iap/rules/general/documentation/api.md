@@ -137,29 +137,7 @@
 | **Basic Auth** | `Authorization: Basic <base64>` | Legacy systems |
 | **OAuth 2.0** | `Authorization: Bearer <access_token>` | Third-party integrations |
 
-**Documentation Template**:
-```markdown
-## Authentication
-
-All API requests require authentication using a Bearer token.
-
-### Obtaining a Token
-
-\`\`\`bash
-curl -X POST https://api.example.com/auth/token \
-  -H "Content-Type: application/json" \
-  -d '{"email":"user@example.com","password":"secret"}'
-\`\`\`
-
-### Using the Token
-
-\`\`\`bash
-curl -X GET https://api.example.com/users/me \
-  -H "Authorization: Bearer YOUR_TOKEN"
-\`\`\`
-
-Tokens expire after 24 hours. Use the refresh endpoint to obtain a new token.
-```
+**Template**: Document auth method, token obtainment, usage example, expiration
 
 ---
 
@@ -167,30 +145,7 @@ Tokens expire after 24 hours. Use the refresh endpoint to obtain a new token.
 
 > **ALWAYS**: Document rate limits and headers
 
-**Example**:
-```markdown
-## Rate Limiting
-
-- **Limit**: 100 requests per minute per API key
-- **Headers Returned**:
-  - `X-RateLimit-Limit`: Maximum requests allowed
-  - `X-RateLimit-Remaining`: Requests remaining in window
-  - `X-RateLimit-Reset`: Unix timestamp when limit resets
-
-### Rate Limit Exceeded Response
-
-Status: `429 Too Many Requests`
-
-\`\`\`json
-{
-  "error": {
-    "code": "RATE_LIMIT_EXCEEDED",
-    "message": "Too many requests, retry after 45 seconds",
-    "retry_after": 45
-  }
-}
-\`\`\`
-```
+**Template**: Document limit, headers (`X-RateLimit-*`), 429 response with `retry_after`
 
 ---
 
@@ -204,25 +159,7 @@ Status: `429 Too Many Requests`
 | **Header** | `Accept: application/vnd.api+json; version=1` | REST standard |
 | **Query Param** | `/users?version=1` | Simple, less common |
 
-**Versioning Template**:
-```markdown
-## API Versioning
-
-This API uses URL path versioning. Current version: **v1**
-
-- **v1** (current): `https://api.example.com/v1/`
-- **v2** (beta): `https://api.example.com/v2/`
-
-### Breaking Changes
-
-Major versions introduce breaking changes. Minor updates are backward-compatible.
-
-### Deprecation Policy
-
-- **Notice**: 6 months before deprecation
-- **Support**: 12 months after deprecation notice
-- **Sunset Header**: `Sunset: Sat, 01 Jan 2025 00:00:00 GMT`
-```
+**Template**: Document strategy (URL/header/query), versions, breaking changes, deprecation policy
 
 ---
 
@@ -230,36 +167,7 @@ Major versions introduce breaking changes. Minor updates are backward-compatible
 
 > **ALWAYS**: Provide code examples in popular languages
 
-**Example**:
-```markdown
-## SDKs
-
-### JavaScript/TypeScript
-
-\`\`\`bash
-npm install @example/api-client
-\`\`\`
-
-\`\`\`typescript
-import { ApiClient } from '@example/api-client';
-
-const client = new ApiClient({ apiKey: 'YOUR_KEY' });
-const user = await client.users.get('123');
-\`\`\`
-
-### Python
-
-\`\`\`bash
-pip install example-api
-\`\`\`
-
-\`\`\`python
-from example_api import Client
-
-client = Client(api_key='YOUR_KEY')
-user = client.users.get('123')
-\`\`\`
-```
+**Template**: Show install command, basic initialization, and example request for each SDK
 
 ---
 

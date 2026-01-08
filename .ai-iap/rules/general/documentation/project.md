@@ -30,40 +30,7 @@
 
 ## README Template
 
-```markdown
-# Project Name
-
-Brief description (1-2 sentences explaining what and why).
-
-## Features
-
-- ✨ Feature one (user benefit)
-- 🚀 Feature two (user benefit)
-- 🔒 Feature three (user benefit)
-
-## Installation
-
-\`\`\`bash
-npm install project-name
-\`\`\`
-
-## Quick Start
-
-\`\`\`javascript
-import { feature } from 'project-name';
-
-const result = feature('hello');
-console.log(result);
-\`\`\`
-
-## Documentation
-
-Full documentation: https://docs.example.com
-
-## License
-
-MIT License - see [LICENSE](LICENSE)
-```
+**Sections**: Title + description, Features (with benefits), Installation (command), Quick Start (example), Documentation link, License
 
 ---
 
@@ -72,44 +39,7 @@ MIT License - see [LICENSE](LICENSE)
 > **Reference**: [Keep a Changelog v1.1.0](https://keepachangelog.com/)  
 > **Format**: Markdown, reverse chronological order
 
-### Structure
-
-```markdown
-# Changelog
-
-All notable changes to this project will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/),
-and this project adheres to [Semantic Versioning](https://semver.org/).
-
-## [Unreleased]
-
-### Added
-- New feature description
-
-### Changed
-- Changed behavior description
-
-### Deprecated
-- Soon-to-be removed feature
-
-### Removed
-- Removed feature description
-
-### Fixed
-- Bug fix description
-
-### Security
-- Security fix description
-
-## [1.0.0] - 2024-01-15
-
-### Added
-- Initial release features
-
-[Unreleased]: https://github.com/user/repo/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/user/repo/releases/tag/v1.0.0
-```
+**Sections**: [Unreleased] and [Version] entries with Added/Changed/Deprecated/Removed/Fixed/Security
 
 ### Category Guidelines
 
@@ -140,34 +70,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 4. **Testing** (how to run tests)
 5. **Pull Request Process** (review, merge criteria)
 
-**Minimal Example**:
-```markdown
-# Contributing
+**Sections**: Code of Conduct, Development Setup, Workflow (fork/branch/commit/PR), Testing, Review Process
 
-## Development Setup
-
-\`\`\`bash
-git clone https://github.com/user/repo.git
-cd repo
-npm install
-npm test
-\`\`\`
-
-## Workflow
-
-1. Fork the repository
-2. Create feature branch: `git checkout -b feature/name`
-3. Commit changes: `git commit -m "feat: description"`
-4. Push to branch: `git push origin feature/name`
-5. Open Pull Request
-
-## Commit Standards
-
-Follow [Conventional Commits](https://conventionalcommits.org/).
-
-## Code Review
-
-All PRs require:
+**PRs require:
 - [ ] Tests passing
 - [ ] Code review approval
 - [ ] Documentation updated
