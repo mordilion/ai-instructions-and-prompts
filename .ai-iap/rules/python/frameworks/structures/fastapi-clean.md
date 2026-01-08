@@ -35,103 +35,14 @@ src/
 
 ## Core Patterns
 
-### Domain Entity (Pure)
+| Layer | Pattern | Dependencies |
+|-------|---------|--------------|
+| **Domain** | Pure entities (@dataclass) + Abstract repositories (ABC) | None (business logic only) |
+| **Application** | Use cases with execute() method | Domain entities + repository interfaces |
+| **Infrastructure** | Repository implementations (SQLAlchemy, etc.) | Domain interfaces + external libs |
+| **Presentation** | FastAPI routers with Depends() | Use cases (injected) + DTOs |
 
-```python
-# domain/entities/user.py
-from dataclasses import dataclass
-from datetime import datetime
-
-@dataclass
-class User:
-    id: int | None
-    email: str
-    name: str
-    created_at: datetime
-    
-    def change_email(self, new_email: str) -> None:
-        if "@" not in new_email:
-            raise ValueError("Invalid email")
-        self.email = new_email
-```
-
-### Repository Interface
-
-```python
-# domain/repositories/user_repository.py
-from abc import ABC, abstractmethod
-from domain.entities.user import User
-
-class UserRepository(ABC):
-    @abstractmethod
-    async def get_by_id(self, user_id: int) -> User | None:
-        pass
-    
-    @abstractmethod
-    async def save(self, user: User) -> User:
-        pass
-```
-
-### Use Case
-
-```python
-# application/use_cases/users/create_user.py
-from domain.entities.user import User
-from domain.repositories.user_repository import UserRepository
-
-class CreateUserUseCase:
-    def __init__(self, user_repository: UserRepository):
-        self.user_repository = user_repository
-    
-    async def execute(self, email: str, name: str) -> User:
-        user = User(id=None, email=email, name=name, created_at=datetime.utcnow())
-        return await self.user_repository.save(user)
-```
-
-### Repository Implementation
-
-```python
-# infrastructure/database/repositories/sqlalchemy_user_repository.py
-from sqlalchemy.ext.asyncio import AsyncSession
-from domain.repositories.user_repository import UserRepository
-from domain.entities.user import User
-
-class SQLAlchemyUserRepository(UserRepository):
-    def __init__(self, session: AsyncSession):
-        self.session = session
-    
-    async def get_by_id(self, user_id: int) -> User | None:
-        result = await self.session.execute(
-            select(UserModel).where(UserModel.id == user_id)
-        )
-        model = result.scalar_one_or_none()
-        return model.to_entity() if model else None
-    
-    async def save(self, user: User) -> User:
-        model = UserModel.from_entity(user)
-        self.session.add(model)
-        await self.session.commit()
-        return model.to_entity()
-```
-
-### API Router
-
-```python
-# presentation/api/v1/endpoints/users.py
-from fastapi import APIRouter, Depends
-from application.use_cases.users.create_user import CreateUserUseCase
-from application.dto.user_dto import CreateUserRequest, UserResponse
-
-router = APIRouter(prefix="/users", tags=["users"])
-
-@router.post("/", response_model=UserResponse, status_code=201)
-async def create_user(
-    request: CreateUserRequest,
-    use_case: CreateUserUseCase = Depends(get_create_user_use_case)
-):
-    user = await use_case.execute(request.email, request.name)
-    return UserResponse.from_entity(user)
-```
+**Flow**: API → Use Case → Repository → Database
 
 ## Common AI Mistakes
 

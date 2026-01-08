@@ -60,57 +60,10 @@ app/
 > **NEVER**: Mix unrelated features in one module
 > **NEVER**: Skip module route registration
 
-## Example Implementation
+## Implementation Pattern
 
-### Module Structure
-```typescript
-// app/modules/user/routes.ts
-import router from '@adonisjs/core/services/router'
-
-router.group(() => {
-  router.get('/', 'UsersController.index')
-  router.get('/:id', 'UsersController.show')
-  router.post('/', 'UsersController.store')
-}).prefix('/users')
-
-// app/start/routes.ts
-import './modules/user/routes'
-import './modules/post/routes'
-```
-
-### Controller
-```typescript
-// app/modules/user/controllers/users_controller.ts
-import { HttpContext } from '@adonisjs/core/http'
-import { inject } from '@adonisjs/core'
-import UserService from '../services/user_service'
-
-@inject()
-export default class UsersController {
-  constructor(protected userService: UserService) {}
-  
-  async index({ response }: HttpContext) {
-    const users = await this.userService.findAll()
-    return response.ok(users)
-  }
-}
-```
-
-### Service
-```typescript
-// app/modules/user/services/user_service.ts
-import User from '../models/user'
-
-export default class UserService {
-  async findAll() {
-    return User.all()
-  }
-  
-  async create(data: any) {
-    return User.create(data)
-  }
-}
-```
+**Layers**: Routes → Controller (@inject service) → Service → Model  
+**Dependencies**: Controllers use services, services use models, routes import into start/routes.ts
 
 ## Common Mistakes
 

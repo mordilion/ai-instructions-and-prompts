@@ -61,60 +61,16 @@ src/main/kotlin/
 > **NEVER**: Database access outside repository layer
 > **NEVER**: Circular dependencies between layers
 
-## Example Implementation
+## Implementation Pattern
 
-```kotlin
-// routes/UserRoutes.kt
-fun Route.userRoutes(controller: UserController) {
-    route("/users") {
-        get { controller.getAllUsers(call) }
-        get("/{id}") { controller.getUserById(call) }
-        post { controller.createUser(call) }
-    }
-}
+| Layer | Responsibility | Pattern |
+|-------|---------------|---------|
+| **Routes** | Routing | `fun Route.userRoutes()` calls controller methods |
+| **Controllers** | HTTP handling | `suspend fun(call: ApplicationCall)` + service injection |
+| **Services** | Business logic | `suspend fun` with transactions, calls repository |
+| **Repositories** | Data access | Exposed/Ktorm queries in transactions |
 
-// controllers/UserController.kt
-class UserController(private val userService: UserService) {
-    suspend fun getAllUsers(call: ApplicationCall) {
-        val users = userService.findAll()
-        call.respond(HttpStatusCode.OK, users)
-    }
-    
-    suspend fun createUser(call: ApplicationCall) {
-        val request = call.receive<CreateUserRequest>()
-        val user = userService.create(request)
-        call.respond(HttpStatusCode.Created, user)
-    }
-}
-
-// services/UserService.kt
-class UserService(private val repository: UserRepository) {
-    suspend fun findAll(): List<UserDto> = transaction {
-        repository.findAll().map { it.toDto() }
-    }
-    
-    suspend fun create(request: CreateUserRequest): UserDto = transaction {
-        // Business logic here
-        val user = User(email = request.email, name = request.name)
-        repository.save(user).toDto()
-    }
-}
-
-// repositories/UserRepository.kt
-class UserRepository {
-    fun findAll(): List<User> = transaction {
-        Users.selectAll().map { it.toUser() }
-    }
-    
-    fun save(user: User): User = transaction {
-        val id = Users.insertAndGetId {
-            it[email] = user.email
-            it[name] = user.name
-        }
-        user.copy(id = id.value)
-    }
-}
-```
+**Flow**: Route → Controller → Service (transaction) → Repository → Database
 
 ## Common Mistakes
 
