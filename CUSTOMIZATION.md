@@ -174,11 +174,13 @@ Custom processes add company-specific implementation guides.
 The system has two types of processes:
 
 **📌 Permanent Processes** (in `.ai-iap/processes/permanent/`):
+
 - Loaded into AI automatically during setup
 - Used repeatedly throughout project lifecycle
 - Example: `database-migrations.md`
 
 **📋 On-Demand Processes** (in `.ai-iap/processes/ondemand/`):
+
 - NOT loaded into AI automatically
 - User copies prompt when ready to implement
 - Examples: test-implementation, ci-cd, docker, logging, auth, etc.
@@ -187,6 +189,7 @@ The system has two types of processes:
 ### Custom Process Recommendations
 
 For custom processes, consider:
+
 - **Permanent**: Processes used repeatedly (e.g., internal deployment patterns)
 - **On-Demand**: One-time setup processes (e.g., initial platform configuration)
 
@@ -245,6 +248,7 @@ kubectl apply -f deployment.yaml
 ```
 
 **Note about `loadIntoAI` flag**:
+
 - `true` = Permanent process (loaded into AI automatically, for recurring tasks)
 - `false` or omitted = On-demand process (user copies prompt when needed, for one-time setups)
 
