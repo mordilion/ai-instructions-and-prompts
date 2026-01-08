@@ -156,8 +156,6 @@
 
 - Redundant sections â†’ merged sections
 
-- Git workflow details â†’ reference to adaptation guide
-
 ---
 
 ### 4. Fix Applied: Restored Minimal Examples âœ…
