@@ -21,9 +21,45 @@
 
 ## Phase 2: Tool Configuration
 
-**Xcode**: Edit Scheme → Test tab → "Gather coverage for: All targets"  
-**CLI**: `xcodebuild test -enableCodeCoverage YES` or `swift test --enable-code-coverage`  
-**Slather** (Reports): Install with `gem install slather`, generate HTML/Cobertura XML reports
+**Xcode Setup**:
+1. Select scheme → Edit Scheme
+2. Go to Test tab
+3. Check "Gather coverage for: All targets"
+
+**Command Line**:
+```bash
+# Xcode projects
+xcodebuild test \
+  -scheme YourScheme \
+  -destination 'platform=iOS Simulator,name=iPhone 15' \
+  -enableCodeCoverage YES
+
+# Swift Package Manager
+swift test --enable-code-coverage
+```
+
+**Slather** (Report Generation):
+```bash
+# Install
+gem install slather
+
+# Generate HTML report
+slather coverage --html --scheme YourScheme YourProject.xcodeproj
+
+# Generate Cobertura XML (for CI/CD)
+slather coverage --cobertura-xml --scheme YourScheme YourProject.xcodeproj
+```
+
+**Configuration** (`.slather.yml`):
+```yaml
+coverage_service: cobertura_xml
+xcodeproj: YourProject.xcodeproj
+scheme: YourScheme
+ignore:
+  - Tests/*
+  - Pods/*
+  - Generated/*
+```
 
 ---
 

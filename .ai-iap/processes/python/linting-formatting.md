@@ -23,17 +23,66 @@
 
 ## Phase 2: Linter Configuration
 
-**Ruff** ⭐ (All-in-one): `pip install ruff`, `ruff check .`, `ruff check --fix`, `ruff format .`  
-**Config** (`pyproject.toml`): Set `line-length=100`, `target-version="py311"`, select rules (E/W/F/I/N/UP/B/C4), ignore E501
+**Ruff** ⭐ (All-in-one):
+```bash
+pip install ruff
+ruff check .           # Lint
+ruff check --fix .     # Auto-fix
+ruff format .          # Format
+```
 
-**flake8** (Alternative): `pip install flake8`, `flake8 .`, config `.flake8` (max-line-length, ignore E203/W503)
+**Configuration** (`pyproject.toml`):
+```toml
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "N", "UP", "B", "C4"]
+ignore = ["E501"]  # line too long (handled by formatter)
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]  # Unused imports OK
+"tests/**/*.py" = ["S101"]  # assert OK in tests
+```
+
+**flake8** (Alternative):
+```bash
+pip install flake8
+flake8 .
+```
+
+**Configuration** (`.flake8`):
+```ini
+[flake8]
+max-line-length = 100
+ignore = E203,W503
+exclude = .git,__pycache__,venv
+```
 
 ---
 
 ## Phase 3: Formatter Configuration
 
-**Ruff Format** ⭐: `ruff format .`, `ruff format --check` (built-in with Ruff)  
-**Black** (Alternative): `pip install black`, `black .`, `black --check`, config `[tool.black]` (line-length, target-version, exclude)
+**Ruff Format** ⭐ (built-in):
+```bash
+ruff format .           # Format
+ruff format --check .   # Check only
+```
+
+**Black** (Alternative):
+```bash
+pip install black
+black .                 # Format
+black --check .         # Check only
+```
+
+**Configuration** (`pyproject.toml`):
+```toml
+[tool.black]
+line-length = 100
+target-version = ['py311']
+```
 
 ### isort Setup (Import Sorting)
 
@@ -60,10 +109,41 @@ skip_gitignore = true
 
 ## Phase 4: IDE Integration & Pre-commit Hooks
 
-**VS Code**: Extensions (`charliermarsh.ruff`), settings (`formatOnSave: true`, `defaultFormatter: "charliermarsh.ruff"`, `codeActionsOnSave`)
+**VS Code** (`.vscode/settings.json`):
+```json
+{
+  "editor.formatOnSave": true,
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.codeActionsOnSave": {
+      "source.fixAll": true,
+      "source.organizeImports": true
+    }
+  }
+}
+```
 
-**Pre-commit**: `pip install pre-commit && pre-commit install`  
-**Config** (`.pre-commit-config.yaml`): Add ruff hooks (`ruff`, `ruff-format`), standard hooks (trailing-whitespace, end-of-file-fixer)
+**Pre-commit Hooks**:
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+**Configuration** (`.pre-commit-config.yaml`):
+```yaml
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.9
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+```
 
 ---
 

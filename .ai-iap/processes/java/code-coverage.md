@@ -22,8 +22,39 @@
 
 ## Phase 2: Tool Configuration
 
-**Maven**: Add `jacoco-maven-plugin` with executions: `prepare-agent`, `report`, `check` (LINE 0.80, BRANCH 0.75)  
-**Gradle**: Apply `jacoco` plugin, configure `jacocoTestReport` (xml/html), `jacocoTestCoverageVerification` (minimum 0.80)
+**Maven** (`pom.xml`):
+```xml
+<plugin>
+  <groupId>org.jacoco</groupId>
+  <artifactId>jacoco-maven-plugin</artifactId>
+  <version>0.8.11</version>
+  <executions>
+    <execution><id>prepare-agent</id><goals><goal>prepare-agent</goal></goals></execution>
+    <execution><id>report</id><phase>test</phase><goals><goal>report</goal></goals></execution>
+    <execution>
+      <id>check</id><goals><goal>check</goal></goals>
+      <configuration>
+        <rules><rule><limits>
+          <limit><counter>LINE</counter><value>COVEREDRATIO</value><minimum>0.80</minimum></limit>
+          <limit><counter>BRANCH</counter><value>COVEREDRATIO</value><minimum>0.75</minimum></limit>
+        </limits></rule></rules>
+      </configuration>
+    </execution>
+  </executions>
+</plugin>
+```
+
+**Gradle** (`build.gradle`):
+```groovy
+plugins { id 'jacoco' }
+jacoco { toolVersion = "0.8.11" }
+jacocoTestReport {
+    reports { xml.required = true; html.required = true }
+}
+jacocoTestCoverageVerification {
+    violationRules { rule { limit { minimum = 0.80 } } }
+}
+```
 
 **Commands**: `mvn test jacoco:report` or `./gradlew test jacocoTestReport`
 

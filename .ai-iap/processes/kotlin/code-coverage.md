@@ -22,8 +22,41 @@
 
 ## Phase 2: Tool Configuration
 
-**Kover** ⭐ (Kotlin): Apply plugin, configure `koverReport` with html/xml, exclude `*.generated`, verify minBound(80 LINE, 75 BRANCH)  
-**JaCoCo** (Alternative): Apply `jacoco` plugin, configure `jacocoTestReport` (xml/html), verification (minimum 0.80)
+**Kover** ⭐ (Kotlin) (`build.gradle.kts`):
+```kotlin
+plugins {
+    id("org.jetbrains.kotlinx.kover") version "0.7.5"
+}
+
+koverReport {
+    defaults {
+        xml { onCheck = true }
+        html { onCheck = true }
+    }
+    filters {
+        excludes {
+            classes("*.BuildConfig", "*.Companion")
+            packages("*.generated")
+        }
+    }
+    verify {
+        rule { minBound(80) }  // LINE
+        rule { minBound(75, coverageUnits = CoverageUnit.BRANCH) }
+    }
+}
+```
+
+**JaCoCo** (Alternative) (`build.gradle.kts`):
+```kotlin
+plugins { id("jacoco") }
+jacoco { toolVersion = "0.8.11" }
+tasks.jacocoTestReport {
+    reports { xml.required.set(true); html.required.set(true) }
+}
+tasks.jacocoTestCoverageVerification {
+    violationRules { rule { limit { minimum = "0.80".toBigDecimal() } } }
+}
+```
 
 **Commands**: `./gradlew koverHtmlReport koverVerify` or `./gradlew test jacocoTestReport`
 

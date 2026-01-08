@@ -21,8 +21,34 @@
 
 ## Phase 2: Tool Configuration
 
-**Dart**: `dart test --coverage=coverage` or `flutter test --coverage`, format with `dart run coverage:format_coverage --lcov`  
-**HTML Reports**: Install `lcov`, run `genhtml coverage/lcov.info -o coverage/html`
+**Run Tests with Coverage**:
+```bash
+# Flutter
+flutter test --coverage
+
+# Dart
+dart test --coverage=coverage
+
+# Format to LCOV
+dart run coverage:format_coverage \
+  --lcov \
+  --in=coverage \
+  --out=coverage/lcov.info \
+  --packages=.dart_tool/package_config.json \
+  --report-on=lib
+```
+
+**HTML Reports**:
+```bash
+# Install lcov (macOS/Linux)
+brew install lcov  # or: sudo apt install lcov
+
+# Generate HTML report
+genhtml coverage/lcov.info -o coverage/html
+
+# Open report
+open coverage/html/index.html
+```
 
 ---
 
