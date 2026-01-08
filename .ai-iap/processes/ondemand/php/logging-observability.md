@@ -1,220 +1,197 @@
-# Logging & Observability Implementation Process - PHP
+# PHP Logging & Observability - Copy This Prompt
 
-> **Purpose**: Establish production-grade logging, monitoring, and observability
-
----
-
-## Prerequisites
-
-> **BEFORE starting**:
-> - Working PHP application
-> - Git repository
+> **Type**: One-time setup process  
+> **When to use**: Setting up production logging and monitoring  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 1: Structured Logging
+## 📋 Complete Self-Contained Prompt
 
-**Branch**: `logging/structured`
+```
+========================================
+PHP LOGGING & OBSERVABILITY
+========================================
 
-### 1.1 Use Monolog
+CONTEXT:
+You are implementing production-grade logging and observability for a PHP application.
 
-> **ALWAYS use**: **Monolog** ⭐ (PSR-3 compliant)
+CRITICAL REQUIREMENTS:
+- ALWAYS use Monolog (PSR-3 standard)
+- NEVER log sensitive data (PII, tokens, passwords)
+- Use structured logging with context
+- Integrate error tracking (Sentry, Bugsnag)
 
-**Install**:
+========================================
+PHASE 1 - STRUCTURED LOGGING
+========================================
+
+Install Monolog:
 ```bash
 composer require monolog/monolog
 ```
 
-**Configure**:
+Configure basic logging:
 ```php
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use Monolog\Formatter\JsonFormatter;
 
-$logger = new Logger('app');
-$handler = new StreamHandler('php://stdout', Logger::INFO);
-$handler->setFormatter(new JsonFormatter());
-$logger->pushHandler($handler);
+$log = new Logger('app');
+
+// Console handler for development
+$consoleHandler = new StreamHandler('php://stdout', Logger::DEBUG);
+
+// File handler for production
+$fileHandler = new StreamHandler('/var/log/app.log', Logger::INFO);
+$fileHandler->setFormatter(new JsonFormatter());
+
+$log->pushHandler($fileHandler);
+$log->pushHandler($consoleHandler);
+
+// Usage
+$log->info('User created', ['userId' => $user->id]);
+$log->error('Database error', [
+    'error' => $e->getMessage(),
+    'userId' => $user->id
+]);
 ```
 
-**Laravel**: Built-in, uses Monolog
+Deliverable: Structured logging implemented
 
-### 1.2 Add Correlation IDs
+========================================
+PHASE 2 - CONTEXT PROCESSORS
+========================================
 
-**Middleware**:
+Add context to all logs:
+
 ```php
-class CorrelationIdMiddleware
-{
-    public function handle($request, Closure $next)
-    {
-        $correlationId = $request->header('X-Correlation-ID', Str::uuid());
-        $request->attributes->set('correlation_id', $correlationId);
-        
-        Log::shareContext(['correlation_id' => $correlationId]);
-        
-        $response = $next($request);
-        $response->headers->set('X-Correlation-ID', $correlationId);
-        return $response;
-    }
+use Monolog\Processor\WebProcessor;
+use Monolog\Processor\MemoryUsageProcessor;
+use Monolog\Processor\ProcessIdProcessor;
+
+$log->pushProcessor(new WebProcessor());
+$log->pushProcessor(new MemoryUsageProcessor());
+$log->pushProcessor(new ProcessIdProcessor());
+
+// Custom processor for request ID
+$log->pushProcessor(function ($record) {
+    $record['extra']['requestId'] = $_SERVER['HTTP_X_REQUEST_ID'] ?? uniqid();
+    return $record;
+});
+```
+
+Deliverable: Enriched logging context
+
+========================================
+PHASE 3 - ERROR TRACKING
+========================================
+
+Install Sentry:
+
+```bash
+composer require sentry/sentry
+```
+
+Configure:
+```php
+\Sentry\init([
+    'dsn' => 'YOUR_DSN',
+    'environment' => 'production',
+    'traces_sample_rate' => 0.1,
+]);
+
+// Catch and report errors
+try {
+    riskyOperation();
+} catch (\Exception $e) {
+    \Sentry\captureException($e);
+    throw $e;
 }
+
+// Add user context
+\Sentry\configureScope(function (\Sentry\State\Scope $scope) use ($user) {
+    $scope->setUser([
+        'id' => $user->id,
+        'email' => $user->email,
+    ]);
+});
 ```
 
-**Verify**: Structured logs (JSON), correlation IDs tracked
+Integrate with Monolog:
+```php
+use Monolog\Handler\SentryHandler;
 
----
-
-## Phase 2: Application Monitoring
-
-**Branch**: `logging/monitoring`
-
-### 2.1 Health Checks
-
-**Laravel**:
-```bash
-composer require spatie/laravel-health
+$sentryHandler = new SentryHandler(
+    \Sentry\ClientBuilder::create(['dsn' => 'YOUR_DSN'])->getClient(),
+    Logger::ERROR
+);
+$log->pushHandler($sentryHandler);
 ```
 
-**Symfony**: FOSHealthCheckBundle
+Deliverable: Error tracking active
 
-### 2.2 Metrics
+========================================
+PHASE 4 - APPLICATION MONITORING
+========================================
 
-**Install**:
-```bash
-composer require promphp/prometheus_client_php
-```
-
-### 2.3 Error Tracking
-
-> **ALWAYS use**: **Sentry** ⭐ or Bugsnag
-
-**Sentry**:
-```bash
-composer require sentry/sentry-laravel
-```
+Add basic health endpoint:
 
 ```php
-Sentry\init(['dsn' => env('SENTRY_DSN')]);
+// health.php
+header('Content-Type: application/json');
+
+$checks = [
+    'database' => checkDatabase(),
+    'redis' => checkRedis(),
+    'disk' => checkDiskSpace(),
+];
+
+$status = array_filter($checks) === $checks ? 'healthy' : 'unhealthy';
+
+echo json_encode([
+    'status' => $status,
+    'checks' => $checks,
+    'timestamp' => time()
+]);
 ```
 
-**Verify**: Health checks, metrics exposed, errors tracked
-
----
-
-## Phase 3: Distributed Tracing
-
-**Branch**: `logging/tracing`
-
-### 3.1 OpenTelemetry
-
-**Install**:
+Use Laravel Horizon for queue monitoring:
 ```bash
-composer require open-telemetry/opentelemetry
+composer require laravel/horizon
+php artisan horizon:install
 ```
 
-**Verify**: Traces collected
+Deliverable: Health monitoring active
 
----
+========================================
+BEST PRACTICES
+========================================
 
-## Phase 4: Log Aggregation
+- Use Monolog (PSR-3 standard)
+- Never log sensitive data
+- Use JSON formatter in production
+- Add context processors
+- Integrate Sentry for error tracking
+- Add health check endpoints
+- Monitor queue workers
+- Review logs regularly
 
-**Branch**: `logging/aggregation`
+========================================
+EXECUTION
+========================================
 
-### 4.1 Log Shipping
-
-> **Options**: ELK Stack, Datadog, CloudWatch, Papertrail
-
-**Monolog + Logstash**:
-```php
-use Monolog\Handler\SocketHandler;
-
-$handler = new SocketHandler('tcp://logstash:5000');
-$logger->pushHandler($handler);
+START: Implement Monolog (Phase 1)
+CONTINUE: Add context processors (Phase 2)
+CONTINUE: Add Sentry (Phase 3)
+OPTIONAL: Add monitoring (Phase 4)
+REMEMBER: JSON format, no sensitive data
 ```
 
-### 4.2 Alerts
-
-> **Alert on**: Error rate >1%, p99 >2s, Health failures
-
-**Verify**: Logs aggregated, alerts configured
-
 ---
 
-## Framework Notes
+## Quick Reference
 
-| Framework | Logger | Health |
-|-----------|--------|--------|
-| **Laravel** | Monolog (built-in) | spatie/laravel-health |
-| **Symfony** | Monolog | FOSHealthCheckBundle |
-
----
-
-## Best Practices
-
-### What to Log/Not Log
-> **ALWAYS**: Structured data, Request/response, Auth events
-
-> **NEVER**: Passwords, API keys, Credit cards, PII
-
----
-
-## AI Self-Check
-
-- [ ] Monolog configured
-- [ ] Structured logging (JSON)
-- [ ] Correlation IDs tracked
-- [ ] No sensitive data logged
-- [ ] Health checks implemented
-- [ ] Metrics exposed
-- [ ] Error tracking configured
-- [ ] Log aggregation configured
-
----
-
-**Process Complete** ✅
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (multi-phase)  
-> **When to use**: When setting up logging and monitoring infrastructure
-
-### Complete Implementation Prompt
-
-```
-CONTEXT:
-You are implementing logging and observability infrastructure for this project.
-
-CRITICAL REQUIREMENTS:
-- ALWAYS use structured logging (JSON format)
-- ALWAYS include correlation IDs for request tracing
-- ALWAYS configure log levels per environment
-- NEVER log sensitive data (PII, passwords, tokens)
-- Use team's Git workflow
-
-IMPLEMENTATION PHASES:
-
-PHASE 1 - STRUCTURED LOGGING:
-1. Choose logging library for the language
-2. Configure structured logging (JSON output)
-3. Set up log levels (DEBUG, INFO, WARN, ERROR)
-4. Add correlation ID middleware/decorator
-
-Deliverable: Structured logging configured
-
-PHASE 2 - LOG AGGREGATION:
-1. Configure log shipping (Filebeat, Fluentd, etc.)
-2. Set up centralized logging (ELK, Loki, CloudWatch)
-3. Create log retention policies
-4. Set up log search and filtering
-
-Deliverable: Centralized log aggregation
-
-PHASE 3 - MONITORING & ALERTS:
-1. Define key metrics to track
-2. Set up health check endpoints
-3. Configure alerting rules
-4. Set up dashboards
-
-Deliverable: Monitoring and alerting active
-
-START: Choose logging library, configure structured logging.
-```
+**What you get**: Production logging with error tracking and monitoring  
+**Time**: 2-3 hours  
+**Output**: Monolog configuration, Sentry integration, health checks

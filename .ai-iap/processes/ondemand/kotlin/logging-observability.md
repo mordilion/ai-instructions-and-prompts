@@ -1,221 +1,182 @@
-# Logging & Observability Implementation Process - Kotlin
+# Kotlin Logging & Observability - Copy This Prompt
 
-> **Purpose**: Establish production-grade logging, monitoring, and observability
-
----
-
-## Prerequisites
-
-> **BEFORE starting**:
-> - Working Kotlin application
-> - Git repository
+> **Type**: One-time setup process  
+> **When to use**: Setting up production logging and monitoring  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 1: Structured Logging
+## 📋 Complete Self-Contained Prompt
 
-**Branch**: `logging/structured`
-
-### 1.1 Use SLF4J + Logback
-
-> **Same as Java**: SLF4J facade + Logback implementation
-
-**Dependencies** (Gradle):
-```kotlin
-implementation("ch.qos.logback:logback-classic")
-implementation("net.logstash.logback:logstash-logback-encoder:7.4")
 ```
+========================================
+KOTLIN LOGGING & OBSERVABILITY
+========================================
 
-**Usage**:
+CONTEXT:
+You are implementing production-grade logging and observability for a Kotlin application.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS use kotlin-logging (SLF4J wrapper)
+- NEVER log sensitive data (PII, tokens, passwords)
+- Use structured logging with MDC
+- Integrate monitoring (Micrometer for Ktor/Spring)
+
+========================================
+PHASE 1 - STRUCTURED LOGGING
+========================================
+
+Add dependencies (Gradle):
 ```kotlin
-import org.slf4j.LoggerFactory
-
-class UserService {
-    private val logger = LoggerFactory.getLogger(UserService::class.java)
-    
-    fun createUser(email: String) {
-        logger.info("Creating user: {}", email)
-    }
+dependencies {
+    implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
+    implementation("ch.qos.logback:logback-classic:1.4.11")
+    implementation("net.logstash.logback:logstash-logback-encoder:7.4")
 }
 ```
 
-### 1.2 Kotlin Logging (Alternative)
-
-**Install**:
-```kotlin
-implementation("io.github.oshai:kotlin-logging-jvm:5.1.0")
+Create logback.xml:
+```xml
+<configuration>
+    <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
+    </appender>
+    
+    <root level="INFO">
+        <appender-ref ref="JSON"/>
+    </root>
+</configuration>
 ```
 
-**Usage**:
+Use in code:
 ```kotlin
-import io.github.oshai.kotlinlogging.KotlinLogging
+import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger {}
 
-fun createUser(email: String) {
-    logger.info { "Creating user: $email" }
-}
-```
-
-### 1.3 Add MDC for Correlation IDs
-
-> **Same as Java**: Use SLF4J MDC in filter/interceptor
-
-**Verify**: Structured logs (JSON), correlation IDs tracked
-
----
-
-## Phase 2: Application Monitoring
-
-**Branch**: `logging/monitoring`
-
-### 2.1 Health Checks
-
-**Spring Boot**: Use Actuator (same as Java)
-
-**Ktor**:
-```kotlin
-routing {
-    get("/health") {
-        call.respond(mapOf("status" to "healthy"))
+class UserService {
+    fun createUser(user: User) {
+        logger.info { "Creating user ${user.id} with email ${user.email}" }
+        
+        try {
+            repository.save(user)
+        } catch (e: Exception) {
+            logger.error(e) { "Failed to create user ${user.id}" }
+            throw e
+        }
     }
 }
 ```
 
-### 2.2 Metrics
+Deliverable: Structured logging implemented
 
-**Spring Boot**: Micrometer (built-in)
+========================================
+PHASE 2 - MDC FOR CONTEXT
+========================================
 
-**Ktor**: Use Micrometer
+Use MDC for request tracking (Ktor):
+
+```kotlin
+import io.ktor.server.application.*
+import org.slf4j.MDC
+import java.util.UUID
+
+fun Application.configureMDC() {
+    intercept(ApplicationCallPipeline.Setup) {
+        val requestId = UUID.randomUUID().toString()
+        MDC.put("requestId", requestId)
+        
+        try {
+            proceed()
+        } finally {
+            MDC.clear()
+        }
+    }
+}
+```
+
+All logs will include requestId automatically.
+
+Deliverable: Request tracking active
+
+========================================
+PHASE 3 - KTOR MONITORING
+========================================
+
+Add Micrometer for Ktor:
+
+```kotlin
+dependencies {
+    implementation("io.ktor:ktor-server-metrics-micrometer:$ktor_version")
+    implementation("io.micrometer:micrometer-registry-prometheus:1.12.0")
+}
+```
+
+Configure:
 ```kotlin
 install(MicrometerMetrics) {
     registry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
 }
-```
 
-### 2.3 Error Tracking
-
-> **Sentry**: Same setup as Java
-
-**Verify**: Health checks, metrics exposed, errors tracked
-
----
-
-## Phase 3: Distributed Tracing
-
-**Branch**: `logging/tracing`
-
-### 3.1 OpenTelemetry
-
-> **Spring Boot**: Same as Java
-
-**Ktor**:
-```kotlin
-install(OpenTelemetry) {
-    // Configuration
+routing {
+    get("/metrics") {
+        call.respond(registry.scrape())
+    }
 }
 ```
 
-**Verify**: Traces visible, trace IDs propagated
+Deliverable: Metrics exposed
 
----
+========================================
+PHASE 4 - CUSTOM METRICS
+========================================
 
-## Phase 4: Log Aggregation
+Track custom metrics:
 
-**Branch**: `logging/aggregation`
+```kotlin
+import io.micrometer.core.instrument.MeterRegistry
 
-### 4.1 Log Shipping
-
-> **Options**: ELK, Datadog, CloudWatch
-
-**Logback configuration**: Same as Java
-
-### 4.2 Alerts & Dashboards
-
-> **Alert on**: Error rate >1%, p99 >2s, Health failures
-
-**Verify**: Logs aggregated, alerts configured
-
----
-
-## Framework-Specific Notes
-
-| Framework | Logger | Health |
-|-----------|--------|--------|
-| **Spring Boot** | SLF4J + Logback | Actuator |
-| **Ktor** | kotlin-logging | Custom route |
-| **Android** | Logcat + Timber | N/A |
-
----
-
-## Best Practices
-
-### What to Log/Not Log
-> **ALWAYS**: Structured data, Request/response, Auth events
-
-> **NEVER**: Passwords, API keys, PII
-
----
-
-## AI Self-Check
-
-- [ ] SLF4J + Logback or kotlin-logging configured
-- [ ] Structured logging (JSON)
-- [ ] Correlation IDs (MDC)
-- [ ] No sensitive data logged
-- [ ] Health checks implemented
-- [ ] Metrics exposed
-- [ ] Error tracking configured
-- [ ] Distributed tracing enabled
-- [ ] Log aggregation configured
-
----
-
-**Process Complete** ✅
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (multi-phase)  
-> **When to use**: When setting up logging and monitoring infrastructure
-
-### Complete Implementation Prompt
-
+class UserService(private val registry: MeterRegistry) {
+    fun createUser(user: User) {
+        registry.counter("users.created").increment()
+        
+        registry.timer("user.creation.time").record {
+            // ... operation ...
+        }
+    }
+}
 ```
-CONTEXT:
-You are implementing logging and observability infrastructure for this project.
 
-CRITICAL REQUIREMENTS:
-- ALWAYS use structured logging (JSON format)
-- ALWAYS include correlation IDs for request tracing
-- ALWAYS configure log levels per environment
-- NEVER log sensitive data (PII, passwords, tokens)
-- Use team's Git workflow
+Deliverable: Custom metrics tracked
 
-IMPLEMENTATION PHASES:
+========================================
+BEST PRACTICES
+========================================
 
-PHASE 1 - STRUCTURED LOGGING:
-1. Choose logging library for the language
-2. Configure structured logging (JSON output)
-3. Set up log levels (DEBUG, INFO, WARN, ERROR)
-4. Add correlation ID middleware/decorator
+- Use kotlin-logging (SLF4J wrapper)
+- Never log sensitive data
+- Use MDC for request context
+- Use structured logging (JSON)
+- Expose metrics via Micrometer
+- Track custom business metrics
+- Use lazy logging { }
+- Review logs regularly
 
-Deliverable: Structured logging configured
+========================================
+EXECUTION
+========================================
 
-PHASE 2 - LOG AGGREGATION:
-1. Configure log shipping (Filebeat, Fluentd, etc.)
-2. Set up centralized logging (ELK, Loki, CloudWatch)
-3. Create log retention policies
-4. Set up log search and filtering
-
-Deliverable: Centralized log aggregation
-
-PHASE 3 - MONITORING & ALERTS:
-1. Define key metrics to track
-2. Set up health check endpoints
-3. Configure alerting rules
-4. Set up dashboards
-
-Deliverable: Monitoring and alerting active
-
-START: Choose logging library, configure structured logging.
+START: Implement kotlin-logging (Phase 1)
+CONTINUE: Add MDC (Phase 2)
+CONTINUE: Add Micrometer (Phase 3)
+OPTIONAL: Add custom metrics (Phase 4)
+REMEMBER: Lazy logging, no sensitive data
 ```
+
+---
+
+## Quick Reference
+
+**What you get**: Production logging with metrics and monitoring  
+**Time**: 2-3 hours  
+**Output**: Logback configuration, MDC setup, Micrometer integration

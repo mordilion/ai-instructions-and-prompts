@@ -1,330 +1,256 @@
-# Logging & Observability Implementation Process - TypeScript/Node.js
+# TypeScript Logging & Observability - Copy This Prompt
 
-> **Purpose**: Establish production-grade logging, monitoring, and observability
-
----
-
-## Prerequisites
-
-> **BEFORE starting**:
-> - Working application with basic error handling
-> - Git repository
-> - Understanding of log levels (debug, info, warn, error)
+> **Type**: One-time setup process  
+> **When to use**: Setting up production logging and monitoring  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 1: Structured Logging
+## 📋 Complete Self-Contained Prompt
 
-### 1.1 Install Logging Library
+```
+========================================
+TYPESCRIPT LOGGING & OBSERVABILITY
+========================================
 
-> **ALWAYS use** (pick one):
-> - **Winston** ⭐ (most popular, flexible)
-> - **Pino** (fastest, minimal overhead)
-> - **Bunyan** (JSON-first)
+CONTEXT:
+You are implementing production-grade logging and observability for a TypeScript/Node.js application.
 
-> **NEVER**:
-> - Use console.log/console.error in production
-> - Log sensitive data (passwords, tokens, PII)
-> - Use synchronous logging (blocks event loop)
+CRITICAL REQUIREMENTS:
+- ALWAYS use winston or pino for logging
+- NEVER log sensitive data (PII, tokens, passwords)
+- Use structured logging (JSON format)
+- Integrate error tracking (Sentry)
 
-**Install Winston**:
+========================================
+PHASE 1 - STRUCTURED LOGGING
+========================================
+
+Install winston:
 ```bash
 npm install winston
 ```
 
-### 1.2 Configure Logger & Request ID
-
-> **ALWAYS**: JSON format, timestamp, log level, context (requestId, userId), separate transports
-> **NEVER**: Log sensitive data (passwords, tokens, PII), use sync logging
-
+Configure:
 ```typescript
 import winston from 'winston';
-import { v4 as uuidv4 } from 'uuid';
 
-// Logger
-export const logger = winston.createLogger({
+const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
-  format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
-  defaultMeta: { service: 'my-app' },
-  transports: [new winston.transports.Console(), new winston.transports.File({ filename: 'error.log', level: 'error' })]
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.errors({ stack: true }),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.simple()
+      )
+    }),
+    new winston.transports.File({ 
+      filename: 'logs/error.log', 
+      level: 'error' 
+    }),
+    new winston.transports.File({ 
+      filename: 'logs/combined.log' 
+    })
+  ]
 });
 
-// Request ID middleware
-app.use((req, res, next) => {
-  req.id = req.headers['x-correlation-id'] || uuidv4();
-  res.setHeader('X-Correlation-ID', req.id);
-  logger.info('Request', { requestId: req.id, method: req.method, path: req.path });
+// Usage
+logger.info('User created', { userId: user.id });
+logger.error('API error', { error: err.message, statusCode: 500 });
+```
+
+Or use pino (faster):
+```typescript
+import pino from 'pino';
+
+const logger = pino({
+  level: process.env.LOG_LEVEL || 'info',
+  formatters: {
+    level: (label) => {
+      return { level: label };
+    }
+  }
+});
+
+logger.info({ userId: user.id }, 'User created');
+```
+
+Deliverable: Structured logging implemented
+
+========================================
+PHASE 2 - REQUEST TRACKING
+========================================
+
+Add request ID middleware (Express):
+
+```typescript
+import { Request, Response, NextFunction } from 'express';
+import { v4 as uuidv4 } from 'uuid';
+
+interface RequestWithId extends Request {
+  id: string;
+  log: winston.Logger;
+}
+
+export const requestIdMiddleware = (
+  req: RequestWithId, 
+  res: Response, 
+  next: NextFunction
+) => {
+  req.id = uuidv4();
+  req.log = logger.child({ requestId: req.id });
+  
+  res.setHeader('X-Request-Id', req.id);
+  
+  req.log.info('Request started', {
+    method: req.method,
+    path: req.path
+  });
+  
   next();
+};
+
+// Usage in routes
+app.get('/users', (req: RequestWithId, res) => {
+  req.log.info('Fetching users');
+  // All logs include requestId
 });
 ```
 
-**Verify**: Logs as JSON with timestamp and request ID
+Deliverable: Request tracking active
 
----
+========================================
+PHASE 3 - ERROR TRACKING
+========================================
 
-## Phase 2: Application Monitoring
+Install Sentry:
 
-**Branch**: `logging/monitoring`
+```bash
+npm install @sentry/node @sentry/tracing
+```
 
-### 2.1 Health Check Endpoint
+Configure:
+```typescript
+import * as Sentry from '@sentry/node';
+import * as Tracing from '@sentry/tracing';
 
-> **ALWAYS include**:
-> - /health or /healthz endpoint
-> - Check database connectivity
-> - Check external dependencies (Redis, APIs)
-> - Return HTTP 200 if healthy, 503 if unhealthy
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  environment: process.env.NODE_ENV,
+  tracesSampleRate: 0.1,
+  integrations: [
+    new Tracing.Integrations.Express({ app })
+  ]
+});
 
-**Health Check Example**:
+// Add middleware
+app.use(Sentry.Handlers.requestHandler());
+app.use(Sentry.Handlers.tracingHandler());
+
+// Add error handler (must be after routes)
+app.use(Sentry.Handlers.errorHandler());
+
+// Manual error capture
+try {
+  await riskyOperation();
+} catch (error) {
+  Sentry.captureException(error);
+  throw error;
+}
+```
+
+Deliverable: Error tracking active
+
+========================================
+PHASE 4 - APPLICATION MONITORING
+========================================
+
+Add Prometheus metrics:
+
+```bash
+npm install prom-client
+```
+
+Configure:
+```typescript
+import client from 'prom-client';
+
+const collectDefaultMetrics = client.collectDefaultMetrics;
+collectDefaultMetrics();
+
+// Custom metrics
+const httpRequestDuration = new client.Histogram({
+  name: 'http_request_duration_seconds',
+  help: 'Duration of HTTP requests in seconds',
+  labelNames: ['method', 'route', 'status_code']
+});
+
+const userCreatedCounter = new client.Counter({
+  name: 'users_created_total',
+  help: 'Total number of users created'
+});
+
+// Expose metrics endpoint
+app.get('/metrics', async (req, res) => {
+  res.set('Content-Type', client.register.contentType);
+  res.end(await client.register.metrics());
+});
+
+// Usage
+userCreatedCounter.inc();
+```
+
+Add health check:
 ```typescript
 app.get('/health', async (req, res) => {
   const checks = {
     database: await checkDatabase(),
-    redis: await checkRedis(),
-    uptime: process.uptime()
+    redis: await checkRedis()
   };
-  const healthy = Object.values(checks).every(c => c === true || typeof c === 'number');
-  res.status(healthy ? 200 : 503).json(checks);
+  
+  const status = Object.values(checks).every(Boolean) 
+    ? 'healthy' 
+    : 'unhealthy';
+  
+  res.json({ status, checks });
 });
 ```
 
-### 2.2 Metrics (Prometheus)
+Deliverable: Monitoring active
 
-> **Track**: Request count, response time (p50/p95/p99), error rate, memory/CPU
+========================================
+BEST PRACTICES
+========================================
 
-```typescript
-import promClient from 'prom-client';
+- Use winston or pino
+- Never log sensitive data
+- Use JSON format in production
+- Add request ID to all logs
+- Integrate Sentry for error tracking
+- Expose Prometheus metrics
+- Add health checks
+- Review logs regularly
 
-const register = new promClient.Register();
-promClient.collectDefaultMetrics({ register });
-const httpDuration = new promClient.Histogram({ name: 'http_request_duration_seconds', labelNames: ['method', 'route', 'status_code'], registers: [register] });
+========================================
+EXECUTION
+========================================
 
-app.get('/metrics', async (req, res) => res.set('Content-Type', register.contentType).end(await register.metrics()));
-```
-
-### 2.3 Error Tracking (Sentry)
-
-```typescript
-import * as Sentry from '@sentry/node';
-
-Sentry.init({ dsn: process.env.SENTRY_DSN, environment: process.env.NODE_ENV,
-  tracesSampleRate: 0.1
-});
-
-app.use(Sentry.Handlers.requestHandler());
-app.use(Sentry.Handlers.tracingHandler());
-// ... routes ...
-app.use(Sentry.Handlers.errorHandler());
-```
-
-**Verify**: /health endpoint returns correct status, /metrics exposes Prometheus metrics, errors sent to Sentry, no performance degradation
-
----
-
-## Phase 3: Distributed Tracing
-
-**Branch**: `logging/tracing`
-
-### 3.1 Install Tracing Library
-
-> **ALWAYS use**: **OpenTelemetry** ⭐ (vendor-neutral), Jaeger, Zipkin, or Datadog APM
-
-**OpenTelemetry Setup**:
-```bash
-npm install @opentelemetry/api @opentelemetry/sdk-node @opentelemetry/auto-instrumentations-node
-```
-
-### 3.2 Configure Distributed Tracing
-
-> **ALWAYS include**:
-> - Trace ID propagation across services
-> - Span for each major operation (DB query, HTTP call, business logic)
-> - Contextual attributes (user ID, tenant ID)
-> - Sampling strategy (not 100% in production)
-
-**OpenTelemetry Configuration**:
-```typescript
-import { NodeSDK } from '@opentelemetry/sdk-node';
-import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
-
-const sdk = new NodeSDK({
-  serviceName: 'my-app',
-  traceExporter: /* Jaeger/Zipkin/OTLP exporter */,
-  instrumentations: [getNodeAutoInstrumentations()]
-});
-
-sdk.start();
-```
-
-**Verify**: Traces visible in UI (Jaeger/Zipkin/Datadog), trace ID propagated across services, spans show correct timing, overhead <5% CPU
-
----
-
-## Phase 4: Log Aggregation & Alerts
-
-**Branch**: `logging/aggregation`
-
-### 4.1 Configure Log Shipping
-
-> **ALWAYS use** (pick one):
-> - **ELK Stack** (Elasticsearch + Logstash + Kibana)
-> - **Datadog** ⭐ (managed, expensive)
-> - **CloudWatch Logs** (AWS)
-> - **Azure Monitor** (Azure)
-> - **Google Cloud Logging** (GCP)
-
-**Winston + Datadog**:
-```bash
-npm install winston-datadog-logs
-```
-
-```typescript
-import { DatadogTransport } from 'winston-datadog-logs';
-
-logger.add(new DatadogTransport({
-  apiKey: process.env.DATADOG_API_KEY,
-  service: 'my-app',
-  ddsource: 'nodejs',
-  ddtags: `env:${process.env.NODE_ENV}`
-}));
-```
-
-### 4.2 Create Alerts
-
-> **ALWAYS alert on**:
-> - Error rate threshold (>1% of requests)
-> - Response time p99 >2s
-> - Health check failures
-> - High memory/CPU usage (>80%)
-> - Unhandled exceptions
-
-> **NEVER**: Alert on every error (use thresholds), create alerts without runbooks, forget to test alert delivery
-
-### 4.3 Add Dashboards
-
-> **ALWAYS include**:
-> - Request rate, error rate, duration (RED metrics)
-> - CPU, memory, disk usage
-> - Database query performance
-> - Cache hit rate
-> - Business metrics (signups, orders, etc.)
-
-**Verify**: Logs visible in aggregation service, alerts trigger correctly, dashboards show real-time data, runbooks documented
-
----
-
-## Framework-Specific Notes
-
-| Framework | Logger | Health Checks | Notes |
-|-----------|--------|---------------|-------|
-| **Express.js** | Winston + morgan | Custom middleware | Use morgan for HTTP logging |
-| **NestJS** | Built-in Logger | @nestjs/terminus | Interceptors for request/response logging |
-| **Next.js** | Winston | API route | Server-side logging only |
-| **Fastify** | Built-in Pino | Hooks | onRequest, onResponse hooks |
-
----
-
-## Best Practices
-
-### Log Levels
-| Level | Use Case | Example |
-|-------|----------|---------|
-| **DEBUG** | Detailed troubleshooting info | Variable values, function entry/exit |
-| **INFO** | General informational messages | Request received, operation completed |
-| **WARN** | Warning messages, app can continue | Deprecated API usage, fallback used |
-| **ERROR** | Error messages, operation failed | Database connection failed, validation error |
-
-### What to Log
-> **ALWAYS log**: Request/response (method, path, status, duration), Errors with stack traces, Authentication events, Business events (payment, order), Performance metrics
-
-> **NEVER log**: Passwords/tokens/API keys, PII without consent (email, phone, SSN), Credit card numbers, Session IDs
-
-### Performance
-> **ALWAYS**: Use async logging (non-blocking), Sample high-frequency logs (10% of requests), Rotate log files, Set log retention policy (30-90 days)
-
----
-
-## Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| **Logs not appearing** | Check log level, verify transport configuration, ensure logger initialized before use |
-| **High memory usage** | Implement log rotation, reduce log verbosity, check for memory leaks in custom transports |
-| **Missing correlation IDs** | Ensure middleware runs before route handlers, check async context propagation |
-| **Metrics endpoint slow** | Cache metrics, reduce cardinality, sample high-frequency metrics |
-
----
-
-## AI Self-Check
-
-- [ ] Structured logging configured (JSON format)
-- [ ] Log levels properly used (debug, info, warn, error)
-- [ ] Request ID/correlation ID tracked across requests
-- [ ] No sensitive data in logs
-- [ ] Health check endpoint implemented
-- [ ] Metrics endpoint exposed (/metrics)
-- [ ] Error tracking configured (Sentry/Rollbar)
-- [ ] Distributed tracing enabled (if microservices)
-- [ ] Log aggregation configured
-- [ ] Alerts created with appropriate thresholds
-
----
-
-## Final Commit
-
-```bash
-git checkout main
-git merge logging/aggregation
-git tag -a v1.0.0-logging -m "Logging and observability implemented"
-git push origin main --tags
+START: Implement winston/pino (Phase 1)
+CONTINUE: Add request tracking (Phase 2)
+CONTINUE: Add Sentry (Phase 3)
+OPTIONAL: Add monitoring (Phase 4)
+REMEMBER: JSON format, no sensitive data
 ```
 
 ---
 
-**Process Complete** ✅
+## Quick Reference
 
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (multi-phase)  
-> **When to use**: When setting up logging and monitoring infrastructure
-
-### Complete Implementation Prompt
-
-```
-CONTEXT:
-You are implementing logging and observability infrastructure for this project.
-
-CRITICAL REQUIREMENTS:
-- ALWAYS use structured logging (JSON format)
-- ALWAYS include correlation IDs for request tracing
-- ALWAYS configure log levels per environment
-- NEVER log sensitive data (PII, passwords, tokens)
-- Use team's Git workflow
-
-IMPLEMENTATION PHASES:
-
-PHASE 1 - STRUCTURED LOGGING:
-1. Choose logging library for the language
-2. Configure structured logging (JSON output)
-3. Set up log levels (DEBUG, INFO, WARN, ERROR)
-4. Add correlation ID middleware/decorator
-
-Deliverable: Structured logging configured
-
-PHASE 2 - LOG AGGREGATION:
-1. Configure log shipping (Filebeat, Fluentd, etc.)
-2. Set up centralized logging (ELK, Loki, CloudWatch)
-3. Create log retention policies
-4. Set up log search and filtering
-
-Deliverable: Centralized log aggregation
-
-PHASE 3 - MONITORING & ALERTS:
-1. Define key metrics to track
-2. Set up health check endpoints
-3. Configure alerting rules
-4. Set up dashboards
-
-Deliverable: Monitoring and alerting active
-
-START: Choose logging library, configure structured logging.
-```
+**What you get**: Production logging with error tracking and metrics  
+**Time**: 2-3 hours  
+**Output**: Winston/Pino configuration, Sentry integration, Prometheus metrics

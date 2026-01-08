@@ -1,43 +1,33 @@
-# Logging & Observability Implementation Process - .NET/C#
+# .NET Logging & Observability - Copy This Prompt
 
-> **Purpose**: Establish production-grade logging, monitoring, and observability
-
----
-
-## Prerequisites
-
-> **BEFORE starting**:
-> - Working .NET application
-> - Git repository
-> - Understanding of log levels
+> **Type**: One-time setup process  
+> **When to use**: Setting up production logging and monitoring  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 1: Structured Logging
+## 📋 Complete Self-Contained Prompt
 
-**Branch**: `logging/structured`
-
-### 1.1 Use Built-in ILogger
-
-> **.NET 6+**: ILogger is built-in, structured, and performant
-
-> **ALWAYS use**: `ILogger<T>` via dependency injection
-
-> **NEVER**: Use Console.WriteLine, Debug.WriteLine, or Trace in production
-
-**Configuration** (appsettings.json):
-```json
-{
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft.AspNetCore": "Warning"
-    }
-  }
-}
 ```
+========================================
+.NET LOGGING & OBSERVABILITY
+========================================
 
-**Usage**:
+CONTEXT:
+You are implementing production-grade logging and observability for a .NET application.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS use ILogger (built-in framework)
+- NEVER log sensitive data (PII, tokens, passwords)
+- Use structured logging with semantic log levels
+- Integrate Application Insights or Serilog
+
+========================================
+PHASE 1 - STRUCTURED LOGGING
+========================================
+
+Use built-in ILogger with structured logging:
+
 ```csharp
 public class UserService
 {
@@ -48,262 +38,148 @@ public class UserService
         _logger = logger;
     }
     
-    public void CreateUser(string email)
+    public async Task CreateUser(User user)
     {
-        _logger.LogInformation("Creating user {Email}", email);
+        _logger.LogInformation("Creating user {UserId} with email {Email}", 
+            user.Id, user.Email);
+        
+        try
+        {
+            await _repository.CreateAsync(user);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create user {UserId}", user.Id);
+            throw;
+        }
     }
 }
 ```
 
-### 1.2 Add Structured Logging Provider
+Configure in Program.cs:
+```csharp
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+```
 
-> **ALWAYS use**: **Serilog** ⭐ (most popular) or NLog
+Deliverable: Structured logging implemented
 
-**Install Serilog**:
+========================================
+PHASE 2 - SERILOG INTEGRATION
+========================================
+
+Install Serilog for advanced logging:
+
 ```bash
 dotnet add package Serilog.AspNetCore
 dotnet add package Serilog.Sinks.Console
 dotnet add package Serilog.Sinks.File
 ```
 
-**Configure** (Program.cs):
+Configure in Program.cs:
 ```csharp
-builder.Host.UseSerilog((context, configuration) =>
-    configuration
-        .ReadFrom.Configuration(context.Configuration)
-        .Enrich.FromLogContext()
-        .WriteTo.Console()
-        .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day));
+using Serilog;
+
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .WriteTo.Console()
+    .WriteTo.File("logs/app-.log", rollingInterval: RollingInterval.Day)
+    .Enrich.FromLogContext()
+    .Enrich.WithMachineName()
+    .Enrich.WithThreadId()
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 ```
 
-### 1.3 Add Correlation ID Middleware
-
-**Install**:
-```bash
-dotnet add package CorrelationId
-```
-
-**Configure**:
+Add request logging middleware:
 ```csharp
-builder.Services.AddDefaultCorrelationId();
-app.UseCorrelationId();
+app.UseSerilogRequestLogging();
 ```
 
-**Verify**: Logs structured (JSON), correlation IDs tracked, no sensitive data logged
+Deliverable: Serilog logging active
 
----
+========================================
+PHASE 3 - APPLICATION INSIGHTS
+========================================
 
-## Phase 2: Application Monitoring
+Install Application Insights:
 
-**Branch**: `logging/monitoring`
-
-### 2.1 Health Checks
-
-> **ALWAYS use**: ASP.NET Core built-in health checks
-
-**Configure**:
-```csharp
-builder.Services.AddHealthChecks()
-    .AddDbContextCheck<AppDbContext>()
-    .AddRedis(configuration["Redis:ConnectionString"]);
-
-app.MapHealthChecks("/health");
-```
-
-### 2.2 Metrics with Prometheus
-
-**Install**:
-```bash
-dotnet add package prometheus-net.AspNetCore
-```
-
-**Configure**:
-```csharp
-app.UseMetricServer(); // /metrics endpoint
-app.UseHttpMetrics();
-```
-
-### 2.3 Error Tracking
-
-> **ALWAYS use**: **Sentry** ⭐ or Application Insights
-
-**Sentry Setup**:
-```bash
-dotnet add package Sentry.AspNetCore
-```
-
-```csharp
-builder.WebHost.UseSentry(options =>
-{
-    options.Dsn = builder.Configuration["Sentry:Dsn"];
-    options.Environment = builder.Environment.EnvironmentName;
-});
-```
-
-**Verify**: Health checks work, metrics exposed, errors tracked
-
----
-
-## Phase 3: Distributed Tracing
-
-**Branch**: `logging/tracing`
-
-### 3.1 Configure OpenTelemetry
-
-**Install**:
-```bash
-dotnet add package OpenTelemetry.Extensions.Hosting
-dotnet add package OpenTelemetry.Instrumentation.AspNetCore
-dotnet add package OpenTelemetry.Instrumentation.Http
-```
-
-**Configure**:
-```csharp
-builder.Services.AddOpenTelemetry()
-    .WithTracing(builder => builder
-        .AddAspNetCoreInstrumentation()
-        .AddHttpClientInstrumentation()
-        .AddSource("MyApp")
-        .AddJaegerExporter());
-```
-
-**Verify**: Traces visible in Jaeger/Zipkin, trace IDs propagated
-
----
-
-## Phase 4: Log Aggregation & Alerts
-
-**Branch**: `logging/aggregation`
-
-### 4.1 Configure Log Shipping
-
-> **Options**:
-> - **Application Insights** ⭐ (Azure, comprehensive)
-> - **Seq** (self-hosted, .NET-focused)
-> - **ELK Stack**
-> - **Datadog**
-
-**Application Insights**:
 ```bash
 dotnet add package Microsoft.ApplicationInsights.AspNetCore
 ```
 
+Configure in appsettings.json:
+```json
+{
+  "ApplicationInsights": {
+    "ConnectionString": "YOUR_CONNECTION_STRING"
+  }
+}
+```
+
+Add to Program.cs:
 ```csharp
 builder.Services.AddApplicationInsightsTelemetry();
 ```
 
-### 4.2 Create Alerts
+Track custom metrics:
+```csharp
+private readonly TelemetryClient _telemetry;
 
-> **Alert on**: Error rate >1%, Response time p99 >2s, Health check failures, High CPU/memory (>80%)
-
-### 4.3 Dashboards
-
-> **Include**: RED metrics (Rate, Errors, Duration), Resource usage, Database performance, Cache hit rate
-
-**Verify**: Logs aggregated, alerts configured, dashboards created
-
----
-
-## Framework-Specific Notes
-
-| Framework | Logger | Health Checks | Notes |
-|-----------|--------|---------------|-------|
-| **ASP.NET Core Web API** | ILogger + Serilog | Built-in | UseHttpLogging() middleware |
-| **Blazor** | ILogger | Custom health endpoint | Client-side logging limited |
-| **Worker Services** | ILogger | IHealthCheck | Background service monitoring |
-| **.NET MAUI** | ILogger | N/A | Use App Center for mobile analytics |
-
----
-
-## Best Practices
-
-### Log Levels
-| Level | Use Case |
-|-------|----------|
-| **Trace** | Very detailed, usually disabled |
-| **Debug** | Detailed troubleshooting |
-| **Information** | General flow of application |
-| **Warning** | Unexpected events, degraded functionality |
-| **Error** | Errors and exceptions |
-| **Critical** | Application/system failures |
-
-### What to Log/Not Log
-> **ALWAYS log**: Structured data with `{Parameter}` syntax, Request/response details, Authentication events, Business events
-
-> **NEVER log**: Passwords, API keys, Credit card data, PII without redaction
-
----
-
-## Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| **Logs not appearing** | Check appsettings.json log levels, verify Serilog configuration |
-| **High memory usage** | Enable log file rolling, reduce verbosity, check for infinite loops |
-| **Missing correlation IDs** | Ensure CorrelationId middleware before MVC middleware |
-
----
-
-## AI Self-Check
-
-- [ ] ILogger used throughout application
-- [ ] Serilog configured with structured logging
-- [ ] Correlation IDs tracked
-- [ ] No sensitive data in logs
-- [ ] Health checks implemented
-- [ ] Metrics endpoint exposed
-- [ ] Error tracking configured
-- [ ] Distributed tracing enabled (if microservices)
-- [ ] Log aggregation configured
-- [ ] Alerts created
-
----
-
-**Process Complete** ✅
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (multi-phase)  
-> **When to use**: When setting up logging and monitoring infrastructure
-
-### Complete Implementation Prompt
-
+public void TrackMetric(string name, double value)
+{
+    _telemetry.TrackMetric(name, value);
+}
 ```
-CONTEXT:
-You are implementing logging and observability infrastructure for this project.
 
-CRITICAL REQUIREMENTS:
-- ALWAYS use structured logging (JSON format)
-- ALWAYS include correlation IDs for request tracing
-- ALWAYS configure log levels per environment
-- NEVER log sensitive data (PII, passwords, tokens)
-- Use team's Git workflow
+Deliverable: Application Insights integrated
 
-IMPLEMENTATION PHASES:
+========================================
+PHASE 4 - HEALTH CHECKS
+========================================
 
-PHASE 1 - STRUCTURED LOGGING:
-1. Choose logging library for the language
-2. Configure structured logging (JSON output)
-3. Set up log levels (DEBUG, INFO, WARN, ERROR)
-4. Add correlation ID middleware/decorator
+Add health checks:
 
-Deliverable: Structured logging configured
+```csharp
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<AppDbContext>()
+    .AddUrlGroup(new Uri("https://api.external.com"), "External API");
 
-PHASE 2 - LOG AGGREGATION:
-1. Configure log shipping (Filebeat, Fluentd, etc.)
-2. Set up centralized logging (ELK, Loki, CloudWatch)
-3. Create log retention policies
-4. Set up log search and filtering
-
-Deliverable: Centralized log aggregation
-
-PHASE 3 - MONITORING & ALERTS:
-1. Define key metrics to track
-2. Set up health check endpoints
-3. Configure alerting rules
-4. Set up dashboards
-
-Deliverable: Monitoring and alerting active
-
-START: Choose logging library, configure structured logging.
+app.MapHealthChecks("/health");
 ```
+
+Deliverable: Health monitoring active
+
+========================================
+BEST PRACTICES
+========================================
+
+- Use structured logging with ILogger
+- Never log sensitive data
+- Use appropriate log levels
+- Enrich logs with context (request ID, user ID)
+- Use Serilog for production
+- Integrate Application Insights for Azure
+- Add health checks for dependencies
+- Review logs regularly
+
+========================================
+EXECUTION
+========================================
+
+START: Implement ILogger (Phase 1)
+CONTINUE: Add Serilog (Phase 2)
+CONTINUE: Add Application Insights (Phase 3)
+OPTIONAL: Add health checks (Phase 4)
+REMEMBER: Structured logging, no sensitive data
+```
+
+---
+
+## Quick Reference
+
+**What you get**: Production logging with Application Insights and health checks  
+**Time**: 2-3 hours  
+**Output**: Logger configuration, Serilog setup, Application Insights integration

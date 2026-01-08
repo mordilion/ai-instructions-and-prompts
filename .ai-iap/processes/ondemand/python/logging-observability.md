@@ -1,293 +1,209 @@
-# Logging & Observability Implementation Process - Python
+# Python Logging & Observability - Copy This Prompt
 
-> **Purpose**: Establish production-grade logging, monitoring, and observability
-
----
-
-## Prerequisites
-
-> **BEFORE starting**:
-> - Working Python application
-> - Git repository
-> - Understanding of log levels
+> **Type**: One-time setup process  
+> **When to use**: Setting up production logging and monitoring  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 1: Structured Logging
+## 📋 Complete Self-Contained Prompt
 
-**Branch**: `logging/structured`
+```
+========================================
+PYTHON LOGGING & OBSERVABILITY
+========================================
 
-### 1.1 Use structlog
+CONTEXT:
+You are implementing production-grade logging and observability for a Python application.
 
-> **ALWAYS use**: **structlog** ⭐ (structured logging) or Python's logging with JSON formatter
+CRITICAL REQUIREMENTS:
+- ALWAYS use structlog or Python logging
+- NEVER log sensitive data (PII, tokens, passwords)
+- Use structured logging (JSON format)
+- Integrate error tracking (Sentry)
 
-**Install**:
+========================================
+PHASE 1 - STRUCTURED LOGGING
+========================================
+
+Install structlog:
 ```bash
-pip install structlog python-json-logger
+pip install structlog
 ```
 
-**Configure**:
+Configure:
 ```python
 import structlog
+import logging
 
 structlog.configure(
     processors=[
-        structlog.stdlib.add_log_level,
+        structlog.stdlib.filter_by_level,
         structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.PositionalArgumentsFormatter(),
         structlog.processors.TimeStamper(fmt="iso"),
         structlog.processors.StackInfoRenderer(),
         structlog.processors.format_exc_info,
+        structlog.processors.UnicodeDecoder(),
         structlog.processors.JSONRenderer()
     ],
     wrapper_class=structlog.stdlib.BoundLogger,
     logger_factory=structlog.stdlib.LoggerFactory(),
+    cache_logger_on_first_use=True,
 )
 
 logger = structlog.get_logger()
+
+# Usage
+logger.info("user_created", user_id=user.id)
+logger.error("api_error", error=str(e), status_code=500)
 ```
 
-**Usage**:
-```python
-logger.info("user_created", user_id=user.id, email=user.email)
-```
+Deliverable: Structured logging implemented
 
-### 1.2 Add Correlation IDs
+========================================
+PHASE 2 - CONTEXT BINDING
+========================================
 
-**Middleware** (Flask/FastAPI):
+Add request context:
+
 ```python
+from flask import Flask, request, g
 import uuid
-from contextvars import ContextVar
 
-correlation_id: ContextVar[str] = ContextVar("correlation_id", default="")
+app = Flask(__name__)
 
-@app.middleware("http")
-async def add_correlation_id(request, call_next):
-    cid = request.headers.get("X-Correlation-ID", str(uuid.uuid4()))
-    correlation_id.set(cid)
-    response = await call_next(request)
-    response.headers["X-Correlation-ID"] = cid
-    return response
+@app.before_request
+def add_request_id():
+    g.request_id = str(uuid.uuid4())
+    g.logger = logger.bind(request_id=g.request_id)
+
+@app.route('/users', methods=['POST'])
+def create_user():
+    g.logger.info("creating_user", data=request.json)
+    # All logs in this request include request_id
 ```
 
-**Verify**: Logs structured (JSON), correlation IDs tracked, no sensitive data
+Deliverable: Request tracking active
 
----
+========================================
+PHASE 3 - ERROR TRACKING
+========================================
 
-## Phase 2: Application Monitoring
+Install Sentry:
 
-**Branch**: `logging/monitoring`
-
-### 2.1 Health Checks
-
-**FastAPI**:
-```python
-@app.get("/health")
-async def health():
-    return {
-        "status": "healthy",
-        "database": await check_database(),
-        "redis": await check_redis()
-    }
-```
-
-### 2.2 Metrics with Prometheus
-
-**Install**:
-```bash
-pip install prometheus-client
-```
-
-**Configure**:
-```python
-from prometheus_client import Counter, Histogram, make_asgi_app
-
-requests_total = Counter('requests_total', 'Total requests', ['method', 'endpoint'])
-request_duration = Histogram('request_duration_seconds', 'Request duration')
-
-metrics_app = make_asgi_app()
-app.mount("/metrics", metrics_app)
-```
-
-### 2.3 Error Tracking
-
-> **ALWAYS use**: **Sentry** ⭐
-
-**Setup**:
 ```bash
 pip install sentry-sdk
 ```
 
+Configure:
 ```python
 import sentry_sdk
+from sentry_sdk.integrations.flask import FlaskIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
 
 sentry_sdk.init(
-    dsn=os.environ["SENTRY_DSN"],
-    environment=os.environ.get("ENV", "development"),
-    traces_sample_rate=0.1
+    dsn="YOUR_DSN",
+    integrations=[
+        FlaskIntegration(),
+        LoggingIntegration(
+            level=logging.INFO,
+            event_level=logging.ERROR
+        ),
+    ],
+    environment="production",
+    traces_sample_rate=0.1,
 )
+
+# Errors are automatically captured
+# Manual capture:
+try:
+    risky_operation()
+except Exception as e:
+    sentry_sdk.capture_exception(e)
+    raise
 ```
 
-**Verify**: Health endpoint works, metrics exposed, errors tracked
-
----
-
-## Phase 3: Distributed Tracing
-
-**Branch**: `logging/tracing`
-
-### 3.1 Configure OpenTelemetry
-
-**Install**:
-```bash
-pip install opentelemetry-api opentelemetry-sdk opentelemetry-instrumentation-fastapi
-```
-
-**Configure**:
+Add user context:
 ```python
-from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.exporter.jaeger.thrift import JaegerExporter
-
-trace.set_tracer_provider(TracerProvider())
-jaeger_exporter = JaegerExporter(agent_host_name="jaeger", agent_port=6831)
-trace.get_tracer_provider().add_span_processor(BatchSpanProcessor(jaeger_exporter))
+sentry_sdk.set_user({"id": user.id, "email": user.email})
 ```
 
-**Verify**: Traces in Jaeger/Zipkin, trace IDs propagated
+Deliverable: Error tracking active
 
----
+========================================
+PHASE 4 - APPLICATION MONITORING
+========================================
 
-## Phase 4: Log Aggregation & Alerts
+Add Prometheus metrics:
 
-**Branch**: `logging/aggregation`
-
-### 4.1 Configure Log Shipping
-
-> **Options**: ELK Stack, Datadog, CloudWatch, Loguru (with external sink)
-
-**Loguru with external sink**:
 ```bash
-pip install loguru
+pip install prometheus-flask-exporter
 ```
 
+Configure:
 ```python
-from loguru import logger
+from prometheus_flask_exporter import PrometheusMetrics
 
-logger.add(
-    "logs/app.log",
-    rotation="500 MB",
-    retention="10 days",
-    format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}",
-    serialize=True  # JSON format
-)
+app = Flask(__name__)
+metrics = PrometheusMetrics(app)
+
+# Custom metrics
+from prometheus_client import Counter
+
+user_created = Counter('users_created_total', 'Total users created')
+
+@app.route('/users', methods=['POST'])
+def create_user():
+    user_created.inc()
+    # ... create user ...
 ```
 
-### 4.2 Alerts & Dashboards
+Metrics available at /metrics
 
-> **Alert on**: Error rate >1%, p99 latency >2s, Health failures, High memory
-
-> **Dashboards**: RED metrics, Python process metrics, Database performance
-
-**Verify**: Logs aggregated, alerts configured, dashboards created
-
----
-
-## Framework-Specific Notes
-
-| Framework | Logger | Health | Notes |
-|-----------|--------|--------|-------|
-| **FastAPI** | structlog | Built-in route | Async-first |
-| **Django** | logging | django-health-check | WSGI, sync |
-| **Flask** | structlog | Custom route | WSGI, sync |
-
----
-
-## Best Practices
-
-### Log Levels
-- **DEBUG**: Detailed troubleshooting
-- **INFO**: General flow
-- **WARNING**: Unexpected events
-- **ERROR**: Errors/exceptions
-- **CRITICAL**: System failures
-
-### What to Log/Not Log
-> **ALWAYS log**: Structured data, Request/response, Auth events
-
-> **NEVER log**: Passwords, API keys, Credit cards, PII
-
----
-
-## Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| **Logs not JSON** | Configure JSON formatter or use structlog |
-| **Context lost in async** | Use contextvars for correlation IDs |
-| **High memory** | Enable log rotation, reduce verbosity |
-
----
-
-## AI Self-Check
-
-- [ ] Structured logging configured (structlog/JSON)
-- [ ] Correlation IDs tracked
-- [ ] No sensitive data logged
-- [ ] Health checks implemented
-- [ ] Metrics exposed (/metrics)
-- [ ] Error tracking configured (Sentry)
-- [ ] Distributed tracing enabled
-- [ ] Log aggregation configured
-- [ ] Alerts created
-
----
-
-**Process Complete** ✅
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (multi-phase)  
-> **When to use**: When setting up logging and monitoring infrastructure
-
-### Complete Implementation Prompt
-
+Add health check:
+```python
+@app.route('/health')
+def health():
+    checks = {
+        'database': check_database(),
+        'redis': check_redis(),
+    }
+    status = 'healthy' if all(checks.values()) else 'unhealthy'
+    return jsonify({'status': status, 'checks': checks})
 ```
-CONTEXT:
-You are implementing logging and observability infrastructure for this project.
 
-CRITICAL REQUIREMENTS:
-- ALWAYS use structured logging (JSON format)
-- ALWAYS include correlation IDs for request tracing
-- ALWAYS configure log levels per environment
-- NEVER log sensitive data (PII, passwords, tokens)
-- Use team's Git workflow
+Deliverable: Monitoring active
 
-IMPLEMENTATION PHASES:
+========================================
+BEST PRACTICES
+========================================
 
-PHASE 1 - STRUCTURED LOGGING:
-1. Choose logging library for the language
-2. Configure structured logging (JSON output)
-3. Set up log levels (DEBUG, INFO, WARN, ERROR)
-4. Add correlation ID middleware/decorator
+- Use structlog for structured logging
+- Never log sensitive data
+- Use JSON format in production
+- Bind context to loggers
+- Integrate Sentry for error tracking
+- Expose Prometheus metrics
+- Add health checks
+- Review logs regularly
 
-Deliverable: Structured logging configured
+========================================
+EXECUTION
+========================================
 
-PHASE 2 - LOG AGGREGATION:
-1. Configure log shipping (Filebeat, Fluentd, etc.)
-2. Set up centralized logging (ELK, Loki, CloudWatch)
-3. Create log retention policies
-4. Set up log search and filtering
-
-Deliverable: Centralized log aggregation
-
-PHASE 3 - MONITORING & ALERTS:
-1. Define key metrics to track
-2. Set up health check endpoints
-3. Configure alerting rules
-4. Set up dashboards
-
-Deliverable: Monitoring and alerting active
-
-START: Choose logging library, configure structured logging.
+START: Implement structlog (Phase 1)
+CONTINUE: Add context binding (Phase 2)
+CONTINUE: Add Sentry (Phase 3)
+OPTIONAL: Add monitoring (Phase 4)
+REMEMBER: JSON format, no sensitive data
 ```
+
+---
+
+## Quick Reference
+
+**What you get**: Production logging with error tracking and metrics  
+**Time**: 2-3 hours  
+**Output**: Structlog configuration, Sentry integration, Prometheus metrics

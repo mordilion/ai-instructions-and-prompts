@@ -1,210 +1,200 @@
-# Logging & Observability Implementation Process - Swift
+# Swift Logging & Observability - Copy This Prompt
 
-> **Purpose**: Establish production-grade logging, monitoring, and observability for Swift applications
-
----
-
-## Prerequisites
-
-> **BEFORE starting**:
-> - Working Swift application
-> - Git repository
+> **Type**: One-time setup process  
+> **When to use**: Setting up production logging and monitoring  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 1: Structured Logging
+## 📋 Complete Self-Contained Prompt
 
-**Branch**: `logging/structured`
+```
+========================================
+SWIFT LOGGING & OBSERVABILITY
+========================================
 
-### 1.1 Use os.Logger (iOS/macOS) or SwiftLog (Server)
+CONTEXT:
+You are implementing production-grade logging and observability for a Swift application.
 
-**iOS/macOS (os.Logger)**:
+CRITICAL REQUIREMENTS:
+- ALWAYS use os.Logger (built-in) or swift-log
+- NEVER log sensitive data (PII, tokens, passwords)
+- Use appropriate log levels
+- Integrate crash reporting (Sentry, Crashlytics)
+
+========================================
+PHASE 1 - STRUCTURED LOGGING
+========================================
+
+For iOS/macOS, use os.Logger:
+
 ```swift
-import os.log
+import os
 
-let logger = Logger(subsystem: "com.myapp", category: "network")
+let logger = Logger(subsystem: "com.example.app", category: "networking")
 
-logger.info("Request started: \(requestId)")
-logger.error("Error occurred: \(error.localizedDescription)")
+// Usage with different levels
+logger.debug("Debug message")
+logger.info("User logged in: \\(userId)")
+logger.notice("Important event")
+logger.warning("Warning: low memory")
+logger.error("Error: \\(error.localizedDescription)")
+logger.fault("Critical error")
 ```
 
-**Vapor (SwiftLog)**:
+For server-side Swift, use swift-log:
+
 ```swift
+// Package.swift
+dependencies: [
+    .package(url: "https://github.com/apple/swift-log.git", from: "1.5.3")
+]
+
+// Usage
 import Logging
 
-let logger = Logger(label: "com.myapp")
+let logger = Logger(label: "com.example.app")
 
-logger.info("Server started", metadata: [
-    "port": "\(port)",
-    "environment": "\(environment)"
+logger.info("User created", metadata: [
+    "userId": "\\(user.id)",
+    "email": "\\(user.email)"
 ])
 ```
 
-**Verify**: Structured logging configured
+Deliverable: Structured logging implemented
 
----
+========================================
+PHASE 2 - CRASH REPORTING (iOS)
+========================================
 
-## Phase 2: Application Monitoring
+Install Firebase Crashlytics:
 
-**Branch**: `logging/monitoring`
-
-### 2.1 Health Checks
-
-**Vapor**:
-```swift
-app.get("health") { req in
-    return HTTPStatus.ok
-}
+```ruby
+# Podfile
+pod 'Firebase/Crashlytics'
 ```
 
-### 2.2 Metrics
-
-**Vapor**: Use Prometheus
+Initialize in AppDelegate:
 ```swift
-// Install: swift-prometheus
-```
+import FirebaseCrashlytics
 
-**iOS**: MetricKit
-```swift
-import MetricKit
-
-class MetricsManager: NSObject, MXMetricManagerSubscriber {
-    override init() {
-        super.init()
-        MXMetricManager.shared.add(self)
-    }
-    
-    func didReceive(_ payloads: [MXMetricPayload]) {
-        // Process metrics
+class AppDelegate: UIResponder, UIApplicationDelegate {
+    func application(_ application: UIApplication, 
+                    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        FirebaseApp.configure()
+        return true
     }
 }
 ```
 
-### 2.3 Error Tracking
-
-> **iOS**: **Sentry** ⭐ or Firebase Crashlytics
-
-**Sentry**:
+Log custom events:
 ```swift
+Crashlytics.crashlytics().log("User action: \\(action)")
+Crashlytics.crashlytics().setCustomValue(userId, forKey: "user_id")
+
+// Capture non-fatal errors
+do {
+    try riskyOperation()
+} catch {
+    Crashlytics.crashlytics().record(error: error)
+}
+```
+
+Deliverable: Crash reporting active
+
+========================================
+PHASE 3 - PERFORMANCE MONITORING
+========================================
+
+Add Firebase Performance:
+
+```ruby
+pod 'Firebase/Performance'
+```
+
+Track custom traces:
+```swift
+import FirebasePerformance
+
+let trace = Performance.startTrace(name: "api_call")
+trace?.setValue("GET", forAttribute: "method")
+
+// ... perform operation ...
+
+trace?.stop()
+```
+
+Track network requests:
+```swift
+let metric = HTTPMetric(url: url, httpMethod: .get)
+metric?.start()
+
+// ... perform request ...
+
+metric?.responseCode = response.statusCode
+metric?.stop()
+```
+
+Deliverable: Performance monitoring active
+
+========================================
+PHASE 4 - ERROR TRACKING (SERVER)
+========================================
+
+For Vapor, add Sentry:
+
+```swift
+// Package.swift
+.package(url: "https://github.com/getsentry/sentry-swift.git", from: "8.0.0")
+
+// Configure
 import Sentry
 
 SentrySDK.start { options in
     options.dsn = "YOUR_DSN"
     options.environment = "production"
+    options.tracesSampleRate = 0.1
+}
+
+// Capture errors
+do {
+    try riskyOperation()
+} catch {
+    SentrySDK.capture(error: error)
+    throw error
 }
 ```
 
-**Verify**: Health checks (server), metrics collected, errors tracked
+Deliverable: Error tracking active
 
----
+========================================
+BEST PRACTICES
+========================================
 
-## Phase 3: Distributed Tracing
+- Use os.Logger for Apple platforms
+- Use swift-log for server-side
+- Never log sensitive data
+- Use appropriate log levels
+- Integrate Crashlytics for mobile
+- Use Firebase Performance for iOS
+- Use Sentry for server-side
+- Review logs regularly
 
-**Branch**: `logging/tracing`
+========================================
+EXECUTION
+========================================
 
-### 3.1 OpenTelemetry (Server)
-
-**Vapor**: Use OpenTelemetry
-
-**iOS**: URLSessionTaskMetrics for network tracing
-
-**Verify**: Traces collected
-
----
-
-## Phase 4: Log Aggregation
-
-**Branch**: `logging/aggregation`
-
-### 4.1 Log Shipping
-
-**iOS/macOS**: OSLog → Console.app or ship to backend/Sentry
-
-**Vapor**: ELK Stack, Datadog, CloudWatch
-
-### 4.2 Alerts
-
-> **Alert on**: Crash rate >0.1%, API error rate >1%
-
-**Verify**: Logs aggregated, alerts configured
-
----
-
-## Platform Notes
-
-| Platform | Logger | Monitoring |
-|----------|--------|------------|
-| **iOS/macOS** | os.Logger | MetricKit, Sentry |
-| **Vapor** | SwiftLog | Prometheus, OpenTelemetry |
-
----
-
-## Best Practices
-
-### What to Log/Not Log
-> **ALWAYS**: Structured data, Errors, User actions
-
-> **NEVER**: Passwords, Tokens, PII
-
----
-
-## AI Self-Check
-
-- [ ] Logging configured (os.Logger/SwiftLog)
-- [ ] No sensitive data logged
-- [ ] Health checks (server)
-- [ ] Error tracking (Sentry/Crashlytics)
-- [ ] Metrics collected
-- [ ] Log aggregation configured
-- [ ] Alerts created
-
----
-
-**Process Complete** ✅
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (multi-phase)  
-> **When to use**: When setting up logging and monitoring infrastructure
-
-### Complete Implementation Prompt
-
+START: Implement logging (Phase 1)
+CONTINUE: Add crash reporting (Phase 2)
+CONTINUE: Add performance monitoring (Phase 3)
+OPTIONAL: Add error tracking for server (Phase 4)
+REMEMBER: No sensitive data, use os.Logger
 ```
-CONTEXT:
-You are implementing logging and observability infrastructure for this project.
 
-CRITICAL REQUIREMENTS:
-- ALWAYS use structured logging (JSON format)
-- ALWAYS include correlation IDs for request tracing
-- ALWAYS configure log levels per environment
-- NEVER log sensitive data (PII, passwords, tokens)
-- Use team's Git workflow
+---
 
-IMPLEMENTATION PHASES:
+## Quick Reference
 
-PHASE 1 - STRUCTURED LOGGING:
-1. Choose logging library for the language
-2. Configure structured logging (JSON output)
-3. Set up log levels (DEBUG, INFO, WARN, ERROR)
-4. Add correlation ID middleware/decorator
-
-Deliverable: Structured logging configured
-
-PHASE 2 - LOG AGGREGATION:
-1. Configure log shipping (Filebeat, Fluentd, etc.)
-2. Set up centralized logging (ELK, Loki, CloudWatch)
-3. Create log retention policies
-4. Set up log search and filtering
-
-Deliverable: Centralized log aggregation
-
-PHASE 3 - MONITORING & ALERTS:
-1. Define key metrics to track
-2. Set up health check endpoints
-3. Configure alerting rules
-4. Set up dashboards
-
-Deliverable: Monitoring and alerting active
-
-START: Choose logging library, configure structured logging.
-```
+**What you get**: Production logging with crash reporting and monitoring  
+**Time**: 2-3 hours  
+**Output**: Logger configuration, Firebase integration, monitoring setup

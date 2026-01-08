@@ -1,219 +1,180 @@
-# Logging & Observability Implementation Process - Dart/Flutter
+# Dart/Flutter Logging & Observability - Copy This Prompt
 
-> **Purpose**: Establish production-grade logging, monitoring, and observability
-
----
-
-## Prerequisites
-
-> **BEFORE starting**:
-> - Working Dart/Flutter application
-> - Git repository
+> **Type**: One-time setup process  
+> **When to use**: Setting up production logging and monitoring  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 1: Structured Logging
+## 📋 Complete Self-Contained Prompt
 
-**Branch**: `logging/structured`
+```
+========================================
+DART/FLUTTER LOGGING & OBSERVABILITY
+========================================
 
-### 1.1 Use logger package
+CONTEXT:
+You are implementing production-grade logging and observability for a Dart/Flutter project.
 
-**Install**:
+CRITICAL REQUIREMENTS:
+- ALWAYS use structured logging (JSON format)
+- NEVER log sensitive data (PII, tokens, passwords)
+- Use log levels appropriately (debug, info, warn, error)
+- Integrate crash reporting for mobile apps
+
+========================================
+PHASE 1 - STRUCTURED LOGGING
+========================================
+
+Install logger package:
 ```yaml
 dependencies:
   logger: ^2.0.0
 ```
 
-**Configure**:
+Configure for production:
 ```dart
 import 'package:logger/logger.dart';
 
 final logger = Logger(
-  printer: PrettyPrinter(),
-  level: Level.info,
+  printer: kReleaseMode ? 
+    JsonPrinter() : 
+    PrettyPrinter(methodCount: 0),
+  level: kReleaseMode ? Level.info : Level.debug,
 );
 
 // Usage
-logger.i('User created', userId: user.id);
-logger.e('Error occurred', error, stackTrace);
+logger.i('User action', {'userId': user.id, 'action': 'login'});
+logger.e('API error', error, stackTrace);
 ```
 
-**Production**: Use JSONPrinter for structured logs
+Deliverable: Structured logging implemented
 
-### 1.2 Firebase Crashlytics (Mobile)
+========================================
+PHASE 2 - CRASH REPORTING
+========================================
 
-**Install**:
+For mobile apps, add Firebase Crashlytics:
+
 ```yaml
 dependencies:
   firebase_crashlytics: ^3.4.0
 ```
 
-**Configure**:
+Initialize:
 ```dart
-await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
-FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterError;
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+  
+  runApp(MyApp());
+}
 ```
 
-**Verify**: Logs structured, crashes reported
-
----
-
-## Phase 2: Application Monitoring
-
-**Branch**: `logging/monitoring`
-
-### 2.1 Health Checks (Server)
-
-**Dart server**:
+Record custom logs:
 ```dart
-router.get('/health', (Request request) {
-  return Response.ok('{"status": "healthy"}');
-});
+FirebaseCrashlytics.instance.log('User action: $action');
+FirebaseCrashlytics.instance.setCustomKey('userId', userId);
 ```
 
-### 2.2 Analytics (Mobile)
+Deliverable: Crash reporting active
 
-**Firebase Analytics**:
+========================================
+PHASE 3 - MONITORING
+========================================
+
+Add performance monitoring:
 ```yaml
 dependencies:
-  firebase_analytics: ^10.7.0
+  firebase_performance: ^0.9.0
 ```
 
+Track custom traces:
 ```dart
-await FirebaseAnalytics.instance.logEvent(
-  name: 'user_created',
-  parameters: {'user_id': userId},
-);
-```
-
-### 2.3 Error Tracking
-
-> **Mobile**: Firebase Crashlytics ⭐
-> **Server**: Sentry
-
-**Verify**: Health checks (server), analytics tracking (mobile), errors tracked
-
----
-
-## Phase 3: Performance Monitoring
-
-**Branch**: `logging/performance`
-
-### 3.1 Firebase Performance (Mobile)
-
-**Install**:
-```yaml
-dependencies:
-  firebase_performance: ^0.9.3
-```
-
-**Usage**:
-```dart
-final trace = FirebasePerformance.instance.newTrace('user_creation');
+final trace = FirebasePerformance.instance.newTrace('api_call');
 await trace.start();
-// ... operation ...
-await trace.stop();
+try {
+  await apiCall();
+} finally {
+  await trace.stop();
+}
 ```
 
-**Verify**: Performance metrics collected
-
----
-
-## Phase 4: Log Aggregation
-
-**Branch**: `logging/aggregation`
-
-### 4.1 Mobile Logs
-
-> **Firebase**: Crashlytics + Analytics + Performance Monitor
-
-### 4.2 Server Logs
-
-> **Options**: ELK Stack, Datadog, CloudWatch
-
-### 4.3 Alerts
-
-> **Alert on**: Crash rate >0.1%, Error rate >1%
-
-**Verify**: Logs aggregated, alerts configured
-
----
-
-## Platform Notes
-
-| Platform | Logger | Monitoring |
-|----------|--------|------------|
-| **Flutter (Mobile)** | logger + Firebase | Crashlytics, Analytics |
-| **Dart (Server)** | logger | Sentry, Prometheus |
-
----
-
-## Best Practices
-
-### What to Log/Not Log
-> **ALWAYS**: Structured data, User actions, Errors
-
-> **NEVER**: Passwords, Tokens, PII
-
----
-
-## AI Self-Check
-
-- [ ] logger package configured
-- [ ] Firebase Crashlytics enabled (mobile)
-- [ ] No sensitive data logged
-- [ ] Error tracking configured
-- [ ] Analytics tracking (mobile)
-- [ ] Performance monitoring (mobile)
-- [ ] Alerts configured
-
----
-
-**Process Complete** ✅
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (multi-phase)  
-> **When to use**: When setting up logging and monitoring infrastructure
-
-### Complete Implementation Prompt
-
+Track HTTP requests:
+```dart
+final httpMetric = FirebasePerformance.instance
+  .newHttpMetric('https://api.example.com', HttpMethod.Get);
+await httpMetric.start();
+final response = await http.get(url);
+httpMetric.responseCode = response.statusCode;
+await httpMetric.stop();
 ```
-CONTEXT:
-You are implementing logging and observability infrastructure for this project.
 
-CRITICAL REQUIREMENTS:
-- ALWAYS use structured logging (JSON format)
-- ALWAYS include correlation IDs for request tracing
-- ALWAYS configure log levels per environment
-- NEVER log sensitive data (PII, passwords, tokens)
-- Use team's Git workflow
+Deliverable: Performance monitoring active
 
-IMPLEMENTATION PHASES:
+========================================
+PHASE 4 - LOG AGGREGATION
+========================================
 
-PHASE 1 - STRUCTURED LOGGING:
-1. Choose logging library for the language
-2. Configure structured logging (JSON output)
-3. Set up log levels (DEBUG, INFO, WARN, ERROR)
-4. Add correlation ID middleware/decorator
+For server-side Dart, use Sentry:
 
-Deliverable: Structured logging configured
-
-PHASE 2 - LOG AGGREGATION:
-1. Configure log shipping (Filebeat, Fluentd, etc.)
-2. Set up centralized logging (ELK, Loki, CloudWatch)
-3. Create log retention policies
-4. Set up log search and filtering
-
-Deliverable: Centralized log aggregation
-
-PHASE 3 - MONITORING & ALERTS:
-1. Define key metrics to track
-2. Set up health check endpoints
-3. Configure alerting rules
-4. Set up dashboards
-
-Deliverable: Monitoring and alerting active
-
-START: Choose logging library, configure structured logging.
+```yaml
+dependencies:
+  sentry: ^7.0.0
 ```
+
+Initialize:
+```dart
+import 'package:sentry/sentry.dart';
+
+await Sentry.init((options) {
+  options.dsn = 'YOUR_DSN';
+  options.environment = 'production';
+  options.tracesSampleRate = 0.1;
+});
+
+// Capture errors
+try {
+  await riskyOperation();
+} catch (error, stackTrace) {
+  await Sentry.captureException(error, stackTrace: stackTrace);
+}
+```
+
+Deliverable: Centralized error tracking
+
+========================================
+BEST PRACTICES
+========================================
+
+- Use structured logging (JSON in production)
+- Log contextual information (user ID, request ID)
+- Never log sensitive data
+- Use appropriate log levels
+- Enable crash reporting for mobile
+- Monitor performance metrics
+- Set up alerts for critical errors
+- Review logs regularly
+
+========================================
+EXECUTION
+========================================
+
+START: Implement structured logging (Phase 1)
+CONTINUE: Add crash reporting (Phase 2)
+CONTINUE: Add monitoring (Phase 3)
+OPTIONAL: Add log aggregation (Phase 4)
+REMEMBER: Never log sensitive data, use structured format
+```
+
+---
+
+## Quick Reference
+
+**What you get**: Production logging with crash reporting and monitoring  
+**Time**: 2-3 hours  
+**Output**: Logger configuration, Firebase integration, monitoring setup
