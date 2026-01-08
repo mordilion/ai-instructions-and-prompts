@@ -36,93 +36,31 @@ src/main/kotlin/com/app/
 
 ## Core Patterns
 
-### Domain Model (Pure)
-
 ```kotlin
-// domain/model/User.kt - NO Spring dependencies
-data class User(
-    val id: Long?,
-    val email: String,
-    val name: String
-) {
-    fun changeEmail(newEmail: String): User {
-        require("@" in newEmail) { "Invalid email" }
-        return copy(email = newEmail)
-    }
-}
-```
+// 1. Domain Model (NO Spring!)
+data class User(val id: Long?, val email: String, val name: String)
 
-### Repository Interface
-
-```kotlin
-// domain/repository/UserRepository.kt
+// 2. Repository Interface
 interface UserRepository {
-    suspend fun findById(id: Long): User?
     suspend fun save(user: User): User
-    suspend fun findAll(): List<User>
 }
-```
 
-### Use Case
-
-```kotlin
-// domain/usecase/CreateUserUseCase.kt
+// 3. Use Case
 class CreateUserUseCase(private val repository: UserRepository) {
-    suspend fun execute(email: String, name: String): User {
-        val user = User(id = null, email = email, name = name)
-        return repository.save(user)
-    }
+    suspend fun execute(email: String, name: String) = repository.save(User(null, email, name))
 }
-```
 
-### Repository Implementation
-
-```kotlin
-// data/repository/UserRepositoryImpl.kt
+// 4. Repository Implementation
 @Repository
-class UserRepositoryImpl(
-    private val jpaRepository: UserJpaRepository,
-    private val mapper: UserEntityMapper
-) : UserRepository {
-    
-    override suspend fun findById(id: Long): User? = withContext(Dispatchers.IO) {
-        jpaRepository.findById(id).map { mapper.toDomain(it) }.orElse(null)
-    }
-    
-    override suspend fun save(user: User): User = withContext(Dispatchers.IO) {
-        val entity = mapper.toEntity(user)
-        val saved = jpaRepository.save(entity)
-        mapper.toDomain(saved)
-    }
+class UserRepositoryImpl(private val jpa: UserJpaRepository) : UserRepository {
+    override suspend fun save(user: User) = mapper.toDomain(jpa.save(mapper.toEntity(user)))
 }
-```
 
-### Controller
-
-```kotlin
-// presentation/controller/UserController.kt
+// 5. Controller
 @RestController
-@RequestMapping("/api/users")
-class UserController(private val createUserUseCase: CreateUserUseCase) {
-    
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    suspend fun create(@Valid @RequestBody request: CreateUserRequest): UserDto {
-        val user = createUserUseCase.execute(request.email, request.name)
-        return UserDto.from(user)
-    }
-}
-```
-
-### Configuration
-
-```kotlin
-// config/UserConfig.kt
-@Configuration
-class UserConfig {
-    @Bean
-    fun createUserUseCase(repository: UserRepository) = 
-        CreateUserUseCase(repository)
+class UserController(private val useCase: CreateUserUseCase) {
+    @PostMapping("/api/users")
+    suspend fun create(@RequestBody req: CreateUserRequest) = UserDto.from(useCase.execute(req.email, req.name))
 }
 ```
 

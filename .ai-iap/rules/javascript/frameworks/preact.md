@@ -28,28 +28,13 @@ Preact is a fast 3kB React alternative with the same API. Use preact/compat for 
 - **Embedded Widgets**: Third-party embeds, performance-sensitive contexts.
 
 ## 2. Component Syntax
-```jsx
-import { h } from 'preact';
-import { useState, useEffect } from 'preact/hooks';
 
-// Functional component (same as React)
+```jsx
+import { useState } from 'preact/hooks';
+
 const UserCard = ({ user, onDelete }) => {
   const [loading, setLoading] = useState(false);
-
-  const handleDelete = async () => {
-    setLoading(true);
-    await onDelete(user.id);
-    setLoading(false);
-  };
-
-  return (
-    <div class="card">
-      <h3>{user.name}</h3>
-      <button onClick={handleDelete} disabled={loading}>
-        {loading ? 'Deleting...' : 'Delete'}
-      </button>
-    </div>
-  );
+  return <div class="card"><button onClick={() => onDelete(user.id)}>{user.name}</button></div>;
 };
 ```
 
@@ -62,99 +47,36 @@ const UserCard = ({ user, onDelete }) => {
 | Synthetic events | Yes | No (uses native) |
 
 ```jsx
-// Preact prefers native attribute names
 <label for="email" class="label">
-  <input id="email" class="input" onInput={handleInput} />
+  <input onInput={handleInput} />
 </label>
 ```
 
-## 4. Hooks (Same API as React)
+## 4. Hooks
+
 ```jsx
-import { useState, useEffect, useRef, useMemo, useCallback } from 'preact/hooks';
+import { useState, useMemo } from 'preact/hooks';
 
 const SearchList = ({ items }) => {
   const [query, setQuery] = useState('');
-  const inputRef = useRef(null);
-
-  const filtered = useMemo(
-    () => items.filter(item => item.name.includes(query)),
-    [items, query]
-  );
-
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-
-  return (
-    <div>
-      <input ref={inputRef} value={query} onInput={e => setQuery(e.target.value)} />
-      <ul>
-        {filtered.map(item => <li key={item.id}>{item.name}</li>)}
-      </ul>
-    </div>
-  );
+  const filtered = useMemo(() => items.filter(i => i.name.includes(query)), [items, query]);
+  return <input onInput={e => setQuery(e.target.value)} />;
 };
 ```
 
-## 5. Signals (Preact-specific State)
-```jsx
-import { signal, computed } from '@preact/signals';
+## 5. Signals
 
-// Global reactive state (no Context needed)
+```jsx
+import { signal } from '@preact/signals';
+
 const count = signal(0);
-const doubled = computed(() => count.value * 2);
-
-// Use directly in components
-const Counter = () => (
-  <div>
-    <p>Count: {count} (doubled: {doubled})</p>
-    <button onClick={() => count.value++}>Increment</button>
-  </div>
-);
+const Counter = () => <button onClick={() => count.value++}>Count: {count}</button>;
 ```
 
-## 6. React Compatibility (preact/compat)
+## 6. React Compat
+
 ```javascript
-// vite.config.js or webpack alias
-{
-  resolve: {
-    alias: {
-      'react': 'preact/compat',
-      'react-dom': 'preact/compat',
-      'react-dom/test-utils': 'preact/test-utils',
-      'react/jsx-runtime': 'preact/jsx-runtime'
-    }
-  }
-}
-```
-
-## 7. Performance Tips
-- **Avoid Reconciliation**: Use `key` props correctly.
-- **Signals for Shared State**: Skip Context overhead.
-- **Code Splitting**: Use dynamic imports.
-
-```jsx
-import { lazy, Suspense } from 'preact/compat';
-
-const HeavyComponent = lazy(() => import('./HeavyComponent'));
-
-const App = () => (
-  <Suspense fallback={<div>Loading...</div>}>
-    <HeavyComponent />
-  </Suspense>
-);
-```
-
-## 8. Project Structure
-```
-src/
-├── components/
-│   ├── common/
-│   └── features/
-├── hooks/
-├── signals/          # Preact signals (global state)
-├── utils/
-├── app.jsx
-└── index.jsx
+// vite.config.js
+{ resolve: { alias: { 'react': 'preact/compat', 'react-dom': 'preact/compat' } } }
 ```
 

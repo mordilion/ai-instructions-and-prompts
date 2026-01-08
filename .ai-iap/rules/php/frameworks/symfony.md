@@ -20,61 +20,30 @@
 
 ## Core Patterns
 
-### Controller with Attributes
-
 ```php
-#[Route('/api/users', name: 'api_user_')]
+// Controller with Attributes
+#[Route('/api/users')]
 class UserController extends AbstractController
 {
-    public function __construct(private UserService $userService) {}
-    
     #[Route('', methods: ['GET'])]
-    public function index(): JsonResponse
-    {
-        return $this->json($this->userService->getAll(), context: ['groups' => ['user:read']]);
-    }
-    
-    #[Route('', methods: ['POST'])]
-    public function create(#[MapRequestPayload] UserDto $dto): JsonResponse
-    {
-        return $this->json($this->userService->create($dto), status: 201);
+    public function index(): JsonResponse {
+        return $this->json($this->userService->getAll());
     }
 }
-```
 
-### Entity (Doctrine)
-
-```php
-#[ORM\Entity(repositoryClass: UserRepository::class)]
-#[ORM\Table(name: 'users')]
-class User
-{
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
+// Entity (Doctrine)
+#[ORM\Entity, ORM\Table(name: 'users')]
+class User {
+    #[ORM\Id, ORM\GeneratedValue, ORM\Column]
     private ?int $id = null;
     
-    #[ORM\Column(length: 255)]
-    #[Groups(['user:read', 'user:write'])]
+    #[ORM\Column(length: 255), Groups(['user:read'])]
     private string $name;
-    
-    #[ORM\OneToMany(targetEntity: Post::class, mappedBy: 'user')]
-    private Collection $posts;
 }
-```
 
-### Service
-
-```php
-class UserService
-{
-    public function __construct(
-        private UserRepository $repository,
-        private EntityManagerInterface $em
-    ) {}
-    
-    public function create(UserDto $dto): User
-    {
+// Service
+class UserService {
+    public function create(UserDto $dto): User {
         $user = new User();
         $user->setName($dto->name);
         $this->em->persist($user);
@@ -82,36 +51,18 @@ class UserService
         return $user;
     }
 }
-```
 
-### DTO with Validation
-
-```php
-class UserDto
-{
+// DTO with Validation
+class UserDto {
     public function __construct(
-        #[Assert\NotBlank]
-        #[Assert\Length(min: 3, max: 255)]
+        #[Assert\NotBlank, Assert\Length(min: 3)]
         public string $name,
-        
-        #[Assert\Email]
-        public string $email,
     ) {}
 }
-```
 
-### Repository
-
-```php
-class UserRepository extends ServiceEntityRepository
-{
-    public function __construct(ManagerRegistry $registry)
-    {
-        parent::__construct($registry, User::class);
-    }
-    
-    public function findByEmail(string $email): ?User
-    {
+// Repository
+class UserRepository extends ServiceEntityRepository {
+    public function findByEmail(string $email): ?User {
         return $this->createQueryBuilder('u')
             ->where('u.email = :email')
             ->setParameter('email', $email)

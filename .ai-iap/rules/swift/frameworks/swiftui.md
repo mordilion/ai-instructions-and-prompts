@@ -30,100 +30,26 @@
 
 ## Core Patterns
 
-### State & Binding
-
 ```swift
-struct CounterView: View {
-    @State private var count = 0
-    
-    var body: some View {
-        VStack {
-            Text("Count: \(count)")
-            Button("Increment") { count += 1 }
-            ChildView(count: $count)  // Pass binding
-        }
-    }
-}
+// @State for local values
+@State private var count = 0
 
+// @Binding for two-way flow
 struct ChildView: View {
     @Binding var count: Int
-    var body: some View {
-        Button("Decrement") { count -= 1 }
-    }
 }
-```
 
-### ObservableObject & StateObject
-
-```swift
+// @StateObject for owned ObservableObject
 class UserViewModel: ObservableObject {
     @Published var users: [User] = []
-    @Published var isLoading = false
-    
-    func loadUsers() async {
-        isLoading = true
-        users = await api.fetchUsers()
-        isLoading = false
-    }
 }
+@StateObject private var viewModel = UserViewModel()
 
-struct UserListView: View {
-    @StateObject private var viewModel = UserViewModel()
-    
-    var body: some View {
-        List(viewModel.users) { user in
-            Text(user.name)
-        }
-        .task { await viewModel.loadUsers() }
-    }
-}
-```
+// @EnvironmentObject for DI
+@EnvironmentObject var userStore: UserStore
 
-### EnvironmentObject
-
-```swift
-class UserStore: ObservableObject {
-    @Published var currentUser: User?
-}
-
-@main
-struct MyApp: App {
-    @StateObject private var userStore = UserStore()
-    
-    var body: some Scene {
-        WindowGroup {
-            ContentView().environmentObject(userStore)
-        }
-    }
-}
-
-struct ProfileView: View {
-    @EnvironmentObject var userStore: UserStore
-    var body: some View {
-        Text(userStore.currentUser?.name ?? "Guest")
-    }
-}
-```
-
-### Async/Await
-
-```swift
-struct UsersView: View {
-    @State private var users: [User] = []
-    
-    var body: some View {
-        List(users, id: \.id) { user in
-            Text(user.name)
-        }
-        .task {
-            users = await fetchUsers()
-        }
-    }
-    
-    func fetchUsers() async -> [User] {
-        // Async network call
-    }
-}
+// Async loading
+.task { users = await fetchUsers() }
 ```
 
 ## Common AI Mistakes
