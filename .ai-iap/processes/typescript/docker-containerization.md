@@ -15,11 +15,6 @@
 
 ## Phase 1: Basic Dockerfile
 
-### Branch Strategy
-```
-main → docker/basic
-```
-
 ### 1.1 Create Dockerfile
 
 > **ALWAYS use**:
@@ -109,11 +104,6 @@ coverage
 
 ## Phase 2: Docker Compose for Local Dev
 
-### Branch Strategy
-```
-main → docker/compose
-```
-
 ### 2.1 Create docker-compose.yml
 
 > **ALWAYS include**:
@@ -193,11 +183,6 @@ volumes:
 
 ## Phase 3: Production Optimizations
 
-### Branch Strategy
-```
-main → docker/production
-```
-
 ### 3.1 Optimize Dockerfile
 
 > **ALWAYS include**:
@@ -266,11 +251,6 @@ CMD ["node", "dist/index.js"]
 ---
 
 ## Phase 4: CI/CD Integration
-
-### Branch Strategy
-```
-main → docker/ci-cd
-```
 
 ### 4.1 Add Build & Push Workflow
 
@@ -375,17 +355,6 @@ main → docker/ci-cd
 > - Create ticket/issue for each bug
 > - Tag with `bug`, `docker`, `infrastructure`
 > - **NEVER fix production code during Docker setup**
-
----
-
-## Final Commit
-
-```bash
-git checkout main
-git merge docker/ci-cd
-git tag -a v1.0.0-docker -m "Docker containerization complete"
-git push origin main --tags
-```
 
 ---
 
