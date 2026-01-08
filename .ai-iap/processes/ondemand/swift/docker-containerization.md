@@ -1,153 +1,177 @@
-# Docker Containerization Process - Swift (Server-Side)
+# Swift Docker Containerization - Copy This Prompt
 
-> **Purpose**: Containerize Swift server applications (Vapor) with Docker
-
-> **Key Points**: Multi-stage build, swift:latest → swift:slim, non-root user
+> **Type**: One-time setup process  
+> **When to use**: Dockerizing Swift server application (Vapor, Hummingbird)  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 1: Basic Dockerfile
+## 📋 Complete Self-Contained Prompt
 
-> **ALWAYS use**: Multi-stage build (swift builder → slim runtime)
-> **NEVER**: Use untagged images, run as root, include build tools in runtime
+```
+========================================
+SWIFT DOCKER CONTAINERIZATION
+========================================
 
-**Dockerfile (Vapor)**:
+CONTEXT:
+You are creating Docker container for a Swift server application.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS use multi-stage builds
+- ALWAYS use official Swift images
+- NEVER include source files in production image
+- Use .dockerignore to exclude build artifacts
+
+========================================
+PHASE 1 - CREATE DOCKERFILE
+========================================
+
+For Swift (Vapor):
+
 ```dockerfile
-FROM swift:5.9 AS build
-WORKDIR /app
-COPY Package.* ./
+# Build stage
+FROM swift:5.9-focal AS build
+WORKDIR /build
+
+# Copy manifests
+COPY ./Package.* ./
 RUN swift package resolve
+
+# Copy source
+COPY . .
+
+# Build for release
+RUN swift build -c release --static-swift-stdlib
+
+# Runtime stage
+FROM ubuntu:22.04
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    libcurl4 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy binary from build
+COPY --from=build /build/.build/release/App .
+
+# Create non-root user
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+USER appuser
+
+EXPOSE 8080
+ENTRYPOINT ["./App"]
+CMD ["serve", "--env", "production", "--hostname", "0.0.0.0", "--port", "8080"]
+```
+
+For Hummingbird:
+
+```dockerfile
+FROM swift:5.9-focal AS build
+WORKDIR /build
+
+COPY ./Package.* ./
+RUN swift package resolve
+
 COPY . .
 RUN swift build -c release
 
-FROM swift:5.9-slim
+FROM ubuntu:22.04
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
-RUN useradd -m -u 1001 vapor
-COPY --from=build --chown=vapor:vapor /app/.build/release/App ./App
-USER vapor
+COPY --from=build /build/.build/release/MyApp .
+
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+USER appuser
+
 EXPOSE 8080
-HEALTHCHECK CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
-ENTRYPOINT ["./App", "serve", "--hostname", "0.0.0.0", "--port", "8080"]
+CMD ["./MyApp"]
 ```
 
-**.dockerignore**:
+Create .dockerignore:
 ```
 .build/
 .swiftpm/
-*.xcodeproj
-.git
+.git/
+*.xcodeproj/
+*.xcworkspace/
+.DS_Store
 ```
 
-> **Git**: `git commit -m "feat: add Docker containerization"`
+Deliverable: Working Dockerfile
 
----
+========================================
+PHASE 2 - BUILD AND TEST
+========================================
 
-## Phase 2: Docker Compose
+Build and test locally:
 
-**docker-compose.yml**:
-```yaml
-services:
-  app:
-    build: .
-    ports:
-      - "8080:8080"
-    environment:
-      - DATABASE_URL=postgresql://user:pass@db:5432/myapp
-    depends_on:
-      - db
+```bash
+# Build
+docker build -t my-swift-app:latest .
 
-  db:
-    image: postgres:15-alpine
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+# Run
+docker run -p 8080:8080 my-swift-app:latest
 
-volumes:
-  postgres_data:
+# Test
+curl http://localhost:8080
 ```
 
-> **Git**: `git commit -m "feat: add docker-compose"`
+Deliverable: Working container locally
 
----
+========================================
+PHASE 3 - OPTIMIZE
+========================================
 
-## Phase 3: Production Optimizations
-
-> **ALWAYS**:
-> - Use swift:slim for runtime (smaller)
-> - Static linking if possible
-> - Health checks configured
-
-> **Git**: `git commit -m "feat: optimize Dockerfile"`
-
----
-
-## Phase 4: CI/CD Integration
-
-**GitHub Actions**: Build on Ubuntu (Swift support), tag, push to registry
-
-> **Git**: `git commit -m "feat: add Docker build to CI/CD"`
-
----
-
-## AI Self-Check
-
-- [ ] Multi-stage Dockerfile
-- [ ] Slim runtime image
-- [ ] Non-root user
-- [ ] .dockerignore configured
-- [ ] docker-compose.yml created
-- [ ] Health check added
-- [ ] Security scan passes
-
----
-
-**Process Complete** ✅
-
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (multi-phase)  
-> **When to use**: When containerizing application with Docker
-
-### Complete Implementation Prompt
-
+Add health check:
+```dockerfile
+HEALTHCHECK --interval=30s --timeout=3s \
+  CMD curl -f http://localhost:8080/health || exit 1
 ```
-CONTEXT:
-You are containerizing this application with Docker.
 
-CRITICAL REQUIREMENTS:
-- ALWAYS detect language version from project files
-- ALWAYS use multi-stage builds (separate build and runtime)
-- ALWAYS use specific version tags (never :latest in production)
-- ALWAYS run as non-root user for security
-- NEVER include secrets in Docker images
-
-IMPLEMENTATION PHASES:
-
-PHASE 1 - DOCKERFILE:
-1. Detect language version
-2. Create Dockerfile with multi-stage build:
-   - Build stage: Install dependencies, compile
-   - Runtime stage: Copy artifacts, minimal runtime
-3. Configure non-root user
-4. Optimize layer caching
-
-Deliverable: Optimized Dockerfile
-
-PHASE 2 - DOCKER COMPOSE:
-1. Create docker-compose.yml for local development
-2. Configure services (app, database, cache, etc.)
-3. Set up volumes for persistence
-4. Configure networking
-
-Deliverable: Local Docker environment
-
-PHASE 3 - CI/CD INTEGRATION:
-1. Build Docker image in CI pipeline
-2. Tag with version/commit SHA
-3. Push to container registry
-4. Scan for vulnerabilities
-
-Deliverable: Automated Docker builds
-
-START: Detect language version, create multi-stage Dockerfile.
+Use Amazon Linux for AWS deployments:
+```dockerfile
+FROM swift:5.9-amazonlinux2 AS build
+# Runtime
+FROM amazonlinux:2
 ```
+
+Use static linking for smaller image:
+```dockerfile
+RUN swift build -c release --static-swift-stdlib
+```
+
+Deliverable: Optimized production image
+
+========================================
+BEST PRACTICES
+========================================
+
+- Use multi-stage builds (smaller images)
+- Copy Package.swift first (better caching)
+- Use non-root user
+- Static link Swift stdlib
+- Enable health checks
+- Use .dockerignore
+- Tag images with versions
+
+========================================
+EXECUTION
+========================================
+
+START: Create Dockerfile (Phase 1)
+CONTINUE: Build and test (Phase 2)
+OPTIONAL: Optimize (Phase 3)
+REMEMBER: Multi-stage builds, static linking
+```
+
+---
+
+## Quick Reference
+
+**What you get**: Production-ready Swift Docker container  
+**Time**: 1 hour  
+**Output**: Dockerfile, .dockerignore

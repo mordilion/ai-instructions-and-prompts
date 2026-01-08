@@ -1,165 +1,152 @@
-# Docker Containerization Process - .NET/C#
+# .NET Docker Containerization - Copy This Prompt
 
-> **Purpose**: Containerize .NET applications with Docker for consistent deployments
-
-> **Key Points**: Multi-stage build, mcr.microsoft.com/dotnet base images, non-root user, Alpine variants
+> **Type**: One-time setup process  
+> **When to use**: Dockerizing .NET application  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 1: Basic Dockerfile
+## 📋 Complete Self-Contained Prompt
 
-> **ALWAYS use**: Multi-stage build (SDK → ASP.NET runtime)
-> **NEVER**: Use `latest` tag, run as root, copy bin/obj from host
+```
+========================================
+.NET DOCKER CONTAINERIZATION
+========================================
 
-**Dockerfile**:
+CONTEXT:
+You are creating Docker container for a .NET application.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS use multi-stage builds
+- ALWAYS use official Microsoft images
+- NEVER include source files in production image
+- Use .dockerignore to exclude build artifacts
+
+========================================
+PHASE 1 - CREATE DOCKERFILE
+========================================
+
+Create Dockerfile:
+
 ```dockerfile
-FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
+# Build stage
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
-COPY ["MyApp.csproj", "./"]
-RUN dotnet restore
-COPY . .
-RUN dotnet publish -c Release -o /app/publish --no-restore
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine
+COPY ["MyApp/MyApp.csproj", "MyApp/"]
+RUN dotnet restore "MyApp/MyApp.csproj"
+
+COPY . .
+WORKDIR "/src/MyApp"
+RUN dotnet build "MyApp.csproj" -c Release -o /app/build
+RUN dotnet publish "MyApp.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+# Runtime stage
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
-RUN addgroup -g 1001 dotnet && adduser -u 1001 -G dotnet -s /bin/sh -D dotnet
-COPY --from=build --chown=dotnet:dotnet /app/publish .
-USER dotnet
-EXPOSE 8080
-HEALTHCHECK CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
+COPY --from=build /app/publish .
+
+EXPOSE 80
+EXPOSE 443
 ENTRYPOINT ["dotnet", "MyApp.dll"]
 ```
 
-**.dockerignore**:
+Create .dockerignore:
 ```
-bin/
-obj/
-*.user
-*.suo
-.vs/
-.vscode/
-*.log
+**/.classpath
+**/.dockerignore
+**/.git
+**/.gitignore
+**/.project
+**/.settings
+**/.toolstarget
+**/.vs
+**/.vscode
+**/*.*proj.user
+**/*.dbmdl
+**/*.jfm
+**/bin
+**/charts
+**/docker-compose*
+**/compose*
+**/Dockerfile*
+**/node_modules
+**/npm-debug.log
+**/obj
+**/secrets.dev.yaml
+**/values.dev.yaml
 ```
 
-> **Git**: `git commit -m "feat: add Docker containerization"`
+Deliverable: Working Dockerfile
+
+========================================
+PHASE 2 - BUILD AND TEST
+========================================
+
+Build and test locally:
+
+```bash
+# Build
+docker build -t my-dotnet-app:latest .
+
+# Run
+docker run -p 8080:80 my-dotnet-app:latest
+
+# Test
+curl http://localhost:8080
+```
+
+Deliverable: Working container locally
+
+========================================
+PHASE 3 - OPTIMIZE
+========================================
+
+Add health check:
+```dockerfile
+HEALTHCHECK --interval=30s --timeout=3s \
+  CMD curl -f http://localhost:80/health || exit 1
+```
+
+Use build arguments:
+```dockerfile
+ARG DOTNET_VERSION=8.0
+FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION} AS build
+```
+
+Enable globalization invariant mode (smaller image):
+```dockerfile
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=true
+```
+
+Deliverable: Optimized production image
+
+========================================
+BEST PRACTICES
+========================================
+
+- Use multi-stage builds (smaller images)
+- Copy .csproj first (better caching)
+- Use official Microsoft images
+- Add health checks
+- Minimize image size
+- Use .dockerignore
+- Tag images with versions
+
+========================================
+EXECUTION
+========================================
+
+START: Create Dockerfile (Phase 1)
+CONTINUE: Build and test (Phase 2)
+OPTIONAL: Optimize (Phase 3)
+REMEMBER: Multi-stage builds, .dockerignore
+```
 
 ---
 
-## Phase 2: Docker Compose
+## Quick Reference
 
-**docker-compose.yml**:
-```yaml
-services:
-  app:
-    build: .
-    ports:
-      - "8080:8080"
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Host=db;Database=myapp;Username=user;Password=pass
-    depends_on:
-      - db
-
-  db:
-    image: postgres:15-alpine
-    environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=pass
-      - POSTGRES_DB=myapp
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-volumes:
-  postgres_data:
-```
-
-> **Git**: `git commit -m "feat: add docker-compose"`
-
----
-
-## Phase 3: Production Optimizations
-
-> **ALWAYS**:
-> - Use Alpine images (smaller)
-> - Trim self-contained apps with PublishTrimmed
-> - Add health checks
-> - Scan with `docker scan` or Trivy
-
-**Optimized**: Use `--self-contained false` or `-r linux-musl-x64` for Alpine
-
-> **Git**: `git commit -m "feat: optimize Dockerfile"`
-
----
-
-## Phase 4: CI/CD Integration
-
-**GitHub Actions**: Build, tag (SHA + semver), push to registry (GHCR, ACR, ECR)
-
-> **Git**: `git commit -m "feat: add Docker build to CI/CD"`
-
----
-
-## AI Self-Check
-
-- [ ] Multi-stage Dockerfile
-- [ ] Alpine base image
-- [ ] Non-root user
-- [ ] .dockerignore configured
-- [ ] docker-compose.yml created
-- [ ] Health check added
-- [ ] Image size <150MB
-- [ ] Security scan passes
-
----
-
-**Process Complete** ✅
-
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (multi-phase)  
-> **When to use**: When containerizing application with Docker
-
-### Complete Implementation Prompt
-
-```
-CONTEXT:
-You are containerizing this application with Docker.
-
-CRITICAL REQUIREMENTS:
-- ALWAYS detect language version from project files
-- ALWAYS use multi-stage builds (separate build and runtime)
-- ALWAYS use specific version tags (never :latest in production)
-- ALWAYS run as non-root user for security
-- NEVER include secrets in Docker images
-
-IMPLEMENTATION PHASES:
-
-PHASE 1 - DOCKERFILE:
-1. Detect language version
-2. Create Dockerfile with multi-stage build:
-   - Build stage: Install dependencies, compile
-   - Runtime stage: Copy artifacts, minimal runtime
-3. Configure non-root user
-4. Optimize layer caching
-
-Deliverable: Optimized Dockerfile
-
-PHASE 2 - DOCKER COMPOSE:
-1. Create docker-compose.yml for local development
-2. Configure services (app, database, cache, etc.)
-3. Set up volumes for persistence
-4. Configure networking
-
-Deliverable: Local Docker environment
-
-PHASE 3 - CI/CD INTEGRATION:
-1. Build Docker image in CI pipeline
-2. Tag with version/commit SHA
-3. Push to container registry
-4. Scan for vulnerabilities
-
-Deliverable: Automated Docker builds
-
-START: Detect language version, create multi-stage Dockerfile.
-```
+**What you get**: Production-ready .NET Docker container  
+**Time**: 1 hour  
+**Output**: Dockerfile, .dockerignore

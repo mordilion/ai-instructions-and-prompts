@@ -1,309 +1,185 @@
-# Docker Containerization Process - TypeScript/Node.js
+# TypeScript Docker Containerization - Copy This Prompt
 
-> **Purpose**: Containerize TypeScript/Node.js applications with Docker for consistent deployments
-
----
-
-## Prerequisites
-
-> **BEFORE starting**:
-> - Working application with package.json
-> - Docker installed locally
-> - Understanding of Docker basics (images, containers, layers)
+> **Type**: One-time setup process  
+> **When to use**: Dockerizing TypeScript/Node.js application  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 1: Basic Dockerfile
+## 📋 Complete Self-Contained Prompt
 
-### 1.1 Create Dockerfile
+```
+========================================
+TYPESCRIPT DOCKER CONTAINERIZATION
+========================================
 
-> **ALWAYS use**:
-> - Multi-stage builds (builder → runtime)
-> - Official Node.js images (node:20-alpine ⭐)
-> - Non-root user
-> - .dockerignore file
+CONTEXT:
+You are creating Docker container for a TypeScript/Node.js application.
 
-> **NEVER**:
-> - Use `latest` tag
-> - Run as root user
-> - Copy node_modules from host
-> - Include .git, .env, test files
+CRITICAL REQUIREMENTS:
+- ALWAYS use multi-stage builds
+- ALWAYS use official Node.js images
+- NEVER include source files in production image
+- Use .dockerignore to exclude node_modules
 
-**Multi-Stage Dockerfile**:
+========================================
+PHASE 1 - CREATE DOCKERFILE
+========================================
+
+For TypeScript with npm:
+
 ```dockerfile
 # Build stage
-FROM node:20-alpine AS builder
+FROM node:20-alpine AS build
 WORKDIR /app
+
+# Copy package files
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci
+
+# Copy source and build
 COPY . .
 RUN npm run build
 
 # Runtime stage
 FROM node:20-alpine
 WORKDIR /app
+
+# Copy package files and install production deps only
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Copy built application
+COPY --from=build /app/dist ./dist
+
+# Create non-root user
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
-COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
-COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
 USER nodejs
+
 EXPOSE 3000
 CMD ["node", "dist/index.js"]
 ```
 
-### 1.2 Create .dockerignore
-
-> **ALWAYS exclude**:
-> - node_modules
-> - .git
-> - .env, .env.*
-> - dist, build
-> - *.log
-> - .vscode, .idea
-> - coverage, test results
-
-**.dockerignore**:
-```
-node_modules
-npm-debug.log
-.env
-.env.*
-.git
-.gitignore
-README.md
-dist
-coverage
-*.test.ts
-*.spec.ts
-```
-
-### 1.3 Build & Test
-
-> **Build command**:
-> ```bash
-> docker build -t myapp:latest .
-> docker run -p 3000:3000 myapp:latest
-> ```
-
-> **Verify**:
-> - Image size reasonable (<200MB for Alpine)
-> - App starts correctly
-> - Health endpoint responds
-> - Non-root user (check with `docker exec <container> whoami`)
-
-### 1.4 Verify
-
-> - Image size reasonable (<200MB for Alpine)
-> - App starts correctly
-> - Health endpoint responds
-> - Non-root user
-
----
-
-## Phase 2: Docker Compose for Local Dev
-
-### 2.1 Docker Compose
-
-```yaml
-version: '3.8'
-services:
-  app:
-    build: .
-    ports: ["3000:3000"]
-    environment:
-      - DATABASE_URL=postgres://user:pass@db:5432/myapp
-    depends_on: [db, redis]
-    volumes: [".:/app", "/app/node_modules"]
-  db:
-    image: postgres:15-alpine
-    environment: { POSTGRES_USER: user, POSTGRES_PASSWORD: pass, POSTGRES_DB: myapp }
-    volumes: ["postgres_data:/var/lib/postgresql/data"]
-  redis:
-    image: redis:7-alpine
-volumes: { postgres_data: }
-```
-
-**Test**: `docker-compose up -d`, verify all services start and connect
-
----
-
-## Phase 3: Production Optimizations
-
-### 3.1 Production Optimizations
-
-> **ALWAYS**: Layer caching, multi-stage, health check, security scanning
-> **Enhancements**: Add **/*.md, *.log, Dockerfile*, docker-compose* to .dockerignore
+For Next.js:
 
 ```dockerfile
-FROM node:20-alpine AS builder
+FROM node:20-alpine AS build
 WORKDIR /app
+
 COPY package*.json ./
 RUN npm ci
+
 COPY . .
-RUN npm run build && npm ci --only=production
+RUN npm run build
 
 FROM node:20-alpine
 WORKDIR /app
+
+ENV NODE_ENV=production
+COPY --from=build /app/next.config.js ./
+COPY --from=build /app/public ./public
+COPY --from=build /app/.next ./.next
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/package.json ./
+
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
-COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
 USER nodejs
+
 EXPOSE 3000
-HEALTHCHECK CMD node -e "require('http').get('http://localhost:3000/health',(r)=>process.exit(r.statusCode===200?0:1))"
-CMD ["node", "dist/index.js"]
+CMD ["npm", "start"]
 ```
 
-**Security**: Run `docker scan myapp:latest` or `trivy image myapp:latest`, fix vulnerabilities
-
----
-
-## Phase 4: CI/CD Integration
-
-### 4.1 Add Build & Push Workflow
-
-> **ALWAYS**:
-> - Build in CI on every push
-> - Tag with git SHA + semantic version
-> - Push to registry (Docker Hub, GHCR, ECR)
-> - Scan for vulnerabilities
-
-**GitHub Actions Example**:
-```yaml
-- name: Build and push Docker image
-  uses: docker/build-push-action@v5
-  with:
-    context: .
-    push: true
-    tags: |
-      myorg/myapp:${{ github.sha }}
-      myorg/myapp:latest
-    cache-from: type=gha
-    cache-to: type=gha,mode=max
+Create .dockerignore:
+```
+node_modules/
+npm-debug.log
+.npm/
+.git/
+.env
+.env.local
+dist/
+build/
+coverage/
+.next/
+.nuxt/
 ```
 
-### 4.2 Test in CI
+Deliverable: Working Dockerfile
 
-> **ALWAYS**:
-> - Run health check in CI
-> - Test with docker-compose
-> - Validate image size limits
+========================================
+PHASE 2 - BUILD AND TEST
+========================================
 
----
+Build and test locally:
 
-## Framework-Specific Notes
+```bash
+# Build
+docker build -t my-node-app:latest .
 
-### Next.js
-- Use `next build` with standalone output
-- COPY standalone files + public + .next/static
-- Smaller image size (~150MB)
+# Run
+docker run -p 3000:3000 my-node-app:latest
 
-### NestJS
-- Build with `npm run build`
-- Start with `node dist/main`
-- Include nest CLI if needed
-
-### Express
-- Build TypeScript: `tsc`
-- Start: `node dist/index.js`
-- Simple, lightweight
-
----
-
-## Best Practices
-
-### Image Size
-- Alpine base: ~50MB
-- Node + deps: 100-200MB
-- Avoid full Node image (>900MB)
-
-### Security
-> **ALWAYS**:
-> - Non-root user
-> - No secrets in image
-> - Scan for vulnerabilities
-> - Update base images regularly
-
-### Performance
-> **ALWAYS**:
-> - Multi-stage builds
-> - Layer caching (package.json first)
-> - .dockerignore comprehensive
-> - Health checks configured
-
----
-
-## AI Self-Check
-
-- [ ] Dockerfile created with multi-stage build
-- [ ] Alpine base image used
-- [ ] Non-root user configured
-- [ ] .dockerignore comprehensive
-- [ ] docker-compose.yml for local dev
-- [ ] Health check instruction added
-- [ ] Image size optimized (<200MB)
-- [ ] Security scan passes
-- [ ] CI/CD integration complete
-- [ ] Documentation updated
-
----
-
-## Bug Logging
-
-> **ALWAYS log bugs found during Docker setup**:
-> - Create ticket/issue for each bug
-> - Tag with `bug`, `docker`, `infrastructure`
-> - **NEVER fix production code during Docker setup**
-
----
-
-**Process Complete** ✅
-
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (multi-phase)  
-> **When to use**: When containerizing application with Docker
-
-### Complete Implementation Prompt
-
+# Test
+curl http://localhost:3000
 ```
-CONTEXT:
-You are containerizing this application with Docker.
 
-CRITICAL REQUIREMENTS:
-- ALWAYS detect language version from project files
-- ALWAYS use multi-stage builds (separate build and runtime)
-- ALWAYS use specific version tags (never :latest in production)
-- ALWAYS run as non-root user for security
-- NEVER include secrets in Docker images
+Deliverable: Working container locally
 
-IMPLEMENTATION PHASES:
+========================================
+PHASE 3 - OPTIMIZE
+========================================
 
-PHASE 1 - DOCKERFILE:
-1. Detect language version
-2. Create Dockerfile with multi-stage build:
-   - Build stage: Install dependencies, compile
-   - Runtime stage: Copy artifacts, minimal runtime
-3. Configure non-root user
-4. Optimize layer caching
-
-Deliverable: Optimized Dockerfile
-
-PHASE 2 - DOCKER COMPOSE:
-1. Create docker-compose.yml for local development
-2. Configure services (app, database, cache, etc.)
-3. Set up volumes for persistence
-4. Configure networking
-
-Deliverable: Local Docker environment
-
-PHASE 3 - CI/CD INTEGRATION:
-1. Build Docker image in CI pipeline
-2. Tag with version/commit SHA
-3. Push to container registry
-4. Scan for vulnerabilities
-
-Deliverable: Automated Docker builds
-
-START: Detect language version, create multi-stage Dockerfile.
+Add health check:
+```dockerfile
+HEALTHCHECK --interval=30s --timeout=3s \
+  CMD node -e "require('http').get('http://localhost:3000/health', (r) => { process.exit(r.statusCode === 200 ? 0 : 1) })"
 ```
+
+Use pnpm for faster installs:
+```dockerfile
+FROM node:20-alpine AS build
+RUN corepack enable && corepack prepare pnpm@latest --activate
+COPY pnpm-lock.yaml ./
+RUN pnpm fetch
+RUN pnpm install --offline
+```
+
+Use distroless for security:
+```dockerfile
+FROM gcr.io/distroless/nodejs20-debian11
+COPY --from=build /app/dist /app/dist
+CMD ["/app/dist/index.js"]
+```
+
+Deliverable: Optimized production image
+
+========================================
+BEST PRACTICES
+========================================
+
+- Use multi-stage builds (smaller images)
+- Copy package.json first (better caching)
+- Use non-root user
+- Install only production dependencies
+- Use Alpine or distroless images
+- Enable health checks
+- Use .dockerignore
+- Tag images with versions
+
+========================================
+EXECUTION
+========================================
+
+START: Create Dockerfile (Phase 1)
+CONTINUE: Build and test (Phase 2)
+OPTIONAL: Optimize (Phase 3)
+REMEMBER: Multi-stage builds, production deps only
+```
+
+---
+
+## Quick Reference
+
+**What you get**: Production-ready TypeScript Docker container  
+**Time**: 1 hour  
+**Output**: Dockerfile, .dockerignore

@@ -1,164 +1,173 @@
-# Docker Containerization Process - PHP
+# PHP Docker Containerization - Copy This Prompt
 
-> **Purpose**: Containerize PHP applications with Docker (Apache/Nginx + PHP-FPM)
-
-> **Key Points**: Multi-stage build, php:8.3-fpm-alpine, Composer, non-root user
+> **Type**: One-time setup process  
+> **When to use**: Dockerizing PHP application  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 1: Basic Dockerfile
+## 📋 Complete Self-Contained Prompt
 
-> **ALWAYS use**: Multi-stage build (Composer install → PHP-FPM runtime)
-> **NEVER**: Use `latest`, include Composer in runtime, run as root
+```
+========================================
+PHP DOCKER CONTAINERIZATION
+========================================
 
-**Dockerfile**:
+CONTEXT:
+You are creating Docker container for a PHP application.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS use multi-stage builds
+- ALWAYS use official PHP-FPM images
+- NEVER include source files in build stage
+- Use .dockerignore to exclude vendor
+
+========================================
+PHASE 1 - CREATE DOCKERFILE
+========================================
+
+For PHP with Composer:
+
 ```dockerfile
-FROM composer:2 AS composer
+# Build stage
+FROM composer:2 AS build
 WORKDIR /app
+
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-FROM php:8.3-fpm-alpine
+# Runtime stage
+FROM php:8.2-fpm-alpine
 WORKDIR /var/www/html
-RUN apk add --no-cache postgresql-dev && docker-php-ext-install pdo_pgsql
-RUN addgroup -g 1001 www && adduser -u 1001 -G www -s /bin/sh -D www
-COPY --from=composer --chown=www:www /app/vendor ./vendor
-COPY --chown=www:www . .
-USER www
+
+# Install extensions
+RUN apk add --no-cache \
+    libzip-dev \
+    && docker-php-ext-install pdo_mysql zip opcache
+
+# Copy Composer dependencies
+COPY --from=build /app/vendor ./vendor
+
+# Copy application
+COPY . .
+
+# Set permissions
+RUN chown -R www-data:www-data /var/www/html
+
 EXPOSE 9000
-HEALTHCHECK CMD php artisan health:check || exit 1
 CMD ["php-fpm"]
 ```
 
-**.dockerignore**:
+For Laravel with Nginx:
+
+```dockerfile
+# Build stage
+FROM composer:2 AS build
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --optimize-autoloader
+
+# Runtime stage
+FROM php:8.2-fpm-alpine
+WORKDIR /var/www/html
+
+RUN apk add --no-cache nginx \
+    && docker-php-ext-install pdo_mysql opcache
+
+COPY --from=build /app/vendor ./vendor
+COPY . .
+COPY nginx.conf /etc/nginx/nginx.conf
+
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 storage bootstrap/cache
+
+EXPOSE 80
+CMD ["sh", "-c", "php-fpm -D && nginx -g 'daemon off;'"]
+```
+
+Create .dockerignore:
 ```
 vendor/
+node_modules/
+.git/
 .env
-.git
-*.log
 storage/logs/
+*.log
+tests/
+.phpunit.cache/
 ```
 
-> **Git**: `git commit -m "feat: add Docker containerization"`
+Deliverable: Working Dockerfile
 
----
+========================================
+PHASE 2 - BUILD AND TEST
+========================================
 
-## Phase 2: Docker Compose
+Build and test locally:
 
-**docker-compose.yml**:
-```yaml
-services:
-  app:
-    build: .
-    volumes:
-      - .:/var/www/html
-    depends_on:
-      - db
+```bash
+# Build
+docker build -t my-php-app:latest .
 
-  webserver:
-    image: nginx:alpine
-    ports:
-      - "8080:80"
-    volumes:
-      - .:/var/www/html
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
-    depends_on:
-      - app
+# Run
+docker run -p 8080:80 my-php-app:latest
 
-  db:
-    image: postgres:15-alpine
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-volumes:
-  postgres_data:
+# Test
+curl http://localhost:8080
 ```
 
-> **Git**: `git commit -m "feat: add docker-compose with Nginx"`
+Deliverable: Working container locally
 
----
+========================================
+PHASE 3 - OPTIMIZE
+========================================
 
-## Phase 3: Production Optimizations
-
-> **ALWAYS**:
-> - Use PHP-FPM + Nginx (not Apache)
-> - Optimize Composer autoloader
-> - OPcache enabled
-> - Cache Laravel config/routes
-
-> **Git**: `git commit -m "feat: optimize Dockerfile"`
-
----
-
-## Phase 4: CI/CD Integration
-
-**GitHub Actions**: Build, tag, push to registry
-
-> **Git**: `git commit -m "feat: add Docker build to CI/CD"`
-
----
-
-## AI Self-Check
-
-- [ ] Multi-stage Dockerfile
-- [ ] PHP-FPM Alpine image
-- [ ] Non-root user
-- [ ] .dockerignore configured
-- [ ] docker-compose.yml with Nginx
-- [ ] Health check added
-- [ ] Image size <100MB
-- [ ] Security scan passes
-
----
-
-**Process Complete** ✅
-
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (multi-phase)  
-> **When to use**: When containerizing application with Docker
-
-### Complete Implementation Prompt
-
+Add OPcache configuration:
+```dockerfile
+RUN echo "opcache.enable=1" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.memory_consumption=128" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.max_accelerated_files=10000" >> /usr/local/etc/php/conf.d/opcache.ini
 ```
-CONTEXT:
-You are containerizing this application with Docker.
 
-CRITICAL REQUIREMENTS:
-- ALWAYS detect language version from project files
-- ALWAYS use multi-stage builds (separate build and runtime)
-- ALWAYS use specific version tags (never :latest in production)
-- ALWAYS run as non-root user for security
-- NEVER include secrets in Docker images
-
-IMPLEMENTATION PHASES:
-
-PHASE 1 - DOCKERFILE:
-1. Detect language version
-2. Create Dockerfile with multi-stage build:
-   - Build stage: Install dependencies, compile
-   - Runtime stage: Copy artifacts, minimal runtime
-3. Configure non-root user
-4. Optimize layer caching
-
-Deliverable: Optimized Dockerfile
-
-PHASE 2 - DOCKER COMPOSE:
-1. Create docker-compose.yml for local development
-2. Configure services (app, database, cache, etc.)
-3. Set up volumes for persistence
-4. Configure networking
-
-Deliverable: Local Docker environment
-
-PHASE 3 - CI/CD INTEGRATION:
-1. Build Docker image in CI pipeline
-2. Tag with version/commit SHA
-3. Push to container registry
-4. Scan for vulnerabilities
-
-Deliverable: Automated Docker builds
-
-START: Detect language version, create multi-stage Dockerfile.
+Add health check:
+```dockerfile
+HEALTHCHECK --interval=30s --timeout=3s \
+  CMD curl -f http://localhost/health || exit 1
 ```
+
+Use production PHP settings:
+```dockerfile
+RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+```
+
+Deliverable: Optimized production image
+
+========================================
+BEST PRACTICES
+========================================
+
+- Use multi-stage builds (smaller images)
+- Copy composer.json first (better caching)
+- Use PHP-FPM with Nginx
+- Enable OPcache in production
+- Set proper file permissions
+- Use .dockerignore
+- Tag images with versions
+
+========================================
+EXECUTION
+========================================
+
+START: Create Dockerfile (Phase 1)
+CONTINUE: Build and test (Phase 2)
+OPTIONAL: Optimize (Phase 3)
+REMEMBER: Multi-stage builds, OPcache, permissions
+```
+
+---
+
+## Quick Reference
+
+**What you get**: Production-ready PHP Docker container  
+**Time**: 1 hour  
+**Output**: Dockerfile, .dockerignore, nginx.conf

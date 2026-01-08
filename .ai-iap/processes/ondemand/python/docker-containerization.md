@@ -1,159 +1,174 @@
-# Docker Containerization Process - Python
+# Python Docker Containerization - Copy This Prompt
 
-> **Purpose**: Containerize Python applications with Docker for consistent deployments
-
-> **Key Points**: Multi-stage build, python:3.12-slim, non-root user, pip vs poetry
+> **Type**: One-time setup process  
+> **When to use**: Dockerizing Python application  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 1: Basic Dockerfile
+## 📋 Complete Self-Contained Prompt
 
-> **ALWAYS use**: Multi-stage build, slim or alpine base
-> **NEVER**: Use `latest`, copy entire venv from host, run as root
+```
+========================================
+PYTHON DOCKER CONTAINERIZATION
+========================================
 
-**Dockerfile**:
+CONTEXT:
+You are creating Docker container for a Python application.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS use multi-stage builds
+- ALWAYS use official Python images
+- NEVER include source files in build stage
+- Use .dockerignore to exclude __pycache__
+
+========================================
+PHASE 1 - CREATE DOCKERFILE
+========================================
+
+For Python with pip:
+
 ```dockerfile
-FROM python:3.12-slim AS builder
+# Build stage
+FROM python:3.11-slim AS build
 WORKDIR /app
+
+# Install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
 
-FROM python:3.12-slim
+# Runtime stage
+FROM python:3.11-slim
 WORKDIR /app
-RUN addgroup --gid 1001 python && adduser --uid 1001 --gid 1001 --disabled-password python
-COPY --from=builder --chown=python:python /root/.local /home/python/.local
-COPY --chown=python:python . .
-USER python
-ENV PATH=/home/python/.local/bin:$PATH
+
+# Copy dependencies from build
+COPY --from=build /root/.local /root/.local
+ENV PATH=/root/.local/bin:$PATH
+
+# Copy application
+COPY . .
+
+# Create non-root user
+RUN useradd -m appuser && chown -R appuser:appuser /app
+USER appuser
+
 EXPOSE 8000
-HEALTHCHECK CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
-CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "app.py"]
 ```
 
-**.dockerignore**:
+For Flask/Django:
+
+```dockerfile
+FROM python:3.11-slim AS build
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir --user -r requirements.txt
+
+FROM python:3.11-slim
+WORKDIR /app
+
+COPY --from=build /root/.local /root/.local
+ENV PATH=/root/.local/bin:$PATH
+COPY . .
+
+RUN useradd -m appuser && chown -R appuser:appuser /app
+USER appuser
+
+EXPOSE 8000
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "wsgi:app"]
+```
+
+Create .dockerignore:
 ```
 __pycache__/
-*.pyc
-.venv/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
 .env
-.git
+.git/
+.pytest_cache/
+htmlcov/
+.coverage
 *.log
 ```
 
-> **Git**: `git commit -m "feat: add Docker containerization"`
+Deliverable: Working Dockerfile
 
----
+========================================
+PHASE 2 - BUILD AND TEST
+========================================
 
-## Phase 2: Docker Compose
+Build and test locally:
 
-**docker-compose.yml**:
-```yaml
-services:
-  app:
-    build: .
-    ports:
-      - "8000:8000"
-    environment:
-      - DATABASE_URL=postgresql://user:pass@db:5432/myapp
-    depends_on:
-      - db
+```bash
+# Build
+docker build -t my-python-app:latest .
 
-  db:
-    image: postgres:15-alpine
-    environment:
-      - POSTGRES_DB=myapp
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+# Run
+docker run -p 8000:8000 my-python-app:latest
 
-volumes:
-  postgres_data:
+# Test
+curl http://localhost:8000
 ```
 
-> **Git**: `git commit -m "feat: add docker-compose"`
+Deliverable: Working container locally
 
----
+========================================
+PHASE 3 - OPTIMIZE
+========================================
 
-## Phase 3: Production Optimizations
-
-> **ALWAYS**:
-> - Use python:3.12-slim (not alpine, C extension issues)
-> - Pin dependencies in requirements.txt
-> - Use gunicorn/uvicorn workers: `--workers 4`
-> - Add health checks
-
-> **Git**: `git commit -m "feat: optimize Dockerfile"`
-
----
-
-## Phase 4: CI/CD Integration
-
-**GitHub Actions**: Build, tag, push to registry
-
-> **Git**: `git commit -m "feat: add Docker build to CI/CD"`
-
----
-
-## AI Self-Check
-
-- [ ] Multi-stage Dockerfile
-- [ ] Slim base image
-- [ ] Non-root user
-- [ ] .dockerignore configured
-- [ ] docker-compose.yml created
-- [ ] Health check added
-- [ ] Image size <150MB
-- [ ] Security scan passes
-
----
-
-**Process Complete** ✅
-
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (multi-phase)  
-> **When to use**: When containerizing application with Docker
-
-### Complete Implementation Prompt
-
+Add health check:
+```dockerfile
+HEALTHCHECK --interval=30s --timeout=3s \
+  CMD curl -f http://localhost:8000/health || exit 1
 ```
-CONTEXT:
-You are containerizing this application with Docker.
 
-CRITICAL REQUIREMENTS:
-- ALWAYS detect language version from project files
-- ALWAYS use multi-stage builds (separate build and runtime)
-- ALWAYS use specific version tags (never :latest in production)
-- ALWAYS run as non-root user for security
-- NEVER include secrets in Docker images
-
-IMPLEMENTATION PHASES:
-
-PHASE 1 - DOCKERFILE:
-1. Detect language version
-2. Create Dockerfile with multi-stage build:
-   - Build stage: Install dependencies, compile
-   - Runtime stage: Copy artifacts, minimal runtime
-3. Configure non-root user
-4. Optimize layer caching
-
-Deliverable: Optimized Dockerfile
-
-PHASE 2 - DOCKER COMPOSE:
-1. Create docker-compose.yml for local development
-2. Configure services (app, database, cache, etc.)
-3. Set up volumes for persistence
-4. Configure networking
-
-Deliverable: Local Docker environment
-
-PHASE 3 - CI/CD INTEGRATION:
-1. Build Docker image in CI pipeline
-2. Tag with version/commit SHA
-3. Push to container registry
-4. Scan for vulnerabilities
-
-Deliverable: Automated Docker builds
-
-START: Detect language version, create multi-stage Dockerfile.
+Use Alpine for smaller image:
+```dockerfile
+FROM python:3.11-alpine AS build
+RUN apk add --no-cache gcc musl-dev linux-headers
 ```
+
+Use Poetry for dependency management:
+```dockerfile
+FROM python:3.11-slim AS build
+RUN pip install poetry
+COPY pyproject.toml poetry.lock ./
+RUN poetry export -f requirements.txt > requirements.txt
+```
+
+Deliverable: Optimized production image
+
+========================================
+BEST PRACTICES
+========================================
+
+- Use multi-stage builds (smaller images)
+- Copy requirements.txt first (better caching)
+- Use non-root user
+- Use gunicorn/uvicorn for production
+- Enable health checks
+- Use .dockerignore
+- Tag images with versions
+
+========================================
+EXECUTION
+========================================
+
+START: Create Dockerfile (Phase 1)
+CONTINUE: Build and test (Phase 2)
+OPTIONAL: Optimize (Phase 3)
+REMEMBER: Multi-stage builds, non-root user
+```
+
+---
+
+## Quick Reference
+
+**What you get**: Production-ready Python Docker container  
+**Time**: 1 hour  
+**Output**: Dockerfile, .dockerignore
