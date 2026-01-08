@@ -13,7 +13,7 @@
 **Objective**: Split processes into permanent (recurring) vs on-demand (one-time)
 
 - ✅ Analyzed and classified all 70 process files
-- ✅ Created `_permanent/` and `_ondemand/` directory structure
+- ✅ Created `permanent/` and `ondemand/` directory structure
 - ✅ Moved 8 permanent files (database-migrations.md for 7 languages)
 - ✅ Moved 62 on-demand files (all other processes)
 - ✅ Updated `config.json` with `type` and `loadIntoAI` fields
@@ -154,7 +154,7 @@ Every on-demand process file now has a comprehensive Usage section with:
 
 **On-Demand Processes** (62 files - 85%):
 1. Setup script does NOT load these into AI
-2. User navigates to `.ai-iap/processes/_ondemand/{language}/{process}.md`
+2. User navigates to `.ai-iap/processes/ondemand/{language}/{process}.md`
 3. User copies the complete prompt from "Usage" section
 4. User pastes into AI tool when ready to implement
 5. AI executes the one-time setup
@@ -201,7 +201,7 @@ Every on-demand process file now has a comprehensive Usage section with:
 
 ## How to Use On-Demand Processes
 
-1. Navigate to `.ai-iap/processes/_ondemand/{language}/{process}.md`
+1. Navigate to `.ai-iap/processes/ondemand/{language}/{process}.md`
 2. Scroll to "Usage - Copy This Complete Prompt" section
 3. Copy the entire prompt block
 4. Paste into your AI tool
@@ -268,7 +268,7 @@ Every on-demand process file now has a comprehensive Usage section with:
 - All-or-nothing approach
 
 **After**:
-- Process files clearly organized in `_permanent/` and `_ondemand/`
+- Process files clearly organized in `permanent/` and `ondemand/`
 - Easy to browse and copy prompts
 - User control over when to use each process
 - Can adapt prompts before pasting

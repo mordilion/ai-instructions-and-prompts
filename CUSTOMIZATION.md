@@ -173,12 +173,12 @@ Custom processes add company-specific implementation guides.
 
 The system has two types of processes:
 
-**📌 Permanent Processes** (in `.ai-iap/processes/_permanent/`):
+**📌 Permanent Processes** (in `.ai-iap/processes/permanent/`):
 - Loaded into AI automatically during setup
 - Used repeatedly throughout project lifecycle
 - Example: `database-migrations.md`
 
-**📋 On-Demand Processes** (in `.ai-iap/processes/_ondemand/`):
+**📋 On-Demand Processes** (in `.ai-iap/processes/ondemand/`):
 - NOT loaded into AI automatically
 - User copies prompt when ready to implement
 - Examples: test-implementation, ci-cd, docker, logging, auth, etc.

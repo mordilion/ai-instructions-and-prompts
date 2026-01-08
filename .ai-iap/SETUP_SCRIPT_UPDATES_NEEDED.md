@@ -159,7 +159,7 @@ function Copy-OnDemandProcesses {
             
             # Only copy if it's on-demand
             if ($procConfig.loadIntoAI -eq $false) {
-                $sourcePath = Join-Path $Script:ScriptDir "processes\_ondemand\$lang\$($procConfig.file).md"
+                $sourcePath = Join-Path $Script:ScriptDir "processes\ondemand\$lang\$($procConfig.file).md"
                 
                 if (Test-Path $sourcePath) {
                     $langDir = Join-Path $ondemandDir $lang

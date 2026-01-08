@@ -988,7 +988,7 @@ generate_cursor() {
                 
                 # Skip on-demand processes (user copies prompt when needed)
                 if [[ "$load_into_ai" == "false" ]]; then
-                    print_info "Skipped on-demand process: $proc (copy prompt from .ai-iap/processes/_ondemand/$lang/$proc_file.md when needed)"
+                    print_info "Skipped on-demand process: $proc (copy prompt from .ai-iap/processes/ondemand/$lang/$proc_file.md when needed)"
                     continue
                 fi
                 

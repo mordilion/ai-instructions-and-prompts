@@ -54,7 +54,7 @@
 
 ```
 .ai-iap/processes/
-├── _permanent/           # Ongoing processes (loaded into AI tools)
+├── permanent/           # Ongoing processes (loaded into AI tools)
 │   ├── dart/
 │   │   └── database-migrations.md
 │   ├── dotnet/
@@ -72,7 +72,7 @@
 │   └── typescript/
 │       └── database-migrations.md
 │
-└── _ondemand/           # One-time setup (copy as prompts when needed)
+└── ondemand/           # One-time setup (copy as prompts when needed)
     ├── dart/
     │   ├── test-implementation.md
     │   ├── ci-cd-github-actions.md

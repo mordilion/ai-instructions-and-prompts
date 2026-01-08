@@ -843,7 +843,7 @@ function New-CursorConfig {
                 
                 # Skip on-demand processes (user copies prompt when needed)
                 if ($procConfig.loadIntoAI -eq $false) {
-                    Write-InfoMessage "Skipped on-demand process: $proc (copy prompt from .ai-iap/processes/_ondemand/$lang/$($procConfig.file).md when needed)"
+                    Write-InfoMessage "Skipped on-demand process: $proc (copy prompt from .ai-iap/processes/ondemand/$lang/$($procConfig.file).md when needed)"
                     continue
                 }
                 

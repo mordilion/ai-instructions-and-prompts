@@ -13,7 +13,7 @@ Process files are now split into two categories based on usage patterns:
 
 ```
 .ai-iap/processes/
-├── _permanent/           # Loaded into AI tools
+├── permanent/           # Loaded into AI tools
 │   ├── dart/
 │   │   └── (none - Dart doesn't have migrations yet)
 │   ├── dotnet/
@@ -31,7 +31,7 @@ Process files are now split into two categories based on usage patterns:
 │   └── typescript/
 │       └── database-migrations.md
 │
-└── _ondemand/           # Copy-paste prompts
+└── ondemand/           # Copy-paste prompts
     ├── dart/
     │   ├── test-implementation.md
     │   ├── ci-cd-github-actions.md
@@ -74,7 +74,7 @@ Process files are now split into two categories based on usage patterns:
 
 ```bash
 # Concatenated/loaded into AI tool files
-.ai-iap/processes/_permanent/dotnet/database-migrations.md 
+.ai-iap/processes/permanent/dotnet/database-migrations.md 
   → .cursor/rules/processes-dotnet-database-migrations.mdc
   → CLAUDE.md (if selected)
   → .github/copilot-instructions.md (if selected)
@@ -111,7 +111,7 @@ Process files are now split into two categories based on usage patterns:
 ```bash
 # NOT loaded into AI tools
 # Just copied to project for reference
-.ai-iap/processes/_ondemand/dotnet/test-implementation.md 
+.ai-iap/processes/ondemand/dotnet/test-implementation.md 
   → Copied to project root or docs/
   → User copies prompt when ready to implement
 ```
@@ -128,7 +128,7 @@ Process files are now split into two categories based on usage patterns:
 - Use naturally during development
 
 **On-Demand Processes (Manual):**
-1. Find process file in `.ai-iap/processes/_ondemand/{language}/`
+1. Find process file in `.ai-iap/processes/ondemand/{language}/`
 2. Open the file and scroll to "Usage" section
 3. Copy the complete prompt block
 4. Paste into your AI tool
@@ -186,7 +186,7 @@ Each process in `config.json` now has:
 
 ### Adding a New Permanent Process
 
-1. Create file in `.ai-iap/processes/_permanent/{language}/`
+1. Create file in `.ai-iap/processes/permanent/{language}/`
 2. Update `config.json`:
    - Add process definition
    - Set `"type": "permanent"`
@@ -195,7 +195,7 @@ Each process in `config.json` now has:
 
 ### Adding a New On-Demand Process
 
-1. Create file in `.ai-iap/processes/_ondemand/{language}/`
+1. Create file in `.ai-iap/processes/ondemand/{language}/`
 2. Include comprehensive "Usage" section with complete prompt
 3. Update `config.json`:
    - Add process definition
@@ -207,7 +207,7 @@ Each process in `config.json` now has:
 
 ## Migration Status
 
-- ✅ Files reorganized into _permanent/ and _ondemand/
+- ✅ Files reorganized into permanent/ and ondemand/
 - ✅ config.json updated with type information
 - ⏳ Setup scripts update (pending)
 - ⏳ On-demand prompt rewrite (pending)

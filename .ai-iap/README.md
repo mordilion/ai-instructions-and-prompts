@@ -381,7 +381,7 @@ In addition to coding rules, this system includes **step-by-step workflow guides
 
 ### How to Use On-Demand Processes
 
-1. Navigate to `.ai-iap/processes/_ondemand/{language}/{process}.md`
+1. Navigate to `.ai-iap/processes/ondemand/{language}/{process}.md`
 2. Scroll to **"Usage - Copy This Complete Prompt"** section
 3. Copy the entire prompt block
 4. Paste into your AI tool

@@ -92,7 +92,7 @@ START: Execute Phase 1. {Initial action to take}
 
 ## Example: Test Implementation
 
-See `.ai-iap/processes/_ondemand/dotnet/test-implementation.md` for a complete example.
+See `.ai-iap/processes/ondemand/dotnet/test-implementation.md` for a complete example.
 
 **Key elements:**
 - ✅ Self-contained (all context included)
@@ -168,7 +168,7 @@ Use simplified template:
 ## Files to Update
 
 ### Completed (1/62)
-- ✅ `.ai-iap/processes/_ondemand/dotnet/test-implementation.md`
+- ✅ `.ai-iap/processes/ondemand/dotnet/test-implementation.md`
 
 ### Remaining by Process Type
 
