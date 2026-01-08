@@ -20,31 +20,23 @@
 
 ## Core Patterns
 
-### Activity
-
 ```java
+// Activity
 public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
-    private UserViewModel viewModel;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        
-        viewModel = new ViewModelProvider(this).get(UserViewModel.class);
         viewModel.getUsers().observe(this, users -> updateUI(users));
     }
 }
-```
 
-### Fragment (Memory Leak Prevention)
-
-```java
+// Fragment (CRITICAL: Clean up binding!)
 public class UserFragment extends Fragment {
     private FragmentUserBinding binding;
-    private UserViewModel viewModel;
     
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle state) {
@@ -53,74 +45,33 @@ public class UserFragment extends Fragment {
     }
     
     @Override
-    public void onViewCreated(View view, Bundle state) {
-        super.onViewCreated(view, state);
-        viewModel = new ViewModelProvider(this).get(UserViewModel.class);
-    }
-    
-    @Override
     public void onDestroyView() {
         super.onDestroyView();
-        binding = null;  // CRITICAL: Prevent memory leak
+        binding = null;  // Prevent memory leak!
     }
 }
-```
 
-### ViewModel
-
-```java
+// ViewModel
 public class UserViewModel extends ViewModel {
     private final MutableLiveData<List<User>> users = new MutableLiveData<>();
-    private final UserRepository repository;
     
-    public UserViewModel(UserRepository repository) {
-        this.repository = repository;
-    }
-    
-    public LiveData<List<User>> getUsers() {
-        return users;
-    }
-    
-    public void loadUsers() {
-        repository.getUsers(users::postValue);
-    }
+    public LiveData<List<User>> getUsers() { return users; }
+    public void loadUsers() { repository.getUsers(users::postValue); }
 }
-```
 
-### RecyclerView Adapter
-
-```java
+// RecyclerView Adapter
 public class UserAdapter extends RecyclerView.Adapter<UserAdapter.ViewHolder> {
     private List<User> users = new ArrayList<>();
     
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        ItemUserBinding binding = ItemUserBinding.inflate(
-            LayoutInflater.from(parent.getContext()), parent, false);
-        return new ViewHolder(binding);
-    }
-    
-    @Override
-    public void onBindViewHolder(ViewHolder holder, int position) {
-        holder.bind(users.get(position));
-    }
-    
-    @Override
-    public int getItemCount() {
-        return users.size();
+        return new ViewHolder(ItemUserBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false));
     }
     
     static class ViewHolder extends RecyclerView.ViewHolder {
         private final ItemUserBinding binding;
-        
-        ViewHolder(ItemUserBinding binding) {
-            super(binding.getRoot());
-            this.binding = binding;
-        }
-        
-        void bind(User user) {
-            binding.textName.setText(user.getName());
-        }
+        ViewHolder(ItemUserBinding binding) { super(binding.getRoot()); this.binding = binding; }
+        void bind(User user) { binding.textName.setText(user.getName()); }
     }
 }
 ```

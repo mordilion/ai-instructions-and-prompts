@@ -20,128 +20,48 @@
 
 ## Core Patterns
 
-### Controller
-
 ```dart
+// Controller
 class UserController extends GetxController {
-  final UserRepository _repository;
-  UserController(this _repository);
-  
   final users = <User>[].obs;
   final isLoading = false.obs;
-  final error = Rxn<String>();
   
   @override
-  void onInit() {
-    super.onInit();
-    loadUsers();
-  }
+  void onInit() { super.onInit(); loadUsers(); }
   
   Future<void> loadUsers() async {
-    try {
-      isLoading.value = true;
-      error.value = null;
-      users.value = await _repository.getUsers();
-    } catch (e) {
-      error.value = e.toString();
-    } finally {
-      isLoading.value = false;
-    }
-  }
-  
-  @override
-  void onClose() {
-    // Cleanup
-    super.onClose();
-  }
-}
-```
-
-### View (Obx)
-
-```dart
-class UserListView extends StatelessWidget {
-  final controller = Get.find<UserController>();
-  
-  @override
-  Widget build(BuildContext context) {
-    return Obx(() {
-      if (controller.isLoading.value) {
-        return CircularProgressIndicator();
-      }
-      return ListView.builder(
-        itemCount: controller.users.length,
-        itemBuilder: (context, index) => UserTile(controller.users[index]),
-      );
-    });
+    isLoading.value = true;
+    users.value = await _repository.getUsers();
+    isLoading.value = false;
   }
 }
 
-// Or use GetView
+// View (GetView preferred)
 class UserListView extends GetView<UserController> {
   @override
   Widget build(BuildContext context) {
-    return Obx(() => ListView.builder(
-      itemCount: controller.users.length,
-      itemBuilder: (context, index) => UserTile(controller.users[index]),
-    ));
+    return Obx(() => controller.isLoading.value
+      ? CircularProgressIndicator()
+      : ListView.builder(itemCount: controller.users.length, itemBuilder: (_, i) => UserTile(controller.users[i])));
   }
 }
-```
 
-### Bindings
-
-```dart
+// Bindings (DI)
 class UserBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut(() => UserRepository());
     Get.lazyPut(() => UserController(Get.find()));
   }
 }
 
-// Usage
-GetPage(
-  name: '/users',
-  page: () => UserListView(),
-  binding: UserBinding(),
-);
-```
+// Navigation
+Get.to(() => DetailView());  // Navigate
+Get.toNamed('/details', arguments: userId);  // Named
+Get.back();  // Back
 
-### Navigation
-
-```dart
-// Navigate
-Get.to(() => UserDetailView());
-
-// Named route
-Get.toNamed('/user/details', arguments: userId);
-
-// Replace
-Get.off(() => HomeView());
-
-// Clear stack
-Get.offAll(() => LoginView());
-
-// Back
-Get.back();
-```
-
-### Dialogs & Snackbars
-
-```dart
-// Snackbar
+// Dialogs
 Get.snackbar('Success', 'User created');
-
-// Dialog
-Get.defaultDialog(
-  title: 'Confirm',
-  middleText: 'Delete user?',
-  onConfirm: () => controller.deleteUser(),
-);
-
-// Bottom sheet
-Get.bottomSheet(Container(child: Text('Options')));
+Get.defaultDialog(title: 'Confirm', onConfirm: () => controller.delete());
 ```
 
 ## Common AI Mistakes
