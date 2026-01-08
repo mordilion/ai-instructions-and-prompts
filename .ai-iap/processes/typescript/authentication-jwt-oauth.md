@@ -34,97 +34,36 @@ npm install jsonwebtoken bcryptjs
 npm install --save-dev @types/jsonwebtoken @types/bcryptjs
 ```
 
-### 1.2 Password Hashing
+### 1.2 Password Hashing & JWT
 
-> **ALWAYS**:
-> - Hash passwords with bcrypt (10+ rounds) or Argon2
-> - Salt automatically (bcrypt does this)
-> - Validate password strength (min 8 chars, complexity)
+> **ALWAYS**: Hash with bcrypt (12+ rounds), include user ID in JWT, set expiration (1h access, 7d refresh)
+> **NEVER**: Store plain passwords, include sensitive data in JWT, use sync hashing
 
-> **NEVER**:
-> - Use synchronous hashing (blocks event loop)
-> - Store password in plain text anywhere
-> - Log passwords
-
-**Hash Implementation**:
 ```typescript
 import bcrypt from 'bcryptjs';
-
-async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, 12); // 12 rounds
-}
-
-async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  return bcrypt.compare(password, hash);
-}
-```
-
-### 1.3 JWT Token Generation
-
-> **ALWAYS include in JWT**:
-> - User ID (subject)
-> - Expiration time (1h for access, 7d for refresh)
-> - Issued at timestamp
-> - Token type (access/refresh)
-
-> **NEVER include in JWT**:
-> - Password or password hash
-> - Sensitive PII
-> - Permissions (use claims sparingly)
-
-**JWT Implementation**:
-```typescript
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET!;
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET!;
+// Hash password
+async function hashPassword(password: string) { return bcrypt.hash(password, 12); }
+async function verifyPassword(password: string, hash: string) { return bcrypt.compare(password, hash); }
 
-function generateAccessToken(userId: string): string {
-  return jwt.sign({ sub: userId, type: 'access' }, JWT_SECRET, { 
-    expiresIn: '1h' 
-  });
+// Generate JWT
+function generateAccessToken(userId: string) {
+  return jwt.sign({ sub: userId, type: 'access' }, process.env.JWT_SECRET!, { expiresIn: '1h' });
 }
 
-function generateRefreshToken(userId: string): string {
-  return jwt.sign({ sub: userId, type: 'refresh' }, JWT_REFRESH_SECRET, { 
-    expiresIn: '7d' 
-  });
-}
-```
-
-### 1.4 Authentication Middleware
-
-> **ALWAYS**:
-> - Verify JWT signature
-> - Check expiration
-> - Attach user to request object
-> - Handle errors gracefully
-
-**Middleware**:
-```typescript
+// Auth middleware
 function authenticateJWT(req: Request, res: Response, next: NextFunction) {
   const token = req.headers.authorization?.split(' ')[1];
-  
-  if (!token) {
-    return res.status(401).json({ error: 'No token provided' });
-  }
-  
+  if (!token) return res.status(401).json({ error: 'No token provided' });
   try {
-    const payload = jwt.verify(token, JWT_SECRET);
-    req.user = payload;
+    req.user = jwt.verify(token, process.env.JWT_SECRET!);
     next();
-  } catch (error) {
-    return res.status(401).json({ error: 'Invalid token' });
-  }
+  } catch { return res.status(401).json({ error: 'Invalid token' }); }
 }
 ```
 
-### 1.5 Verify
-
-> - POST /auth/register creates user with hashed password
-> - POST /auth/login returns access + refresh tokens
-> - Protected routes require valid JWT
-> - Invalid/expired tokens rejected
+**Verify**: POST /auth/register creates user, POST /auth/login returns tokens, protected routes require valid JWT
 
 ---
 
@@ -143,22 +82,12 @@ npm install passport passport-google-oauth20 passport-github2
 npm install --save-dev @types/passport @types/passport-google-oauth20
 ```
 
-### 2.2 Configure OAuth Providers
+### 2.2 Configure OAuth (Passport.js)
 
-> **ALWAYS**:
-> - Store client ID/secret in environment variables
-> - Use HTTPS callback URLs (production)
-> - Validate state parameter (CSRF protection)
-> - Handle email verification
+> **ALWAYS**: Store credentials in env, use HTTPS callbacks, validate state
+> **NEVER**: Commit OAuth secrets, trust provider data without validation
 
-> **NEVER**:
-> - Commit OAuth credentials
-> - Trust provider data without validation
-> - Skip email verification
-
-**Google OAuth**:
 ```typescript
-import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 
 passport.use(new GoogleStrategy({
@@ -166,69 +95,35 @@ passport.use(new GoogleStrategy({
   clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
   callbackURL: '/auth/google/callback'
 }, async (accessToken, refreshToken, profile, done) => {
-  // Find or create user
-  const user = await findOrCreateUser(profile);
-  done(null, user);
+  done(null, await findOrCreateUser(profile));
 }));
 ```
 
-### 2.3 OAuth Routes
-
-> **ALWAYS**:
-> - Redirect to provider for authentication
-> - Handle callback with user creation/update
-> - Issue JWT after OAuth success
-> - Link existing accounts by email
-
-### 2.4 Verify
-
-> - GET /auth/google redirects to Google login
-> - Callback creates/finds user and issues JWT
-> - Users can link multiple providers
+**Verify**: GET /auth/google redirects, callback creates user and issues JWT
 
 ---
 
 ## Phase 3: Role-Based Access Control (RBAC)
 
-### 3.1 Define Roles & Permissions
+### 3.1 Role-Based Access Control
 
-> **ALWAYS**:
-> - Store roles in database (User, Admin, Moderator)
-> - Use permission-based checks (not just roles)
-> - Apply least privilege principle
-> - Document permission matrix
+> **ALWAYS**: Store roles in DB, use permission-based checks, least privilege
+> **NEVER**: Hardcode roles, trust client-side checks
 
-> **NEVER**:
-> - Hardcode roles in middleware
-> - Trust client-side role checks
-> - Skip authorization after authentication
-
-**Role Middleware**:
 ```typescript
 function requireRole(...roles: string[]) {
   return (req: Request, res: Response, next: NextFunction) => {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(req.user ? 403 : 401).json({ error: req.user ? 'Forbidden' : 'Unauthorized' });
     }
-    
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
-    
     next();
   };
 }
 
-// Usage
-app.delete('/users/:id', authenticateJWT, requireRole('admin'), deleteUser);
+// Usage: app.delete('/users/:id', authenticateJWT, requireRole('admin'), deleteUser);
 ```
 
-### 3.2 Permission-Based Authorization
-
-> **ALWAYS prefer permissions over roles**:
-> - Roles: collection of permissions
-> - Permissions: granular actions (read:users, write:posts)
-> - Check permissions, not roles
+> **Prefer permissions over roles**: Roles = collection of permissions, check granular actions (read:users, write:posts)
 
 ### 3.3 Verify
 
@@ -264,59 +159,23 @@ const loginLimiter = rateLimit({
 app.post('/auth/login', loginLimiter, login);
 ```
 
-### 4.2 Additional Security Measures
+### 4.2 Additional Security
 
-> **ALWAYS implement**:
-> - Refresh token rotation
-> - Token revocation/blacklist
-> - CORS configuration
-> - Helmet.js security headers
-> - HTTPS only (production)
-> - HttpOnly cookies for tokens (web apps)
+> **ALWAYS**: Refresh token rotation, token revocation, CORS, Helmet.js, HTTPS, HttpOnly cookies, audit logging (login attempts, password changes)
+> **NEVER**: JWT in localStorage (XSS risk), long-lived access tokens (>1h)
 
-> **NEVER**:
-> - Store JWT in localStorage (XSS risk for web)
-> - Use long-lived access tokens (>1h)
-> - Skip input validation
-
-### 4.3 Audit Logging
-
-> **ALWAYS log**:
-> - Login attempts (success/failure)
-> - Password changes
-> - Permission elevation
-> - Suspicious activity
-
-### 4.4 Verify
-
-> - Rate limiting blocks brute force
-> - Refresh tokens rotate on use
-> - Security headers present
+**Verify**: Rate limiting works, tokens rotate, security headers present
 
 ---
 
-## Framework-Specific Notes
+## Framework-Specific
 
-### Express.js
-- Use Passport.js for OAuth
-- express-session for session-based auth
-- cookie-parser for HttpOnly cookies
-
-### NestJS
-- @nestjs/passport for authentication
-- Guards for authorization
-- @nestjs/jwt for JWT
-- Built-in validation pipes
-
-### Next.js
-- NextAuth.js ⭐ (built-in OAuth, JWT, sessions)
-- API routes for auth endpoints
-- middleware.ts for protected routes
-
-### Fastify
-- @fastify/jwt for JWT
-- @fastify/auth for strategies
-- Faster performance than Express
+| Framework | Tools |
+|-----------|-------|
+| Express | Passport.js, express-session, cookie-parser |
+| NestJS | @nestjs/passport, Guards, @nestjs/jwt |
+| Next.js | NextAuth.js ⭐, API routes, middleware.ts |
+| Fastify | @fastify/jwt, @fastify/auth |
 
 ---
 

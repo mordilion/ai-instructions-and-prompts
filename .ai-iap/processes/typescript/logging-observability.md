@@ -13,21 +13,7 @@
 
 ---
 
-## Git Workflow Pattern (All Phases)
-
-> **Standard workflow for each phase**:
-> 1. Create branch: `git checkout -b logging/<phase-name>`
-> 2. Make changes according to phase requirements
-> 3. Commit: `git commit -m "feat(logging): <description>"`
-> 4. Push and verify in CI/CD
-
-Phases below reference this pattern instead of repeating it.
-
----
-
 ## Phase 1: Structured Logging
-
-**Branch**: `logging/structured`
 
 ### 1.1 Install Logging Library
 
@@ -46,55 +32,33 @@ Phases below reference this pattern instead of repeating it.
 npm install winston
 ```
 
-### 1.2 Configure Structured Logger
+### 1.2 Configure Logger & Request ID
 
-> **ALWAYS include**:
-> - JSON format for machine parsing
-> - Timestamp (ISO 8601)
-> - Log level (debug, info, warn, error)
-> - Context/metadata (requestId, userId, service name)
-> - Separate transports (console, file, external service)
+> **ALWAYS**: JSON format, timestamp, log level, context (requestId, userId), separate transports
+> **NEVER**: Log sensitive data (passwords, tokens, PII), use sync logging
 
-**Winston Configuration**:
 ```typescript
 import winston from 'winston';
-
-export const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.errors({ stack: true }),
-    winston.format.json()
-  ),
-  defaultMeta: { service: 'my-app' },
-  transports: [
-    new winston.transports.Console(),
-    new winston.transports.File({ filename: 'error.log', level: 'error' })
-  ]
-});
-```
-
-### 1.3 Add Request ID Middleware
-
-> **ALWAYS**:
-> - Generate unique ID per request (UUID v4)
-> - Attach to request object
-> - Include in all logs for that request
-> - Use correlation ID from headers (X-Correlation-ID) if available
-
-**Express Middleware**:
-```typescript
 import { v4 as uuidv4 } from 'uuid';
 
+// Logger
+export const logger = winston.createLogger({
+  level: process.env.LOG_LEVEL || 'info',
+  format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
+  defaultMeta: { service: 'my-app' },
+  transports: [new winston.transports.Console(), new winston.transports.File({ filename: 'error.log', level: 'error' })]
+});
+
+// Request ID middleware
 app.use((req, res, next) => {
   req.id = req.headers['x-correlation-id'] || uuidv4();
   res.setHeader('X-Correlation-ID', req.id);
-  logger.info('Incoming request', { requestId: req.id, method: req.method, path: req.path });
+  logger.info('Request', { requestId: req.id, method: req.method, path: req.path });
   next();
 });
 ```
 
-**Verify**: Logs output as JSON, timestamp present, request ID tracked, no sensitive data logged
+**Verify**: Logs as JSON with timestamp and request ID
 
 ---
 

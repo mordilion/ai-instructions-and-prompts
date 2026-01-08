@@ -102,131 +102,58 @@ coverage
 
 ## Phase 2: Docker Compose for Local Dev
 
-### 2.1 Create docker-compose.yml
+### 2.1 Docker Compose
 
-> **ALWAYS include**:
-> - App service
-> - Database service (PostgreSQL/MySQL)
-> - Redis/Cache service (if needed)
-> - Volumes for data persistence
-> - Networks for service isolation
-> - Environment variables
-
-**docker-compose.yml**:
 ```yaml
 version: '3.8'
-
 services:
   app:
     build: .
-    ports:
-      - "3000:3000"
+    ports: ["3000:3000"]
     environment:
-      - NODE_ENV=development
       - DATABASE_URL=postgres://user:pass@db:5432/myapp
-      - REDIS_URL=redis://redis:6379
-    depends_on:
-      - db
-      - redis
-    volumes:
-      - .:/app
-      - /app/node_modules
-    command: npm run dev
-
+    depends_on: [db, redis]
+    volumes: [".:/app", "/app/node_modules"]
   db:
     image: postgres:15-alpine
-    environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=pass
-      - POSTGRES_DB=myapp
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-
+    environment: { POSTGRES_USER: user, POSTGRES_PASSWORD: pass, POSTGRES_DB: myapp }
+    volumes: ["postgres_data:/var/lib/postgresql/data"]
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
-
-volumes:
-  postgres_data:
+volumes: { postgres_data: }
 ```
 
-### 2.2 Test Compose
-
-> **Commands**:
-> ```bash
-> docker-compose up -d
-> docker-compose logs -f app
-> docker-compose down
-> ```
-
-> **Verify**:
-> - All services start
-> - App connects to database
-> - Redis accessible
-> - Hot reload works (if dev mode)
+**Test**: `docker-compose up -d`, verify all services start and connect
 
 ---
 
 ## Phase 3: Production Optimizations
 
-### 3.1 Optimize Dockerfile
+### 3.1 Production Optimizations
 
-> **ALWAYS include**:
-> - Layer caching (COPY package*.json before source)
-> - Multi-stage with minimal runtime
-> - Health check instruction
-> - Proper signal handling (SIGTERM)
+> **ALWAYS**: Layer caching, multi-stage, health check, security scanning
+> **Enhancements**: Add **/*.md, *.log, Dockerfile*, docker-compose* to .dockerignore
 
-**Optimized Dockerfile**:
 ```dockerfile
-FROM node:20-alpine AS deps
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
-RUN npm run build
+RUN npm run build && npm ci --only=production
 
 FROM node:20-alpine
 WORKDIR /app
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
-COPY --from=deps --chown=nodejs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
-COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
 USER nodejs
 EXPOSE 3000
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s \  
-  CMD node -e "require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
+HEALTHCHECK CMD node -e "require('http').get('http://localhost:3000/health',(r)=>process.exit(r.statusCode===200?0:1))"
 CMD ["node", "dist/index.js"]
 ```
 
-### 3.2 Add .dockerignore Enhancements
-
-> **Add**:
-> - **/*.md
-> - *.log
-> - Dockerfile*
-> - docker-compose*
-
-### 3.3 Security Scanning
-
-> **ALWAYS scan images**:
-> ```bash
-> docker scan myapp:latest
-> # Or: trivy image myapp:latest
-> ```
-
-> **Fix vulnerabilities**:
-> - Update base image
-> - Update dependencies
-> - Remove unnecessary packages
+**Security**: Run `docker scan myapp:latest` or `trivy image myapp:latest`, fix vulnerabilities
 
 ---
 
