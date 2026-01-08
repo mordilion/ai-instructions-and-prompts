@@ -60,7 +60,8 @@ foreach ($toolKey in $config.tools.PSObject.Properties.Name) {
     }
     
     # Check tool type consistency
-    if ($tool.outputDir -and $tool.outputFile) {
+    # Exception: Claude needs both outputDir (.claude/skills) and outputFile (CLAUDE.md)
+    if ($tool.outputDir -and $tool.outputFile -and $toolKey -ne "claude") {
         Write-Issue "ERROR" "Tool '$toolKey': Has both 'outputDir' and 'outputFile' (should have only one)"
     }
     if (-not $tool.outputDir -and -not $tool.outputFile) {

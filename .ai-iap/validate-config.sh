@@ -81,7 +81,8 @@ for tool_key in $(jq -r '.tools | keys[]' .ai-iap/config.json); do
     output_dir=$(jq -r ".tools[\"$tool_key\"].outputDir // empty" .ai-iap/config.json)
     output_file=$(jq -r ".tools[\"$tool_key\"].outputFile // empty" .ai-iap/config.json)
     
-    if [[ -n "$output_dir" && -n "$output_file" ]]; then
+    # Exception: Claude needs both outputDir (.claude/skills) and outputFile (CLAUDE.md)
+    if [[ -n "$output_dir" && -n "$output_file" && "$tool_key" != "claude" ]]; then
         write_error "Tool '$tool_key': Has both 'outputDir' and 'outputFile' (should have only one)"
     fi
     if [[ -z "$output_dir" && -z "$output_file" ]]; then
