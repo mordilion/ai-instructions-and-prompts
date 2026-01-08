@@ -10,22 +10,16 @@
       "supportsSubfolders": true,
       "recommended": true
     },
-    "claude-cli": {
-      "name": "Claude CLI",
+    "claude": {
+      "name": "Claude (CLI & Code)",
       "outputFile": "CLAUDE.md",
+      "outputDir": ".claude/skills",
       "fileExtension": ".md",
       "useFrontmatter": false,
       "concatenate": true,
-      "recommended": true
-    },
-    "claude-code": {
-      "name": "Claude Code",
-      "outputDir": ".claude/skills",
-      "fileExtension": ".md",
-      "useFrontmatter": true,
+      "skillFilename": "SKILL.md",
       "supportsGlobs": false,
       "supportsSubfolders": true,
-      "skillFilename": "SKILL.md",
       "recommended": true
     },
     "github-copilot": {

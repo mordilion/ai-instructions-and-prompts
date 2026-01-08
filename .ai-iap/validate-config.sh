@@ -101,21 +101,31 @@ for tool_key in $(jq -r '.tools | keys[]' .ai-iap/config.json); do
         fi
     fi
     
-    # Claude Code-specific checks
-    if [[ "$tool_key" == "claude-code" ]]; then
-        skill_filename=$(jq -r ".tools[\"claude-code\"].skillFilename // \"null\"" .ai-iap/config.json)
+    # Claude-specific checks (unified CLI & Code)
+    if [[ "$tool_key" == "claude" ]]; then
+        skill_filename=$(jq -r ".tools.claude.skillFilename // \"null\"" .ai-iap/config.json)
         if [[ "$skill_filename" == "null" ]]; then
-            write_warning "Tool 'claude-code': Missing 'skillFilename' property (should be 'SKILL.md')"
+            write_warning "Tool 'claude': Missing 'skillFilename' property (should be 'SKILL.md')"
         fi
         
-        supports_subfolders=$(jq -r ".tools[\"claude-code\"].supportsSubfolders // false" .ai-iap/config.json)
+        supports_subfolders=$(jq -r ".tools.claude.supportsSubfolders // false" .ai-iap/config.json)
         if [[ "$supports_subfolders" != "true" ]]; then
-            write_warning "Tool 'claude-code': Should have 'supportsSubfolders: true'"
+            write_warning "Tool 'claude': Should have 'supportsSubfolders: true'"
         fi
         
-        supports_globs=$(jq -r ".tools[\"claude-code\"].supportsGlobs // false" .ai-iap/config.json)
+        supports_globs=$(jq -r ".tools.claude.supportsGlobs // false" .ai-iap/config.json)
         if [[ "$supports_globs" == "true" ]]; then
-            write_warning "Tool 'claude-code': Should have 'supportsGlobs: false' (uses directory-based skills)"
+            write_warning "Tool 'claude': Should have 'supportsGlobs: false' (uses directory-based skills)"
+        fi
+        
+        output_file=$(jq -r ".tools.claude.outputFile // \"null\"" .ai-iap/config.json)
+        if [[ "$output_file" == "null" ]]; then
+            write_warning "Tool 'claude': Missing 'outputFile' property (should be 'CLAUDE.md')"
+        fi
+        
+        output_dir=$(jq -r ".tools.claude.outputDir // \"null\"" .ai-iap/config.json)
+        if [[ "$output_dir" == "null" ]]; then
+            write_warning "Tool 'claude': Missing 'outputDir' property (should be '.claude/skills')"
         fi
     fi
 done

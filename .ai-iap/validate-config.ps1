@@ -77,16 +77,22 @@ foreach ($toolKey in $config.tools.PSObject.Properties.Name) {
         }
     }
     
-    # Claude Code-specific checks
-    if ($toolKey -eq "claude-code") {
+    # Claude-specific checks (unified CLI & Code)
+    if ($toolKey -eq "claude") {
         if (-not $tool.skillFilename) {
-            Write-Issue "WARNING" "Tool 'claude-code': Missing 'skillFilename' property (should be 'SKILL.md')"
+            Write-Issue "WARNING" "Tool 'claude': Missing 'skillFilename' property (should be 'SKILL.md')"
         }
         if (-not $tool.supportsSubfolders) {
-            Write-Issue "WARNING" "Tool 'claude-code': Should have 'supportsSubfolders: true'"
+            Write-Issue "WARNING" "Tool 'claude': Should have 'supportsSubfolders: true'"
         }
         if ($tool.supportsGlobs) {
-            Write-Issue "WARNING" "Tool 'claude-code': Should have 'supportsGlobs: false' (uses directory-based skills)"
+            Write-Issue "WARNING" "Tool 'claude': Should have 'supportsGlobs: false' (uses directory-based skills)"
+        }
+        if (-not $tool.outputFile) {
+            Write-Issue "WARNING" "Tool 'claude': Missing 'outputFile' property (should be 'CLAUDE.md')"
+        }
+        if (-not $tool.outputDir) {
+            Write-Issue "WARNING" "Tool 'claude': Missing 'outputDir' property (should be '.claude/skills')"
         }
     }
 }

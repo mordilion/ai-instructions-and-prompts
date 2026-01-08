@@ -8,12 +8,12 @@
 
 ---
 
-Define your coding standards once, generate configurations for **11 AI coding assistants** including Cursor, Claude CLI,
-Claude Code, Copilot, Windsurf, Aider, Google AI Studio, Amazon Q, Tabnine, Cody, and Continue.dev.
+Define your coding standards once, generate configurations for **10 AI coding assistants** including Cursor, Claude,
+Copilot, Windsurf, Aider, Google AI Studio, Amazon Q, Tabnine, Cody, and Continue.dev.
 
 ## ✨ Features
 
-- 🔧 **Multi-Tool** – One source, 11 AI tools configured
+- 🔧 **Multi-Tool** – One source, 10 AI tools configured
 - 🌍 **Multi-Language** – Swift, Kotlin, Java, Python, JavaScript, TypeScript, Dart/Flutter, .NET/C#, PHP, Node.js
 - 📦 **50+ Frameworks** – React, Next.js, NestJS, AdonisJS, Spring Boot, Django, FastAPI, Laravel, iOS, Android, and more
 - 🏗️ **Structure Templates** – Clean Architecture, MVVM, MVI, Vertical Slices, Feature-First, DDD, Modular
