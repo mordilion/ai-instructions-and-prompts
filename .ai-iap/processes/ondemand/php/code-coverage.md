@@ -1,327 +1,173 @@
-# Code Coverage Setup (PHP)
+# PHP Code Coverage - Copy This Prompt
 
-> **Goal**: Establish automated code coverage tracking in existing PHP projects
-
-## Phase 1: Choose Code Coverage Tools
-
-> **ALWAYS**: Track line, branch, and function coverage
-> **ALWAYS**: Set minimum coverage thresholds
-> **NEVER**: Aim for 100% coverage (diminishing returns)
-> **NEVER**: Skip uncovered critical paths
-
-### Recommended Tools
-
-| Tool | Type | Use Case | Setup |
-|------|------|----------|-------|
-| **PHPUnit (built-in)** ⭐ | Test runner + coverage | Industry standard | `composer require --dev phpunit/phpunit` |
-| **PCOV** ⭐ | Coverage driver | Fast, modern | `pecl install pcov` |
-| **Xdebug** | Coverage driver | Feature-rich | `pecl install xdebug` |
-| **Codecov** | Reporting | CI/CD integration | Cloud service |
+> **Type**: One-time setup process  
+> **When to use**: Setting up code coverage for PHP project  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 2: Coverage Tool Configuration
+## 📋 Complete Self-Contained Prompt
 
-### PHPUnit with PCOV (Recommended)
+```
+========================================
+PHP CODE COVERAGE - XDEBUG/PCOV
+========================================
 
+CONTEXT:
+You are implementing code coverage measurement for a PHP project using Xdebug or PCOV.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS use Xdebug or PCOV for coverage
+- NEVER commit coverage reports to Git
+- Target 80%+ coverage for critical paths
+- Exclude vendor and generated files
+
+========================================
+PHASE 1 - LOCAL COVERAGE
+========================================
+
+Install coverage driver:
 ```bash
-# Install PCOV (faster than Xdebug)
+# Option 1: Xdebug (full-featured)
+pecl install xdebug
+
+# Option 2: PCOV (faster, coverage only)
 pecl install pcov
-
-# Install PHPUnit
-composer require --dev phpunit/phpunit
-
-# Run tests with coverage
-vendor/bin/phpunit --coverage-html coverage --coverage-clover coverage.xml
 ```
 
-**Configuration** (`phpunit.xml`):
+Add to php.ini:
+```ini
+; For Xdebug 3
+xdebug.mode=coverage
+
+; For PCOV
+pcov.enabled=1
+```
+
+Update composer.json:
+```json
+{
+  "require-dev": {
+    "phpunit/phpunit": "^10.0"
+  }
+}
+```
+
+Run tests with coverage:
+```bash
+vendor/bin/phpunit --coverage-html coverage
+open coverage/index.html
+```
+
+Update .gitignore:
+```
+coverage/
+.phpunit.cache/
+```
+
+Deliverable: Local coverage report
+
+========================================
+PHASE 2 - CONFIGURE EXCLUSIONS
+========================================
+
+Create/update phpunit.xml:
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
-         bootstrap="vendor/autoload.php"
-         colors="true"
-         failOnRisky="true"
-         failOnWarning="true">
-    <testsuites>
-        <testsuite name="Unit">
-            <directory>tests/Unit</directory>
-        </testsuite>
-        <testsuite name="Feature">
-            <directory>tests/Feature</directory>
-        </testsuite>
-    </testsuites>
-    
-    <coverage processUncoveredFiles="true">
-        <include>
-            <directory suffix=".php">src</directory>
-        </include>
-        <exclude>
-            <directory suffix=".php">src/Migrations</directory>
-            <directory suffix=".php">src/Console</directory>
-            <file>src/bootstrap.php</file>
-        </exclude>
-        <report>
-            <html outputDirectory="coverage/html"/>
-            <clover outputFile="coverage/clover.xml"/>
-            <text outputFile="php://stdout" showUncoveredFiles="false"/>
-        </report>
-    </coverage>
+<phpunit>
+  <coverage>
+    <include>
+      <directory suffix=".php">src</directory>
+    </include>
+    <exclude>
+      <directory>vendor</directory>
+      <directory>src/migrations</directory>
+      <file>src/bootstrap.php</file>
+    </exclude>
+  </coverage>
 </phpunit>
 ```
 
----
+Deliverable: Proper file exclusions
 
-## Phase 3: Coverage Thresholds & Reporting
+========================================
+PHASE 3 - CI INTEGRATION
+========================================
 
-### PHPUnit Thresholds
+Add to .github/workflows/ci.yml:
 
-**Configuration** (`phpunit.xml`):
+```yaml
+    - name: Setup PHP with Xdebug
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        coverage: xdebug
+    
+    - name: Test with coverage
+      run: vendor/bin/phpunit --coverage-clover coverage.xml
+    
+    - name: Upload to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        files: coverage.xml
+        fail_ci_if_error: true
+```
+
+Deliverable: CI coverage reporting
+
+========================================
+PHASE 4 - COVERAGE ENFORCEMENT
+========================================
+
+Update phpunit.xml:
 ```xml
-<coverage processUncoveredFiles="true">
-    <include>
-        <directory suffix=".php">src</directory>
-    </include>
-    <report>
-        <html outputDirectory="coverage/html"/>
-        <clover outputFile="coverage/clover.xml"/>
-    </report>
-    <thresholds>
-        <line min="80"/>
-        <branch min="75"/>
-        <function min="80"/>
-    </thresholds>
+<coverage>
+  <report>
+    <clover outputFile="coverage.xml"/>
+  </report>
 </coverage>
 ```
 
-### PCOV Configuration
-
-```ini
-; php.ini or .user.ini
-pcov.enabled = 1
-pcov.directory = /path/to/project/src
-pcov.exclude = "~vendor~"
-```
-
-### Exclude Code from Coverage
-
-```php
-<?php
-
-// Exclude class
-/** @codeCoverageIgnore */
-class LegacyClass { }
-
-// Exclude method
-class MyClass {
-    /** @codeCoverageIgnore */
-    public function legacyMethod() { }
-}
-
-// Exclude lines
-// @codeCoverageIgnoreStart
-function debug() {
-    var_dump('Debug');
-}
-// @codeCoverageIgnoreEnd
-```
-
----
-
-## Phase 4: CI/CD Integration
-
-### GitHub Actions
-
-```yaml
-# .github/workflows/test.yml
-name: Test & Coverage
-
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version-file: 'composer.json'
-          extensions: pcov, mbstring, xml
-          coverage: pcov
-          tools: composer
-      
-      - name: Install dependencies
-        run: composer install --prefer-dist --no-progress
-      
-      - name: Run tests with coverage
-        run: vendor/bin/phpunit --coverage-clover coverage.xml --coverage-html coverage/html
-      
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage.xml
-          fail_ci_if_error: true
-      
-      - name: Archive coverage report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: coverage-report
-          path: coverage/html/
-```
-
----
-
-## Phase 5: Coverage Analysis & Improvement
-
-### Identify Uncovered Code
-
-```bash
-# Generate HTML report
-vendor/bin/phpunit --coverage-html coverage/html
-
-# Open report
-open coverage/html/index.html
-```
-
-### Prioritize Critical Paths
-
-**Coverage priorities (high to low)**:
-1. Business logic (services, domain)
-2. Data validation (form requests, validators)
-3. Error handling
-4. API controllers
-5. Repositories
-
-### Laravel-Specific Considerations
-
-```php
-// Exclude generated code
-// phpunit.xml
-<exclude>
-    <directory suffix=".php">database/migrations</directory>
-    <directory suffix=".php">bootstrap/cache</directory>
-    <directory suffix=".php">storage</directory>
-</exclude>
-
-// Test example with coverage
-/** @test */
-public function it_validates_user_input()
+Add script to composer.json:
+```json
 {
-    $service = new UserService();
-    $result = $service->validateInput(['email' => 'test@example.com']);
-    $this->assertTrue($result);
+  "scripts": {
+    "test:coverage": [
+      "phpunit --coverage-text --coverage-clover=coverage.xml",
+      "@php -r \"$xml = simplexml_load_file('coverage.xml'); $metrics = $xml->project->metrics; $coverage = ($metrics['coveredstatements'] / $metrics['statements']) * 100; if ($coverage < 80) { echo 'Coverage is ' . number_format($coverage, 2) . '%, minimum is 80%' . PHP_EOL; exit(1); }\""
+    ]
+  }
 }
 ```
 
----
+Deliverable: Automated coverage enforcement
 
-## Troubleshooting
+========================================
+BEST PRACTICES
+========================================
 
-| Issue | Solution |
-|-------|----------|
-| **Coverage reports empty** | Enable PCOV or Xdebug in `php.ini` |
-| **Slow test runs** | Use PCOV instead of Xdebug (3-5x faster) |
-| **Memory limit errors** | Increase: `php -d memory_limit=1G vendor/bin/phpunit` |
-| **CI fails on threshold** | Review uncovered code, add tests or adjust threshold |
+- Use PCOV for faster CI (Xdebug for local)
+- Exclude vendor and migrations
+- Focus on application logic
+- Test error handling
+- Set minimum thresholds (80%+)
+- Review coverage in PRs
 
----
+========================================
+EXECUTION
+========================================
 
-## Best Practices
-
-> **ALWAYS**: Set realistic thresholds (70-85% is good)
-> **ALWAYS**: Use PCOV for faster coverage (CI/CD)
-> **ALWAYS**: Exclude migrations, generated code
-> **ALWAYS**: Review coverage reports before merge
-> **NEVER**: Aim for 100% (diminishing returns)
-> **NEVER**: Write tests just to increase coverage
-> **NEVER**: Skip business logic tests
-
----
-
-## AI Self-Check
-
-- [ ] PHPUnit configured for coverage?
-- [ ] PCOV or Xdebug installed?
-- [ ] Coverage thresholds set (80% line, 75% branch)?
-- [ ] CI/CD runs coverage and fails on threshold violation?
-- [ ] Coverage reports uploaded to Codecov/Coveralls?
-- [ ] Migrations excluded from coverage?
-- [ ] HTML reports generated for local review?
-- [ ] Team reviews coverage reports?
-- [ ] `@codeCoverageIgnore` used appropriately?
-- [ ] Uncovered critical code identified and tested?
-
----
-
-## Coverage Metrics Explained
-
-| Metric | Definition | Target |
-|--------|------------|--------|
-| **Line Coverage** | % of lines executed | 80-85% |
-| **Branch Coverage** | % of if/else branches executed | 75-80% |
-| **Method Coverage** | % of methods called | 80-85% |
-
----
-
-## Tools Comparison
-
-| Tool | Speed | Setup | CI/CD | Best For |
-|------|-------|-------|-------|----------|
-| PHPUnit | Medium | Easy | ✅ | Industry standard |
-| PCOV | Fast | Easy | ✅ | CI/CD (fast) |
-| Xdebug | Slow | Easy | ⚠️ | Local development |
-| Codecov | N/A | Easy | ✅ | Reporting |
-
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (simple)  
-> **When to use**: When configuring code coverage tracking and reporting
-
-### Complete Implementation Prompt
-
+START: Install coverage driver (Phase 1)
+CONTINUE: Configure exclusions (Phase 2)
+CONTINUE: Add CI integration (Phase 3)
+OPTIONAL: Add enforcement (Phase 4)
+REMEMBER: Exclude vendor, use PCOV for CI
 ```
-CONTEXT:
-You are configuring code coverage tracking for this project.
 
-CRITICAL REQUIREMENTS:
-- ALWAYS detect language version from project files
-- ALWAYS configure coverage thresholds (recommended: 80% line, 75% branch)
-- ALWAYS integrate with CI/CD pipeline
-- NEVER lower coverage thresholds without justification
+---
 
-IMPLEMENTATION STEPS:
+## Quick Reference
 
-1. DETECT VERSION:
-   Scan project files for language/framework version
-
-2. CHOOSE COVERAGE TOOL:
-   Select appropriate tool for the language (see Tech Stack section above)
-
-3. CONFIGURE TOOL:
-   Add coverage configuration to project
-   Set thresholds (line, branch, function)
-
-4. INTEGRATE WITH CI/CD:
-   Add coverage step to pipeline
-   Configure to fail build if below thresholds
-
-5. CONFIGURE REPORTING:
-   Generate coverage reports (HTML, XML, lcov)
-   Optional: Upload to coverage service (Codecov, Coveralls)
-
-DELIVERABLE:
-- Coverage tool configured
-- Thresholds enforced in CI/CD
-- Coverage reports generated
-
-START: Detect language version and configure coverage tool.
-```
+**What you get**: Complete code coverage setup with Xdebug/PCOV  
+**Time**: 1 hour  
+**Output**: Coverage reports in CI and locally

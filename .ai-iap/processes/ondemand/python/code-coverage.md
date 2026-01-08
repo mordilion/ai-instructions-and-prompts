@@ -1,333 +1,185 @@
-# Code Coverage Setup (Python)
+# Python Code Coverage - Copy This Prompt
 
-> **Goal**: Establish automated code coverage tracking in existing Python projects
-
-## Phase 1: Choose Code Coverage Tools
-
-> **ALWAYS**: Track line, branch, and function coverage
-> **ALWAYS**: Set minimum coverage thresholds
-> **NEVER**: Aim for 100% coverage (diminishing returns)
-> **NEVER**: Skip uncovered critical paths
-
-### Recommended Tools
-
-| Tool | Type | Use Case | Setup |
-|------|------|----------|-------|
-| **Coverage.py** ⭐ | Coverage tool | Industry standard | `pip install coverage` |
-| **pytest-cov** ⭐ | pytest plugin | pytest integration | `pip install pytest-cov` |
-| **Codecov** | Reporting | CI/CD integration | Cloud service |
+> **Type**: One-time setup process  
+> **When to use**: Setting up code coverage for Python project  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 2: Coverage Tool Configuration
+## 📋 Complete Self-Contained Prompt
 
-### pytest-cov Setup (Recommended)
+```
+========================================
+PYTHON CODE COVERAGE - PYTEST-COV
+========================================
 
+CONTEXT:
+You are implementing code coverage measurement for a Python project using pytest-cov.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS use pytest-cov (standard tool)
+- NEVER commit coverage reports to Git
+- Target 80%+ coverage for critical paths
+- Exclude tests and migrations from coverage
+
+========================================
+PHASE 1 - LOCAL COVERAGE
+========================================
+
+Install coverage tools:
 ```bash
-# Install
 pip install pytest pytest-cov
-
-# Run tests with coverage
-pytest --cov=src --cov-report=html --cov-report=term
-
-# Generate specific formats
-pytest --cov=src --cov-report=xml --cov-report=html
+# Or add to requirements-dev.txt
 ```
 
-**Configuration** (`pyproject.toml`):
-```toml
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-addopts = [
-    "--cov=src",
-    "--cov-report=html",
-    "--cov-report=term",
-    "--cov-report=xml",
-    "--cov-fail-under=80"
-]
-
-[tool.coverage.run]
-source = ["src"]
-omit = [
-    "*/tests/*",
-    "*/migrations/*",
-    "*/__init__.py",
-    "*/venv/*",
-    "*/.venv/*"
-]
-branch = true
-
-[tool.coverage.report]
-precision = 2
-show_missing = true
-skip_covered = false
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "if TYPE_CHECKING:",
-    "raise AssertionError",
-    "raise NotImplementedError",
-    "if __name__ == .__main__.:"
-]
-
-[tool.coverage.html]
-directory = "htmlcov"
-```
-
-### Coverage.py Setup (Alternative)
-
+Run tests with coverage:
 ```bash
-# Install
-pip install coverage
+pytest --cov=. --cov-report=html --cov-report=term
 
-# Run tests with coverage
-coverage run -m pytest
-coverage report
-coverage html
+# View HTML report
+open htmlcov/index.html
 ```
 
-**Configuration** (`.coveragerc`):
+Update .gitignore:
+```
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+```
+
+Deliverable: Local coverage report
+
+========================================
+PHASE 2 - CONFIGURE EXCLUSIONS
+========================================
+
+Create .coveragerc:
 ```ini
 [run]
-source = src
+source = .
 omit =
     */tests/*
+    */test_*.py
+    */__pycache__/*
+    */venv/*
     */migrations/*
-    */__init__.py
-branch = True
+    */settings.py
+    */manage.py
+    */wsgi.py
 
 [report]
-precision = 2
-show_missing = True
-fail_under = 80
 exclude_lines =
     pragma: no cover
     def __repr__
-    if TYPE_CHECKING:
     raise AssertionError
     raise NotImplementedError
-
-[html]
-directory = htmlcov
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    @abstractmethod
 ```
 
----
+Or use pyproject.toml:
+```toml
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "*/tests/*",
+    "*/test_*.py",
+    "*/migrations/*"
+]
 
-## Phase 3: Coverage Thresholds & Reporting
-
-### Set Thresholds
-
-**pytest-cov**:
-```bash
-# Fail if coverage below 80%
-pytest --cov=src --cov-fail-under=80
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.:"
+]
 ```
 
-**Coverage.py**:
-```bash
-# Fail if coverage below 80%
-coverage run -m pytest
-coverage report --fail-under=80
-```
+Deliverable: Proper file exclusions
 
-### Exclude Code from Coverage
+========================================
+PHASE 3 - CI INTEGRATION
+========================================
 
-```python
-# Exclude entire block
-def debug_only():  # pragma: no cover
-    print("Debug info")
-
-# Exclude if statement
-if TYPE_CHECKING:  # pragma: no cover
-    from typing import Optional
-```
-
----
-
-## Phase 4: CI/CD Integration
-
-### GitHub Actions
+Add to .github/workflows/ci.yml:
 
 ```yaml
-# .github/workflows/test.yml
-name: Test & Coverage
-
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version-file: '.python-version'
-          cache: 'pip'
-      
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest pytest-cov
-      
-      - name: Run tests with coverage
-        run: pytest --cov=src --cov-report=xml --cov-report=html
-      
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage.xml
-          fail_ci_if_error: true
-      
-      - name: Archive coverage report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: coverage-report
-          path: htmlcov/
+    - name: Install dependencies
+      run: |
+        pip install pytest pytest-cov
+        pip install -r requirements.txt
+    
+    - name: Test with coverage
+      run: pytest --cov=. --cov-report=xml
+    
+    - name: Upload to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        files: coverage.xml
+        fail_ci_if_error: true
 ```
 
----
+Deliverable: CI coverage reporting
 
-## Phase 5: Coverage Analysis & Improvement
+========================================
+PHASE 4 - COVERAGE ENFORCEMENT
+========================================
 
-### Identify Uncovered Code
+Add to .coveragerc or pyproject.toml:
+```ini
+[report]
+fail_under = 80
+```
 
+Run:
 ```bash
-# Generate HTML report
-pytest --cov=src --cov-report=html
-
-# Open report (macOS)
-open htmlcov/index.html
-
-# Open report (Windows)
-start htmlcov/index.html
+pytest --cov=. --cov-fail-under=80
+# Exits with code 2 if below 80%
 ```
 
-### Prioritize Critical Paths
+Or use pre-commit hook:
+```yaml
+# .pre-commit-config.yaml
+repos:
+  - repo: local
+    hooks:
+      - id: pytest-cov
+        name: pytest with coverage
+        entry: pytest --cov=. --cov-fail-under=80
+        language: system
+        pass_filenames: false
+```
 
-**Coverage priorities (high to low)**:
-1. Business logic (services, domain)
-2. Data validation (validators, serializers)
-3. Error handling
-4. API endpoints (FastAPI, Flask, Django)
-5. Database models
+Deliverable: Automated coverage enforcement
 
-### Incremental Improvement
+========================================
+BEST PRACTICES
+========================================
 
-```toml
-# pyproject.toml - Ratcheting approach
-[tool.coverage.report]
-fail_under = 80  # Start at current coverage
-# Increase by 5% every sprint
+- Exclude tests, migrations, and config
+- Use pytest-cov for consistency
+- Focus on business logic
+- Test error paths and edge cases
+- Set minimum thresholds (80%+)
+- Review coverage in PRs
+
+========================================
+EXECUTION
+========================================
+
+START: Install pytest-cov (Phase 1)
+CONTINUE: Configure exclusions (Phase 2)
+CONTINUE: Add CI integration (Phase 3)
+OPTIONAL: Add enforcement (Phase 4)
+REMEMBER: Exclude tests and migrations
 ```
 
 ---
 
-## Troubleshooting
+## Quick Reference
 
-| Issue | Solution |
-|-------|----------|
-| **Coverage reports empty** | Check `source` and `omit` paths in config |
-| **Slow test runs** | Use `pytest -n auto` (pytest-xdist) for parallel tests |
-| **False low coverage** | Exclude test files, `__init__.py`, migrations |
-| **CI fails on threshold** | Review uncovered code, add tests or adjust threshold |
-
----
-
-## Best Practices
-
-> **ALWAYS**: Set realistic thresholds (70-85% is good)
-> **ALWAYS**: Exclude test files, migrations, `__init__.py`
-> **ALWAYS**: Review coverage reports before merge
-> **ALWAYS**: Track coverage trends over time
-> **NEVER**: Aim for 100% (diminishing returns)
-> **NEVER**: Write tests just to increase coverage
-> **NEVER**: Skip edge cases and error paths
-
----
-
-## AI Self-Check
-
-- [ ] pytest-cov or Coverage.py configured?
-- [ ] Coverage thresholds set (80% line, 75% branch)?
-- [ ] CI/CD runs coverage and fails on threshold violation?
-- [ ] Coverage reports uploaded to Codecov/Coveralls?
-- [ ] Test files excluded from coverage?
-- [ ] HTML reports generated for local review?
-- [ ] Team reviews coverage reports?
-- [ ] `# pragma: no cover` used appropriately?
-- [ ] Critical business logic covered?
-- [ ] Uncovered code identified and tested?
-
----
-
-## Coverage Metrics Explained
-
-| Metric | Definition | Target |
-|--------|------------|--------|
-| **Line Coverage** | % of lines executed | 80-85% |
-| **Branch Coverage** | % of if/else branches executed | 75-80% |
-| **Function Coverage** | % of functions called | 80-85% |
-
----
-
-## Tools Comparison
-
-| Tool | Speed | Setup | CI/CD | Best For |
-|------|-------|-------|-------|----------|
-| pytest-cov | Fast | Easy | ✅ | pytest users |
-| Coverage.py | Fast | Easy | ✅ | Any test runner |
-| Codecov | N/A | Easy | ✅ | Reporting |
-
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (simple)  
-> **When to use**: When configuring code coverage tracking and reporting
-
-### Complete Implementation Prompt
-
-```
-CONTEXT:
-You are configuring code coverage tracking for this project.
-
-CRITICAL REQUIREMENTS:
-- ALWAYS detect language version from project files
-- ALWAYS configure coverage thresholds (recommended: 80% line, 75% branch)
-- ALWAYS integrate with CI/CD pipeline
-- NEVER lower coverage thresholds without justification
-
-IMPLEMENTATION STEPS:
-
-1. DETECT VERSION:
-   Scan project files for language/framework version
-
-2. CHOOSE COVERAGE TOOL:
-   Select appropriate tool for the language (see Tech Stack section above)
-
-3. CONFIGURE TOOL:
-   Add coverage configuration to project
-   Set thresholds (line, branch, function)
-
-4. INTEGRATE WITH CI/CD:
-   Add coverage step to pipeline
-   Configure to fail build if below thresholds
-
-5. CONFIGURE REPORTING:
-   Generate coverage reports (HTML, XML, lcov)
-   Optional: Upload to coverage service (Codecov, Coveralls)
-
-DELIVERABLE:
-- Coverage tool configured
-- Thresholds enforced in CI/CD
-- Coverage reports generated
-
-START: Detect language version and configure coverage tool.
-```
+**What you get**: Complete code coverage setup with pytest-cov  
+**Time**: 1 hour  
+**Output**: Coverage reports in CI and locally

@@ -1,210 +1,161 @@
-# Code Coverage Setup (Kotlin)
+# Kotlin Code Coverage - Copy This Prompt
 
-> **Goal**: Establish automated code coverage tracking in existing Kotlin projects
-
-## Phase 1: Choose Code Coverage Tools
-
-> **ALWAYS**: Track line, branch, and function coverage
-> **ALWAYS**: Set minimum coverage thresholds
-> **NEVER**: Aim for 100% coverage (diminishing returns)
-> **NEVER**: Skip uncovered critical paths
-
-### Recommended Tools
-
-| Tool | Type | Use Case | Setup |
-|------|------|----------|-------|
-| **JaCoCo** ⭐ | Coverage tool | Industry standard | Gradle plugin |
-| **Kover** ⭐ | Coverage tool | Kotlin-first | Gradle plugin |
-| **IntelliJ Coverage** | IDE integration | JetBrains IDEs | Built-in |
-| **Codecov** | Reporting | CI/CD integration | Cloud service |
+> **Type**: One-time setup process  
+> **When to use**: Setting up code coverage for Kotlin project  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 2: Tool Configuration
+## 📋 Complete Self-Contained Prompt
 
-**Kover** ⭐ (Kotlin) (`build.gradle.kts`):
+```
+========================================
+KOTLIN CODE COVERAGE - KOVER
+========================================
+
+CONTEXT:
+You are implementing code coverage measurement for a Kotlin project using Kover.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS use Kover (official JetBrains tool)
+- NEVER commit coverage reports to Git
+- Target 80%+ coverage for critical paths
+- Exclude generated code and data classes
+
+========================================
+PHASE 1 - LOCAL COVERAGE
+========================================
+
+Add to build.gradle.kts:
 ```kotlin
 plugins {
+    kotlin("jvm") version "1.9.21"
     id("org.jetbrains.kotlinx.kover") version "0.7.5"
 }
 
-koverReport {
-    defaults {
-        xml { onCheck = true }
-        html { onCheck = true }
-    }
-    filters {
-        excludes {
-            classes("*.BuildConfig", "*.Companion")
-            packages("*.generated")
+kover {
+    reports {
+        filters {
+            excludes {
+                classes("*.BuildConfig")
+            }
         }
     }
+}
+```
+
+Run tests with coverage:
+```bash
+./gradlew koverHtmlReport
+# Report at: build/reports/kover/html/index.html
+open build/reports/kover/html/index.html
+```
+
+Update .gitignore:
+```
+build/reports/kover/
+kover.bin
+```
+
+Deliverable: Local coverage report
+
+========================================
+PHASE 2 - CONFIGURE EXCLUSIONS
+========================================
+
+Add to build.gradle.kts:
+```kotlin
+kover {
+    reports {
+        filters {
+            excludes {
+                classes(
+                    "*.BuildConfig",
+                    "*.*Application*",
+                    "*.dto.*",
+                    "*.entity.*",
+                    "*.config.*"
+                )
+                annotatedBy("Generated")
+            }
+        }
+    }
+}
+```
+
+Deliverable: Proper file exclusions
+
+========================================
+PHASE 3 - CI INTEGRATION
+========================================
+
+Add to .github/workflows/ci.yml:
+
+```yaml
+    - name: Test with coverage
+      run: ./gradlew test koverXmlReport
+    
+    - name: Upload to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        files: build/reports/kover/report.xml
+        fail_ci_if_error: true
+```
+
+Deliverable: CI coverage reporting
+
+========================================
+PHASE 4 - COVERAGE ENFORCEMENT
+========================================
+
+Add to build.gradle.kts:
+```kotlin
+kover {
     verify {
-        rule { minBound(80) }  // LINE
-        rule { minBound(75, coverageUnits = CoverageUnit.BRANCH) }
-    }
-}
-```
-
-**JaCoCo** (Alternative) (`build.gradle.kts`):
-```kotlin
-plugins { id("jacoco") }
-jacoco { toolVersion = "0.8.11" }
-tasks.jacocoTestReport {
-    reports { xml.required.set(true); html.required.set(true) }
-}
-tasks.jacocoTestCoverageVerification {
-    violationRules { rule { limit { minimum = "0.80".toBigDecimal() } } }
-}
-```
-
-**Commands**: `./gradlew koverHtmlReport koverVerify` or `./gradlew test jacocoTestReport`
-
----
-
-## Phase 3: Exclusions & Thresholds
-
-**Exclude**: `*.BuildConfig`, `*.Companion`, `*.generated` packages, `@Generated` annotated  
-**Thresholds**: LINE 80%, BRANCH 75%, critical packages 90%
-
-### Exclude Code from Coverage
-
-**Annotation-based**:
-```kotlin
-@file:Suppress("COVERAGE_EXCLUDE")
-
-@Generated
-class GeneratedCode { }
-```
-
-**Configuration-based**:
-```kotlin
-koverReport {
-    filters {
-        excludes {
-            classes("*Test", "*Activity", "*Fragment")
-            packages("*.generated", "*.di")
-            annotatedBy("Generated", "Composable")
+        rule {
+            bound {
+                minValue = 80
+                metric = kotlinx.kover.gradle.plugin.dsl.MetricType.LINE
+                aggregation = kotlinx.kover.gradle.plugin.dsl.AggregationType.COVERED_PERCENTAGE
+            }
         }
     }
 }
 ```
 
----
-
-## Phase 4: CI/CD Integration
-
-**GitHub Actions**: Run `./gradlew test koverXmlReport koverVerify`, upload to Codecov  
-**Report Paths**: Kover: `build/reports/kover/report.xml`, JaCoCo: `build/reports/jacoco/test/jacocoTestReport.xml`
-
----
-
-## Phase 5: Analysis & Improvement
-
-**Prioritize**: Business logic > Validation > Error handling > ViewModels/Controllers > Repositories  
-**Android Exclusions**: `*Activity`, `*Fragment`, `@Composable`, `*.di`, `*_Factory`
-
----
-
-## Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| **Kover reports empty** | Check `excludes` configuration |
-| **Android tests not counted** | Add `android.testCoverage.jacocoVersion = "0.8.11"` |
-| **Compose functions counted** | Exclude `@Composable` annotation |
-| **CI fails on threshold** | Review uncovered code, add tests or adjust threshold |
-
----
-
-## Best Practices
-
-> **ALWAYS**: Set realistic thresholds (70-85% is good)
-> **ALWAYS**: Exclude Android UI components (hard to test)
-> **ALWAYS**: Review coverage reports before merge
-> **ALWAYS**: Track coverage trends over time
-> **NEVER**: Aim for 100% (diminishing returns)
-> **NEVER**: Write tests just to increase coverage
-> **NEVER**: Skip business logic tests
-
----
-
-## AI Self-Check
-
-- [ ] Kover or JaCoCo configured for coverage?
-- [ ] Coverage thresholds set (80% line, 75% branch)?
-- [ ] CI/CD runs coverage and fails on threshold violation?
-- [ ] Coverage reports uploaded to Codecov/Coveralls?
-- [ ] Android UI components excluded?
-- [ ] HTML reports generated for local review?
-- [ ] Team reviews coverage reports?
-- [ ] Generated code excluded?
-- [ ] Critical business logic covered?
-- [ ] Uncovered code identified and tested?
-
----
-
-## Coverage Metrics Explained
-
-| Metric | Definition | Target |
-|--------|------------|--------|
-| **Line Coverage** | % of lines executed | 80-85% |
-| **Branch Coverage** | % of if/else branches executed | 75-80% |
-| **Method Coverage** | % of methods called | 80-85% |
-
----
-
-## Tools Comparison
-
-| Tool | Speed | Setup | CI/CD | Best For |
-|------|-------|-------|-------|----------|
-| Kover | Fast | Easy | ✅ | Kotlin projects |
-| JaCoCo | Fast | Easy | ✅ | Java/Kotlin mix |
-| IntelliJ | Fast | Built-in | ⚠️ | IDE only |
-| Codecov | N/A | Easy | ✅ | Reporting |
-
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (simple)  
-> **When to use**: When configuring code coverage tracking and reporting
-
-### Complete Implementation Prompt
-
+Run:
+```bash
+./gradlew koverVerify  # Fails if below 80%
 ```
-CONTEXT:
-You are configuring code coverage tracking for this project.
 
-CRITICAL REQUIREMENTS:
-- ALWAYS detect language version from project files
-- ALWAYS configure coverage thresholds (recommended: 80% line, 75% branch)
-- ALWAYS integrate with CI/CD pipeline
-- NEVER lower coverage thresholds without justification
+Deliverable: Automated coverage enforcement
 
-IMPLEMENTATION STEPS:
+========================================
+BEST PRACTICES
+========================================
 
-1. DETECT VERSION:
-   Scan project files for language/framework version
+- Use Kover for Kotlin projects
+- Exclude data classes and configs
+- Focus on business logic
+- Test coroutines and flows
+- Set minimum thresholds (80%+)
+- Review coverage in PRs
 
-2. CHOOSE COVERAGE TOOL:
-   Select appropriate tool for the language (see Tech Stack section above)
+========================================
+EXECUTION
+========================================
 
-3. CONFIGURE TOOL:
-   Add coverage configuration to project
-   Set thresholds (line, branch, function)
-
-4. INTEGRATE WITH CI/CD:
-   Add coverage step to pipeline
-   Configure to fail build if below thresholds
-
-5. CONFIGURE REPORTING:
-   Generate coverage reports (HTML, XML, lcov)
-   Optional: Upload to coverage service (Codecov, Coveralls)
-
-DELIVERABLE:
-- Coverage tool configured
-- Thresholds enforced in CI/CD
-- Coverage reports generated
-
-START: Detect language version and configure coverage tool.
+START: Add Kover plugin (Phase 1)
+CONTINUE: Configure exclusions (Phase 2)
+CONTINUE: Add CI integration (Phase 3)
+OPTIONAL: Add enforcement (Phase 4)
+REMEMBER: Exclude generated code, use Kover
 ```
+
+---
+
+## Quick Reference
+
+**What you get**: Complete code coverage setup with Kover  
+**Time**: 1 hour  
+**Output**: Coverage reports in CI and locally

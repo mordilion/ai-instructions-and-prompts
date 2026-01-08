@@ -1,207 +1,183 @@
-# Code Coverage Setup (Swift)
+# Swift Code Coverage - Copy This Prompt
 
-> **Goal**: Establish automated code coverage tracking in existing Swift projects
-
-## Phase 1: Choose Code Coverage Tools
-
-> **ALWAYS**: Track line, branch, and function coverage
-> **ALWAYS**: Set minimum coverage thresholds
-> **NEVER**: Aim for 100% coverage (diminishing returns)
-> **NEVER**: Skip uncovered critical paths
-
-### Recommended Tools
-
-| Tool | Type | Use Case | Setup |
-|------|------|----------|-------|
-| **XCTest (built-in)** ⭐ | Test runner + coverage | Native | Xcode configuration |
-| **Slather** | Report formatter | Cobertura/HTML reports | `gem install slather` |
-| **Codecov** | Reporting | CI/CD integration | Cloud service |
+> **Type**: One-time setup process  
+> **When to use**: Setting up code coverage for Swift project  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 2: Tool Configuration
-
-**Xcode Setup**:
-1. Select scheme → Edit Scheme
-2. Go to Test tab
-3. Check "Gather coverage for: All targets"
-
-**Command Line**:
-```bash
-# Xcode projects
-xcodebuild test \
-  -scheme YourScheme \
-  -destination 'platform=iOS Simulator,name=iPhone 15' \
-  -enableCodeCoverage YES
-
-# Swift Package Manager
-swift test --enable-code-coverage
-```
-
-**Slather** (Report Generation):
-```bash
-# Install
-gem install slather
-
-# Generate HTML report
-slather coverage --html --scheme YourScheme YourProject.xcodeproj
-
-# Generate Cobertura XML (for CI/CD)
-slather coverage --cobertura-xml --scheme YourScheme YourProject.xcodeproj
-```
-
-**Configuration** (`.slather.yml`):
-```yaml
-coverage_service: cobertura_xml
-xcodeproj: YourProject.xcodeproj
-scheme: YourScheme
-ignore:
-  - Tests/*
-  - Pods/*
-  - Generated/*
-```
-
----
-
-## Phase 3: Exclusions & Thresholds
-
-**Exclude** (`.slather.yml`): `Tests/*`, `Pods/*`, `Generated/*`, `Mocks/*`  
-**Thresholds**: LINE 80% (use custom script or CI tooling to enforce)  
-**Code Exclusions**: Use `#if DEBUG` or separate targets (no native exclusion support)
-
----
-
-## Phase 4: CI/CD Integration
-
-**GitHub Actions**: Run `xcodebuild test -enableCodeCoverage YES` or `swift test --enable-code-coverage`, generate reports with Slather, upload to Codecov  
-**Report Paths**: Slather: `coverage/cobertura.xml`, SPM: `.build/debug/codecov/default.profdata` (convert with `xcrun llvm-cov`)
-
----
-
-## Phase 5: Analysis & Improvement
-
-**Xcode UI**: Report Navigator (⌘9) → Coverage tab  
-**Prioritize**: Business logic > Validation > Error handling > ViewModels > SwiftUI views  
-**iOS-Specific Exclusions**: UIViewControllers (hard to test), Storyboards, AppDelegate/SceneDelegate
-
-### UI Testing Considerations
-
-```swift
-// Unit tests (preferred for coverage)
-func testViewModel() {
-    let viewModel = MyViewModel()
-    viewModel.performAction()
-    XCTAssertEqual(viewModel.state, .success)
-}
-
-// UI tests (not counted in coverage)
-func testUI() {
-    let app = XCUIApplication()
-    app.launch()
-    app.buttons["Login"].tap()
-}
-```
-
----
-
-## Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| **Coverage data missing** | Clean build folder, enable coverage in scheme |
-| **Slather fails** | Ensure scheme is shared (`Edit Scheme → Shared`) |
-| **SwiftUI views not counted** | Use ViewInspector or extract logic to ViewModels |
-| **CI fails to find .xcresult** | Check `-resultBundlePath` in xcodebuild command |
-
----
-
-## Best Practices
-
-> **ALWAYS**: Set realistic thresholds (70-85% is good)
-> **ALWAYS**: Extract business logic from SwiftUI views
-> **ALWAYS**: Review coverage reports before merge
-> **ALWAYS**: Track coverage trends over time
-> **NEVER**: Aim for 100% (diminishing returns)
-> **NEVER**: Skip ViewModel/business logic tests
-> **NEVER**: Rely only on UI tests for coverage
-
----
-
-## AI Self-Check
-
-- [ ] Xcode code coverage enabled?
-- [ ] Slather configured for report generation?
-- [ ] CI/CD runs tests with coverage?
-- [ ] Coverage reports uploaded to Codecov/Coveralls?
-- [ ] Test targets excluded from coverage?
-- [ ] HTML reports generated for local review?
-- [ ] Team reviews coverage reports?
-- [ ] Business logic extracted from SwiftUI views?
-- [ ] ViewModels have high coverage (>85%)?
-- [ ] Uncovered critical code identified and tested?
-
----
-
-## Coverage Metrics Explained
-
-| Metric | Definition | Target |
-|--------|------------|--------|
-| **Line Coverage** | % of lines executed | 80-85% |
-| **Branch Coverage** | % of if/else branches executed | 75-80% |
-| **Function Coverage** | % of functions called | 80-85% |
-
----
-
-## Tools Comparison
-
-| Tool | Speed | Setup | CI/CD | Best For |
-|------|-------|-------|-------|----------|
-| XCTest | Fast | Built-in | ✅ | Native |
-| Slather | N/A | Easy | ✅ | Report formatting |
-| Codecov | N/A | Easy | ✅ | Reporting |
-
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (simple)  
-> **When to use**: When configuring code coverage tracking and reporting
-
-### Complete Implementation Prompt
+## 📋 Complete Self-Contained Prompt
 
 ```
+========================================
+SWIFT CODE COVERAGE - XCODE/SLATHER
+========================================
+
 CONTEXT:
-You are configuring code coverage tracking for this project.
+You are implementing code coverage measurement for a Swift project using Xcode and Slather.
 
 CRITICAL REQUIREMENTS:
-- ALWAYS detect language version from project files
-- ALWAYS configure coverage thresholds (recommended: 80% line, 75% branch)
-- ALWAYS integrate with CI/CD pipeline
-- NEVER lower coverage thresholds without justification
+- ALWAYS enable code coverage in Xcode scheme
+- NEVER commit coverage reports to Git
+- Target 80%+ coverage for critical paths
+- Exclude UI code and generated files
 
-IMPLEMENTATION STEPS:
+========================================
+PHASE 1 - LOCAL COVERAGE
+========================================
 
-1. DETECT VERSION:
-   Scan project files for language/framework version
+Enable coverage in Xcode:
+1. Edit Scheme → Test → Options
+2. Check "Gather coverage for: All targets"
+3. Run tests (Cmd+U)
 
-2. CHOOSE COVERAGE TOOL:
-   Select appropriate tool for the language (see Tech Stack section above)
+View coverage in Xcode:
+- Show Report Navigator (Cmd+9)
+- Select Coverage tab
+- Click on files to see line-by-line coverage
 
-3. CONFIGURE TOOL:
-   Add coverage configuration to project
-   Set thresholds (line, branch, function)
+For SPM projects:
+```bash
+swift test --enable-code-coverage
 
-4. INTEGRATE WITH CI/CD:
-   Add coverage step to pipeline
-   Configure to fail build if below thresholds
-
-5. CONFIGURE REPORTING:
-   Generate coverage reports (HTML, XML, lcov)
-   Optional: Upload to coverage service (Codecov, Coveralls)
-
-DELIVERABLE:
-- Coverage tool configured
-- Thresholds enforced in CI/CD
-- Coverage reports generated
-
-START: Detect language version and configure coverage tool.
+# Generate lcov report
+xcrun llvm-cov export \
+  .build/debug/*PackageTests.xctest/Contents/MacOS/*PackageTests \
+  -instr-profile .build/debug/codecov/default.profdata \
+  --format="lcov" > coverage.lcov
 ```
+
+Update .gitignore:
+```
+*.xcresult
+coverage/
+coverage.lcov
+```
+
+Deliverable: Local coverage report
+
+========================================
+PHASE 2 - CONFIGURE EXCLUSIONS
+========================================
+
+For Xcode projects, install Slather:
+```bash
+gem install slather
+```
+
+Create .slather.yml:
+```yaml
+coverage_service: cobertura_xml
+xcodeproj: YourApp.xcodeproj
+scheme: YourApp
+source_directory: YourApp
+output_directory: coverage
+ignore:
+  - Tests/*
+  - YourApp/Generated/*
+  - Pods/*
+  - "*/AppDelegate.swift"
+  - "*/SceneDelegate.swift"
+```
+
+Run:
+```bash
+slather coverage --scheme YourApp YourApp.xcodeproj
+```
+
+Deliverable: Proper file exclusions
+
+========================================
+PHASE 3 - CI INTEGRATION
+========================================
+
+Add to .github/workflows/ci.yml:
+
+For SPM:
+```yaml
+    - name: Test with coverage
+      run: swift test --enable-code-coverage
+    
+    - name: Generate lcov
+      run: |
+        xcrun llvm-cov export \
+          .build/debug/*PackageTests.xctest/Contents/MacOS/*PackageTests \
+          -instr-profile .build/debug/codecov/default.profdata \
+          --format="lcov" > coverage.lcov
+    
+    - name: Upload to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        files: coverage.lcov
+        fail_ci_if_error: true
+```
+
+For Xcode:
+```yaml
+    - name: Test with coverage
+      run: |
+        xcodebuild test \
+          -scheme YourApp \
+          -destination 'platform=iOS Simulator,name=iPhone 14' \
+          -enableCodeCoverage YES
+    
+    - name: Generate coverage
+      run: slather coverage --cobertura-xml --output-directory . --scheme YourApp YourApp.xcodeproj
+    
+    - name: Upload to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        files: cobertura.xml
+```
+
+Deliverable: CI coverage reporting
+
+========================================
+PHASE 4 - COVERAGE ENFORCEMENT
+========================================
+
+Use Codecov for enforcement via PR comments.
+
+Or create custom script:
+```bash
+#!/bin/bash
+COVERAGE=$(slather coverage --json YourApp.xcodeproj | jq '.coverage')
+THRESHOLD=80.0
+
+if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
+    echo "Coverage $COVERAGE% is below threshold $THRESHOLD%"
+    exit 1
+fi
+```
+
+Deliverable: Automated coverage enforcement
+
+========================================
+BEST PRACTICES
+========================================
+
+- Enable coverage in Xcode scheme
+- Use Slather for better reports
+- Exclude AppDelegate and UI code
+- Focus on business logic and models
+- Set minimum thresholds (80%+)
+- Review coverage in PRs
+
+========================================
+EXECUTION
+========================================
+
+START: Enable Xcode coverage (Phase 1)
+CONTINUE: Configure Slather (Phase 2)
+CONTINUE: Add CI integration (Phase 3)
+OPTIONAL: Add enforcement (Phase 4)
+REMEMBER: Exclude UI code, use Slather
+```
+
+---
+
+## Quick Reference
+
+**What you get**: Complete code coverage setup with Xcode/Slather  
+**Time**: 1-2 hours  
+**Output**: Coverage reports in CI and locally

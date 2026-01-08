@@ -1,214 +1,173 @@
-# Code Coverage Setup (Java)
+# Java Code Coverage - Copy This Prompt
 
-> **Goal**: Establish automated code coverage tracking in existing Java projects
-
-## Phase 1: Choose Code Coverage Tools
-
-> **ALWAYS**: Track line, branch, and function coverage
-> **ALWAYS**: Set minimum coverage thresholds
-> **NEVER**: Aim for 100% coverage (diminishing returns)
-> **NEVER**: Skip uncovered critical paths
-
-### Recommended Tools
-
-| Tool | Type | Use Case | Setup |
-|------|------|----------|-------|
-| **JaCoCo** ⭐ | Coverage tool | Industry standard | Maven/Gradle plugin |
-| **Cobertura** | Coverage tool | Alternative | Maven/Gradle plugin |
-| **IntelliJ Coverage** | IDE integration | JetBrains IDEs | Built-in |
-| **Codecov** | Reporting | CI/CD integration | Cloud service |
+> **Type**: One-time setup process  
+> **When to use**: Setting up code coverage for Java project  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 2: Tool Configuration
+## 📋 Complete Self-Contained Prompt
 
-**Maven** (`pom.xml`):
+```
+========================================
+JAVA CODE COVERAGE - JACOCO
+========================================
+
+CONTEXT:
+You are implementing code coverage measurement for a Java project using JaCoCo.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS use JaCoCo (industry standard)
+- NEVER commit coverage reports to Git
+- Target 80%+ coverage for critical paths
+- Exclude generated code and POJOs
+
+========================================
+PHASE 1 - LOCAL COVERAGE
+========================================
+
+Add to pom.xml:
 ```xml
 <plugin>
   <groupId>org.jacoco</groupId>
   <artifactId>jacoco-maven-plugin</artifactId>
   <version>0.8.11</version>
   <executions>
-    <execution><id>prepare-agent</id><goals><goal>prepare-agent</goal></goals></execution>
-    <execution><id>report</id><phase>test</phase><goals><goal>report</goal></goals></execution>
     <execution>
-      <id>check</id><goals><goal>check</goal></goals>
-      <configuration>
-        <rules><rule><limits>
-          <limit><counter>LINE</counter><value>COVEREDRATIO</value><minimum>0.80</minimum></limit>
-          <limit><counter>BRANCH</counter><value>COVEREDRATIO</value><minimum>0.75</minimum></limit>
-        </limits></rule></rules>
-      </configuration>
+      <goals>
+        <goal>prepare-agent</goal>
+      </goals>
+    </execution>
+    <execution>
+      <id>report</id>
+      <phase>test</phase>
+      <goals>
+        <goal>report</goal>
+      </goals>
     </execution>
   </executions>
 </plugin>
 ```
 
-**Gradle** (`build.gradle`):
-```groovy
-plugins { id 'jacoco' }
-jacoco { toolVersion = "0.8.11" }
-jacocoTestReport {
-    reports { xml.required = true; html.required = true }
-}
-jacocoTestCoverageVerification {
-    violationRules { rule { limit { minimum = 0.80 } } }
-}
-```
-
-**Commands**: `mvn test jacoco:report` or `./gradlew test jacocoTestReport`
-
----
-
-## Phase 3: Exclusions & Thresholds
-
-**Exclude**: `**/generated/**`, `**/dto/**`, `**/config/**` (configure in plugin)  
-**Thresholds**: LINE 80%, BRANCH 75%, METHOD 70% (adjust per project)
-
----
-
-## Phase 4: CI/CD Integration
-
-**GitHub Actions**: Run `mvn test jacoco:report` or `./gradlew test jacocoTestReport`, upload to Codecov/Coveralls  
-**Report Paths**: Maven: `target/site/jacoco/jacoco.xml`, Gradle: `build/reports/jacoco/test/jacocoTestReport.xml`
-
----
-
-## Phase 5: Coverage Analysis & Improvement
-
-### Identify Uncovered Code
-
+Run tests with coverage:
 ```bash
-# Maven - Open report
+mvn clean test
+# Report at: target/site/jacoco/index.html
 open target/site/jacoco/index.html
-
-# Gradle - Open report
-open build/reports/jacoco/test/html/index.html
 ```
 
-### Prioritize Critical Paths
+Update .gitignore:
+```
+target/site/jacoco/
+jacoco.exec
+```
 
-**Coverage priorities (high to low)**:
-1. Business logic (services, domain)
-2. Data validation (validators, mappers)
-3. Error handling
-4. API controllers
-5. Repositories
+Deliverable: Local coverage report
 
-### Exclude Code with Annotations
+========================================
+PHASE 2 - CONFIGURE EXCLUSIONS
+========================================
 
+Add to pom.xml jacoco plugin:
+```xml
+<configuration>
+  <excludes>
+    <exclude>**/dto/**</exclude>
+    <exclude>**/entity/**</exclude>
+    <exclude>**/config/**</exclude>
+    <exclude>**/*Application.class</exclude>
+  </excludes>
+</configuration>
+```
+
+Use annotations:
 ```java
-// Lombok generated code
-@lombok.Generated
+@lombok.Generated  // Exclude Lombok code
 public class User { }
+```
 
-// Custom annotation
-@CoverageExclude
-public void legacyMethod() { }
+Deliverable: Proper file exclusions
+
+========================================
+PHASE 3 - CI INTEGRATION
+========================================
+
+Add to .github/workflows/ci.yml:
+
+```yaml
+    - name: Test with coverage
+      run: mvn test jacoco:report
+    
+    - name: Upload to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        files: target/site/jacoco/jacoco.xml
+        fail_ci_if_error: true
+```
+
+Deliverable: CI coverage reporting
+
+========================================
+PHASE 4 - COVERAGE ENFORCEMENT
+========================================
+
+Add to pom.xml:
+```xml
+<execution>
+  <id>check</id>
+  <goals>
+    <goal>check</goal>
+  </goals>
+  <configuration>
+    <rules>
+      <rule>
+        <element>BUNDLE</element>
+        <limits>
+          <limit>
+            <counter>LINE</counter>
+            <value>COVEREDRATIO</value>
+            <minimum>0.80</minimum>
+          </limit>
+        </limits>
+      </rule>
+    </rules>
+  </configuration>
+</execution>
+```
+
+Run:
+```bash
+mvn verify  # Fails if below 80%
+```
+
+Deliverable: Automated coverage enforcement
+
+========================================
+BEST PRACTICES
+========================================
+
+- Exclude DTOs, entities, and config classes
+- Use JaCoCo for consistent reporting
+- Focus on service/business logic
+- Test edge cases and exceptions
+- Set minimum thresholds (80%+)
+- Review coverage in PRs
+
+========================================
+EXECUTION
+========================================
+
+START: Add JaCoCo plugin (Phase 1)
+CONTINUE: Configure exclusions (Phase 2)
+CONTINUE: Add CI integration (Phase 3)
+OPTIONAL: Add enforcement (Phase 4)
+REMEMBER: Exclude generated code, use JaCoCo
 ```
 
 ---
 
-## Troubleshooting
+## Quick Reference
 
-| Issue | Solution |
-|-------|----------|
-| **Coverage reports empty** | Check `excludes` configuration |
-| **Slow test runs** | Use parallel test execution |
-| **Missing coverage for Lombok** | Add `@lombok.Generated` exclusion |
-| **CI fails on threshold** | Review uncovered code, add tests or adjust threshold |
-
----
-
-## Best Practices
-
-> **ALWAYS**: Set realistic thresholds (70-85% is good)
-> **ALWAYS**: Exclude generated code (Lombok, DTOs)
-> **ALWAYS**: Review coverage reports before merge
-> **ALWAYS**: Track coverage trends over time
-> **NEVER**: Aim for 100% (diminishing returns)
-> **NEVER**: Write tests just to increase coverage
-> **NEVER**: Skip edge cases and error paths
-
----
-
-## AI Self-Check
-
-- [ ] JaCoCo configured for coverage?
-- [ ] Coverage thresholds set (80% line, 75% branch)?
-- [ ] CI/CD runs coverage and fails on threshold violation?
-- [ ] Coverage reports uploaded to Codecov/Coveralls?
-- [ ] Generated code excluded from coverage?
-- [ ] HTML reports generated for local review?
-- [ ] Team reviews coverage reports?
-- [ ] Lombok generated code excluded?
-- [ ] Critical business logic covered?
-- [ ] Uncovered code identified and tested?
-
----
-
-## Coverage Metrics Explained
-
-| Metric | Definition | Target |
-|--------|------------|--------|
-| **Line Coverage** | % of lines executed | 80-85% |
-| **Branch Coverage** | % of if/else branches executed | 75-80% |
-| **Method Coverage** | % of methods called | 80-85% |
-| **Instruction Coverage** | % of bytecode instructions executed | 80-85% |
-
----
-
-## Tools Comparison
-
-| Tool | Speed | Setup | CI/CD | Best For |
-|------|-------|-------|-------|----------|
-| JaCoCo | Fast | Easy | ✅ | Industry standard |
-| Cobertura | Medium | Medium | ✅ | Alternative |
-| IntelliJ | Fast | Built-in | ⚠️ | IDE only |
-| Codecov | N/A | Easy | ✅ | Reporting |
-
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (simple)  
-> **When to use**: When configuring code coverage tracking and reporting
-
-### Complete Implementation Prompt
-
-```
-CONTEXT:
-You are configuring code coverage tracking for this project.
-
-CRITICAL REQUIREMENTS:
-- ALWAYS detect language version from project files
-- ALWAYS configure coverage thresholds (recommended: 80% line, 75% branch)
-- ALWAYS integrate with CI/CD pipeline
-- NEVER lower coverage thresholds without justification
-
-IMPLEMENTATION STEPS:
-
-1. DETECT VERSION:
-   Scan project files for language/framework version
-
-2. CHOOSE COVERAGE TOOL:
-   Select appropriate tool for the language (see Tech Stack section above)
-
-3. CONFIGURE TOOL:
-   Add coverage configuration to project
-   Set thresholds (line, branch, function)
-
-4. INTEGRATE WITH CI/CD:
-   Add coverage step to pipeline
-   Configure to fail build if below thresholds
-
-5. CONFIGURE REPORTING:
-   Generate coverage reports (HTML, XML, lcov)
-   Optional: Upload to coverage service (Codecov, Coveralls)
-
-DELIVERABLE:
-- Coverage tool configured
-- Thresholds enforced in CI/CD
-- Coverage reports generated
-
-START: Detect language version and configure coverage tool.
-```
+**What you get**: Complete code coverage setup with JaCoCo  
+**Time**: 1 hour  
+**Output**: Coverage reports in CI and locally
