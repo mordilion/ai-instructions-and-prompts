@@ -53,116 +53,29 @@ lib/features/auth/
 - **Descriptive Names**: `LoginRequested`, `LogoutRequested`, not `Login`, `Logout`.
 - **Carry Data**: Events hold input data needed for the operation.
 
-```dart
-// ✅ Good - Sealed classes (Dart 3+)
-sealed class AuthEvent {}
-
-final class LoginRequested extends AuthEvent {
-  final String email;
-  final String password;
-  LoginRequested({required this.email, required this.password});
-}
-
-final class LogoutRequested extends AuthEvent {}
-```
+**Pattern**: `sealed class Event/State {}` + `final class Specific extends Event/State {}`
 
 ## 3. States
-- **Finite States**: Define explicit states (Initial, Loading, Success, Failure).
-- **Data in States**: Success states hold the result data.
-- **Error Messages**: Failure states hold error information.
-
-```dart
-// ✅ Good
-sealed class AuthState {}
-
-final class AuthInitial extends AuthState {}
-
-final class AuthLoading extends AuthState {}
-
-final class AuthSuccess extends AuthState {
-  final User user;
-  AuthSuccess(this.user);
-}
-
-final class AuthFailure extends AuthState {
-  final String message;
-  AuthFailure(this.message);
-}
-```
+**Pattern**: Initial → Loading → Success(data) / Failure(error)
 
 ## 4. BLoC Implementation
-- **Constructor Injection**: Inject repositories via constructor.
-- **Event Handlers**: One handler per event type.
-- **Emit States**: Always emit loading before async operations.
+**Pattern**: `Bloc<Event, State>` + constructor injection + `on<Event>(_handler)` + `emit(state)`
 
-```dart
-class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  final AuthRepository _authRepository;
+## 5. Cubit (Simplified)
+**Use For**: Simple state without complex events (methods instead of events)
 
-  AuthBloc(this._authRepository) : super(AuthInitial()) {
-    on<LoginRequested>(_onLoginRequested);
-    on<LogoutRequested>(_onLogoutRequested);
-  }
-
-  Future<void> _onLoginRequested(
-    LoginRequested event,
-    Emitter<AuthState> emit,
-  ) async {
-    emit(AuthLoading());
-    try {
-      final user = await _authRepository.login(event.email, event.password);
-      emit(AuthSuccess(user));
-    } catch (e) {
-      emit(AuthFailure(e.toString()));
-    }
-  }
-}
-```
-
-## 5. Cubit (Simplified BLoC)
-- Use Cubit for simple state without complex events.
-- Methods instead of events.
-
-```dart
-// ✅ Good - Cubit for simple cases
-class CounterCubit extends Cubit<int> {
-  CounterCubit() : super(0);
-
-  void increment() => emit(state + 1);
-  void decrement() => emit(state - 1);
-}
-```
+**Pattern**: `Cubit<State>` + methods call `emit(newState)`
 
 ## 6. UI Integration
-- **BlocProvider**: Provide BLoC at the appropriate level.
-- **BlocBuilder**: Rebuild UI based on state.
-- **BlocListener**: Side effects (navigation, snackbars).
-- **BlocConsumer**: When you need both.
-
-```dart
-// ✅ Good
-BlocConsumer<AuthBloc, AuthState>(
-  listener: (context, state) {
-    if (state is AuthSuccess) {
-      Navigator.pushReplacementNamed(context, '/home');
-    } else if (state is AuthFailure) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(state.message)),
-      );
-    }
-  },
-  builder: (context, state) {
-    if (state is AuthLoading) {
-      return const CircularProgressIndicator();
-    }
-    return LoginForm();
-  },
-)
-```
+| Widget | Purpose |
+|--------|---------|
+| **BlocProvider** | Dependency injection |
+| **BlocBuilder** | Rebuild on state change |
+| **BlocListener** | Side effects (navigation, snackbars) |
+| **BlocConsumer** | Builder + Listener combined |
 
 ## 7. Testing
-- **bloc_test**: Use for testing BLoCs.
-- **Mock Repositories**: Inject mocks for unit tests.
+**Tools**: `bloc_test` package + mock repositories for unit tests
 
 ```dart
 blocTest<AuthBloc, AuthState>(

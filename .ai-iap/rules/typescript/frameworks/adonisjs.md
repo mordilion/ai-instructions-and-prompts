@@ -21,103 +21,15 @@
 
 ## Core Patterns
 
-### Controller
+| Component | Pattern |
+|-----------|---------|
+| **Controller** | `@inject()` + constructor DI + `request.validateUsing()` + service calls |
+| **Model** | `extends BaseModel` + `@column()` + `@hasMany()/@belongsTo()` decorators |
+| **Validator** | VineJS schemas: `vine.compile(vine.object({ field: vine.string() }))`
 
-```typescript
-import { HttpContext } from '@adonisjs/core/http'
-import { inject } from '@adonisjs/core'
-import UserService from '#services/user_service'
-import { createUserValidator } from '#validators/user'
-
-@inject()
-export default class UsersController {
-  constructor(protected userService: UserService) {}
-
-  async store({ request, response }: HttpContext) {
-    const payload = await request.validateUsing(createUserValidator)
-    const user = await this.userService.create(payload)
-    return response.created(user)
-  }
-}
-```
-
-### Model (Lucid ORM)
-
-```typescript
-import { BaseModel, column, hasMany } from '@adonisjs/lucid/orm'
-
-export default class User extends BaseModel {
-  @column({ isPrimary: true })
-  declare id: number
-
-  @column()
-  declare email: string
-
-  @column({ serializeAs: null })
-  declare password: string
-
-  @hasMany(() => Post)
-  declare posts: HasMany<typeof Post>
-}
-```
-
-### Validator (VineJS)
-
-```typescript
-import vine from '@vinejs/vine'
-
-export const createUserValidator = vine.compile(
-  vine.object({
-    email: vine.string().email().normalizeEmail(),
-    password: vine.string().minLength(8),
-    fullName: vine.string().minLength(3)
-  })
-)
-```
-
-### Service
-
-```typescript
-import { inject } from '@adonisjs/core'
-import User from '#models/user'
-import hash from '@adonisjs/core/services/hash'
-
-@inject()
-export default class UserService {
-  async create(data: { email: string; password: string }) {
-    const hashedPassword = await hash.make(data.password)
-    return User.create({ ...data, password: hashedPassword })
-  }
-}
-```
-
-### Routes
-
-```typescript
-import router from '@adonisjs/core/services/router'
-import { middleware } from '#start/kernel'
-
-const UsersController = () => import('#controllers/users_controller')
-
-router.group(() => {
-  router.resource('users', UsersController).apiOnly()
-}).prefix('/api/v1').middleware(middleware.auth())
-```
-
-### Events
-
-```typescript
-// app/events/user_registered.ts
-import { BaseEvent } from '@adonisjs/core/events'
-
-export default class UserRegistered extends BaseEvent {
-  constructor(public user: User) { super() }
-}
-
-// start/events.ts
-import emitter from '@adonisjs/core/services/emitter'
-emitter.on(UserRegistered, [SendWelcomeEmail])
-```
+| **Service** | `@inject()` + business logic + model/repository calls |
+| **Routes** | `router.group()` + `.prefix()` + `.middleware()` + `resource()` |
+| **Events** | `extends BaseEvent` + `emitter.on(Event, [Listener])`
 
 ## Common AI Mistakes
 
