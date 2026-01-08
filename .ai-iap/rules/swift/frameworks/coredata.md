@@ -19,36 +19,19 @@
 
 ## Core Patterns
 
-### Stack Setup
-
 ```swift
+// Stack Setup
 class CoreDataStack {
     static let shared = CoreDataStack()
-    
     lazy var persistentContainer: NSPersistentContainer = {
         let container = NSPersistentContainer(name: "Model")
-        container.loadPersistentStores { _, error in
-            if let error = error { fatalError("Load error: \(error)") }
-        }
-        container.viewContext.automaticallyMergesChangesFromParent = true
+        container.loadPersistentStores { _, error in if let error = error { fatalError() } }
         return container
     }()
-    
-    var context: NSManagedObjectContext {
-        persistentContainer.viewContext
-    }
-    
-    func save() {
-        guard context.hasChanges else { return }
-        try? context.save()
-    }
+    func save() { if context.hasChanges { try? context.save() } }
 }
-```
 
-### CRUD Operations
-
-```swift
-// Create
+// CRUD
 func createUser(name: String) -> User? {
     let user = User(context: CoreDataStack.shared.context)
     user.name = name
@@ -56,56 +39,26 @@ func createUser(name: String) -> User? {
     return user
 }
 
-// Read
 func fetchUsers() -> [User] {
     let request: NSFetchRequest<User> = User.fetchRequest()
-    request.sortDescriptors = [NSSortDescriptor(key: "name", ascending: true)]
     return (try? CoreDataStack.shared.context.fetch(request)) ?? []
 }
 
-// Update
-func updateUser(_ user: User, name: String) {
-    user.name = name
-    try? user.managedObjectContext?.save()
-}
-
-// Delete
-func deleteUser(_ user: User) {
-    guard let context = user.managedObjectContext else { return }
-    context.delete(user)
-    try? context.save()
-}
-```
-
-### Background Context
-
-```swift
+// Background Context
 func importData(_ items: [DataItem]) {
     CoreDataStack.shared.persistentContainer.performBackgroundTask { context in
-        for item in items {
-            let user = User(context: context)
-            user.name = item.name
-        }
+        items.forEach { User(context: context).name = $0.name }
         try? context.save()
     }
 }
-```
 
-### NSFetchedResultsController
-
-```swift
-lazy var fetchedResultsController: NSFetchedResultsController<User> = {
-    let request: NSFetchRequest<User> = User.fetchRequest()
-    request.sortDescriptors = [NSSortDescriptor(key: "name", ascending: true)]
-    
-    let controller = NSFetchedResultsController(
-        fetchRequest: request,
-        managedObjectContext: CoreDataStack.shared.context,
-        sectionNameKeyPath: nil,
-        cacheName: nil
-    )
-    controller.delegate = self
-    return controller
+// NSFetchedResultsController
+lazy var frc: NSFetchedResultsController<User> = {
+    let req: NSFetchRequest<User> = User.fetchRequest()
+    req.sortDescriptors = [NSSortDescriptor(key: "name", ascending: true)]
+    let frc = NSFetchedResultsController(fetchRequest: req, managedObjectContext: context, sectionNameKeyPath: nil, cacheName: nil)
+    frc.delegate = self
+    return frc
 }()
 ```
 

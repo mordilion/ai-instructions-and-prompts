@@ -40,112 +40,45 @@ tests/
 
 ## Layer Organization
 
-### Controllers → Services → Models
-
 ```typescript
-// app/controllers/users_controller.ts
-import { HttpContext } from '@adonisjs/core/http'
-import { inject } from '@adonisjs/core'
-import UserService from '#services/user_service'
-import { createUserValidator } from '#validators/user_validator'
-
+// Controller → Service → Model
 @inject()
 export default class UsersController {
   constructor(protected userService: UserService) {}
-
+  
   async store({ request, response }: HttpContext) {
-    const payload = await request.validateUsing(createUserValidator)
-    const user = await this.userService.create(payload)
-    return response.created(user)
+    const payload = await request.validateUsing(createUserValidator);
+    return response.created(await this.userService.create(payload));
   }
 }
-```
 
-### Services (Business Logic)
-
-```typescript
-// app/services/user_service.ts
-import { inject } from '@adonisjs/core'
-import User from '#models/user'
-import hash from '@adonisjs/core/services/hash'
-import emitter from '@adonisjs/core/services/emitter'
-
+// Service (Business Logic)
 @inject()
 export default class UserService {
-  async create(data: { email: string; password: string; fullName: string }) {
-    const hashedPassword = await hash.make(data.password)
-    const user = await User.create({ ...data, password: hashedPassword })
-    emitter.emit(new UserRegistered(user))
-    return user
+  async create(data) {
+    const user = await User.create({ ...data, password: await hash.make(data.password) });
+    emitter.emit(new UserRegistered(user));
+    return user;
   }
 }
-```
 
-### Models (Data Layer)
-
-```typescript
-// app/models/user.ts
-import { BaseModel, column, hasMany } from '@adonisjs/lucid/orm'
-
+// Model
 export default class User extends BaseModel {
-  @column({ isPrimary: true })
-  declare id: number
-
-  @column({ serializeAs: null })
-  declare password: string
-
-  @hasMany(() => Post)
-  declare posts: HasMany<typeof Post>
+  @column({ isPrimary: true }) declare id: number
+  @column({ serializeAs: null }) declare password: string
+  @hasMany(() => Post) declare posts: HasMany<typeof Post>
 }
-```
 
-## Routes (start/routes.ts)
-
-```typescript
-import router from '@adonisjs/core/services/router'
-import { middleware } from '#start/kernel'
-
-const UsersController = () => import('#controllers/users_controller')
-
-// Protected routes
+// Routes
 router.group(() => {
-  router.resource('users', UsersController).apiOnly()
-}).prefix('/api/v1').middleware(middleware.auth())
-```
+  router.resource('users', () => import('#controllers/users_controller')).apiOnly();
+}).prefix('/api/v1').middleware(middleware.auth());
 
-## Events & Listeners
-
-```typescript
-// app/events/user_registered.ts
+// Events
 export default class UserRegistered extends BaseEvent {
   constructor(public user: User) { super() }
 }
-
-// app/listeners/send_welcome_email.ts
-@inject()
-export default class SendWelcomeEmail {
-  async handle(event: UserRegistered) {
-    await this.emailService.sendWelcome(event.user.email)
-  }
-}
-
-// start/events.ts
-emitter.on(UserRegistered, [SendWelcomeEmail])
-```
-
-## Path Aliases (tsconfig.json)
-
-```json
-{
-  "compilerOptions": {
-    "paths": {
-      "#controllers/*": ["./app/controllers/*"],
-      "#models/*": ["./app/models/*"],
-      "#services/*": ["./app/services/*"],
-      "#validators/*": ["./app/validators/*"]
-    }
-  }
-}
+emitter.on(UserRegistered, [SendWelcomeEmail]);
 ```
 
 ## Rules

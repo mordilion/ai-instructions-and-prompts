@@ -31,69 +31,48 @@
 
 ## Core Patterns
 
-### Dependency Injection (REQUIRED)
 ```java
+// Dependency Injection (Constructor)
 @Service
-@RequiredArgsConstructor  // Generates constructor for final fields
+@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class UserService {
-    private final UserRepository repository;  // final = immutable, required
+    private final UserRepository repository;  // final = immutable
 }
-```
 
-### Controller (Thin Layer)
-```java
+// Controller (Thin)
 @RestController
-@RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
     
-    @PostMapping
+    @PostMapping("/api/users")
     public ResponseEntity<UserDto> create(@Valid @RequestBody CreateUserRequest req) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(req));
-    }
-    
-    @GetMapping("/{id}")
-    public UserDto getUser(@PathVariable Long id) {
-        return userService.getUser(id);  // DTO, not entity
+        return ResponseEntity.status(CREATED).body(userService.createUser(req));
     }
 }
-```
 
-### Service (Business Logic Layer)
-```java
+// Service (Business Logic)
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class UserService {
     private final UserRepository repository;
     
-    @Transactional  // Override for write
-    public UserDto createUser(CreateUserRequest request) {
-        User user = repository.save(mapper.toEntity(request));
-        return mapper.toDto(user);  // Always return DTO
+    @Transactional
+    public UserDto createUser(CreateUserRequest req) {
+        return mapper.toDto(repository.save(mapper.toEntity(req)));
     }
 }
-```
 
-### Repository
-```java
+// Repository
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
-    @Query("SELECT u FROM User u WHERE u.createdAt > :date")
-    List<User> findRecentUsers(@Param("date") LocalDateTime date);
 }
-```
 
-### DTOs & Validation
-```java
-public record CreateUserRequest(
-    @NotBlank @Size(min = 2, max = 100) String name,
-    @NotBlank @Email String email
-) {}
-
+// DTOs
+public record CreateUserRequest(@NotBlank @Email String email, @NotBlank String name) {}
 public record UserDto(Long id, String name, String email) {}
 ```
 

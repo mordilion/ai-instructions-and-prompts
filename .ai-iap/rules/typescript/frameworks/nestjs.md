@@ -20,142 +20,66 @@
 
 ## Core Patterns
 
-### Controller (Thin)
-
 ```typescript
+// Controller (Thin)
 @Controller('users')
 @UseGuards(JwtAuthGuard)
 export class UserController {
   constructor(private readonly userService: UserService) {}
   
-  @Get()
-  findAll() {
-    return this.userService.findAll()
-  }
-  
   @Post()
-  create(@Body() dto: CreateUserDto) {
-    return this.userService.create(dto)
-  }
-  
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.userService.findOne(+id)
-  }
+  create(@Body() dto: CreateUserDto) { return this.userService.create(dto) }
 }
-```
 
-### Service (Business Logic)
-
-```typescript
+// Service (Business Logic)
 @Injectable()
 export class UserService {
-  constructor(
-    @InjectRepository(User)
-    private userRepository: Repository<User>
-  ) {}
+  constructor(@InjectRepository(User) private repo: Repository<User>) {}
   
-  async findAll(): Promise<User[]> {
-    return this.userRepository.find()
-  }
-  
-  async create(dto: CreateUserDto): Promise<User> {
-    const user = this.userRepository.create(dto)
-    return this.userRepository.save(user)
-  }
-  
-  async findOne(id: number): Promise<User> {
-    const user = await this.userRepository.findOneBy({ id })
-    if (!user) {
-      throw new NotFoundException(`User ${id} not found`)
-    }
-    return user
+  async create(dto: CreateUserDto) {
+    return this.repo.save(this.repo.create(dto));
   }
 }
-```
 
-### DTO with Validation
-
-```typescript
-import { IsEmail, IsString, MinLength, MaxLength } from 'class-validator'
-
+// DTO with Validation
 export class CreateUserDto {
-  @IsEmail()
-  email: string
-  
-  @IsString()
-  @MinLength(2)
-  @MaxLength(100)
-  name: string
-  
-  @IsString()
-  @MinLength(8)
-  password: string
+  @IsEmail() email: string
+  @IsString() @MinLength(2) name: string
 }
-```
 
-### Guard (Auth)
-
-```typescript
+// Guard (Auth)
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
-  canActivate(context: ExecutionContext) {
-    return super.canActivate(context)
-  }
-  
   handleRequest(err: any, user: any) {
-    if (err || !user) {
-      throw new UnauthorizedException()
-    }
-    return user
+    if (err || !user) throw new UnauthorizedException();
+    return user;
   }
 }
-```
 
-### Interceptor (Transform Response)
-
-```typescript
+// Interceptor
 @Injectable()
-export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> {
-  intercept(context: ExecutionContext, next: CallHandler): Observable<Response<T>> {
-    return next.handle().pipe(
-      map(data => ({
-        statusCode: context.switchToHttp().getResponse().statusCode,
-        data,
-        timestamp: new Date().toISOString()
-      }))
-    )
+export class TransformInterceptor implements NestInterceptor {
+  intercept(context: ExecutionContext, next: CallHandler) {
+    return next.handle().pipe(map(data => ({ data, timestamp: new Date() })));
   }
 }
-```
 
-### Exception Filter
-
-```typescript
+// Exception Filter
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
   catch(exception: HttpException, host: ArgumentsHost) {
-    const ctx = host.switchToHttp()
-    const response = ctx.getResponse()
-    const status = exception.getStatus()
-    
-    response.status(status).json({
-      statusCode: status,
-      message: exception.message,
-      timestamp: new Date().toISOString()
-    })
+    host.switchToHttp().getResponse().status(exception.getStatus()).json({
+      statusCode: exception.getStatus(),
+      message: exception.message
+    });
   }
 }
-```
 
-### Module
-
-```typescript
+// Module
 @Module({
   imports: [TypeOrmModule.forFeature([User])],
   controllers: [UserController],
-  providers: [UserService],
-  exports: [UserService]
+  providers: [UserService]
 })
 export class UserModule {}
 ```
