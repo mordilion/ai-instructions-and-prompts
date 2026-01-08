@@ -23,6 +23,15 @@ CRITICAL REQUIREMENTS:
 - Use .dockerignore to exclude node_modules
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+1. Read PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, DOCKER-SETUP.md if they exist
+
+Use this to continue from where work stopped. If no docs: Start fresh.
+
+========================================
 PHASE 1 - CREATE DOCKERFILE
 ========================================
 
@@ -167,13 +176,21 @@ BEST PRACTICES
 - Tag images with versions
 
 ========================================
+DOCUMENTATION
+========================================
+
+Create/update: PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, DOCKER-SETUP.md
+
+========================================
 EXECUTION
 ========================================
 
-START: Create Dockerfile (Phase 1)
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Create Dockerfile (Phase 1)
 CONTINUE: Build and test (Phase 2)
 OPTIONAL: Optimize (Phase 3)
-REMEMBER: Multi-stage builds, production deps only
+FINISH: Update all documentation files
+REMEMBER: Multi-stage builds, production deps only, document for catch-up
 ```
 
 ---
