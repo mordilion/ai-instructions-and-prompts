@@ -47,6 +47,7 @@ chmod +x .ai-iap/setup.sh && ./.ai-iap/setup.sh
 - [Configuration](.ai-iap/README.md#️-configuration)
 - [**Team Adoption Guide**](TEAM_ADOPTION_GUIDE.md) ⭐ – For engineering teams evaluating this project
 - [**Customization Guide**](CUSTOMIZATION.md) ⭐ – Extend with company standards (update-safe)
+- [**Claude Setup Guide**](.ai-iap/docs/CLAUDE_SETUP.md) – Memory & Skills configuration
 - [Troubleshooting](.ai-iap/TROUBLESHOOTING.md)
 - [Extending](.ai-iap/README.md#-extending)
 - [Contributing](.ai-iap/README.md#-contributing)
