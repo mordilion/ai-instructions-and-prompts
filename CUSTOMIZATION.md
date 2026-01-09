@@ -284,11 +284,13 @@ During setup, select your custom process when prompted.
 
 ## Adding Custom Functions
 
-Custom functions add **company-specific implementation patterns** that your team uses frequently. These are short (5-20 line) code patterns for common tasks.
+Custom functions add **company-specific implementation patterns** that your team uses frequently.
+These are short (5-20 line) code patterns for common tasks.
 
 ### When to Add Custom Functions
 
 ✅ **Good use cases**:
+
 - Company-specific authentication flows
 - Internal logging service integration
 - Company cache/Redis patterns
@@ -297,6 +299,7 @@ Custom functions add **company-specific implementation patterns** that your team
 - Internal message queue patterns (RabbitMQ, Kafka, etc.)
 
 ❌ **Don't create custom functions for**:
+
 - One-off implementations (use processes instead)
 - Language-specific syntax (belongs in rules)
 - Complete features (use processes instead)
