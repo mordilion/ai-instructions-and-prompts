@@ -284,246 +284,153 @@ During setup, select your custom process when prompted.
 
 ## Adding Custom Functions
 
-Custom functions add **company-specific implementation patterns** that your team uses frequently.
-These are short (5-20 line) code patterns for common tasks.
+Custom functions are **company-specific implementation patterns** your team uses repeatedly.
+They live in `.ai-iap-custom/functions/` so they stay **update-safe** when core `.ai-iap/` changes.
 
 ### When to Add Custom Functions
 
 ✅ **Good use cases**:
 
-- Company-specific authentication flows
-- Internal logging service integration
-- Company cache/Redis patterns
-- Internal API client patterns
-- Company-specific error reporting (Sentry, Datadog, etc.)
-- Internal message queue patterns (RabbitMQ, Kafka, etc.)
+- Company-specific auth flows or permission checks
+- Internal API client wrappers
+- Company logging/redaction conventions
+- Standard cache key patterns and invalidation helpers
+- Webhook signature verification for internal systems
 
 ❌ **Don't create custom functions for**:
 
 - One-off implementations (use processes instead)
-- Language-specific syntax (belongs in rules)
-- Complete features (use processes instead)
+- Language syntax/style rules (belongs in rules)
+- Full workflows (use processes instead)
 
-### Step 1: Create Function File
+### Step 1: Create the Function File (Template-based)
 
-`.ai-iap-custom/functions/custom-auth-flow.md`:
+- Copy `.ai-iap/functions/_TEMPLATE.md` to:
+  - `.ai-iap-custom/functions/<your-function>.md`
+- Replace the YAML frontmatter values.
+- Keep **only code examples** after the YAML header.
+- **No installation commands** inside function files.
+
+### Step 2 (Optional): Add a Custom Functions INDEX
+
+If you create multiple custom functions, add:
+
+- `.ai-iap-custom/functions/INDEX.md`
+
+This helps AIs find company patterns faster.
+
+### Step 3: Ensure AIs Search Custom Functions First
+
+In your project’s AI rules, add a small directive like:
+
+- Check `.ai-iap-custom/functions/INDEX.md` (if it exists)
+- Then check `.ai-iap/functions/INDEX.md`
+
+---
+
+### Example Custom Function
+
+Create `.ai-iap-custom/functions/company-auth-header.md`:
 
 ```markdown
 ---
-title: Company SSO Authentication Flow
-category: Authentication
-difficulty: intermediate
+title: Company Auth Header Patterns
+category: Security
+difficulty: beginner
+purpose: Add the company auth header consistently for internal API calls
+when_to_use:
+  - Calling internal APIs
+  - Service-to-service requests
+  - Mobile app API requests
 languages:
-  - typescript
-  - python
-  - java
-  - csharp
-tags:
-  - auth
-  - sso
-  - company-specific
+  typescript:
+    - name: fetch header (Built-in)
+      library: javascript-core
+      recommended: true
+    - name: axios interceptor
+      library: axios
+  python:
+    - name: httpx client header
+      library: httpx
+      recommended: true
+    - name: requests session header
+      library: requests
+  csharp:
+    - name: HttpClient default header
+      library: System.Net.Http
+      recommended: true
+best_practices:
+  do:
+    - Read tokens from environment or secure storage
+    - Use a single shared client per service
+  dont:
+    - Hardcode tokens in source code
+    - Log tokens or headers containing secrets
+tags: [auth, headers, internal-api]
 updated: 2026-01-09
 ---
 
-# Company SSO Authentication Flow
+## TypeScript
 
-> **Purpose**: Authenticate users with company SSO service
->
-> **When to use**: All internal applications requiring user authentication
-
----
-
-## TypeScript / JavaScript
-
-### 📦 Dependencies
-
-| Approach | Library | Installation | Use Case |
-|----------|---------|--------------|----------|
-| **Company Auth SDK** ⭐ | `@company/auth-sdk` | `npm install @company/auth-sdk` | Official company SDK |
-| **Manual OAuth** | `oauth2` | `npm install oauth2` | Custom OAuth flow |
-
-### Company Auth SDK (Recommended)
-
-\`\`\`typescript
-// Install: npm install @company/auth-sdk
-import { CompanyAuth } from '@company/auth-sdk';
-
-const auth = new CompanyAuth({
-  clientId: process.env.COMPANY_CLIENT_ID,
-  clientSecret: process.env.COMPANY_CLIENT_SECRET,
-  redirectUri: 'https://app.example.com/callback'
+### fetch header (Built-in)
+```typescript
+const response = await fetch(url, {
+  headers: { Authorization: `Bearer ${token}` },
 });
+```
 
-// Login flow
-async function login(email: string) {
-  const authUrl = auth.getAuthorizationUrl({
-    scope: ['profile', 'email'],
-    state: generateState()
-  });
-  
-  return { redirectUrl: authUrl };
-}
+### axios interceptor
+```typescript
+import axios from 'axios';
 
-// Callback handler
-async function handleCallback(code: string) {
-  const tokens = await auth.exchangeCodeForTokens(code);
-  const user = await auth.getUserInfo(tokens.accessToken);
-  
-  return { user, tokens };
-}
-\`\`\`
+const client = axios.create();
+client.interceptors.request.use((config) => {
+  config.headers = config.headers ?? {};
+  config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+```
 
 ---
 
 ## Python
 
-### 📦 Dependencies
+### httpx client header
+```python
+import httpx
 
-| Approach | Library | Installation | Use Case |
-|----------|---------|--------------|----------|
-| **Company Auth SDK** ⭐ | `company-auth-sdk` | `pip install company-auth-sdk` | Official company SDK |
-
-### Company Auth SDK (Recommended)
-
-\`\`\`python
-# Install: pip install company-auth-sdk
-from company_auth import CompanyAuth
-
-auth = CompanyAuth(
-    client_id=os.getenv('COMPANY_CLIENT_ID'),
-    client_secret=os.getenv('COMPANY_CLIENT_SECRET'),
-    redirect_uri='https://app.example.com/callback'
-)
-
-# Login flow
-def login(email: str):
-    auth_url = auth.get_authorization_url(
-        scope=['profile', 'email'],
-        state=generate_state()
-    )
-    return {'redirect_url': auth_url}
-
-# Callback handler
-async def handle_callback(code: str):
-    tokens = await auth.exchange_code_for_tokens(code)
-    user = await auth.get_user_info(tokens['access_token'])
-    return {'user': user, 'tokens': tokens}
-\`\`\`
-
----
-
-## Best Practices
-
-✅ **DO**:
-- Store tokens securely (httpOnly cookies)
-- Validate state parameter (CSRF protection)
-- Refresh tokens before expiry
-- Log authentication events
-
-❌ **DON'T**:
-- Store tokens in localStorage (XSS risk)
-- Expose client secret in frontend
-- Skip token validation
+client = httpx.Client(headers={"Authorization": f"Bearer {token}"})
+resp = client.get(url)
 ```
 
-### Step 2: Register in config.json
+### requests session header
+```python
+import requests
 
-Add to `.ai-iap-custom/config.json`:
-
-```json
-{
-  "customFunctions": {
-    "custom-auth-flow": {
-      "title": "Company SSO Authentication Flow",
-      "file": "custom-auth-flow",
-      "category": "Authentication",
-      "languages": ["typescript", "python", "java", "csharp"],
-      "description": "Authenticate with company SSO service",
-      "tags": ["auth", "sso", "company-specific"]
-    },
-    "custom-logging": {
-      "title": "Company Logging Service",
-      "file": "custom-logging",
-      "category": "Observability",
-      "languages": ["typescript", "python"],
-      "description": "Send logs to company DataDog instance",
-      "tags": ["logging", "observability"]
-    }
-  }
-}
+session = requests.Session()
+session.headers["Authorization"] = f"Bearer {token}"
+resp = session.get(url)
 ```
 
-### Step 3: Update Custom INDEX
+---
 
-Create `.ai-iap-custom/functions/INDEX.md`:
+## C#
 
-```markdown
-# Custom Functions Index
+### HttpClient default header
+```csharp
+using System.Net.Http.Headers;
 
-Company-specific implementation patterns.
-
-## Available Custom Functions
-
-| Function | Description | Languages | File |
-|----------|-------------|-----------|------|
-| **Company SSO Auth** | Company SSO authentication flow | TypeScript, Python, Java, C# | [custom-auth-flow.md](custom-auth-flow.md) |
-| **Company Logging** | DataDog logging integration | TypeScript, Python | [custom-logging.md](custom-logging.md) |
-| **Company Cache** | Redis cache patterns | All 8 | [custom-cache.md](custom-cache.md) |
-
-## How to Use
-
-1. Check this INDEX for company-specific patterns
-2. Use core functions (`.ai-iap/functions/`) for generic patterns
-3. Open relevant custom function file
-4. Copy implementation with company credentials handling
+httpClient.DefaultRequestHeaders.Authorization =
+    new AuthenticationHeaderValue("Bearer", token);
+```
 ```
 
-### Step 4: Run Setup
+### Function File Structure Rules
 
-The setup script will automatically merge your custom functions with core functions.
-
-### Function File Structure
-
-All function files (core and custom) should follow this structure:
-
-```markdown
----
-title: [Pattern Name]
-category: [Category]
-difficulty: [beginner|intermediate|advanced]
-languages: [list of languages]
-tags: [relevant, tags]
-updated: YYYY-MM-DD
----
-
-# [Pattern Name]
-
-> **Purpose**: Brief description
-> **When to use**: Use case description
-
----
-
-## [Language 1]
-
-### 📦 Dependencies
-
-| Approach | Library | Installation | Use Case |
-|----------|---------|--------------|----------|
-| **Approach 1** ⭐ | `library` | `install command` | When to use |
-
-### Code Implementation
-
-\`\`\`language
-// 5-20 lines of code
-\`\`\`
-
----
-
-## Best Practices
-
-✅ **DO**: [list]
-❌ **DON'T**: [list]
-```
+- Start from `.ai-iap/functions/_TEMPLATE.md`
+- Put all metadata in YAML frontmatter
+- After the YAML header: **code examples only**
+- Keep examples short and copy-paste ready
 
 ---
 
