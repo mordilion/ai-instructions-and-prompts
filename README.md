@@ -19,6 +19,7 @@ Copilot, Windsurf, Aider, Google AI Studio, Amazon Q, Tabnine, Cody, and Continu
 - 🏗️ **Structure Templates** – Clean Architecture, MVVM, MVI, Vertical Slices, Feature-First, DDD, Modular
 - 🔒 **Security Rules** – OWASP Top 10 coverage for all languages (token-optimized)
 - 🔄 **Process Guides** – CI/CD, Testing, Logging, Docker, Authentication, Migrations, API Documentation (all languages)
+- 🎯 **Function Patterns** – 5+ common patterns (error handling, async, validation, DB queries, HTTP) across all 8 languages – reduces AI guessing
 - 🎨 **Extension System** – Add company standards, override rules, custom processes (update-safe)
 - ⚡ **Interactive Setup** – Wizard guides you through configuration
 - ✅ **Quality Verified** – 95%+ compliant, understandability-first (same result across all AIs)

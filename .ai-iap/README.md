@@ -354,6 +354,13 @@ For supported frameworks, choose how you want to organize your code:
 │   ├── swift/                  # Swift processes (10 files)
 │   ├── php/                    # PHP processes (10 files)
 │   └── dart/                   # Dart processes (7 files: frontend/mobile focus)
+├── functions/                  # Cross-language implementation patterns (NEW)
+│   ├── INDEX.md                # Quick reference for all function patterns
+│   ├── error-handling.md       # Exception handling across all 8 languages
+│   ├── async-operations.md     # Async/await patterns for all languages
+│   ├── input-validation.md     # Validation & sanitization (all languages)
+│   ├── database-query.md       # Safe DB queries, prevent SQL injection
+│   └── http-requests.md        # HTTP client patterns with retry logic
 ├── config.json                 # Tool & language definitions
 ├── setup.ps1                   # Windows setup script
 ├── setup.sh                    # macOS/Linux setup script
@@ -418,6 +425,53 @@ In addition to coding rules, this system includes **step-by-step workflow guides
 8. **DRY Principle**: Process files reference general documentation standards instead of duplicating content
 
 > **Design Philosophy**: Files may exceed token guidelines when framework complexity requires it. All lengths are justified by the need for clear, unambiguous instructions that produce consistent results across different AI models.
+
+---
+
+## 🎯 Function Patterns (NEW)
+
+In addition to rules and processes, the system now includes **cross-language implementation patterns** that provide exact code examples for common tasks. This **reduces AI guessing** and ensures consistent, secure implementations.
+
+### What Are Functions?
+
+Functions are **5-20 line code patterns** for common coding tasks, shown **across all 8 languages** in a single file. Instead of letting the AI guess how to implement error handling or database queries, you reference the exact pattern.
+
+### Available Functions
+
+| Function | Purpose | Languages | File |
+|----------|---------|-----------|------|
+| **Error Handling** | Exception handling, custom errors, error propagation | All 8 | [error-handling.md](functions/error-handling.md) |
+| **Async Operations** | Async/await, promises, parallel execution, timeouts | All 8 | [async-operations.md](functions/async-operations.md) |
+| **Input Validation** | Data validation, sanitization, type checking | All 8 | [input-validation.md](functions/input-validation.md) |
+| **Database Queries** | Safe queries, parameterization, SQL injection prevention | All 8 | [database-query.md](functions/database-query.md) |
+| **HTTP Requests** | API calls, retry logic, timeout handling | All 8 | [http-requests.md](functions/http-requests.md) |
+
+**All functions cover**: TypeScript, Python, Java, C#, PHP, Kotlin, Swift, Dart
+
+### How to Use
+
+1. **Check the INDEX first**: Open [functions/INDEX.md](functions/INDEX.md) to find the pattern you need
+2. **Open the function file**: Each file shows implementations for all 8 languages side-by-side
+3. **Copy the exact pattern**: Use the language-specific implementation for your project
+4. **Stop AI guessing**: Precise patterns = consistent code = fewer bugs
+
+### Benefits
+
+✅ **Consistency**: Same pattern across all your projects
+✅ **Security**: Validated, safe implementations (prevent SQL injection, XSS, etc.)
+✅ **Token Efficiency**: AI doesn't waste tokens guessing, uses proven pattern
+✅ **Cross-Language**: Easy to compare implementations when switching languages
+✅ **Reduced Errors**: Less guessing = fewer bugs
+
+### Functions vs Processes vs Rules
+
+| Aspect | Rules | Processes | Functions |
+|--------|-------|-----------|-----------|
+| **What** | Principles & standards | Step-by-step workflow | Exact code patterns |
+| **Size** | 1-2 pages | 5-15 pages | 5-20 lines of code |
+| **Scope** | High-level guidelines | Complete implementation | Single coding task |
+| **Example** | "Handle errors gracefully" | "Set up CI/CD pipeline" | "try/catch with custom errors" |
+| **Organization** | One file per language | One file per language | All languages in one file |
 
 ### Selecting Documentation Standards
 
