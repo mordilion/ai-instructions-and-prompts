@@ -116,3 +116,108 @@ const handleSubmit = (e) => {
 - **Lazy Loading**: `React.lazy()` for code splitting.
 - **Key Prop**: Always use unique, stable keys in lists.
 
+## 7. Testing Patterns
+
+> **ALWAYS**: Test user behavior, not implementation details  
+> **ALWAYS**: Use React Testing Library (NOT Enzyme)  
+> **ALWAYS**: Query by role/label/text, NOT by test IDs or classes  
+> **NEVER**: Test component internals (state, props, methods)  
+> **NEVER**: Shallow render (use full render)
+
+**Framework**: React Testing Library + Jest
+
+```jsx
+// ✅ Good - Test behavior
+test('submits form with user data', async () => {
+  render(<UserForm onSubmit={mockSubmit} />);
+  
+  await userEvent.type(screen.getByLabelText('Name'), 'John');
+  await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+  
+  expect(mockSubmit).toHaveBeenCalledWith({ name: 'John' });
+});
+
+// ❌ Bad - Test implementation
+test('updates state on input change', () => {
+  const wrapper = shallow(<UserForm />);
+  wrapper.find('input').simulate('change', { target: { value: 'John' } });
+  expect(wrapper.state('name')).toBe('John'); // Testing internals!
+});
+```
+
+**Query Priority**:
+1. `getByRole` - Accessibility-focused ⭐
+2. `getByLabelText` - Form elements
+3. `getByText` - Non-interactive content
+4. `getByTestId` - Last resort only
+
+**Async Testing**:
+```jsx
+// Wait for element to appear
+await waitFor(() => {
+  expect(screen.getByText('Success')).toBeInTheDocument();
+});
+
+// Wait for element to disappear
+await waitForElementToBeRemoved(() => screen.queryByText('Loading...'));
+```
+
+## 8. Logging Patterns
+
+> **ALWAYS**: Use structured logging in production  
+> **ALWAYS**: Include context (userId, requestId)  
+> **NEVER**: Log sensitive data (passwords, tokens, PII)  
+> **NEVER**: Use console.log in production code
+
+**Development**:
+```jsx
+// ✅ Good - Structured with context
+console.info('[UserList] Fetching users', { count: users.length, timestamp: Date.now() });
+console.error('[UserList] Failed to fetch', { error: err.message, userId });
+
+// ❌ Bad - Unstructured
+console.log('fetching users');
+console.log(err); // Raw error object
+```
+
+**Production** (use logging library):
+```jsx
+import logger from './logger'; // winston, pino, etc.
+
+// ✅ Good
+logger.info('user.fetch.success', { userId, count: users.length });
+logger.error('user.fetch.failure', { userId, error: err.message, stack: err.stack });
+
+// ❌ Bad - console.log in production
+console.log('User fetched'); // Remove before deploy
+```
+
+**Error Boundaries**:
+```jsx
+class ErrorBoundary extends React.Component {
+  componentDidCatch(error, errorInfo) {
+    // ✅ Log to monitoring service
+    logger.error('react.error.boundary', {
+      error: error.message,
+      componentStack: errorInfo.componentStack,
+      timestamp: Date.now()
+    });
+  }
+}
+```
+
+**Performance Logging**:
+```jsx
+// ✅ Good - Log slow renders in development
+useEffect(() => {
+  if (process.env.NODE_ENV === 'development') {
+    const start = performance.now();
+    return () => {
+      const duration = performance.now() - start;
+      if (duration > 16) { // 60fps threshold
+        logger.warn('component.slow.render', { component: 'UserList', duration });
+      }
+    };
+  }
+}, []);
+```
