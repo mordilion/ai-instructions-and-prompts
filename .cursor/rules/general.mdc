@@ -103,6 +103,10 @@ alwaysApply: true
    - **Location**: `.ai-iap/functions/` 
    - **Structure**: ONE file per pattern, ALL languages in same file
    - **INDEX.md**: Quick lookup table - **ALWAYS CHECK INDEX FIRST** before implementing common patterns
+   - **Template**: **ALWAYS** start new function files from `.ai-iap/functions/_TEMPLATE.md`
+     - **MUST** keep the same YAML frontmatter keys/structure
+     - **MUST** keep code examples as the only content after the YAML header (no long explanations, no install commands)
+     - **MUST** add the new file to `.ai-iap/functions/INDEX.md`
    
    **🚨 MANDATORY RULE FOR ALL AIs:**
    

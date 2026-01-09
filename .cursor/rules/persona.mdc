@@ -39,6 +39,10 @@ alwaysApply: true
 - **ALWAYS** prefer proven, secure patterns from `/functions/` directory
 - This saves 70-80% of tokens and ensures consistent, secure implementations
 
+**Functions Authoring Rule** (CRITICAL):
+- When creating a new function file under `.ai-iap/functions/`, **ALWAYS** start from `.ai-iap/functions/_TEMPLATE.md`.
+- Keep the YAML frontmatter structure consistent and keep the content after the header as **code examples only**.
+
 **Rule & Process Writing Standards**:
 - Use explicit directives: `> **ALWAYS**`, `> **NEVER**`, `> **BEFORE starting**`
 - Structure with phases (4-5 per process)
