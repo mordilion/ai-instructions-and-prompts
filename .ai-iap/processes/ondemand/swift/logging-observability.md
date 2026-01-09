@@ -23,6 +23,15 @@ CRITICAL REQUIREMENTS:
 - Integrate crash reporting (Sentry, Crashlytics)
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+1. Read PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, LOGGING-SETUP.md if they exist
+
+Use this to continue from where work stopped. If no docs: Start fresh.
+
+========================================
 PHASE 1 - STRUCTURED LOGGING
 ========================================
 
@@ -181,14 +190,22 @@ BEST PRACTICES
 - Review logs regularly
 
 ========================================
+DOCUMENTATION
+========================================
+
+Create/update: PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, LOGGING-SETUP.md
+
+========================================
 EXECUTION
 ========================================
 
-START: Implement logging (Phase 1)
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Implement logging (Phase 1)
 CONTINUE: Add crash reporting (Phase 2)
 CONTINUE: Add performance monitoring (Phase 3)
 OPTIONAL: Add error tracking for server (Phase 4)
-REMEMBER: No sensitive data, use os.Logger
+FINISH: Update all documentation files
+REMEMBER: No sensitive data, use os.Logger, document for catch-up
 ```
 
 ---

@@ -23,6 +23,15 @@ CRITICAL REQUIREMENTS:
 - Integrate monitoring (Micrometer, Spring Boot Actuator)
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+1. Read PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, LOGGING-SETUP.md if they exist
+
+Use this to continue from where work stopped. If no docs: Start fresh.
+
+========================================
 PHASE 1 - STRUCTURED LOGGING
 ========================================
 
@@ -180,14 +189,22 @@ BEST PRACTICES
 - Review logs regularly
 
 ========================================
+DOCUMENTATION
+========================================
+
+Create/update: PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, LOGGING-SETUP.md
+
+========================================
 EXECUTION
 ========================================
 
-START: Implement SLF4J + Logback (Phase 1)
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Implement SLF4J + Logback (Phase 1)
 CONTINUE: Add MDC (Phase 2)
 CONTINUE: Add Actuator (Phase 3)
 OPTIONAL: Add custom metrics (Phase 4)
-REMEMBER: Structured logging, no sensitive data
+FINISH: Update all documentation files
+REMEMBER: Structured logging, no sensitive data, document for catch-up
 ```
 
 ---

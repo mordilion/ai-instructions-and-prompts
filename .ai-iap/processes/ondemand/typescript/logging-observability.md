@@ -23,6 +23,15 @@ CRITICAL REQUIREMENTS:
 - Integrate error tracking (Sentry)
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+1. Read PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, LOGGING-SETUP.md if they exist
+
+Use this to continue from where work stopped. If no docs: Start fresh.
+
+========================================
 PHASE 1 - STRUCTURED LOGGING
 ========================================
 
@@ -237,14 +246,22 @@ BEST PRACTICES
 - Review logs regularly
 
 ========================================
+DOCUMENTATION
+========================================
+
+Create/update: PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, LOGGING-SETUP.md
+
+========================================
 EXECUTION
 ========================================
 
-START: Implement winston/pino (Phase 1)
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Implement winston/pino (Phase 1)
 CONTINUE: Add request tracking (Phase 2)
 CONTINUE: Add Sentry (Phase 3)
 OPTIONAL: Add monitoring (Phase 4)
-REMEMBER: JSON format, no sensitive data
+FINISH: Update all documentation files
+REMEMBER: JSON format, no sensitive data, document for catch-up
 ```
 
 ---

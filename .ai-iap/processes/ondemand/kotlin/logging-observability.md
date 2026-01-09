@@ -23,6 +23,15 @@ CRITICAL REQUIREMENTS:
 - Integrate monitoring (Micrometer for Ktor/Spring)
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+1. Read PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, LOGGING-SETUP.md if they exist
+
+Use this to continue from where work stopped. If no docs: Start fresh.
+
+========================================
 PHASE 1 - STRUCTURED LOGGING
 ========================================
 
@@ -163,14 +172,22 @@ BEST PRACTICES
 - Review logs regularly
 
 ========================================
+DOCUMENTATION
+========================================
+
+Create/update: PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, LOGGING-SETUP.md
+
+========================================
 EXECUTION
 ========================================
 
-START: Implement kotlin-logging (Phase 1)
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Implement kotlin-logging (Phase 1)
 CONTINUE: Add MDC (Phase 2)
 CONTINUE: Add Micrometer (Phase 3)
 OPTIONAL: Add custom metrics (Phase 4)
-REMEMBER: Lazy logging, no sensitive data
+FINISH: Update all documentation files
+REMEMBER: Lazy logging, no sensitive data, document for catch-up
 ```
 
 ---

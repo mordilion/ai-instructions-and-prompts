@@ -23,6 +23,15 @@ CRITICAL REQUIREMENTS:
 - Integrate crash reporting for mobile apps
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+1. Read PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, LOGGING-SETUP.md if they exist
+
+Use this to continue from where work stopped. If no docs: Start fresh.
+
+========================================
 PHASE 1 - STRUCTURED LOGGING
 ========================================
 
@@ -161,14 +170,22 @@ BEST PRACTICES
 - Review logs regularly
 
 ========================================
+DOCUMENTATION
+========================================
+
+Create/update: PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, LOGGING-SETUP.md
+
+========================================
 EXECUTION
 ========================================
 
-START: Implement structured logging (Phase 1)
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Implement structured logging (Phase 1)
 CONTINUE: Add crash reporting (Phase 2)
 CONTINUE: Add monitoring (Phase 3)
 OPTIONAL: Add log aggregation (Phase 4)
-REMEMBER: Never log sensitive data, use structured format
+FINISH: Update all documentation files
+REMEMBER: Never log sensitive data, use structured format, document for catch-up
 ```
 
 ---
