@@ -380,6 +380,7 @@ const response = await fetch(url, {
 ```
 
 ### axios interceptor
+
 ```typescript
 import axios from 'axios';
 
@@ -396,6 +397,7 @@ client.interceptors.request.use((config) => {
 ## Python
 
 ### httpx client header
+
 ```python
 import httpx
 
@@ -404,6 +406,7 @@ resp = client.get(url)
 ```
 
 ### requests session header
+
 ```python
 import requests
 
@@ -414,15 +417,15 @@ resp = session.get(url)
 
 ---
 
-## C#
+## C\#
 
 ### HttpClient default header
+
 ```csharp
 using System.Net.Http.Headers;
 
 httpClient.DefaultRequestHeaders.Authorization =
     new AuthenticationHeaderValue("Bearer", token);
-```
 ```
 
 ### Function File Structure Rules
