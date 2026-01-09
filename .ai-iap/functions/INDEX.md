@@ -36,6 +36,9 @@
 | **Logging** | Structured logs, correlation IDs, redaction | All 8 | When adding observability and debugging production issues | [logging.md](logging.md) |
 | **Caching** | TTL caches, invalidation, distributed caching | All 8 | When reducing load and speeding up hot reads | [caching.md](caching.md) |
 | **Config & Secrets** | Env/config loading, fail-fast validation, redaction | All 8 | When loading runtime configuration safely | [config-secrets.md](config-secrets.md) |
+| **Auth & Authorization** | JWT/session auth, RBAC/policy checks | All 8 | When protecting endpoints and enforcing permissions | [auth-authorization.md](auth-authorization.md) |
+| **Rate Limiting** | Throttling, 429 handling, abuse protection | All 8 | When protecting public endpoints and auth flows | [rate-limiting.md](rate-limiting.md) |
+| **Webhooks** | Signature verification, idempotency basics | All 8 | When receiving third-party events securely | [webhooks.md](webhooks.md) |
 
 ---
 
@@ -123,5 +126,5 @@ See **CUSTOMIZATION.md** for instructions on adding your own function patterns.
 ---
 
 **Last Updated**: 2026-01-09
-**Total Functions**: 8
+**Total Functions**: 11
 **Languages Covered**: 8

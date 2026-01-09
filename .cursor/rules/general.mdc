@@ -34,7 +34,7 @@ alwaysApply: true
 - `functions/` - Cross-language implementation patterns (5-20 lines each, reduces AI guessing)
   - INDEX.md - Quick reference for all functions
   - One file per pattern, all 8 languages in same file for comparison
-  - Examples: error-handling, async-operations, input-validation, database-query, http-requests, logging, caching, config-secrets
+  - Examples: error-handling, async-operations, input-validation, database-query, http-requests, logging, caching, config-secrets, auth-authorization, rate-limiting, webhooks
 - `setup.sh` / `setup.ps1` - Interactive setup scripts
 - `config.json` - Metadata for all languages, frameworks, structures, and processes
 
