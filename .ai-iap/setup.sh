@@ -1018,29 +1018,76 @@ get_skill_description() {
     local structure="$4"
     local process="$5"
     
-    # Generate appropriate description based on what we're documenting
+    # Generate specific, action-oriented descriptions per Claude's documentation
+    # Format: What it covers. Use when [concrete triggers/actions].
+    
     if [[ -n "$process" ]]; then
         local proc_name
         proc_name=$(get_process_name "$lang" "$process")
-        echo "$proc_name process for $lang projects. Use when ${proc_name,,}."
+        
+        # Generate process-specific descriptions
+        case "$process" in
+            *database-migrations*) echo "Database schema migration implementation using ORMs and version control. Use when setting up migrations, creating schema changes, or working with database versioning." ;;
+            *test-implementation*) echo "Testing framework setup and test writing patterns for $lang. Use when implementing unit tests, integration tests, or setting up test infrastructure." ;;
+            *ci-cd*) echo "CI/CD pipeline configuration with GitHub Actions for $lang projects. Use when setting up workflows, configuring builds, or implementing deployment automation." ;;
+            *docker*) echo "Docker containerization for $lang applications. Use when creating Dockerfiles, docker-compose configurations, or containerizing applications." ;;
+            *logging*) echo "Structured logging and observability implementation. Use when adding logging, setting up monitoring, or implementing error tracking." ;;
+            *security-scanning*) echo "Security scanning and vulnerability detection. Use when implementing SAST/DAST, dependency scanning, or security auditing." ;;
+            *auth*) echo "Authentication and authorization implementation. Use when adding JWT, OAuth, session management, or RBAC systems." ;;
+            *api-doc*) echo "API documentation with OpenAPI/Swagger. Use when documenting REST endpoints, generating API specs, or creating interactive API documentation." ;;
+            *) echo "$proc_name implementation for $lang. Use when working on ${proc_name,,} tasks or setup." ;;
+        esac
     elif [[ -n "$structure" ]]; then
-        echo "Project structure guidelines for $framework with $structure architecture. Use when setting up or organizing $lang projects."
+        local struct_name
+        struct_name=$(basename "$structure" | sed 's/-/ /g')
+        
+        # Generate structure-specific descriptions
+        case "$structure" in
+            *feature*) echo "Feature-First architecture pattern for $framework. Use when organizing code by features, setting up new features, or discussing project structure with feature modules." ;;
+            *layer*) echo "Layer-First (N-tier) architecture for $framework. Use when organizing by technical layers, separating presentation/business/data layers, or implementing layered architecture." ;;
+            *clean*) echo "Clean Architecture implementation for $framework. Use when setting up domain-driven design, organizing by use cases, or implementing clean architecture principles." ;;
+            *mvvm*) echo "MVVM (Model-View-ViewModel) pattern for $framework. Use when creating ViewModels, binding views, or implementing MVVM architecture." ;;
+            *mvi*) echo "MVI (Model-View-Intent) pattern for $framework. Use when implementing unidirectional data flow, handling user intents, or setting up state management." ;;
+            *vertical*) echo "Vertical Slice architecture for $framework. Use when organizing by features as vertical slices, minimizing coupling between features, or implementing vertical architecture." ;;
+            *modular*) echo "Modular Monolith architecture for $framework. Use when creating independent modules, setting up module boundaries, or refactoring to modular structure." ;;
+            *) echo "$struct_name architecture for $framework. Use when setting up project structure, organizing files, or discussing architecture patterns." ;;
+        esac
     elif [[ -n "$framework" ]]; then
         local fw_name
         fw_name=$(get_framework_name "$lang" "$framework")
-        echo "$fw_name framework standards and best practices for $lang. Use when working with $fw_name."
+        
+        # Generate framework-specific descriptions
+        case "$framework" in
+            react) echo "React framework development. Use when working with React components, hooks, JSX, state management, or React-specific patterns." ;;
+            vue) echo "Vue.js framework development. Use when working with Vue components, Composition API, Vue directives, or Vue-specific patterns." ;;
+            angular) echo "Angular framework development. Use when working with Angular components, services, decorators, RxJS, or Angular-specific patterns." ;;
+            next|nextjs) echo "Next.js framework for React. Use when working with server-side rendering, API routes, app directory, or Next.js-specific features." ;;
+            nuxt|nuxtjs) echo "Nuxt.js framework for Vue. Use when working with SSR, auto-routing, Nuxt modules, or Nuxt-specific features." ;;
+            nest|nestjs) echo "NestJS framework for Node.js. Use when working with NestJS decorators, modules, providers, or building backend APIs with NestJS." ;;
+            express|expressjs) echo "Express.js framework for Node.js. Use when building REST APIs, middleware, routing, or Express-based backends." ;;
+            django) echo "Django web framework for Python. Use when working with Django models, views, ORM, admin, or Django-specific patterns." ;;
+            fastapi) echo "FastAPI framework for Python. Use when building async APIs, Pydantic models, auto-generated docs, or FastAPI-specific features." ;;
+            flask) echo "Flask framework for Python. Use when building lightweight APIs, Flask routes, blueprints, or Flask-based applications." ;;
+            spring*) echo "Spring Boot framework for Java. Use when working with Spring beans, annotations, JPA, REST controllers, or Spring-specific patterns." ;;
+            laravel) echo "Laravel framework for PHP. Use when working with Eloquent ORM, Blade templates, artisan commands, or Laravel-specific features." ;;
+            flutter) echo "Flutter framework for Dart. Use when creating Flutter widgets, state management, animations, or cross-platform mobile apps." ;;
+            swiftui) echo "SwiftUI framework for iOS. Use when building declarative UI, SwiftUI views, property wrappers, or iOS/macOS applications." ;;
+            uikit) echo "UIKit framework for iOS. Use when working with view controllers, UIViews, storyboards, or UIKit-based iOS applications." ;;
+            jetpack*) echo "Jetpack Compose for Android. Use when building declarative UI, composables, state management, or modern Android applications." ;;
+            *) echo "$fw_name framework for $lang. Use when working with $fw_name-specific features, patterns, or implementation details." ;;
+        esac
     else
         # For general rules and documentation
         local filename
         filename=$(basename "$file")
         case "$filename" in
-            code-style*) echo "Code style and formatting standards for $lang. Use when writing or reviewing code." ;;
-            security*) echo "Security best practices for $lang projects. Use when implementing authentication, handling data, or reviewing security." ;;
-            testing*) echo "Testing standards and practices for $lang. Use when writing or reviewing tests." ;;
-            documentation-api*) echo "API documentation standards using OpenAPI/Swagger. Use when documenting REST APIs or working with API specs." ;;
-            documentation-code*) echo "Code documentation and commenting standards. Use when writing docstrings, comments, or documentation." ;;
-            documentation-project*) echo "Project documentation standards (README, CHANGELOG, etc.). Use when creating or updating project documentation." ;;
-            *) echo "$lang development standards. Use when working with $lang code." ;;
+            code-style*) echo "$lang code style, naming conventions, and formatting rules. Use when writing new code, reviewing code, or refactoring $lang code." ;;
+            security*) echo "$lang security best practices and OWASP guidelines. Use when implementing authentication, handling sensitive data, validating input, or conducting security reviews." ;;
+            testing*) echo "$lang testing strategies, test patterns, and assertion guidelines. Use when writing tests, setting up test infrastructure, or reviewing test coverage." ;;
+            documentation-api*) echo "API documentation standards with OpenAPI/Swagger specifications. Use when documenting REST endpoints, generating API schemas, or creating API reference documentation." ;;
+            documentation-code*) echo "Code documentation with comments, docstrings, and inline documentation. Use when adding code comments, writing function documentation, or improving code readability." ;;
+            documentation-project*) echo "Project-level documentation including README, CHANGELOG, and contribution guides. Use when creating project documentation, writing setup instructions, or maintaining project files." ;;
+            *) echo "$lang development standards and best practices. Use when working with $lang projects or making architectural decisions." ;;
         esac
     fi
 }

@@ -1055,29 +1055,77 @@ function Get-SkillDescription {
         [PSCustomObject]$Config
     )
     
-    # Generate appropriate description based on what we're documenting
+    # Generate specific, action-oriented descriptions per Claude's documentation
+    # Format: What it covers. Use when [concrete triggers/actions].
+    
     if ($Process) {
         $procConfig = $Config.languages.$Lang.processes.$Process
-        return "$($procConfig.name) process for $Lang projects. Use when $($procConfig.name.ToLower())."
+        $procName = $procConfig.name
+        
+        # Generate process-specific descriptions
+        switch -Regex ($Process) {
+            "database-migrations" { return "Database schema migration implementation using ORMs and version control. Use when setting up migrations, creating schema changes, or working with database versioning." }
+            "test-implementation" { return "Testing framework setup and test writing patterns for $Lang. Use when implementing unit tests, integration tests, or setting up test infrastructure." }
+            "ci-cd" { return "CI/CD pipeline configuration with GitHub Actions for $Lang projects. Use when setting up workflows, configuring builds, or implementing deployment automation." }
+            "docker" { return "Docker containerization for $Lang applications. Use when creating Dockerfiles, docker-compose configurations, or containerizing applications." }
+            "logging" { return "Structured logging and observability implementation. Use when adding logging, setting up monitoring, or implementing error tracking." }
+            "security-scanning" { return "Security scanning and vulnerability detection. Use when implementing SAST/DAST, dependency scanning, or security auditing." }
+            "auth" { return "Authentication and authorization implementation. Use when adding JWT, OAuth, session management, or RBAC systems." }
+            "api-doc" { return "API documentation with OpenAPI/Swagger. Use when documenting REST endpoints, generating API specs, or creating interactive API documentation." }
+            default { return "$procName implementation for $Lang. Use when working on $($procName.ToLower()) tasks or setup." }
+        }
     }
     elseif ($Structure) {
-        return "Project structure guidelines for $Framework with $Structure architecture. Use when setting up or organizing $Lang projects."
+        $structName = $Structure -replace ".*/", "" -replace "-", " "
+        
+        # Generate structure-specific descriptions
+        switch -Regex ($Structure) {
+            "feature" { return "Feature-First architecture pattern for $Framework. Use when organizing code by features, setting up new features, or discussing project structure with feature modules." }
+            "layer" { return "Layer-First (N-tier) architecture for $Framework. Use when organizing by technical layers, separating presentation/business/data layers, or implementing layered architecture." }
+            "clean" { return "Clean Architecture implementation for $Framework. Use when setting up domain-driven design, organizing by use cases, or implementing clean architecture principles." }
+            "mvvm" { return "MVVM (Model-View-ViewModel) pattern for $Framework. Use when creating ViewModels, binding views, or implementing MVVM architecture." }
+            "mvi" { return "MVI (Model-View-Intent) pattern for $Framework. Use when implementing unidirectional data flow, handling user intents, or setting up state management." }
+            "vertical" { return "Vertical Slice architecture for $Framework. Use when organizing by features as vertical slices, minimizing coupling between features, or implementing vertical architecture." }
+            "modular" { return "Modular Monolith architecture for $Framework. Use when creating independent modules, setting up module boundaries, or refactoring to modular structure." }
+            default { return "$structName architecture for $Framework. Use when setting up project structure, organizing files, or discussing architecture patterns." }
+        }
     }
     elseif ($Framework) {
         $fwConfig = $Config.languages.$Lang.frameworks.$Framework
-        return "$($fwConfig.name) framework standards and best practices for $Lang. Use when working with $($fwConfig.name)."
+        $fwName = $fwConfig.name
+        
+        # Generate framework-specific descriptions
+        switch -Regex ($Framework) {
+            "react" { return "React framework development. Use when working with React components, hooks, JSX, state management, or React-specific patterns." }
+            "vue" { return "Vue.js framework development. Use when working with Vue components, Composition API, Vue directives, or Vue-specific patterns." }
+            "angular" { return "Angular framework development. Use when working with Angular components, services, decorators, RxJS, or Angular-specific patterns." }
+            "next" { return "Next.js framework for React. Use when working with server-side rendering, API routes, app directory, or Next.js-specific features." }
+            "nuxt" { return "Nuxt.js framework for Vue. Use when working with SSR, auto-routing, Nuxt modules, or Nuxt-specific features." }
+            "nest" { return "NestJS framework for Node.js. Use when working with NestJS decorators, modules, providers, or building backend APIs with NestJS." }
+            "express" { return "Express.js framework for Node.js. Use when building REST APIs, middleware, routing, or Express-based backends." }
+            "django" { return "Django web framework for Python. Use when working with Django models, views, ORM, admin, or Django-specific patterns." }
+            "fastapi" { return "FastAPI framework for Python. Use when building async APIs, Pydantic models, auto-generated docs, or FastAPI-specific features." }
+            "flask" { return "Flask framework for Python. Use when building lightweight APIs, Flask routes, blueprints, or Flask-based applications." }
+            "spring" { return "Spring Boot framework for Java. Use when working with Spring beans, annotations, JPA, REST controllers, or Spring-specific patterns." }
+            "laravel" { return "Laravel framework for PHP. Use when working with Eloquent ORM, Blade templates, artisan commands, or Laravel-specific features." }
+            "flutter" { return "Flutter framework for Dart. Use when creating Flutter widgets, state management, animations, or cross-platform mobile apps." }
+            "swiftui" { return "SwiftUI framework for iOS. Use when building declarative UI, SwiftUI views, property wrappers, or iOS/macOS applications." }
+            "uikit" { return "UIKit framework for iOS. Use when working with view controllers, UIViews, storyboards, or UIKit-based iOS applications." }
+            "jetpack" { return "Jetpack Compose for Android. Use when building declarative UI, composables, state management, or modern Android applications." }
+            default { return "$fwName framework for $Lang. Use when working with $fwName-specific features, patterns, or implementation details." }
+        }
     }
     else {
         # For general rules and documentation
         $fileName = Split-Path -Leaf $File
         switch -Regex ($fileName) {
-            "code-style" { return "Code style and formatting standards for $Lang. Use when writing or reviewing code." }
-            "security" { return "Security best practices for $Lang projects. Use when implementing authentication, handling data, or reviewing security." }
-            "testing" { return "Testing standards and practices for $Lang. Use when writing or reviewing tests." }
-            "documentation-api" { return "API documentation standards using OpenAPI/Swagger. Use when documenting REST APIs or working with API specs." }
-            "documentation-code" { return "Code documentation and commenting standards. Use when writing docstrings, comments, or documentation." }
-            "documentation-project" { return "Project documentation standards (README, CHANGELOG, etc.). Use when creating or updating project documentation." }
-            default { return "$Lang development standards. Use when working with $Lang code." }
+            "code-style" { return "$Lang code style, naming conventions, and formatting rules. Use when writing new code, reviewing code, or refactoring $Lang code." }
+            "security" { return "$Lang security best practices and OWASP guidelines. Use when implementing authentication, handling sensitive data, validating input, or conducting security reviews." }
+            "testing" { return "$Lang testing strategies, test patterns, and assertion guidelines. Use when writing tests, setting up test infrastructure, or reviewing test coverage." }
+            "documentation-api" { return "API documentation standards with OpenAPI/Swagger specifications. Use when documenting REST endpoints, generating API schemas, or creating API reference documentation." }
+            "documentation-code" { return "Code documentation with comments, docstrings, and inline documentation. Use when adding code comments, writing function documentation, or improving code readability." }
+            "documentation-project" { return "Project-level documentation including README, CHANGELOG, and contribution guides. Use when creating project documentation, writing setup instructions, or maintaining project files." }
+            default { return "$Lang development standards and best practices. Use when working with $Lang projects or making architectural decisions." }
         }
     }
 }
