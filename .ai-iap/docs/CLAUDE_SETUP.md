@@ -48,33 +48,39 @@ This setup routine generates both components automatically.
 
 ---
 
-### 2. .claude/skills/ (Context-Triggered Skills)
+### 2. .claude/rules/ (Modular Rules)
 
-**Location**: `.claude/skills/{skill-name}/SKILL.md`
+**Location**: `.claude/rules/{category}/{framework}.md`
 
-**Purpose**: Skills that Claude **automatically activates** when relevant to the conversation
+**Purpose**: Modular, topic-specific instructions that are **automatically loaded** by Claude
 
 **Structure**:
 ```
-.claude/skills/
-├── typescript-framework-react/
-│   └── SKILL.md
-├── typescript-framework-react-feature/
-│   └── SKILL.md
-└── typescript-process-database-migrations/
-    └── SKILL.md
+.claude/rules/
+├── frontend/
+│   ├── react.md
+│   ├── vue.md
+│   └── angular.md
+├── backend/
+│   ├── express.md
+│   ├── django.md
+│   └── spring.md
+├── mobile/
+│   └── flutter.md
+└── processes/
+    ├── typescript-database-migrations.md
+    └── python-testing.md
 ```
 
-**SKILL.md Format**:
+**Rule File Format** (with optional path-specific frontmatter):
 ```markdown
 ---
-name: typescript-framework-react
-description: React framework development. Use when working with React components, hooks, or React-specific patterns.
+paths: **/*.{jsx,tsx}
 ---
 
 # React Framework Standards
 
-...skill content...
+...React-specific rules that apply to .jsx and .tsx files...
 ```
 
 ---
@@ -91,16 +97,18 @@ description: React framework development. Use when working with React components
    - Commit message formats
    - General architecture principles
 
-### Skills (.claude/skills/)
+### Rules (.claude/rules/)
 
-1. **Auto-Triggered**: Claude activates skills when context matches
-2. **Token Efficient**: Only loaded when relevant
-3. **Best For**:
+1. **Automatically Loaded**: All `.md` files in `.claude/rules/` are loaded as project memory
+2. **Path-Specific**: Rules with `paths:` frontmatter only apply to matching files
+3. **Modular Organization**: Organized by category (frontend, backend, mobile, processes)
+4. **Best For**:
    - Framework-specific guidelines (React, Vue, Spring Boot)
    - Project structure patterns (Feature-First, Clean Architecture)
    - Process workflows (Database Migrations, CI/CD)
+   - Language-specific conventions for certain file types
 
-**Example**: When you mention "React component", Claude automatically loads `typescript-framework-react` skill.
+**Example**: A rule with `paths: **/*.{jsx,tsx}` only applies when working with React component files.
 
 ---
 
@@ -125,59 +133,58 @@ description: React framework development. Use when working with React components
 
 ### Generated Output
 
-✅ **CLAUDE.md** - Always-on rules (15-30KB typical)
-✅ **.claude/skills/** - Context-triggered skills (5-15 files typical)
+✅ **CLAUDE.md** - Always-on core rules (15-30KB typical)
+✅ **.claude/rules/** - Modular rules organized by category (10-20 files typical)
 
 ---
 
-## Skill Types Generated
+## Rule Types Generated
 
-### 1. Framework Skills
+### 1. Framework Rules
 
-**Pattern**: `{language}-framework-{name}`
+**Location**: `.claude/rules/{category}/{framework}.md`
 
-**Example**: `typescript-framework-react`
+**Example**: `.claude/rules/frontend/react.md`
 
-**Trigger**: When working with specific frameworks
+**Path-Specific**: Rules can target specific file types
 
 ```yaml
 ---
-name: typescript-framework-react
-description: React framework development. Use when working with React components, hooks, or React-specific patterns.
+paths: **/*.{jsx,tsx}
 ---
+
+# React Framework Standards
+
+...React component guidelines...
 ```
 
-### 2. Structure Skills
+### 2. Structure Rules
 
-**Pattern**: `{language}-{framework}-{structure}`
+**Location**: `.claude/rules/{category}/{framework}-{structure}.md`
 
-**Example**: `typescript-react-feature`
+**Example**: `.claude/rules/frontend/react-feature.md`
 
-**Trigger**: When discussing project structure
+**Purpose**: Architectural patterns for specific frameworks
 
 ```yaml
 ---
-name: typescript-react-feature
-description: Feature-First architecture for React projects. Use when organizing React application by features.
+paths: src/**/*.{jsx,tsx}
 ---
+
+# Feature-First Architecture for React
+
+...feature organization guidelines...
 ```
 
-### 3. Process Skills
+### 3. Process Rules
 
-**Pattern**: `{language}-process-{name}`
+**Location**: `.claude/rules/processes/{language}-{process}.md`
 
-**Example**: `typescript-process-database-migrations`
+**Example**: `.claude/rules/processes/typescript-database-migrations.md`
 
-**Trigger**: When implementing specific processes
+**Purpose**: Implementation processes that are used repeatedly
 
-**Note**: Only **permanent processes** (`loadIntoAI: true`) are included as skills. On-demand processes are copied manually when needed.
-
-```yaml
----
-name: typescript-process-database-migrations
-description: Database migration implementation. Use when setting up or working with database schema migrations.
----
-```
+**Note**: Only **permanent processes** (`loadIntoAI: true`) are included as rules. On-demand processes are copied manually when needed.
 
 ---
 

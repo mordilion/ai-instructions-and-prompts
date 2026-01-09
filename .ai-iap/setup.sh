@@ -1011,6 +1011,44 @@ generate_cursor() {
     done
 }
 
+get_framework_category() {
+    local framework="$1"
+    local lang="$2"
+    
+    # Categorize frameworks for .claude/rules/ subdirectories
+    case "$framework" in
+        react|vue|angular|next*|nuxt*|svelte*) echo "frontend" ;;
+        express*|nest*|fastapi|django|flask|spring*|laravel|adonis*) echo "backend" ;;
+        flutter|swiftui|uikit|jetpack*) echo "mobile" ;;
+        *) echo "general" ;;
+    esac
+}
+
+get_framework_path_patterns() {
+    local framework="$1"
+    local lang="$2"
+    
+    # Generate path patterns for YAML frontmatter based on framework
+    case "$framework" in
+        react) echo "**/*.{jsx,tsx}" ;;
+        vue) echo "**/*.vue, **/*.{js,ts}" ;;
+        angular) echo "**/*.{ts,html,scss}" ;;
+        next*) echo "{app,pages,components}/**/*.{jsx,tsx,js,ts}" ;;
+        nuxt*) echo "{pages,components,layouts}/**/*.{vue,js,ts}" ;;
+        nest*) echo "src/**/*.{ts,controller.ts,service.ts,module.ts}" ;;
+        express*) echo "**/*.{js,ts,mjs}" ;;
+        django) echo "**/*.py" ;;
+        fastapi) echo "**/*.py" ;;
+        flask) echo "**/*.py" ;;
+        spring*) echo "**/*.java" ;;
+        laravel) echo "**/*.php" ;;
+        flutter) echo "**/*.dart" ;;
+        swiftui|uikit) echo "**/*.swift" ;;
+        jetpack*) echo "**/*.kt" ;;
+        *) echo "" ;;
+    esac
+}
+
 get_skill_description() {
     local lang="$1"
     local file="$2"
@@ -1148,10 +1186,10 @@ generate_claude() {
     
     print_success "Created CLAUDE.md"
     
-    # Part 2: Generate .claude/skills/ (optional, context-triggered skills)
-    local output_dir="$PROJECT_ROOT/.claude/skills"
+    # Part 2: Generate .claude/rules/ (modular, automatically-loaded rules)
+    local output_dir="$PROJECT_ROOT/.claude/rules"
     
-    print_info "Generating Claude Agent Skills..."
+    print_info "Generating Claude modular rules..."
     
     for lang in "${SELECTED_LANGUAGES[@]}"; do
         # Generate framework files as skills (optional, context-triggered)
@@ -1161,22 +1199,29 @@ generate_claude() {
                 fw_file=$(get_framework_file "$lang" "$fw")
                 content=$(read_instruction_file "$lang" "$fw_file" "true") || continue
                 
-                local skill_name="$lang-framework-$fw"
-                local skill_dir="$output_dir/$skill_name"
-                mkdir -p "$skill_dir"
+                # Organize by category: frontend, backend, mobile
+                local category
+                category=$(get_framework_category "$fw" "$lang")
+                local category_dir="$output_dir/$category"
+                mkdir -p "$category_dir"
                 
-                local output_file="$skill_dir/SKILL.md"
-                local description
-                description=$(get_skill_description "$lang" "" "$fw" "" "")
+                local output_file="$category_dir/$fw.md"
                 
-                {
-                    echo "---"
-                    echo "name: $skill_name"
-                    echo "description: $description"
-                    echo "---"
-                    echo ""
-                    echo "$content"
-                } > "$output_file"
+                # Add YAML frontmatter with path patterns for framework-specific files
+                local path_patterns
+                path_patterns=$(get_framework_path_patterns "$fw" "$lang")
+                
+                if [[ -n "$path_patterns" ]]; then
+                    {
+                        echo "---"
+                        echo "paths: $path_patterns"
+                        echo "---"
+                        echo ""
+                        echo "$content"
+                    } > "$output_file"
+                else
+                    echo "$content" > "$output_file"
+                fi
                 
                 local relative_path="${output_file#"$PROJECT_ROOT/"}"
                 print_success "Created $relative_path"
@@ -1188,22 +1233,25 @@ generate_claude() {
                     local struct_content
                     struct_content=$(read_instruction_file "$lang" "$struct_file" "false" "true") || continue
                     
-                    local struct_skill_name="$lang-$fw-${struct_file//\//-}"
-                    local struct_skill_dir="$output_dir/$struct_skill_name"
-                    mkdir -p "$struct_skill_dir"
+                    local struct_name
+                    struct_name=$(basename "$struct_file")
+                    local struct_output="$category_dir/$fw-$struct_name.md"
                     
-                    local struct_output="$struct_skill_dir/SKILL.md"
-                    local struct_description
-                    struct_description=$(get_skill_description "$lang" "" "$fw" "$struct_file" "")
+                    # Add path patterns for structure-specific rules
+                    local struct_patterns
+                    struct_patterns=$(get_framework_path_patterns "$fw" "$lang")
                     
-                    {
-                        echo "---"
-                        echo "name: $struct_skill_name"
-                        echo "description: $struct_description"
-                        echo "---"
-                        echo ""
-                        echo "$struct_content"
-                    } > "$struct_output"
+                    if [[ -n "$struct_patterns" ]]; then
+                        {
+                            echo "---"
+                            echo "paths: $struct_patterns"
+                            echo "---"
+                            echo ""
+                            echo "$struct_content"
+                        } > "$struct_output"
+                    else
+                        echo "$struct_content" > "$struct_output"
+                    fi
                     
                     local relative_path="${struct_output#"$PROJECT_ROOT/"}"
                     print_success "Created $relative_path"
@@ -1225,22 +1273,15 @@ generate_claude() {
                 
                 content=$(read_instruction_file "$lang" "$proc_file" "false" "false" "true") || continue
                 
-                local skill_name="$lang-process-$proc"
-                local skill_dir="$output_dir/$skill_name"
-                mkdir -p "$skill_dir"
+                # Put processes in a dedicated subdirectory
+                local processes_dir="$output_dir/processes"
+                mkdir -p "$processes_dir"
                 
-                local output_file="$skill_dir/SKILL.md"
-                local description
-                description=$(get_skill_description "$lang" "" "" "" "$proc")
+                local output_file="$processes_dir/$lang-$proc.md"
                 
-                {
-                    echo "---"
-                    echo "name: $skill_name"
-                    echo "description: $description"
-                    echo "---"
-                    echo ""
-                    echo "$content"
-                } > "$output_file"
+                # Process files typically don't need path-specific frontmatter
+                # They apply broadly when working on that type of task
+                echo "$content" > "$output_file"
                 
                 local relative_path="${output_file#"$PROJECT_ROOT/"}"
                 print_success "Created $relative_path"

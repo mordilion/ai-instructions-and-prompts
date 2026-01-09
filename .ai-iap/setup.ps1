@@ -873,6 +873,48 @@ function New-CursorConfig {
     }
 }
 
+function Get-FrameworkCategory {
+    param(
+        [string]$Framework,
+        [string]$Lang
+    )
+    
+    # Categorize frameworks for .claude/rules/ subdirectories
+    switch -Regex ($Framework) {
+        "react|vue|angular|next|nuxt|svelte" { return "frontend" }
+        "express|nest|fastapi|django|flask|spring|laravel|adonis" { return "backend" }
+        "flutter|swiftui|uikit|jetpack" { return "mobile" }
+        default { return "general" }
+    }
+}
+
+function Get-FrameworkPathPatterns {
+    param(
+        [string]$Framework,
+        [string]$Lang
+    )
+    
+    # Generate path patterns for YAML frontmatter based on framework
+    switch -Regex ($Framework) {
+        "react" { return "**/*.{jsx,tsx}" }
+        "vue" { return "**/*.vue, **/*.{js,ts}" }
+        "angular" { return "**/*.{ts,html,scss}" }
+        "next" { return "{app,pages,components}/**/*.{jsx,tsx,js,ts}" }
+        "nuxt" { return "{pages,components,layouts}/**/*.{vue,js,ts}" }
+        "nest" { return "src/**/*.{ts,controller.ts,service.ts,module.ts}" }
+        "express" { return "**/*.{js,ts,mjs}" }
+        "django" { return "**/*.py" }
+        "fastapi" { return "**/*.py" }
+        "flask" { return "**/*.py" }
+        "spring" { return "**/*.java" }
+        "laravel" { return "**/*.php" }
+        "flutter" { return "**/*.dart" }
+        "swiftui|uikit" { return "**/*.swift" }
+        "jetpack" { return "**/*.kt" }
+        default { return $null }
+    }
+}
+
 function New-ClaudeConfig {
     param(
         [PSCustomObject]$Config,
@@ -926,10 +968,10 @@ function New-ClaudeConfig {
     $content | Out-File -FilePath $claudeMdPath -Encoding UTF8 -NoNewline
     Write-SuccessMessage "Created CLAUDE.md"
     
-    # Part 2: Generate .claude/skills/ (optional, context-triggered skills)
-    $outputDir = Join-Path $Script:ProjectRoot ".claude\skills"
+    # Part 2: Generate .claude/rules/ (modular, automatically-loaded rules)
+    $outputDir = Join-Path $Script:ProjectRoot ".claude\rules"
     
-    Write-InfoMessage "Generating Claude Agent Skills..."
+    Write-InfoMessage "Generating Claude modular rules..."
     
     foreach ($lang in $SelectedLanguages) {
         # Generate framework files as skills (optional, context-triggered)
@@ -942,25 +984,30 @@ function New-ClaudeConfig {
                     continue
                 }
                 
-                $skillName = "$lang-framework-$fw"
-                $skillDir = Join-Path $outputDir $skillName
+                # Organize by category: frontend, backend, mobile
+                $category = Get-FrameworkCategory -Framework $fw -Lang $lang
+                $categoryDir = Join-Path $outputDir $category
                 
-                if (-not (Test-Path $skillDir)) {
-                    New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
+                if (-not (Test-Path $categoryDir)) {
+                    New-Item -ItemType Directory -Path $categoryDir -Force | Out-Null
                 }
                 
-                $outputFile = Join-Path $skillDir "SKILL.md"
+                $outputFile = Join-Path $categoryDir "$fw.md"
                 
-                $description = Get-SkillDescription -Lang $lang -Framework $fw -Config $Config
-                $frontmatter = @"
+                # Add YAML frontmatter with path patterns for framework-specific files
+                $pathPatterns = Get-FrameworkPathPatterns -Framework $fw -Lang $lang
+                if ($pathPatterns) {
+                    $frontmatter = @"
 ---
-name: $skillName
-description: $description
+paths: $pathPatterns
 ---
 
 "@
+                    $fullContent = $frontmatter + $content
+                } else {
+                    $fullContent = $content
+                }
                 
-                $fullContent = $frontmatter + $content
                 $fullContent | Out-File -FilePath $outputFile -Encoding UTF8 -NoNewline
                 
                 $relativePath = $outputFile.Replace($Script:ProjectRoot, "").TrimStart("\", "/")
@@ -973,25 +1020,23 @@ description: $description
                     $structContent = Read-InstructionFile -Lang $lang -File $structFile -IsStructure $true
                     
                     if ($null -ne $structContent) {
-                        $structSkillName = "$lang-$fw-$($structFile -replace '/', '-')"
-                        $structSkillDir = Join-Path $outputDir $structSkillName
+                        $structName = ($structFile -split '/')[-1]
+                        $structOutputFile = Join-Path $categoryDir "$fw-$structName.md"
                         
-                        if (-not (Test-Path $structSkillDir)) {
-                            New-Item -ItemType Directory -Path $structSkillDir -Force | Out-Null
-                        }
-                        
-                        $structOutputFile = Join-Path $structSkillDir "SKILL.md"
-                        
-                        $structDescription = Get-SkillDescription -Lang $lang -Framework $fw -Structure $structFile -Config $Config
-                        $structFrontmatter = @"
+                        # Add path patterns for structure-specific rules
+                        $structPatterns = Get-FrameworkPathPatterns -Framework $fw -Lang $lang
+                        if ($structPatterns) {
+                            $structFrontmatter = @"
 ---
-name: $structSkillName
-description: $structDescription
+paths: $structPatterns
 ---
 
 "@
+                            $structFullContent = $structFrontmatter + $structContent
+                        } else {
+                            $structFullContent = $structContent
+                        }
                         
-                        $structFullContent = $structFrontmatter + $structContent
                         $structFullContent | Out-File -FilePath $structOutputFile -Encoding UTF8 -NoNewline
                         
                         $relativePath = $structOutputFile.Replace($Script:ProjectRoot, "").TrimStart("\", "/")
@@ -1001,7 +1046,7 @@ description: $structDescription
             }
         }
         
-        # Generate process files as skills
+        # Generate process files as rules
         if ($SelectedProcesses.ContainsKey($lang)) {
             foreach ($proc in $SelectedProcesses[$lang]) {
                 $procConfig = $Config.languages.$lang.processes.$proc
@@ -1017,26 +1062,18 @@ description: $structDescription
                     continue
                 }
                 
-                $skillName = "$lang-process-$proc"
-                $skillDir = Join-Path $outputDir $skillName
+                # Put processes in a dedicated subdirectory
+                $processesDir = Join-Path $outputDir "processes"
                 
-                if (-not (Test-Path $skillDir)) {
-                    New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
+                if (-not (Test-Path $processesDir)) {
+                    New-Item -ItemType Directory -Path $processesDir -Force | Out-Null
                 }
                 
-                $outputFile = Join-Path $skillDir "SKILL.md"
+                $outputFile = Join-Path $processesDir "$lang-$proc.md"
                 
-                $description = Get-SkillDescription -Lang $lang -Process $proc -Config $Config
-                $frontmatter = @"
----
-name: $skillName
-description: $description
----
-
-"@
-                
-                $fullContent = $frontmatter + $content
-                $fullContent | Out-File -FilePath $outputFile -Encoding UTF8 -NoNewline
+                # Process files typically don't need path-specific frontmatter
+                # They apply broadly when working on that type of task
+                $content | Out-File -FilePath $outputFile -Encoding UTF8 -NoNewline
                 
                 $relativePath = $outputFile.Replace($Script:ProjectRoot, "").TrimStart("\", "/")
                 Write-SuccessMessage "Created $relativePath"
