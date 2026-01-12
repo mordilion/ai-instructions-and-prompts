@@ -545,6 +545,7 @@ When setup runs, your file will be used instead of the core file.
 ### Strategy A: Team Sharing (Recommended)
 
 **Setup**: Commit `.ai-iap-custom/` so your team shares the same:
+
 - rules overrides
 - custom processes
 - custom function patterns
