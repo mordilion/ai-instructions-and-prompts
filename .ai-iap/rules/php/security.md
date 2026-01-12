@@ -1,8 +1,13 @@
 # PHP Security
 
 > **Scope**: PHP-specific security (Laravel, Symfony, WordPress)
-> **Extends**: general/security.md
+> **Extends**: General security rules
 > **Applies to**: *.php files
+
+## 0. Embedded SQL (when SQL appears inside PHP)
+- **ALWAYS**: Use parameterized queries / prepared statements (or a safe ORM). This applies to any SQL you embed in PHP code.
+- **NEVER**: Concatenate or interpolate untrusted input into SQL.
+- **If** you must select dynamic table/column names: use strict allowlists (do not pass user input through).
 
 ## 1. Laravel Security
 

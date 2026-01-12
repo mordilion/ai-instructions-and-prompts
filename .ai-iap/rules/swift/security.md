@@ -1,8 +1,13 @@
 # Swift Security
 
 > **Scope**: Swift-specific security (iOS, macOS, Vapor)
-> **Extends**: general/security.md
+> **Extends**: General security rules
 > **Applies to**: *.swift files
+
+## 0. Embedded SQL (when SQL appears inside Swift)
+- **ALWAYS**: Use parameterized queries / prepared statements (or a safe ORM). This applies to any SQL you embed in Swift code.
+- **NEVER**: Build SQL with string interpolation using untrusted input.
+- **If** you must select dynamic table/column names: use strict allowlists (do not pass user input through).
 
 ## 1. iOS/macOS Security
 

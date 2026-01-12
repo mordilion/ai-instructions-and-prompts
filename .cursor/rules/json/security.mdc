@@ -1,0 +1,21 @@
+---
+alwaysApply: false
+description: JSON - security
+globs: "*.json"
+---
+
+# JSON Security
+
+> **Scope**: JSON security guidance (manifests, tool configs, app config).  
+> **Extends**: General security rules
+
+## 1. Secrets
+- **NEVER**: Store secrets or tokens in JSON committed to git.
+- **Prefer**: Reference secret stores or environment variables.
+
+## 2. Package/dependency risk (where applicable)
+- **ALWAYS**: Be cautious with executable hooks/scripts defined in JSON configs (e.g., build scripts).
+- **Prefer**: Least privilege and explicit allowlists for tooling that executes commands.
+
+Follow the general security rules; the rules above are additive.
+

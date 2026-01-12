@@ -1,8 +1,13 @@
 # Python Security
 
 > **Scope**: Python-specific security (Django, FastAPI, Flask)
-> **Extends**: general/security.md
+> **Extends**: General security rules
 > **Applies to**: *.py files
+
+## 0. Embedded SQL (when SQL appears inside Python)
+- **ALWAYS**: Use parameterized queries / prepared statements (or a safe ORM). This applies to any SQL you embed in Python code.
+- **NEVER**: Build SQL with f-strings, `%` formatting, or string concatenation using untrusted input.
+- **If** you must select dynamic table/column names: use strict allowlists (do not pass user input through).
 
 ## 1. Django Security
 

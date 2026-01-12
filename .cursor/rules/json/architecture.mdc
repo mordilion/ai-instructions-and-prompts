@@ -1,0 +1,19 @@
+---
+alwaysApply: false
+description: JSON - architecture
+globs: "*.json"
+---
+
+# JSON Architecture
+
+> **Scope**: JSON configuration patterns (tooling configs, manifests, app settings).  
+> **Extends**: General architecture rules
+
+## 1. Make JSON machine-friendly
+- **Prefer**: JSON that can be validated (JSON Schema where applicable).
+- **ALWAYS**: Keep structure stable (avoid “sometimes string, sometimes array” fields).
+
+## 2. Split concerns
+- **Prefer**: Separate files for separate concerns (build config vs runtime config).
+- **ALWAYS**: Keep environment-specific overrides explicit and documented.
+

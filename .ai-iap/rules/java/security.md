@@ -1,8 +1,13 @@
 # Java Security
 
 > **Scope**: Java-specific security practices (Spring Boot, Android)
-> **Extends**: general/security.md
+> **Extends**: General security rules
 > **Applies to**: *.java files
+
+## 0. Embedded SQL (when SQL appears inside Java)
+- **ALWAYS**: Use parameterized queries / prepared statements (or a safe ORM). This applies to any SQL you embed in Java code.
+- **NEVER**: Concatenate untrusted input into SQL (including in `@Query` strings or native queries).
+- **If** you must select dynamic table/column names: use strict allowlists (do not pass user input through).
 
 ## 1. Spring Security
 

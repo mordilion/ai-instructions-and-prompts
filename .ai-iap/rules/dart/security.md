@@ -1,8 +1,13 @@
 # Dart/Flutter Security
 
 > **Scope**: Dart and Flutter-specific security practices
-> **Extends**: general/security.md
+> **Extends**: General security rules
 > **Applies to**: *.dart files
+
+## 0. Embedded SQL (when SQL appears inside Dart)
+- **ALWAYS**: Use parameterized queries / prepared statements. This applies to any SQL you embed in Dart code (e.g., sqflite/drift).
+- **NEVER**: Use string interpolation or concatenation for SQL with untrusted input.
+- **If** you must select dynamic table/column names: use strict allowlists (do not pass user input through).
 
 ## 1. Flutter Secure Storage
 

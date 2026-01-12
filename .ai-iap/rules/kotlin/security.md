@@ -1,8 +1,13 @@
 # Kotlin Security
 
 > **Scope**: Kotlin-specific security (Android, Ktor, Spring Boot)
-> **Extends**: general/security.md
+> **Extends**: General security rules
 > **Applies to**: *.kt files
+
+## 0. Embedded SQL (when SQL appears inside Kotlin)
+- **ALWAYS**: Use parameterized queries / prepared statements (or a safe ORM). This applies to any SQL you embed in Kotlin code.
+- **NEVER**: Concatenate or template untrusted input into SQL.
+- **If** you must select dynamic table/column names: use strict allowlists (do not pass user input through).
 
 ## 1. Android Security
 

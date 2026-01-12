@@ -1,8 +1,13 @@
 # TypeScript Security
 
 > **Scope**: TypeScript-specific security (frontend & backend)
-> **Extends**: general/security.md
+> **Extends**: General security rules
 > **Applies to**: *.ts, *.tsx files
+
+## 0. Embedded SQL (when SQL appears inside TypeScript)
+- **ALWAYS**: Use parameterized queries / prepared statements (or a safe ORM). This applies to any SQL you embed in TS code.
+- **NEVER**: Concatenate or interpolate untrusted input into SQL (including template literals).
+- **If** you must select dynamic table/column names: use strict allowlists (do not pass user input through).
 
 ## 1. Frontend Security
 
