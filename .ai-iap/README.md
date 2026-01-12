@@ -34,11 +34,11 @@ Your Rules (one source) → Setup Script → All AI Tools Configured
 - **🏗️ Structure Templates** – Clean Architecture, Vertical Slices, Feature-First, Modular, MVVM, MVI, DDD, and more
 - **🔒 Security Rules** – OWASP Top 10 coverage for all languages (token-optimized, 80% more efficient)
 - **📚 Documentation Standards** – Optional code, project, and API documentation standards with smart suggestions
-- **🔄 Process Guides** – CI/CD, Testing, Logging, Docker, Auth, Migrations, API Docs (77 files, 8 languages, token-optimized)
+- **🔄 Process Guides** – CI/CD, Testing, Logging, Docker, Auth, Migrations, API Docs (77 files across core application languages, token-optimized)
 - **🎨 Extension System** – Add company standards, override rules, custom processes without modifying core (update-safe)
 - **⚡ Interactive Setup** – Wizard guides you through configuration with context-aware suggestions
 - **🎯 Recommended Defaults** – Best practices marked with `⭐`
-- **✅ Quality Verified** – Conflict-free system verified across all 191 files (95% confidence)
+- **✅ Quality Verified** – Conflict-free system verified across the repository (95% confidence)
 
 ---
 
@@ -372,7 +372,7 @@ For supported frameworks, choose how you want to organize your code:
 │   └── dart/                   # Dart processes (7 files: frontend/mobile focus)
 ├── functions/                  # Cross-language implementation patterns (NEW)
 │   ├── INDEX.md                # Quick reference for all function patterns
-│   ├── error-handling.md       # Exception handling across all 8 languages
+│   ├── error-handling.md       # Exception handling across all 8 core application languages
 │   ├── async-operations.md     # Async/await patterns for all languages
 │   ├── input-validation.md     # Validation & sanitization (all languages)
 │   ├── database-query.md       # Safe DB queries, prevent SQL injection
@@ -410,7 +410,7 @@ In addition to coding rules, this system includes **step-by-step workflow guides
 4. Paste into your AI tool
 5. AI will guide you through implementation
 
-### Available Processes (All 8 Languages)
+### Available Processes (All 8 Core Application Languages)
 
 | Process Type | Type | Description | Status |
 |--------------|------|-------------|--------|
@@ -425,7 +425,7 @@ In addition to coding rules, this system includes **step-by-step workflow guides
 | **Linting & Formatting** | 📋 On-Demand | Code quality linting and style formatting | ✅ 8 files |
 | **Code Coverage** | 📋 On-Demand | Automated coverage tracking with thresholds | ✅ 8 files |
 
-**Total**: 70 process files (8 permanent, 62 on-demand) across 8 languages
+**Total**: 70 process files (8 permanent, 62 on-demand) across 8 core application languages (not including Bash/PowerShell)
 
 ### Process Quality Features
 
@@ -450,7 +450,7 @@ In addition to rules and processes, the system now includes **cross-language imp
 
 ### What Are Functions?
 
-Functions are **5-20 line code patterns** for common coding tasks, shown **across all 8 languages** in a single file. Instead of letting the AI guess how to implement error handling or database queries, you reference the exact pattern.
+Functions are **5-20 line code patterns** for common coding tasks, shown **across all 8 core application languages** in a single file. Instead of letting the AI guess how to implement error handling or database queries, you reference the exact pattern.
 
 ### Available Functions
 
@@ -592,9 +592,9 @@ Understanding how many tokens your rule selection consumes helps optimize AI con
 
 ### Total Available Tokens by Language
 
-| Language | Base (+Security) | Documentation (Optional) | Frameworks | Structures | Processes (Optimized) | Total |
-|----------|------------------|--------------------------|------------|------------|-----------------------|-------|
-| **General** (always loaded) | 1,075 + 1,200 | 3,850 (if all selected) | – | – | – | **2,275 - 6,125** |
+| Language | Base (+Security) | Documentation (Optional) | Frameworks | Structures | Total |
+|----------|------------------|--------------------------|------------|------------|-------|
+| **General** (always loaded) | 1,075 + 1,200 | 3,850 (if all selected) | – | – | **2,275 - 6,125** |
 | **JavaScript** | 1,012 | 4,596 | 1,162 | – | **6,770** |
 | **TypeScript** | 852 + 1,050 | 11,000 | 5,800 | 1,540 | **20,240** |
 | **Node.js** | – | 2,879 | – | – | **2,879** |
@@ -605,7 +605,9 @@ Understanding how many tokens your rule selection consumes helps optimize AI con
 | **Dart** | 823 + 1,095 | 3,535 | 1,595 | 1,630 | **8,678** |
 | **.NET** | 844 + 1,020 | 5,008 | 1,356 | 1,540 | **9,768** |
 | **PHP** | 860 + 1,050 | 5,158 | 1,553 | 1,585 | **10,206** |
-| **Grand Total** | | | | | | **~177,000 - 181,000** |
+| **Bash** | 878 + 484 | – | – | – | **1,362** |
+| **PowerShell** | 916 + 394 | – | – | – | **1,310** |
+| **Grand Total** | | | | | **~180,000 - 184,000** |
 
 > **Documentation Standards**: Three optional files (~3,850 tokens total) provide baseline documentation standards for code comments, project documentation, and APIs. Selected during setup based on project type. Language-specific process files reference these standards to avoid duplication.
 
@@ -762,23 +764,6 @@ Language-specific process files reference these standards to avoid duplication.
 - Include Git workflow guidance (one branch per phase)
 - Never fix production bugs during infrastructure setup
 - For API documentation, reference `rules/general/documentation/api.md` for HTTP status codes, error formats, and best practices
-
----
-
-## 📦 Git Strategy
-
-### Option A: Share Generated Files (Recommended for Teams)
-
-```bash
-# .gitignore
-.ai-iap/
-```
-
-Commit the generated files (`.cursor/rules/`, `CLAUDE.md`, etc.). Everyone gets the same rules automatically without running setup.
-
-### Option B: Share Source Files
-
-Commit the `.ai-iap/` folder. Each team member runs setup after cloning.
 
 ---
 

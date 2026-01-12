@@ -1745,26 +1745,9 @@ generate_tool() {
 
 prompt_gitignore() {
     echo ""
-    read -rp "Add .ai-iap/ to .gitignore? (y/N): " add_gitignore
-    
-    if [[ "$add_gitignore" =~ ^[Yy]$ ]]; then
-        local gitignore="$PROJECT_ROOT/.gitignore"
-        
-        if [[ -f "$gitignore" ]]; then
-            if ! grep -q "^\.ai-iap/" "$gitignore"; then
-                echo "" >> "$gitignore"
-                echo "# AI Instructions source (generated files committed instead)" >> "$gitignore"
-                echo ".ai-iap/" >> "$gitignore"
-                print_success "Added .ai-iap/ to .gitignore"
-            else
-                print_info ".ai-iap/ already in .gitignore"
-            fi
-        else
-            echo "# AI Instructions source (generated files committed instead)" > "$gitignore"
-            echo ".ai-iap/" >> "$gitignore"
-            print_success "Created .gitignore with .ai-iap/"
-        fi
-    fi
+    print_info "Note: .ai-iap/ and .ai-iap-custom/ are meant to be committed and shared."
+    print_info "Note: .ai-iap-state.json is also meant to be committed and shared."
+    print_info "This setup script will not modify .gitignore."
 }
 
 # ============================================================================

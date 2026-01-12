@@ -1387,36 +1387,9 @@ function New-ToolConfig {
 
 function Add-ToGitignore {
     Write-Host ""
-    $response = Read-Host "Add .ai-iap/ to .gitignore? (y/N)"
-    
-    if ($response -eq 'y' -or $response -eq 'Y') {
-        $gitignorePath = Join-Path $Script:ProjectRoot ".gitignore"
-        
-        if (Test-Path $gitignorePath) {
-            $content = Get-Content $gitignorePath -Raw
-            
-            if ($content -notmatch "^\.ai-iap/") {
-                $addition = @"
-
-# AI Instructions source (generated files committed instead)
-.ai-iap/
-"@
-                Add-Content -Path $gitignorePath -Value $addition
-                Write-SuccessMessage "Added .ai-iap/ to .gitignore"
-            }
-            else {
-                Write-InfoMessage ".ai-iap/ already in .gitignore"
-            }
-        }
-        else {
-            $content = @"
-# AI Instructions source (generated files committed instead)
-.ai-iap/
-"@
-            $content | Out-File -FilePath $gitignorePath -Encoding UTF8
-            Write-SuccessMessage "Created .gitignore with .ai-iap/"
-        }
-    }
+    Write-InfoMessage "Note: .ai-iap/ and .ai-iap-custom/ are meant to be committed and shared."
+    Write-InfoMessage "Note: .ai-iap-state.json is also meant to be committed and shared."
+    Write-InfoMessage "This setup script will not modify .gitignore."
 }
 
 # ============================================================================
