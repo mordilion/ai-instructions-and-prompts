@@ -65,4 +65,4 @@
 - Use secure, HttpOnly cookies for auth
 - Enforce CSP and avoid `unsafe-*` policies
 
-Follow baseline rules in General security rules; language-specific rules above are additive.
+Follow the general security rules; the language-specific rules above are additive.

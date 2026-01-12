@@ -2,7 +2,7 @@
 
 > **Scope**: Java architectural patterns and principles
 > **Applies to**: *.java files
-> **Extends**: general/architecture.md
+> **Extends**: General architecture rules
 > **Precedence**: Structure > Framework > Language > General
 
 ## Rule Precedence Matrix

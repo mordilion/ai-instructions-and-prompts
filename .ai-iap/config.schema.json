@@ -49,12 +49,53 @@
               "type": "array",
               "items": { "type": "string" }
             },
+            "documentation": {
+              "type": "object",
+              "description": "Optional documentation standards (typically under 'general')",
+              "patternProperties": {
+                "^[a-z-]+$": {
+                  "type": "object",
+                  "required": ["name", "file", "description"],
+                  "properties": {
+                    "name": { "type": "string" },
+                    "file": { "type": "string" },
+                    "description": { "type": "string" },
+                    "recommended": { "type": "boolean" },
+                    "applicableTo": {
+                      "type": "array",
+                      "items": { "type": "string" }
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            "processes": {
+              "type": "object",
+              "description": "Optional language process guides (permanent and on-demand)",
+              "patternProperties": {
+                "^[a-z-]+$": {
+                  "type": "object",
+                  "required": ["name", "file", "description", "type", "loadIntoAI"],
+                  "properties": {
+                    "name": { "type": "string" },
+                    "file": { "type": "string" },
+                    "description": { "type": "string" },
+                    "type": { "type": "string", "enum": ["ondemand", "permanent"] },
+                    "loadIntoAI": { "type": "boolean" }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
             "frameworks": {
               "type": "object",
               "patternProperties": {
                 "^[a-z-]+$": {
                   "type": "object",
-                  "required": ["name", "file", "category", "description"],
+                  "required": ["name", "file"],
                   "properties": {
                     "name": { "type": "string" },
                     "file": { "type": "string" },

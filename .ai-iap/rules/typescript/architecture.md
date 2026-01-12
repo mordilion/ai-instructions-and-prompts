@@ -2,7 +2,7 @@
 
 > **Scope**: TypeScript architectural patterns and principles
 > **Applies to**: *.ts, *.tsx files
-> **Extends**: general/architecture.md
+> **Extends**: General architecture rules
 > **Precedence**: Structure > Framework > Language > General
 
 ## Rule Precedence Matrix
