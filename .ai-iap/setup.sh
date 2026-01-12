@@ -7,6 +7,7 @@
 #
 
 set -euo pipefail
+IFS=$'\n\t'
 
 # ============================================================================
 # Constants
@@ -18,10 +19,11 @@ readonly CONFIG_FILE="$SCRIPT_DIR/config.json"
 readonly CUSTOM_CONFIG_FILE="$PROJECT_ROOT/.ai-iap-custom/config.json"
 readonly CUSTOM_RULES_DIR="$PROJECT_ROOT/.ai-iap-custom/rules"
 readonly CUSTOM_PROCESSES_DIR="$PROJECT_ROOT/.ai-iap-custom/processes"
-readonly MERGED_CONFIG_FILE="/tmp/ai-iap-merged-config-$$.json"
-readonly NORMALIZED_CONFIG_FILE="/tmp/ai-iap-normalized-config-$$.json"
+readonly MERGED_CONFIG_FILE="$(mktemp 2>/dev/null || echo "/tmp/ai-iap-merged-config-$$.json")"
+readonly NORMALIZED_CONFIG_FILE="$(mktemp 2>/dev/null || echo "/tmp/ai-iap-normalized-config-$$.json")"
 WORKING_CONFIG="$CONFIG_FILE"
 readonly VERSION="1.0.0"
+readonly STATE_FILE="$PROJECT_ROOT/.ai-iap-state.json"
 
 # Colors
 readonly RED='\033[0;31m'
@@ -38,17 +40,17 @@ readonly NC='\033[0m' # No Color
 # ============================================================================
 
 print_header() {
-    echo ""
-    echo -e "${CYAN}==================================================================${NC}"
-    echo -e "${CYAN}        AI Instructions and Prompts Setup v${VERSION}             ${NC}"
-    echo -e "${CYAN}==================================================================${NC}"
-    echo ""
+    printf '\n'
+    printf '%b\n' "${CYAN}==================================================================${NC}"
+    printf '%b\n' "${CYAN}        AI Instructions and Prompts Setup v${VERSION}             ${NC}"
+    printf '%b\n' "${CYAN}==================================================================${NC}"
+    printf '\n'
 }
 
-print_success() { echo -e "${GREEN}[OK]${NC} $1"; }
-print_error() { echo -e "${RED}[ERROR]${NC} $1" >&2; }
-print_warning() { echo -e "${YELLOW}[WARN]${NC} $1"; }
-print_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
+print_success() { printf '%b\n' "${GREEN}[OK]${NC} $1"; }
+print_error() { printf '%b\n' "${RED}[ERROR]${NC} $1" >&2; }
+print_warning() { printf '%b\n' "${YELLOW}[WARN]${NC} $1"; }
+print_info() { printf '%b\n' "${BLUE}[INFO]${NC} $1"; }
 
 die() {
     print_error "$1"
@@ -105,7 +107,7 @@ validate_selection() {
             print_error "No selection made."
             local skip_msg=""
             [[ "$allow_skip" == "true" ]] && skip_msg=", 's' to skip,"
-    echo "Please enter at least one number$skip_msg or 'a' for all."
+            echo "Please enter at least one number$skip_msg or 'a' for all."
             echo ""
             continue
         fi
@@ -157,12 +159,12 @@ load_config() {
     if [[ ! -f "$WORKING_CONFIG" ]]; then
         print_error "Config file not found: $WORKING_CONFIG"
         echo ""
-        echo -e "${YELLOW}This usually means you're running the script from the wrong directory.${NC}"
+        printf '%b\n' "${YELLOW}This usually means you're running the script from the wrong directory.${NC}"
         echo ""
-        echo -e "${CYAN}Solution:${NC}"
-        echo -e "  ${NC}1. Navigate to your project root directory${NC}"
-        echo -e "  ${NC}2. Run: cd \"$PROJECT_ROOT\"${NC}"
-        echo -e "  ${NC}3. Then run: ./.ai-iap/setup.sh${NC}"
+        printf '%b\n' "${CYAN}Solution:${NC}"
+        printf '%b\n' "  ${NC}1. Navigate to your project root directory${NC}"
+        printf '%b\n' "  ${NC}2. Run: cd \"$PROJECT_ROOT\"${NC}"
+        printf '%b\n' "  ${NC}3. Then run: ./.ai-iap/setup.sh${NC}"
         echo ""
         exit 1
     fi
@@ -171,15 +173,15 @@ load_config() {
     if ! jq empty "$WORKING_CONFIG" 2>/dev/null; then
         print_error "Failed to parse config file: $WORKING_CONFIG"
         echo ""
-        echo -e "${YELLOW}The config.json file exists but contains invalid JSON.${NC}"
+        printf '%b\n' "${YELLOW}The config.json file exists but contains invalid JSON.${NC}"
         echo ""
-        echo -e "${CYAN}Solution:${NC}"
-        echo -e "  ${NC}1. Validate JSON syntax: jq empty \"$WORKING_CONFIG\"${NC}"
-        echo -e "  ${NC}2. Check for common issues:${NC}"
-        echo -e "     ${NC}- Missing or extra commas${NC}"
-        echo -e "     ${NC}- Unmatched brackets/braces${NC}"
-        echo -e "     ${NC}- Missing quotes around strings${NC}"
-        echo -e "  ${NC}3. Or restore from git: git checkout $CONFIG_FILE${NC}"
+        printf '%b\n' "${CYAN}Solution:${NC}"
+        printf '%b\n' "  ${NC}1. Validate JSON syntax: jq empty \"$WORKING_CONFIG\"${NC}"
+        printf '%b\n' "  ${NC}2. Check for common issues:${NC}"
+        printf '%b\n' "     ${NC}- Missing or extra commas${NC}"
+        printf '%b\n' "     ${NC}- Unmatched brackets/braces${NC}"
+        printf '%b\n' "     ${NC}- Missing quotes around strings${NC}"
+        printf '%b\n' "  ${NC}3. Or restore from git: git checkout $CONFIG_FILE${NC}"
         echo ""
         exit 1
     fi
@@ -202,7 +204,7 @@ merge_custom_config() {
     if ! jq empty "$CUSTOM_CONFIG_FILE" 2>/dev/null; then
         print_error "Custom config file contains invalid JSON"
         echo ""
-        echo -e "${YELLOW}Please fix .ai-iap-custom/config.json${NC}"
+        printf '%b\n' "${YELLOW}Please fix .ai-iap-custom/config.json${NC}"
         echo ""
         exit 1
     fi
@@ -265,6 +267,256 @@ cleanup() {
 }
 
 trap cleanup EXIT
+
+# ============================================================================
+# Previous Run State (rerunnable setup)
+# ============================================================================
+
+declare -a PREVIOUS_SELECTED_TOOLS=()
+declare -a PREVIOUS_SELECTED_LANGUAGES=()
+declare -a PREVIOUS_SELECTED_DOCUMENTATION=()
+declare -A PREVIOUS_SELECTED_FRAMEWORKS
+declare -A PREVIOUS_SELECTED_STRUCTURES
+declare -A PREVIOUS_SELECTED_PROCESSES
+
+have_previous_state() {
+    [[ -f "$STATE_FILE" ]]
+}
+
+load_previous_state() {
+    PREVIOUS_SELECTED_TOOLS=()
+    PREVIOUS_SELECTED_LANGUAGES=()
+    PREVIOUS_SELECTED_DOCUMENTATION=()
+    PREVIOUS_SELECTED_FRAMEWORKS=()
+    PREVIOUS_SELECTED_STRUCTURES=()
+    PREVIOUS_SELECTED_PROCESSES=()
+
+    [[ ! -f "$STATE_FILE" ]] && return 1
+
+    if ! jq empty "$STATE_FILE" 2>/dev/null; then
+        print_warning "Found state file but it contains invalid JSON: $STATE_FILE"
+        return 1
+    fi
+
+    # Build allow-lists from current config (ignore stale entries)
+    declare -A _valid_tools
+    declare -A _valid_langs
+    while IFS= read -r k; do _valid_tools["$k"]=1; done < <(jq -r '.tools | keys[]' "$WORKING_CONFIG")
+    while IFS= read -r k; do _valid_langs["$k"]=1; done < <(jq -r '.languages | keys[]' "$WORKING_CONFIG")
+
+    while IFS= read -r t; do
+        [[ -n "${_valid_tools[$t]:-}" ]] && PREVIOUS_SELECTED_TOOLS+=("$t")
+    done < <(jq -r '.selectedTools[]? // empty' "$STATE_FILE")
+
+    while IFS= read -r l; do
+        [[ -n "${_valid_langs[$l]:-}" ]] && PREVIOUS_SELECTED_LANGUAGES+=("$l")
+    done < <(jq -r '.selectedLanguages[]? // empty' "$STATE_FILE")
+
+    while IFS= read -r d; do
+        [[ -n "$d" ]] && PREVIOUS_SELECTED_DOCUMENTATION+=("$d")
+    done < <(jq -r '.selectedDocumentation[]? // empty' "$STATE_FILE")
+
+    # selectedFrameworks: { lang: [frameworkKeys...] }
+    while IFS= read -r line; do
+        local lang keylist
+        lang="${line%%=*}"
+        keylist="${line#*=}"
+        [[ -n "${_valid_langs[$lang]:-}" ]] && PREVIOUS_SELECTED_FRAMEWORKS["$lang"]="$keylist"
+    done < <(jq -r '.selectedFrameworks? // {} | to_entries[] | "\(.key)=\(.value|join(" "))"' "$STATE_FILE")
+
+    # selectedStructures: { "lang-framework": "file" }
+    while IFS= read -r line; do
+        local k v
+        k="${line%%=*}"
+        v="${line#*=}"
+        [[ -n "$k" && -n "$v" ]] && PREVIOUS_SELECTED_STRUCTURES["$k"]="$v"
+    done < <(jq -r '.selectedStructures? // {} | to_entries[] | "\(.key)=\(.value)"' "$STATE_FILE")
+
+    # selectedProcesses: { lang: [processKeys...] }
+    while IFS= read -r line; do
+        local lang keylist
+        lang="${line%%=*}"
+        keylist="${line#*=}"
+        [[ -n "${_valid_langs[$lang]:-}" ]] && PREVIOUS_SELECTED_PROCESSES["$lang"]="$keylist"
+    done < <(jq -r '.selectedProcesses? // {} | to_entries[] | "\(.key)=\(.value|join(" "))"' "$STATE_FILE")
+
+    return 0
+}
+
+print_previous_state_summary() {
+    echo ""
+    printf '%b\n' "${BOLD}Previous setup detected${NC} (${STATE_FILE#"$PROJECT_ROOT/"})"
+    echo "  Tools: ${PREVIOUS_SELECTED_TOOLS[*]:-(none)}"
+    echo "  Languages: ${PREVIOUS_SELECTED_LANGUAGES[*]:-(none)}"
+    if [[ ${#PREVIOUS_SELECTED_DOCUMENTATION[@]} -gt 0 ]]; then
+        echo "  Documentation: ${PREVIOUS_SELECTED_DOCUMENTATION[*]}"
+    fi
+    for lang in "${!PREVIOUS_SELECTED_FRAMEWORKS[@]}"; do
+        echo "  Frameworks ($lang): ${PREVIOUS_SELECTED_FRAMEWORKS[$lang]}"
+    done
+    for key in "${!PREVIOUS_SELECTED_STRUCTURES[@]}"; do
+        echo "  Structure ($key): ${PREVIOUS_SELECTED_STRUCTURES[$key]}"
+    done
+    for lang in "${!PREVIOUS_SELECTED_PROCESSES[@]}"; do
+        echo "  Processes ($lang): ${PREVIOUS_SELECTED_PROCESSES[$lang]}"
+    done
+    echo ""
+}
+
+prompt_previous_run_mode() {
+    # Sets global SETUP_MODE to: reuse | wizard | cleanup | fresh
+    SETUP_MODE="wizard"
+    [[ ! -f "$STATE_FILE" ]] && return 0
+
+    if load_previous_state; then
+        print_previous_state_summary
+    else
+        return 0
+    fi
+
+    echo "What would you like to do?"
+    echo "  1. Reuse previous selection and regenerate (recommended)"
+    echo "  2. Modify selection (run the wizard again)"
+    echo "  3. Remove previously generated files (cleanup only)"
+    echo "  4. Ignore previous selection (start fresh wizard)"
+    echo ""
+
+    read -rp "Enter choice (1-4) [1]: " choice
+    choice="${choice:-1}"
+
+    case "$choice" in
+        1) SETUP_MODE="reuse" ;;
+        2) SETUP_MODE="wizard" ;;
+        3) SETUP_MODE="cleanup" ;;
+        4) SETUP_MODE="fresh" ;;
+        *) SETUP_MODE="reuse" ;;
+    esac
+}
+
+cleanup_managed_cursor_rules() {
+    local root="$PROJECT_ROOT/.cursor/rules"
+    [[ ! -d "$root" ]] && return 0
+
+    # Remove only files created by this setup (identified by frontmatter marker)
+    find "$root" -type f -name '*.mdc' -print0 2>/dev/null \
+        | xargs -0 grep -l 'aiIapManaged: true' 2>/dev/null \
+        | while IFS= read -r f; do rm -f "$f"; done
+
+    find "$root" -type d -empty -delete 2>/dev/null || true
+}
+
+cleanup_managed_claude_rules() {
+    local root="$PROJECT_ROOT/.claude/rules"
+    [[ ! -d "$root" ]] && return 0
+
+    find "$root" -type f -name '*.md' -print0 2>/dev/null \
+        | xargs -0 grep -l 'aiIapManaged: true' 2>/dev/null \
+        | while IFS= read -r f; do rm -f "$f"; done
+
+    find "$root" -type d -empty -delete 2>/dev/null || true
+}
+
+cleanup_generated_file_if_managed() {
+    local filepath="$1"
+    [[ ! -f "$filepath" ]] && return 0
+    if grep -q "Generated by AI Instructions and Prompts Setup" "$filepath" 2>/dev/null; then
+        rm -f "$filepath"
+    fi
+}
+
+cleanup_tool_outputs() {
+    local tool="$1"
+    case "$tool" in
+        cursor)
+            cleanup_managed_cursor_rules
+            ;;
+        claude)
+            cleanup_managed_claude_rules
+            cleanup_generated_file_if_managed "$PROJECT_ROOT/CLAUDE.md"
+            ;;
+        github-copilot)
+            cleanup_generated_file_if_managed "$PROJECT_ROOT/.github/copilot-instructions.md"
+            ;;
+        windsurf)
+            cleanup_generated_file_if_managed "$PROJECT_ROOT/.windsurfrules"
+            ;;
+        aider)
+            cleanup_generated_file_if_managed "$PROJECT_ROOT/CONVENTIONS.md"
+            ;;
+        google-ai-studio)
+            cleanup_generated_file_if_managed "$PROJECT_ROOT/GOOGLE_AI_STUDIO.md"
+            ;;
+        amazon-q)
+            cleanup_generated_file_if_managed "$PROJECT_ROOT/AMAZON_Q.md"
+            ;;
+        tabnine)
+            cleanup_generated_file_if_managed "$PROJECT_ROOT/TABNINE.md"
+            ;;
+        cody)
+            cleanup_generated_file_if_managed "$PROJECT_ROOT/.cody/instructions.md"
+            ;;
+        continue)
+            cleanup_generated_file_if_managed "$PROJECT_ROOT/.continue/instructions.md"
+            ;;
+    esac
+}
+
+json_array_from_items() {
+    # usage: json_array_from_items "${arr[@]}"
+    printf '%s\n' "$@" | jq -R . | jq -s .
+}
+
+json_object_from_assoc_space_lists() {
+    # usage: json_object_from_assoc_space_lists ASSOC_NAME
+    local -n assoc_ref="$1"
+    local obj='{}'
+    for k in "${!assoc_ref[@]}"; do
+        # shellcheck disable=SC2206
+        local items=(${assoc_ref[$k]})
+        local arr_json
+        arr_json=$(json_array_from_items "${items[@]}")
+        obj=$(jq --arg key "$k" --argjson val "$arr_json" '. + {($key): $val}' <<<"$obj")
+    done
+    echo "$obj"
+}
+
+json_object_from_assoc_strings() {
+    # usage: json_object_from_assoc_strings ASSOC_NAME
+    local -n assoc_ref="$1"
+    local obj='{}'
+    for k in "${!assoc_ref[@]}"; do
+        obj=$(jq --arg key "$k" --arg val "${assoc_ref[$k]}" '. + {($key): $val}' <<<"$obj")
+    done
+    echo "$obj"
+}
+
+save_state() {
+    local tools_json langs_json docs_json fw_json structs_json procs_json
+    tools_json=$(json_array_from_items "${SELECTED_TOOLS[@]}")
+    langs_json=$(json_array_from_items "${SELECTED_LANGUAGES[@]}")
+    docs_json=$(json_array_from_items "${SELECTED_DOCUMENTATION[@]}")
+    fw_json=$(json_object_from_assoc_space_lists SELECTED_FRAMEWORKS)
+    structs_json=$(json_object_from_assoc_strings SELECTED_STRUCTURES)
+    procs_json=$(json_object_from_assoc_space_lists SELECTED_PROCESSES)
+
+    jq -n \
+        --arg version "$VERSION" \
+        --argjson selectedTools "$tools_json" \
+        --argjson selectedLanguages "$langs_json" \
+        --argjson selectedDocumentation "$docs_json" \
+        --argjson selectedFrameworks "$fw_json" \
+        --argjson selectedStructures "$structs_json" \
+        --argjson selectedProcesses "$procs_json" \
+        '{
+            version: $version,
+            selectedTools: $selectedTools,
+            selectedLanguages: $selectedLanguages,
+            selectedDocumentation: $selectedDocumentation,
+            selectedFrameworks: $selectedFrameworks,
+            selectedStructures: $selectedStructures,
+            selectedProcesses: $selectedProcesses
+        }' > "$STATE_FILE"
+}
 
 get_tools() {
     jq -r '.tools | keys_unsorted[]' "$WORKING_CONFIG"
@@ -664,7 +916,7 @@ select_frameworks() {
         [[ ${#fw_keys[@]} -eq 0 ]] && continue
         
         echo ""
-        echo -e "Select frameworks for $lang_name:"
+        printf '%b\n' "Select frameworks for $lang_name:"
         echo "(You can combine multiple - e.g., Web Framework + ORM)"
         echo ""
         
@@ -761,7 +1013,7 @@ select_processes() {
         [[ ${#proc_keys[@]} -eq 0 ]] && continue
         
         echo ""
-        echo -e "Select processes for $lang_name:"
+        printf '%b\n' "Select processes for $lang_name:"
         echo "(Workflow guides for establishing infrastructure)"
         echo ""
         echo "Process Types:"
@@ -830,7 +1082,7 @@ select_structures() {
             [[ ${#struct_keys[@]} -eq 0 ]] && continue
             
             echo ""
-            echo -e "Select structure for $fw_name:"
+            printf '%b\n' "Select structure for $fw_name:"
             echo ""
             
             for ((i=0; i<${#struct_keys[@]}; i++)); do
@@ -917,6 +1169,8 @@ generate_cursor_frontmatter() {
     fi
     
     echo "---"
+    echo "aiIapManaged: true"
+    echo "aiIapVersion: $VERSION"
     echo "alwaysApply: $always_apply"
     echo "description: $description"
     echo "globs: $globs"
@@ -1250,17 +1504,14 @@ generate_claude() {
                 local path_patterns
                 path_patterns=$(get_framework_path_patterns "$fw" "$lang")
                 
-                if [[ -n "$path_patterns" ]]; then
-                    {
-                        echo "---"
-                        echo "paths: $path_patterns"
-                        echo "---"
-                        echo ""
-                        echo "$content"
-                    } > "$output_file"
-                else
-                    echo "$content" > "$output_file"
-                fi
+                {
+                    echo "---"
+                    echo "aiIapManaged: true"
+                    [[ -n "$path_patterns" ]] && echo "paths: $path_patterns"
+                    echo "---"
+                    echo ""
+                    echo "$content"
+                } > "$output_file"
                 
                 local relative_path="${output_file#"$PROJECT_ROOT/"}"
                 print_success "Created $relative_path"
@@ -1280,17 +1531,14 @@ generate_claude() {
                     local struct_patterns
                     struct_patterns=$(get_framework_path_patterns "$fw" "$lang")
                     
-                    if [[ -n "$struct_patterns" ]]; then
-                        {
-                            echo "---"
-                            echo "paths: $struct_patterns"
-                            echo "---"
-                            echo ""
-                            echo "$struct_content"
-                        } > "$struct_output"
-                    else
-                        echo "$struct_content" > "$struct_output"
-                    fi
+                    {
+                        echo "---"
+                        echo "aiIapManaged: true"
+                        [[ -n "$struct_patterns" ]] && echo "paths: $struct_patterns"
+                        echo "---"
+                        echo ""
+                        echo "$struct_content"
+                    } > "$struct_output"
                     
                     local relative_path="${struct_output#"$PROJECT_ROOT/"}"
                     print_success "Created $relative_path"
@@ -1318,9 +1566,14 @@ generate_claude() {
                 
                 local output_file="$processes_dir/$lang-$proc.md"
                 
-                # Process files typically don't need path-specific frontmatter
-                # They apply broadly when working on that type of task
-                echo "$content" > "$output_file"
+                # Process files apply broadly; still add a marker so setup can safely clean up on reruns.
+                {
+                    echo "---"
+                    echo "aiIapManaged: true"
+                    echo "---"
+                    echo ""
+                    echo "$content"
+                } > "$output_file"
                 
                 local relative_path="${output_file#"$PROJECT_ROOT/"}"
                 print_success "Created $relative_path"
@@ -1522,37 +1775,67 @@ main() {
     print_header
     check_dependencies
     load_config
+    prompt_previous_run_mode
     
     cd "$PROJECT_ROOT"
     print_info "Project root: $PROJECT_ROOT"
     echo ""
-    
-    # Selection
-    select_tools_simple
-    
-    if [[ ${#SELECTED_TOOLS[@]} -eq 0 ]]; then
-        print_warning "No tools selected. Exiting."
+
+    if [[ "${SETUP_MODE:-wizard}" == "cleanup" ]]; then
+        if [[ ${#PREVIOUS_SELECTED_TOOLS[@]} -gt 0 ]]; then
+            read -rp "Remove previously generated files for tools: ${PREVIOUS_SELECTED_TOOLS[*]}? (Y/n): " confirm_cleanup
+            if [[ ! "$confirm_cleanup" =~ ^[Nn]$ ]]; then
+                for t in "${PREVIOUS_SELECTED_TOOLS[@]}"; do
+                    cleanup_tool_outputs "$t"
+                done
+                rm -f "$STATE_FILE" 2>/dev/null || true
+                print_success "Cleanup complete."
+            fi
+        else
+            print_info "No previous tools found in state."
+        fi
         exit 0
     fi
-    
-    select_languages_simple
-    
-    if [[ ${#SELECTED_LANGUAGES[@]} -eq 0 ]]; then
-        print_warning "No languages selected. Exiting."
-        exit 0
+
+    if [[ "${SETUP_MODE:-wizard}" == "reuse" ]]; then
+        SELECTED_TOOLS=("${PREVIOUS_SELECTED_TOOLS[@]}")
+        SELECTED_LANGUAGES=("${PREVIOUS_SELECTED_LANGUAGES[@]}")
+        SELECTED_DOCUMENTATION=("${PREVIOUS_SELECTED_DOCUMENTATION[@]}")
+
+        SELECTED_FRAMEWORKS=()
+        SELECTED_STRUCTURES=()
+        SELECTED_PROCESSES=()
+        for k in "${!PREVIOUS_SELECTED_FRAMEWORKS[@]}"; do SELECTED_FRAMEWORKS["$k"]="${PREVIOUS_SELECTED_FRAMEWORKS[$k]}"; done
+        for k in "${!PREVIOUS_SELECTED_STRUCTURES[@]}"; do SELECTED_STRUCTURES["$k"]="${PREVIOUS_SELECTED_STRUCTURES[$k]}"; done
+        for k in "${!PREVIOUS_SELECTED_PROCESSES[@]}"; do SELECTED_PROCESSES["$k"]="${PREVIOUS_SELECTED_PROCESSES[$k]}"; done
+    else
+        # Wizard selection
+        select_tools_simple
+        
+        if [[ ${#SELECTED_TOOLS[@]} -eq 0 ]]; then
+            print_warning "No tools selected. Exiting."
+            exit 0
+        fi
+        
+        select_languages_simple
+        
+        if [[ ${#SELECTED_LANGUAGES[@]} -eq 0 ]]; then
+            print_warning "No languages selected. Exiting."
+            exit 0
+        fi
+        
+        # Documentation selection
+        select_documentation
+        
+        # Framework selection
+        select_frameworks
+        
+        # Structure selection (for frameworks that have structure options)
+        select_structures
+        
+        # Process selection
+        select_processes
     fi
-    
-    # Documentation selection
-    select_documentation
-    
-    # Framework selection
-    select_frameworks
-    
-    # Structure selection (for frameworks that have structure options)
-    select_structures
-    
-    # Process selection
-    select_processes
     
     echo ""
     echo "Configuration Summary:"
@@ -1580,11 +1863,25 @@ main() {
     fi
     
     echo ""
+
+    # Optional cleanup (safe mode: only removes files previously generated by this tool)
+    if have_previous_state; then
+        read -rp "Clean up previously generated files for selected tools before regenerating? (Y/n): " do_cleanup
+        if [[ ! "$do_cleanup" =~ ^[Nn]$ ]]; then
+            declare -A _cleanup_set
+            for t in "${PREVIOUS_SELECTED_TOOLS[@]}"; do _cleanup_set["$t"]=1; done
+            for t in "${SELECTED_TOOLS[@]}"; do _cleanup_set["$t"]=1; done
+            for t in "${!_cleanup_set[@]}"; do cleanup_tool_outputs "$t"; done
+        fi
+    fi
     
     # Generate files
     for tool in "${SELECTED_TOOLS[@]}"; do
         generate_tool "$tool"
     done
+
+    # Save state for reruns
+    save_state
     
     # Gitignore prompt
     prompt_gitignore

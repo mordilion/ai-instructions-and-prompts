@@ -1,0 +1,45 @@
+---
+alwaysApply: false
+description: Bash - code style
+globs: "*.sh,*.bash,*.zsh,*.ksh,*.bats"
+---
+
+# Bash Code Style
+
+> **Scope**: Apply these rules ONLY when working with shell scripts (`*.sh`, `*.bash`, etc.). These extend the general code style guidelines.
+
+## 1. Strict Mode (Default)
+- **ALWAYS**: Use strict mode near the top:
+  - `set -euo pipefail`
+  - `IFS=$'\n\t'`
+- **ALWAYS**: Use `trap` for cleanup of temp files and to surface failing line numbers when useful.
+
+## 2. Quoting & Expansions
+- **ALWAYS**: Quote variables unless you explicitly want word-splitting/globbing: `"$var"`, `"${arr[@]}"`.
+- **ALWAYS**: Use `"$@"` to forward args; NEVER use `$*` for forwarding.
+- **NEVER**: Use unquoted command substitutions in arguments; wrap: `"$(cmd)"`.
+
+## 3. Conditionals & Tests
+- **Bash**: Prefer `[[ ... ]]` over `[ ... ]`.
+- **Strings**: Use `[[ -n "$s" ]]` / `[[ -z "$s" ]]`.
+- **Numbers**: Use `-eq/-ne/-lt/...` with `[[ ... ]]` or `(( ... ))`.
+
+## 4. Functions & Variables
+- **Functions**: Use `snake_case` names; keep functions small (<50 lines).
+- **Locals**: Use `local` for function variables. Prefer `readonly` for constants.
+- **Globals**: Minimize global state; if needed, define at top and document.
+
+## 5. Output & Logging
+- **ALWAYS**: Use `printf` for user-facing output; avoid `echo -e` portability pitfalls.
+- **stderr**: Errors and warnings go to stderr: `printf '%s\n' "message" >&2`.
+
+## 6. Common Pitfalls (MUST avoid)
+- **NEVER**: Use backticks (`` `cmd` ``); use `$(cmd)`.
+- **NEVER**: Use `eval` (unless you fully control the input and can justify it).
+- **NEVER**: Parse `ls` output.
+- **NEVER**: Rely on `cd` side effects; use subshells `( ... )` when needed.
+
+## 7. Tooling
+- **ALWAYS**: Run `shellcheck` on changed scripts; address warnings unless you can justify a suppression.
+- **ALWAYS**: Format with `shfmt` (2-space indent, keep it consistent).
+

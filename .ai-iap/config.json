@@ -122,6 +122,28 @@
                                                                     }
                                                         }
                                   },
+                      "bash":  {
+                                   "name":  "Bash",
+                                   "globs":  "*.sh,*.bash,*.zsh,*.ksh,*.bats",
+                                   "alwaysApply":  false,
+                                   "description":  "Bash and shell scripting standards",
+                                   "files":  [
+                                                 "architecture",
+                                                 "code-style",
+                                                 "security"
+                                             ]
+                               },
+                      "powershell":  {
+                                         "name":  "PowerShell",
+                                         "globs":  "*.ps1,*.psm1,*.psd1",
+                                         "alwaysApply":  false,
+                                         "description":  "PowerShell scripting standards",
+                                         "files":  [
+                                                       "architecture",
+                                                       "code-style",
+                                                       "security"
+                                                   ]
+                                     },
                       "dart":  {
                                    "name":  "Dart/Flutter",
                                    "globs":  "*.dart",

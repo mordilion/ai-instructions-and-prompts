@@ -1,0 +1,32 @@
+# PowerShell Security
+
+> **Scope**: PowerShell-specific security.  
+> **Extends**: `.ai-iap/rules/general/security.md`  
+> **Applies to**: `*.ps1, *.psm1, *.psd1`
+
+## 1. Code Execution (MUST be safe)
+- **NEVER**: Use `Invoke-Expression` (`iex`) on untrusted or dynamic input.
+- **NEVER**: Execute downloaded scripts without validation.
+- **ALWAYS**: Prefer calling commands/cmdlets with parameters rather than constructing command strings.
+
+## 2. Inputs & Injection Risks
+- **ALWAYS**: Validate parameters using type constraints and validation attributes.
+- **ALWAYS**: Use `-LiteralPath` when dealing with filesystem paths that may contain wildcard characters.
+- **ALWAYS**: Treat env vars and file contents as untrusted input.
+
+## 3. Secrets
+- **NEVER**: Hardcode secrets in scripts, module files, or repo docs.
+- **NEVER**: Log secrets (including via verbose output).
+- **ALWAYS**: Prefer OS secret stores / SecretManagement / injected environment variables for secrets.
+
+## 4. Network & Downloads
+- **ALWAYS**: Prefer HTTPS; validate endpoints and pin versions where possible.
+- **NEVER**: Disable TLS/SSL validation.
+- **ALWAYS**: Verify integrity (checksums/signatures) for downloaded artifacts in automation contexts.
+
+## 5. Privilege & System Changes
+- **ALWAYS**: Minimize administrative actions; scope them to the smallest possible commands.
+- **ALWAYS**: For destructive operations, require confirmation or support `-WhatIf` / `-Confirm`.
+
+Follow baseline rules in `.ai-iap/rules/general/security.md`; the rules above are additive.
+

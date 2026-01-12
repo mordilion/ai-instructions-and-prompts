@@ -21,6 +21,7 @@ alwaysApply: true
 - **Whenever you change ANYTHING**, you **MUST** check and update dependent parts to keep the meta-project consistent.
 - **ALWAYS** check for necessary updates in:
   - `.ai-iap/setup.sh` and `.ai-iap/setup.ps1`
+  - `.ai-iap-state.json` behavior (reruns/add-remove flows must keep working)
   - `.ai-iap/config.json`
   - `.ai-iap/rules/**`
   - `.ai-iap/processes/**`
@@ -28,6 +29,9 @@ alwaysApply: true
   - `README.md`, `.ai-iap/README.md`, `CUSTOMIZATION.md`, `.ai-iap/docs/**`
   - All supported AI tool outputs and their paths (see the supported tools list in the meta-project rules)
 - **NEVER** leave stale references (old paths, old folder names, removed concepts).
+
+**Rerunnable Setup (CRITICAL):**
+- **ALWAYS** preserve rerun safety: cleanup must only delete files clearly marked as generated (`aiIapManaged: true` in YAML frontmatter, or generated header comment).
 
 **Implementation Workflow** (CRITICAL):
 - **BEFORE** implementing error handling, async operations, input validation, database queries, or HTTP requests:

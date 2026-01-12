@@ -1,0 +1,38 @@
+# Bash Security
+
+> **Scope**: Bash/shell-specific security.  
+> **Extends**: `.ai-iap/rules/general/security.md`  
+> **Applies to**: `*.sh, *.bash, *.zsh, *.ksh`
+
+## 1. Input Handling
+- **ALWAYS**: Treat all inputs as untrusted (args, env vars, files, command output).
+- **ALWAYS**: Validate paths, flags, and required values early. Return exit code `2` on invalid usage.
+- **ALWAYS**: Quote expansions to prevent globbing and word-splitting injection.
+
+## 2. Command Execution
+- **NEVER**: Use `eval` on untrusted input.
+- **NEVER**: `source`/`.` untrusted files.
+- **ALWAYS**: Prefer arrays for command + args when constructing invocations.
+- **ALWAYS**: Use full paths or verify commands via `command -v` when running in controlled environments (CI, provisioning).
+
+## 3. Filesystem Safety
+- **ALWAYS**: Use `mktemp` for temp files/dirs; clean up with `trap`.
+- **ALWAYS**: Set safe permissions when writing secrets or artifacts (`umask 077` when appropriate).
+- **ALWAYS**: Use `--` to end option parsing for commands that support it (avoid “filename starts with dash” issues).
+
+## 4. Secrets
+- **NEVER**: Print secrets to stdout/stderr or logs.
+- **NEVER**: Enable `set -x` in scripts handling secrets (or ensure it is disabled around secret operations).
+- **ALWAYS**: Prefer env vars, secret stores, or injected files with restricted permissions.
+
+## 5. Downloads & Supply Chain
+- **NEVER**: `curl | bash`.
+- **ALWAYS**: Pin versions and verify integrity (checksums/signatures) for downloaded artifacts.
+- **ALWAYS**: Prefer HTTPS; fail on HTTP and handle redirects intentionally.
+
+## 6. Privilege & Environment
+- **ALWAYS**: Minimize `sudo` usage; scope it to the smallest possible commands.
+- **ALWAYS**: Sanitize/avoid trusting `PATH` in privileged scripts; consider setting a safe `PATH`.
+
+Follow baseline rules in `.ai-iap/rules/general/security.md`; the rules above are additive.
+

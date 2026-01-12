@@ -29,7 +29,7 @@ Your Rules (one source) → Setup Script → All AI Tools Configured
 ## ✨ Features
 
 - **🔧 Multi-Tool Support** – 10 AI coding assistants: Cursor, Claude, GitHub Copilot, Windsurf, Aider, Google AI Studio, Amazon Q Developer, Tabnine, Cody, Continue.dev
-- **🌍 Multi-Language** – Kotlin, JavaScript, TypeScript, Java, Python, Dart/Flutter, .NET/C#, PHP, Swift, Node.js
+- **🌍 Multi-Language** – Kotlin, JavaScript, TypeScript, Java, Python, Dart/Flutter, .NET/C#, PHP, Swift, Node.js, Bash, PowerShell
 - **📦 Framework-Specific** – React, Next.js, NestJS, AdonisJS, Laravel, ASP.NET Core, Spring Boot, Django, FastAPI, and 50+ more
 - **🏗️ Structure Templates** – Clean Architecture, Vertical Slices, Feature-First, Modular, MVVM, MVI, DDD, and more
 - **🔒 Security Rules** – OWASP Top 10 coverage for all languages (token-optimized, 80% more efficient)
@@ -62,6 +62,14 @@ cp -r .ai-iap /path/to/your/project/
 ```bash
 chmod +x .ai-iap/setup.sh && ./.ai-iap/setup.sh
 ```
+
+### Re-running Setup (Add/Remove Languages & Tools)
+
+You can safely run setup multiple times.
+
+- The setup script stores your last choices in `.ai-iap-state.json`
+- On rerun, you can **reuse**, **modify**, or **clean up** previously generated outputs
+- Cleanup is **safe by default**: only files marked `aiIapManaged: true` (or files with the generated header comment) are removed
 
 ### 3. Follow the Wizard
 
@@ -280,6 +288,12 @@ Want to add company-specific standards, internal processes, or override core rul
 | CMS | WordPress |
 | ORM | Doctrine ⭐ |
 
+### Bash
+Shell scripting rules (no frameworks).
+
+### PowerShell
+PowerShell scripting rules (no frameworks).
+
 ⭐ = Recommended
 
 ---
@@ -334,7 +348,9 @@ For supported frameworks, choose how you want to organize your code:
 │   ├── python/                 # Python-specific rules (includes security.md)
 │   ├── dart/                   # Dart-specific rules (includes security.md)
 │   ├── dotnet/                 # .NET-specific rules (includes security.md)
-│   └── php/                    # PHP-specific rules (includes security.md)
+│   ├── php/                    # PHP-specific rules (includes security.md)
+│   ├── bash/                   # Bash/shell scripting rules (includes security.md)
+│   └── powershell/             # PowerShell scripting rules (includes security.md)
 ├── processes/                  # Step-by-step workflow guides (77 files)
 │   ├── dotnet/                 # .NET processes
 │   │   ├── test-implementation.md          # NUnit testing setup

@@ -29,6 +29,7 @@ $Script:CustomProcessesDir = Join-Path $Script:ProjectRoot ".ai-iap-custom\proce
 $Script:CustomFunctionsDir = Join-Path $Script:ProjectRoot ".ai-iap-custom\functions"
 $Script:MergedConfigFile = Join-Path $env:TEMP "ai-iap-merged-config-$PID.json"
 $Script:WorkingConfig = $Script:ConfigFile
+$Script:StateFile = Join-Path $Script:ProjectRoot ".ai-iap-state.json"
 
 # ============================================================================
 # Utility Functions
@@ -762,6 +763,8 @@ function New-CursorFrontmatter {
     
     $frontmatter = @"
 ---
+aiIapManaged: true
+aiIapVersion: $Script:Version
 alwaysApply: $alwaysApply
 description: $description
 globs: $globs
@@ -1061,17 +1064,14 @@ function New-ClaudeConfig {
                 
                 # Add YAML frontmatter with path patterns for framework-specific files
                 $pathPatterns = Get-FrameworkPathPatterns -Framework $fw -Lang $lang
-                if ($pathPatterns) {
-                    $frontmatter = @"
+                $frontmatter = @"
 ---
-paths: $pathPatterns
+aiIapManaged: true
+$(if ($pathPatterns) { "paths: $pathPatterns" } else { "" })
 ---
 
 "@
-                    $fullContent = $frontmatter + $content
-                } else {
-                    $fullContent = $content
-                }
+                $fullContent = $frontmatter + $content
                 
                 $fullContent | Out-File -FilePath $outputFile -Encoding UTF8 -NoNewline
                 
@@ -1090,17 +1090,14 @@ paths: $pathPatterns
                         
                         # Add path patterns for structure-specific rules
                         $structPatterns = Get-FrameworkPathPatterns -Framework $fw -Lang $lang
-                        if ($structPatterns) {
-                            $structFrontmatter = @"
+                        $structFrontmatter = @"
 ---
-paths: $structPatterns
+aiIapManaged: true
+$(if ($structPatterns) { "paths: $structPatterns" } else { "" })
 ---
 
 "@
-                            $structFullContent = $structFrontmatter + $structContent
-                        } else {
-                            $structFullContent = $structContent
-                        }
+                        $structFullContent = $structFrontmatter + $structContent
                         
                         $structFullContent | Out-File -FilePath $structOutputFile -Encoding UTF8 -NoNewline
                         
@@ -1136,9 +1133,14 @@ paths: $structPatterns
                 
                 $outputFile = Join-Path $processesDir "$lang-$proc.md"
                 
-                # Process files typically don't need path-specific frontmatter
-                # They apply broadly when working on that type of task
-                $content | Out-File -FilePath $outputFile -Encoding UTF8 -NoNewline
+                # Process files apply broadly; still add a marker so setup can safely clean up on reruns.
+                $procFrontmatter = @"
+---
+aiIapManaged: true
+---
+
+"@
+                ($procFrontmatter + $content) | Out-File -FilePath $outputFile -Encoding UTF8 -NoNewline
                 
                 $relativePath = $outputFile.Replace($Script:ProjectRoot, "").TrimStart("\", "/")
                 Write-SuccessMessage "Created $relativePath"
@@ -1418,6 +1420,171 @@ function Add-ToGitignore {
 }
 
 # ============================================================================
+# Previous Run State (rerunnable setup)
+# ============================================================================
+
+function Get-PreviousState {
+    if (-not (Test-Path $Script:StateFile)) {
+        return $null
+    }
+
+    try {
+        return (Get-Content $Script:StateFile -Raw | ConvertFrom-Json)
+    }
+    catch {
+        Write-WarningMessage "Found state file but it contains invalid JSON: $Script:StateFile"
+        return $null
+    }
+}
+
+function Write-PreviousStateSummary {
+    param(
+        [PSCustomObject]$State
+    )
+
+    Write-Host ""
+    Write-Host "Previous setup detected ($([IO.Path]::GetFileName($Script:StateFile)))" -ForegroundColor Cyan
+    Write-Host "  Tools: $($State.selectedTools -join ', ')"
+    Write-Host "  Languages: $($State.selectedLanguages -join ', ')"
+    if ($State.selectedDocumentation -and $State.selectedDocumentation.Count -gt 0) {
+        Write-Host "  Documentation: $($State.selectedDocumentation -join ', ')"
+    }
+    Write-Host ""
+}
+
+function Save-State {
+    param(
+        [string[]]$SelectedTools,
+        [string[]]$SelectedLanguages,
+        [string[]]$SelectedDocumentation,
+        [hashtable]$SelectedFrameworks,
+        [hashtable]$SelectedStructures,
+        [hashtable]$SelectedProcesses
+    )
+
+    $state = [PSCustomObject]@{
+        version = $Script:Version
+        selectedTools = $SelectedTools
+        selectedLanguages = $SelectedLanguages
+        selectedDocumentation = $SelectedDocumentation
+        selectedFrameworks = $SelectedFrameworks
+        selectedStructures = $SelectedStructures
+        selectedProcesses = $SelectedProcesses
+    }
+
+    $state | ConvertTo-Json -Depth 100 | Out-File -FilePath $Script:StateFile -Encoding UTF8
+}
+
+function ConvertTo-Hashtable {
+    param([object]$InputObject)
+
+    if ($null -eq $InputObject) {
+        return @{}
+    }
+
+    if ($InputObject -is [hashtable]) {
+        return $InputObject
+    }
+
+    # Convert PSCustomObject / PSObject to hashtable (shallow)
+    $ht = @{}
+    if ($InputObject -is [System.Collections.IDictionary]) {
+        foreach ($k in $InputObject.Keys) {
+            $ht[$k] = $InputObject[$k]
+        }
+        return $ht
+    }
+
+    if ($InputObject -is [PSCustomObject]) {
+        foreach ($p in $InputObject.PSObject.Properties) {
+            $ht[$p.Name] = $p.Value
+        }
+        return $ht
+    }
+
+    return @{}
+}
+
+function Remove-ManagedCursorRules {
+    $root = Join-Path $Script:ProjectRoot ".cursor\rules"
+    if (-not (Test-Path $root)) {
+        return
+    }
+
+    Get-ChildItem -Path $root -Recurse -File -Filter "*.mdc" -ErrorAction SilentlyContinue | ForEach-Object {
+        try {
+            $txt = Get-Content $_.FullName -Raw -ErrorAction Stop
+            if ($txt -match "aiIapManaged:\s*true") {
+                Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue
+            }
+        } catch { }
+    }
+
+    # Remove empty directories (bottom-up)
+    Get-ChildItem -Path $root -Recurse -Directory -ErrorAction SilentlyContinue |
+        Sort-Object FullName -Descending |
+        Where-Object { @(Get-ChildItem -Path $_.FullName -Force -ErrorAction SilentlyContinue).Count -eq 0 } |
+        ForEach-Object { Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue }
+}
+
+function Remove-ManagedClaudeRules {
+    $root = Join-Path $Script:ProjectRoot ".claude\rules"
+    if (-not (Test-Path $root)) {
+        return
+    }
+
+    Get-ChildItem -Path $root -Recurse -File -Filter "*.md" -ErrorAction SilentlyContinue | ForEach-Object {
+        try {
+            $txt = Get-Content $_.FullName -Raw -ErrorAction Stop
+            if ($txt -match "aiIapManaged:\s*true") {
+                Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue
+            }
+        } catch { }
+    }
+
+    # Remove empty directories (bottom-up)
+    Get-ChildItem -Path $root -Recurse -Directory -ErrorAction SilentlyContinue |
+        Sort-Object FullName -Descending |
+        Where-Object { @(Get-ChildItem -Path $_.FullName -Force -ErrorAction SilentlyContinue).Count -eq 0 } |
+        ForEach-Object { Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue }
+}
+
+function Remove-GeneratedFileIfManaged {
+    param([string]$Path)
+
+    if (-not (Test-Path $Path)) {
+        return
+    }
+
+    try {
+        $txt = Get-Content $Path -Raw -ErrorAction Stop
+        if ($txt -match "Generated by AI Instructions and Prompts Setup") {
+            Remove-Item $Path -Force -ErrorAction SilentlyContinue
+        }
+    } catch { }
+}
+
+function Cleanup-ToolOutputs {
+    param([string]$Tool)
+
+    switch ($Tool) {
+        "cursor" { Remove-ManagedCursorRules }
+        "claude" {
+            Remove-ManagedClaudeRules
+            Remove-GeneratedFileIfManaged -Path (Join-Path $Script:ProjectRoot "CLAUDE.md")
+        }
+        "github-copilot" { Remove-GeneratedFileIfManaged -Path (Join-Path $Script:ProjectRoot ".github\copilot-instructions.md") }
+        "windsurf" { Remove-GeneratedFileIfManaged -Path (Join-Path $Script:ProjectRoot ".windsurfrules") }
+        "aider" { Remove-GeneratedFileIfManaged -Path (Join-Path $Script:ProjectRoot "CONVENTIONS.md") }
+        "google-ai-studio" { Remove-GeneratedFileIfManaged -Path (Join-Path $Script:ProjectRoot "GOOGLE_AI_STUDIO.md") }
+        "amazon-q" { Remove-GeneratedFileIfManaged -Path (Join-Path $Script:ProjectRoot "AMAZON_Q.md") }
+        "tabnine" { Remove-GeneratedFileIfManaged -Path (Join-Path $Script:ProjectRoot "TABNINE.md") }
+        "cody" { Remove-GeneratedFileIfManaged -Path (Join-Path $Script:ProjectRoot ".cody\instructions.md") }
+        "continue" { Remove-GeneratedFileIfManaged -Path (Join-Path $Script:ProjectRoot ".continue\instructions.md") }
+    }
+}
+
+# ============================================================================
 # Main
 # ============================================================================
 
@@ -1436,32 +1603,91 @@ function Main {
     Write-InfoMessage "Project root: $Script:ProjectRoot"
     Write-Host ""
     
-    # Selection
-    $selectedTools = Select-Tools -Config $config
+    # Previous run handling
+    $state = Get-PreviousState
+    $setupMode = "wizard" # reuse | wizard | cleanup | fresh
+
+    if ($null -ne $state) {
+        Write-PreviousStateSummary -State $state
+
+        Write-Host "What would you like to do?" -ForegroundColor White
+        Write-Host "  1. Reuse previous selection and regenerate (recommended)" -ForegroundColor White
+        Write-Host "  2. Modify selection (run the wizard again)" -ForegroundColor White
+        Write-Host "  3. Remove previously generated files (cleanup only)" -ForegroundColor White
+        Write-Host "  4. Ignore previous selection (start fresh wizard)" -ForegroundColor White
+        Write-Host ""
+
+        $choice = Read-Host "Enter choice (1-4) [1]"
+        if ([string]::IsNullOrWhiteSpace($choice)) { $choice = "1" }
+
+        switch ($choice) {
+            "1" { $setupMode = "reuse" }
+            "2" { $setupMode = "wizard" }
+            "3" { $setupMode = "cleanup" }
+            "4" { $setupMode = "fresh" }
+            default { $setupMode = "reuse" }
+        }
+    }
+
+    if ($setupMode -eq "cleanup") {
+        if ($state -and $state.selectedTools) {
+            $confirmCleanup = Read-Host "Remove previously generated files for tools: $($state.selectedTools -join ', ')? (Y/n)"
+            if ($confirmCleanup -ne "n" -and $confirmCleanup -ne "N") {
+                foreach ($t in @($state.selectedTools)) {
+                    Cleanup-ToolOutputs -Tool $t
+                }
+                if (Test-Path $Script:StateFile) {
+                    Remove-Item $Script:StateFile -Force -ErrorAction SilentlyContinue
+                }
+                Write-SuccessMessage "Cleanup complete."
+            }
+        }
+        exit 0
+    }
+
+    $selectedTools = @()
+    $selectedLanguages = @()
+    $selectedDocumentation = @()
+    $selectedFrameworks = @{}
+    $selectedStructures = @{}
+    $selectedProcesses = @{}
+
+    if ($setupMode -eq "reuse" -and $state) {
+        $selectedTools = @($state.selectedTools)
+        $selectedLanguages = @($state.selectedLanguages)
+        $selectedDocumentation = @($state.selectedDocumentation)
+        $selectedFrameworks = ConvertTo-Hashtable -InputObject $state.selectedFrameworks
+        $selectedStructures = ConvertTo-Hashtable -InputObject $state.selectedStructures
+        $selectedProcesses = ConvertTo-Hashtable -InputObject $state.selectedProcesses
+    }
+    else {
+        # Selection (wizard)
+        $selectedTools = Select-Tools -Config $config
     
     if ($selectedTools.Count -eq 0) {
         Write-WarningMessage "No tools selected. Exiting."
         exit 0
     }
     
-    $selectedLanguages = Select-Languages -Config $config
+        $selectedLanguages = Select-Languages -Config $config
     
     if ($selectedLanguages.Count -eq 0) {
         Write-WarningMessage "No languages selected. Exiting."
         exit 0
     }
     
-    # Documentation selection
-    $selectedDocumentation = Select-Documentation -Config $config -SelectedLanguages $selectedLanguages
-    
-    # Framework selection
-    $selectedFrameworks = Select-Frameworks -Config $config -SelectedLanguages $selectedLanguages
-    
-    # Structure selection (for frameworks that have structure options)
-    $selectedStructures = Select-Structures -Config $config -SelectedLanguages $selectedLanguages -SelectedFrameworks $selectedFrameworks
-    
-    # Process selection
-    $selectedProcesses = Select-Processes -Config $config -SelectedLanguages $selectedLanguages
+        # Documentation selection
+        $selectedDocumentation = Select-Documentation -Config $config -SelectedLanguages $selectedLanguages
+        
+        # Framework selection
+        $selectedFrameworks = Select-Frameworks -Config $config -SelectedLanguages $selectedLanguages
+        
+        # Structure selection (for frameworks that have structure options)
+        $selectedStructures = Select-Structures -Config $config -SelectedLanguages $selectedLanguages -SelectedFrameworks $selectedFrameworks
+        
+        # Process selection
+        $selectedProcesses = Select-Processes -Config $config -SelectedLanguages $selectedLanguages
+    }
     
     Write-Host ""
     Write-Host "Configuration Summary:"
@@ -1495,11 +1721,25 @@ function Main {
     }
     
     Write-Host ""
+
+    if ($null -ne $state) {
+        $doCleanup = Read-Host "Clean up previously generated files for selected tools before regenerating? (Y/n)"
+        if ($doCleanup -ne "n" -and $doCleanup -ne "N") {
+            $toolSet = @{}
+            foreach ($t in @($state.selectedTools)) { $toolSet[$t] = $true }
+            foreach ($t in @($selectedTools)) { $toolSet[$t] = $true }
+            foreach ($t in $toolSet.Keys) {
+                Cleanup-ToolOutputs -Tool $t
+            }
+        }
+    }
     
     # Generate files
     foreach ($tool in $selectedTools) {
         New-ToolConfig -Config $config -Tool $tool -SelectedLanguages $selectedLanguages -SelectedDocumentation $selectedDocumentation -SelectedFrameworks $selectedFrameworks -SelectedStructures $selectedStructures -SelectedProcesses $selectedProcesses
     }
+
+    Save-State -SelectedTools $selectedTools -SelectedLanguages $selectedLanguages -SelectedDocumentation $selectedDocumentation -SelectedFrameworks $selectedFrameworks -SelectedStructures $selectedStructures -SelectedProcesses $selectedProcesses
     
     # Gitignore prompt
     Add-ToGitignore
