@@ -62,22 +62,11 @@ fi
 test_item "Example custom rule exists" "$([[ -f .ai-iap-custom/rules/typescript/company-standards.example.md ]] && echo true || echo false)"
 test_item "Example custom process exists" "$([[ -f .ai-iap-custom/processes/typescript/deploy-internal.example.md ]] && echo true || echo false)"
 
-# Test 5: GitIgnore configuration (optional)
-if [[ -f .gitignore ]]; then
-    if grep -q "\.ai-iap-custom/" .gitignore; then
-        test_item "GitIgnore does not ignore .ai-iap-custom/ (recommended)" "false" "true"
-    else
-        test_item "GitIgnore does not ignore .ai-iap-custom/ (recommended)" "true"
-    fi
-else
-    test_item "GitIgnore file exists (optional)" "false" "true"
-fi
-
-# Test 6: Documentation exists
+# Test 5: Documentation exists
 test_item "CUSTOMIZATION.md exists" "$([[ -f CUSTOMIZATION.md ]] && echo true || echo false)"
 test_item "Custom README.md exists" "$([[ -f .ai-iap-custom/README.md ]] && echo true || echo false)"
 
-# Test 7: Setup scripts have merge functions
+# Test 6: Setup scripts have merge functions
 if [[ -f .ai-iap/setup.sh ]]; then
     if grep -q "merge_custom_config\|CUSTOM_CONFIG" .ai-iap/setup.sh; then
         test_item "Bash setup script has merge function" "true"

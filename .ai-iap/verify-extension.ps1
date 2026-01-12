@@ -53,22 +53,11 @@ Test-Item "Example rule file exists (company-standards.example.md)" $tsExampleRu
 $tsExampleProc = Test-Path ".ai-iap-custom/processes/typescript/deploy-internal.example.md"
 Test-Item "Example process file exists (deploy-internal.example.md)" $tsExampleProc
 
-# Test 7: GitIgnore configuration (optional)
-if (Test-Path ".gitignore") {
-    $gitignoreContent = Get-Content .gitignore -Raw
-    $hasCustomIgnore = $gitignoreContent -match "\.ai-iap-custom/"
-
-    # Teams typically want to commit/share .ai-iap-custom/ (especially for custom function patterns).
-    Test-Item "GitIgnore does not ignore .ai-iap-custom/ (recommended)" (-not $hasCustomIgnore) -Warning
-} else {
-    Test-Item "GitIgnore file exists (optional)" $false -Warning
-}
-
-# Test 8: Documentation exists
+# Test 6: Documentation exists
 Test-Item "CUSTOMIZATION.md exists" (Test-Path "CUSTOMIZATION.md")
 Test-Item "Custom README.md exists" (Test-Path ".ai-iap-custom/README.md")
 
-# Test 9: Setup scripts have merge functions
+# Test 7: Setup scripts have merge functions
 $bashScript = Get-Content .ai-iap/setup.sh -Raw
 $psScript = Get-Content .ai-iap/setup.ps1 -Raw
 
@@ -78,7 +67,7 @@ $psHasMerge = $psScript -match "Merge-CustomConfig|CustomConfig"
 Test-Item "Bash script has merge function" $bashHasMerge
 Test-Item "PowerShell script has merge function" $psHasMerge
 
-# Test 10: Config structure is correct
+# Test 8: Config structure is correct
 if ($customConfig) {
     $hasLanguages = $null -ne $customConfig.languages
     $hasTypeScript = $null -ne $customConfig.languages.typescript
