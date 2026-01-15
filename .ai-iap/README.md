@@ -77,6 +77,17 @@ When you choose **Modify selection**, the wizard will show your previous selecti
 - Enter a new list of numbers to **add/remove** items
 - Use **`s`** (skip) on optional steps (documentation/frameworks/processes/structures) to remove previously selected items
 
+### Generated Outputs (High Level)
+
+Setup generates tool-specific outputs into your project root.
+
+Examples:
+- Cursor: `.cursor/rules/**/*.mdc`
+- Claude: `.claude/rules/**/*.md`
+- GitHub Copilot: `.github/copilot-instructions.md`
+
+(See **Supported AI Tools** below for the full mapping.)
+
 ### 3. Follow the Wizard
 
 The setup wizard will guide you through:
