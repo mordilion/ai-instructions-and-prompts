@@ -6,13 +6,27 @@
 
 > **ALWAYS**:
 > - Treat **PII/PHI/PCI/secrets** as sensitive by default
-> - Minimize collection: only store what is required for the feature
+> - Minimize collection: only store what is required for the feature (data minimization)
 > - Document where sensitive data is stored, processed, and transmitted
 > - Enforce least-privilege access to data (RBAC/ABAC)
 
 > **NEVER**:
 > - Log secrets, tokens, passwords, or raw sensitive payloads
 > - Copy production sensitive data into dev environments without explicit approval and sanitization
+
+---
+
+## GDPR / Privacy (PII)
+
+> **ALWAYS**:
+> - Define the **lawful basis** and purpose for processing PII (document at least at a high level)
+> - Implement **right-to-delete** and **right-to-access/export** flows if required
+> - Default to **pseudonymization** and minimize exposure in logs/analytics
+> - Ensure data is retained **no longer than necessary** (align retention with policy)
+
+> **NEVER**:
+> - Use PII for secondary purposes without explicit approval/policy basis
+> - Store PII in places with unclear ownership (ad-hoc spreadsheets, untracked buckets)
 
 ---
 
@@ -23,6 +37,16 @@
 > - Include request correlation identifiers where applicable (trace IDs)
 > - Ensure logs are tamper-resistant and retained according to policy
 > - Keep an auditable change history for configuration affecting security/compliance
+
+---
+
+## SOC 2 / ISO 27001 Style Controls (Change Management)
+
+> **ALWAYS**:
+> - Require code review (and approvals when needed) for security/compliance-impacting changes
+> - Ensure CI checks run and are recorded (tests, SAST/SCA, linting if used)
+> - Track release provenance (what version/commit is deployed, when, by whom)
+> - Maintain an incident trail: detection → triage → remediation → follow-up actions
 
 ---
 
@@ -44,12 +68,34 @@
 
 ---
 
+## HIPAA / PCI (If Applicable)
+
+> **ALWAYS**:
+> - Follow the applicable standard’s requirements for data handling, auditability, and access controls
+> - Avoid introducing scope creep (keep PHI/PCI out of systems unless explicitly required)
+> - Ensure encryption in transit and at rest for in-scope data and backups
+
+> **NEVER**:
+> - Store full payment card data unless explicitly required and approved (PCI scope explosion)
+
+---
+
 ## Secure SDLC Expectations
 
 > **ALWAYS**:
 > - Run dependency and security scanning as part of CI (SCA/SAST, container scanning if applicable)
 > - Treat high/critical findings as release blockers unless explicitly accepted and documented
 > - Ensure code reviews are required for changes in security/compliance-critical areas
+
+---
+
+## Must-Have Documentation & Evidence (When Regulated/Audited)
+
+> **ALWAYS**:
+> - Keep a clear record of security/compliance-relevant decisions (threat model notes, risk acceptance, approvals)
+> - Document data flows for sensitive data (where it enters/leaves, storage locations, processors)
+> - Document operational runbooks for incident response and data deletion/export flows
+> - Ensure releases are reproducible and traceable (versioning + changelog/release notes where required)
 
 ---
 
@@ -60,4 +106,7 @@
 - [ ] Is retention/deletion behavior defined and implemented where required?
 - [ ] Are permissions least-privilege and consistent across the system?
 - [ ] Are compliance-relevant CI checks in place (or documented as TODO with owner)?
+- [ ] If GDPR/PII applies: do we support deletion/export and data minimization?
+- [ ] If SOC2/ISO applies: is change management and release provenance covered?
+- [ ] If HIPAA/PCI applies: is scope minimized and data protected end-to-end?
 
