@@ -9,8 +9,6 @@ This directory allows you to extend or override the core `.ai-iap/` configuratio
 ├── README.md                   # This file
 ├── config.json                 # Custom configuration (extends core)
 ├── rules/                      # Custom or override rules
-│   ├── general/
-│   │   └── compliance-standards.md
 │   └── typescript/
 │       └── company-standards.md
 └── processes/                  # Custom processes

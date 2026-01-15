@@ -50,7 +50,7 @@ The `.ai-iap-custom/` directory allows you to:
 ├── config.json                         # Custom configuration
 ├── rules/                              # Custom or override rules
 │   ├── general/
-│   │   └── compliance-standards.md
+│   │   └── compliance-standards.md      # Optional override of core compliance rule
 │   ├── typescript/
 │   │   ├── company-standards.md        # Additional rule
 │   │   └── code-style.md               # Overrides core code-style.md
@@ -595,9 +595,11 @@ git remote add origin https://github.com/company/ai-standards
 
 ## Examples
 
-### Example 1: Add Compliance Standards
+### Example 1: Override Compliance Standards (Optional)
 
-**File**: `.ai-iap-custom/rules/general/compliance-standards.md`
+**Use case**: You want to replace the core compliance guidance with your org’s policy details.
+
+**File**: `.ai-iap-custom/rules/general/compliance-standards.md` (same path as core rule)
 
 ```markdown
 # Compliance Standards (Company / Project)
@@ -609,17 +611,7 @@ git remote add origin https://github.com/company/ai-standards
 > **ALWAYS** ensure audit logs exist for privileged actions and data export
 ```
 
-**Config**: `.ai-iap-custom/config.json`
-
-```json
-{
-  "languages": {
-    "general": {
-      "customFiles": ["compliance-standards"]
-    }
-  }
-}
-```
+**Config**: No config changes required for overrides (custom file wins automatically).
 
 ---
 

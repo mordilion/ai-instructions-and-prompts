@@ -89,6 +89,7 @@
         "code-style",
         "design",
         "security",
+        "compliance-standards",
         "commit-standards"
       ],
       "documentation": {

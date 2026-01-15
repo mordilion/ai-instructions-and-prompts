@@ -2,9 +2,6 @@
   "version": "1.0.0-custom",
   "description": "Custom configuration for AI Instructions & Prompts",
   "languages": {
-    "general": {
-      "customFiles": ["compliance-standards"]
-    },
     "typescript": {
       "customFiles": ["company-standards", "internal-apis"],
       "customProcesses": {
