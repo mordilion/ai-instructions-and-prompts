@@ -1,6 +1,6 @@
 # JavaScript Code Style
 
-> **Scope**: Apply these rules ONLY when working with `.js`, `.mjs`, or `.cjs` files. These extend the general code style guidelines.
+> **Scope**: Apply these rules ONLY when working with JavaScript files (`.js`, `.jsx`, `.mjs`, `.cjs`) and JavaScript sections in component files (e.g. `.vue`, `.svelte`). These extend the general code style guidelines.
 
 ## 1. Core Principles
 - **Version**: ES2022+ features. Use modern syntax.

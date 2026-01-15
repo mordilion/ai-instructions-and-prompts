@@ -1,6 +1,6 @@
 # JavaScript Architecture
 
-> **Scope**: Apply these rules ONLY when working with `.js`, `.mjs`, or `.cjs` files. These extend the general architecture guidelines.
+> **Scope**: Apply these rules ONLY when working with JavaScript files (`.js`, `.jsx`, `.mjs`, `.cjs`) and JavaScript sections in component files (e.g. `.vue`, `.svelte`). These extend the general architecture guidelines.
 
 ## 1. Core Principles
 - **Modularity**: Small files (<200 lines). ES Modules preferred over CommonJS.
