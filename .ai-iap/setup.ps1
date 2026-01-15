@@ -1234,10 +1234,14 @@ function New-ClaudeConfig {
     Write-InfoMessage "Generating Claude configuration..."
     
     # Rules-only mode:
-    # Put "always-on" content into unconditional rule files under .claude/rules/core/
-    # and keep framework/process rules under .claude/rules/*.
+    # Put "always-on" content under .claude/rules/core/
+    # Put frameworks under .claude/rules/frameworks/<lang>/
+    # Put structures under .claude/rules/structures/<lang>/
+    # Put processes under .claude/rules/processes/
     $outputDir = Join-Path $Script:ProjectRoot ".claude\rules"
     $coreDir = Join-Path $outputDir "core"
+    $frameworksDir = Join-Path $outputDir "frameworks"
+    $structuresDir = Join-Path $outputDir "structures"
     
     Write-InfoMessage "Generating Claude modular rules..."
     
@@ -1289,7 +1293,7 @@ function New-ClaudeConfig {
             }
         }
         
-        # Generate framework files as skills (optional, context-triggered)
+        # Generate framework files (optional, context-triggered)
         if ($SelectedFrameworks.ContainsKey($lang)) {
             foreach ($fw in $SelectedFrameworks[$lang]) {
                 $fwConfig = $Config.languages.$lang.frameworks.$fw
@@ -1299,15 +1303,9 @@ function New-ClaudeConfig {
                     continue
                 }
                 
-                # Organize by category: frontend, backend, mobile
-                $category = Get-FrameworkCategory -Framework $fw -Lang $lang
-                $categoryDir = Join-Path $outputDir $category
-                
-                if (-not (Test-Path $categoryDir)) {
-                    New-Item -ItemType Directory -Path $categoryDir -Force | Out-Null
-                }
-                
-                $outputFile = Join-Path $categoryDir "$fw.md"
+                $fwOutDir = Join-Path $frameworksDir $lang
+                if (-not (Test-Path $fwOutDir)) { New-Item -ItemType Directory -Path $fwOutDir -Force | Out-Null }
+                $outputFile = Join-Path $fwOutDir "$fw.md"
                 
                 # Add YAML frontmatter with path patterns for framework-specific files
                 $pathPatterns = Get-FrameworkPathPatterns -Framework $fw -Lang $lang
@@ -1336,7 +1334,9 @@ function New-ClaudeConfig {
                     
                     if ($null -ne $structContent) {
                         $structName = ($structFile -split '/')[-1]
-                        $structOutputFile = Join-Path $categoryDir "$fw-$structName.md"
+                        $structOutDir = Join-Path $structuresDir $lang
+                        if (-not (Test-Path $structOutDir)) { New-Item -ItemType Directory -Path $structOutDir -Force | Out-Null }
+                        $structOutputFile = Join-Path $structOutDir "$fw-$structName.md"
                         
                         # Add path patterns for structure-specific rules
                         $structPatterns = Get-FrameworkPathPatterns -Framework $fw -Lang $lang

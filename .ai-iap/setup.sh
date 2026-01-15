@@ -1676,10 +1676,14 @@ generate_claude() {
     print_info "Generating Claude configuration..."
     
     # Rules-only mode:
-    # Put "always-on" content into unconditional rule files under .claude/rules/core/
-    # and keep framework/process rules under .claude/rules/*.
+    # Put "always-on" content under .claude/rules/core/
+    # Put frameworks under .claude/rules/frameworks/<lang>/
+    # Put structures under .claude/rules/structures/<lang>/
+    # Put processes under .claude/rules/processes/
     local output_dir="$PROJECT_ROOT/.claude/rules"
     local core_dir="$output_dir/core"
+    local frameworks_dir="$output_dir/frameworks"
+    local structures_dir="$output_dir/structures"
     
     print_info "Generating Claude modular rules..."
     
@@ -1744,20 +1748,16 @@ generate_claude() {
             done
         fi
         
-        # Generate framework files as skills (optional, context-triggered)
+        # Generate framework files (optional, context-triggered)
         if [[ -n "${SELECTED_FRAMEWORKS[$lang]:-}" ]]; then
             for fw in ${SELECTED_FRAMEWORKS[$lang]}; do
                 local fw_file content
                 fw_file=$(get_framework_file "$lang" "$fw")
                 content=$(read_instruction_file "$lang" "$fw_file" "true") || continue
                 
-                # Organize by category: frontend, backend, mobile
-                local category
-                category=$(get_framework_category "$fw" "$lang")
-                local category_dir="$output_dir/$category"
-                mkdir -p "$category_dir"
-                
-                local output_file="$category_dir/$fw.md"
+                local fw_out_dir="$frameworks_dir/$lang"
+                mkdir -p "$fw_out_dir"
+                local output_file="$fw_out_dir/$fw.md"
                 
                 # Add YAML frontmatter with path patterns for framework-specific files
                 local path_patterns
@@ -1786,7 +1786,9 @@ generate_claude() {
                     
                     local struct_name
                     struct_name=$(basename "$struct_file")
-                    local struct_output="$category_dir/$fw-$struct_name.md"
+                    local struct_out_dir="$structures_dir/$lang"
+                    mkdir -p "$struct_out_dir"
+                    local struct_output="$struct_out_dir/$fw-$struct_name.md"
                     
                     # Add path patterns for structure-specific rules
                     local struct_patterns
