@@ -1113,12 +1113,27 @@ function Get-FrameworkPathPatterns {
     # Generate path patterns for YAML frontmatter based on framework
     switch -Regex ($Framework) {
         "react" { return "**/*.{jsx,tsx}" }
-        "vue" { return "**/*.vue,**/*.{js,ts}" }
+        "vue" {
+            if ($Lang -eq "typescript") { return "**/*.vue,**/*.{ts,tsx,mts,cts}" }
+            return "**/*.vue,**/*.{js,jsx,mjs,cjs}"
+        }
         "angular" { return "**/*.{ts,html,scss}" }
-        "next" { return "{app,pages,components}/**/*.{jsx,tsx,js,ts}" }
-        "nuxt" { return "{pages,components,layouts}/**/*.{vue,js,ts}" }
-        "nest" { return "src/**/*.{ts,controller.ts,service.ts,module.ts}" }
-        "express" { return "**/*.{js,ts,mjs}" }
+        "next" {
+            if ($Lang -eq "typescript") { return "{app,pages,components}/**/*.{ts,tsx,mts,cts}" }
+            return "{app,pages,components}/**/*.{js,jsx,mjs,cjs}"
+        }
+        "nuxt" {
+            if ($Lang -eq "typescript") { return "{pages,components,layouts}/**/*.{vue,ts,tsx,mts,cts}" }
+            return "{pages,components,layouts}/**/*.{vue,js,jsx,mjs,cjs}"
+        }
+        "nest" {
+            if ($Lang -eq "typescript") { return "src/**/*.{ts,controller.ts,service.ts,module.ts}" }
+            return "src/**/*.{js,mjs,cjs}"
+        }
+        "express" {
+            if ($Lang -eq "typescript") { return "**/*.{ts,mts,cts}" }
+            return "**/*.{js,mjs,cjs}"
+        }
         "django" { return "**/*.py" }
         "fastapi" { return "**/*.py" }
         "flask" { return "**/*.py" }

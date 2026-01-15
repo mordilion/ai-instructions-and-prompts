@@ -1573,12 +1573,42 @@ get_framework_path_patterns() {
     # Generate path patterns for YAML frontmatter based on framework
     case "$framework" in
         react) echo "**/*.{jsx,tsx}" ;;
-        vue) echo "**/*.vue,**/*.{js,ts}" ;;
+        vue)
+            if [[ "$lang" == "typescript" ]]; then
+                echo "**/*.vue,**/*.{ts,tsx,mts,cts}"
+            else
+                echo "**/*.vue,**/*.{js,jsx,mjs,cjs}"
+            fi
+            ;;
         angular) echo "**/*.{ts,html,scss}" ;;
-        next*) echo "{app,pages,components}/**/*.{jsx,tsx,js,ts}" ;;
-        nuxt*) echo "{pages,components,layouts}/**/*.{vue,js,ts}" ;;
-        nest*) echo "src/**/*.{ts,controller.ts,service.ts,module.ts}" ;;
-        express*) echo "**/*.{js,ts,mjs}" ;;
+        next*)
+            if [[ "$lang" == "typescript" ]]; then
+                echo "{app,pages,components}/**/*.{ts,tsx,mts,cts}"
+            else
+                echo "{app,pages,components}/**/*.{js,jsx,mjs,cjs}"
+            fi
+            ;;
+        nuxt*)
+            if [[ "$lang" == "typescript" ]]; then
+                echo "{pages,components,layouts}/**/*.{vue,ts,tsx,mts,cts}"
+            else
+                echo "{pages,components,layouts}/**/*.{vue,js,jsx,mjs,cjs}"
+            fi
+            ;;
+        nest*)
+            if [[ "$lang" == "typescript" ]]; then
+                echo "src/**/*.{ts,controller.ts,service.ts,module.ts}"
+            else
+                echo "src/**/*.{js,mjs,cjs}"
+            fi
+            ;;
+        express*)
+            if [[ "$lang" == "typescript" ]]; then
+                echo "**/*.{ts,mts,cts}"
+            else
+                echo "**/*.{js,mjs,cjs}"
+            fi
+            ;;
         django) echo "**/*.py" ;;
         fastapi) echo "**/*.py" ;;
         flask) echo "**/*.py" ;;
