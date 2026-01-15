@@ -262,7 +262,7 @@ git commit -m "Add generated AI configs"
 ```
 
 **Recommendation**: Ensure your repo is not ignoring the files you intend to share.
-For team sharing, commit the source folders (`.ai-iap/`, `.ai-iap-custom/`) and the state file (`.ai-iap-state.json`), and decide whether to also commit generated outputs (`.cursor/rules/`, `CLAUDE.md`, etc.).
+For team sharing, commit the source folders (`.ai-iap/`, `.ai-iap-custom/`) and the state file (`.ai-iap-state.json`), and decide whether to also commit generated outputs (`.cursor/rules/`, `.claude/rules/`, etc.).
 
 ---
 
@@ -337,31 +337,24 @@ globs:
 
 ---
 
-### Claude CLI: CLAUDE.md too large
+### Claude: too many rules applying
 
-**Issue**: CLAUDE.md generated but Claude says it's too large
+**Issue**: Claude responses feel noisy or irrelevant, as if too many rules apply at once
 
-**Cause**: Selected too many frameworks (>50,000 tokens)
-
-**Check**:
-```bash
-# Count tokens (rough estimate)
-wc -c CLAUDE.md | awk '{print $1/4}'
-# If >50,000, it's too large
-```
+**Cause**: Selecting too many languages/frameworks/structures can increase the amount of active guidance. For Claude Code rules, scoping is controlled via `paths:` frontmatter in `.claude/rules/**/*.md`.
 
 **Fix**:
 ```bash
-# Re-run setup with fewer frameworks
+# Re-run setup with fewer frameworks/structures
 .\.ai-iap\setup.ps1
 
-# Select only what you need:
-# - Core language
-# - 1-2 main frameworks
-# - 1 structure template
+# Prefer:
+# - only the languages you actively edit
+# - 1-2 main frameworks per language
+# - one structure per framework (if needed)
 ```
 
-**See**: README.md "Token Cost Analysis" for typical selections
+**Tip**: Ensure `paths:` patterns match your repo layout so rules only apply to relevant files.
 
 ---
 

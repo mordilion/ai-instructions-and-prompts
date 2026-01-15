@@ -12,7 +12,6 @@
     },
     "claude": {
       "name": "Claude (CLI & Code)",
-      "outputFile": "CLAUDE.md",
       "outputDir": ".claude/rules",
       "fileExtension": ".md",
       "useFrontmatter": true,

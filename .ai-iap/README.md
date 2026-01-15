@@ -203,7 +203,7 @@ Want to add company-specific standards, internal processes, or override core rul
 | Tool | Output | Description |
 |------|--------|-------------|
 | **Cursor** ⭐ | `.cursor/rules/*.mdc` | Separate rule files with glob patterns |
-| **Claude** ⭐ | `CLAUDE.md` + `.claude/rules/**/*.md` | Always-on rules + modular path-specific rules |
+| **Claude** ⭐ | `.claude/rules/**/*.md` | Modular project rules (supports `paths:` for scoping) |
 | **GitHub Copilot** | `.github/copilot-instructions.md` | Repository-level instructions |
 | **Windsurf** | `.windsurfrules` | Single concatenated file |
 | **Aider** | `CONVENTIONS.md` | Convention file for Aider |
@@ -440,7 +440,7 @@ In addition to coding rules, this system includes **step-by-step workflow guides
 **📋 On-Demand Processes** (Copy when needed):
 - **Testing, CI/CD, Docker, Logging, Auth, API Docs, Security, Linting, Coverage**
 - One-time setup processes
-- Copy prompt from `.ai-iap/processes/_ondemand/{language}/{process}.md` when ready to implement
+- Copy prompt from `.ai-iap/processes/ondemand/{language}/{process}.md` when ready to implement
 - **85% token savings** - Only load what you need, when you need it
 
 ### How to Use On-Demand Processes
@@ -515,7 +515,7 @@ AI Workflow:
 2. AI checks `.ai-iap/functions/INDEX.md` ← MANDATORY STEP
 3. AI opens relevant function file (e.g., error-handling.md)
 4. AI chooses appropriate framework version (Plain, Prisma, Laravel, etc.)
-5. AI copies exact pattern with installation commands
+5. AI copies exact pattern (no installation commands in function files)
 6. AI implements with zero guessing
 ```
 
@@ -531,7 +531,7 @@ AI Workflow:
 1. **Check the INDEX first**: Open [functions/INDEX.md](functions/INDEX.md) to find the pattern you need
 2. **Open the function file**: Each file shows implementations for all 8 languages side-by-side
 3. **Choose your framework**: Plain (flexibility) or Framework (productivity)
-4. **Copy the exact pattern**: Use the language-specific implementation with installation commands
+4. **Copy the exact pattern**: Use the language-specific implementation (no installation commands in function files)
 5. **Stop AI guessing**: Precise patterns = consistent code = fewer bugs
 
 ### Benefits
