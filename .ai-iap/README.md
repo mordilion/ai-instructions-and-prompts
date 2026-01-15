@@ -32,6 +32,7 @@ Your Rules (one source) → Setup Script → All AI Tools Configured
 - **🌍 Multi-Language** – Kotlin, JavaScript, TypeScript, HTML, CSS, Sass/SCSS, Less, PostCSS, Stylus, YAML, JSON, dotenv (.env), Dockerfile, SQL, Java, Python, Dart/Flutter, .NET/C#, PHP, Swift, Node.js, Bash, PowerShell
 - **📦 Framework-Specific** – React, Next.js, NestJS, AdonisJS, Laravel, ASP.NET Core, Spring Boot, Django, FastAPI, and 50+ more
 - **🏗️ Structure Templates** – Clean Architecture, Vertical Slices, Feature-First, Modular, MVVM, MVI, DDD, and more
+- **🎨 UI/Design Rules** – Reusable component-first UI guidance (variants, states, accessibility, tokens)
 - **🔒 Security Rules** – OWASP Top 10 coverage for all languages (token-optimized, 80% more efficient)
 - **📚 Documentation Standards** – Optional code, project, and API documentation standards with smart suggestions
 - **🔄 Process Guides** – CI/CD, Testing, Logging, Docker, Auth, Migrations, API Docs (77 files across core application languages, token-optimized)

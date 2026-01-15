@@ -87,6 +87,7 @@
         "persona",
         "architecture",
         "code-style",
+        "design",
         "security",
         "commit-standards"
       ],
