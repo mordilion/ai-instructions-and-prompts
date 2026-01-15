@@ -138,7 +138,7 @@ Enable learnings capture? (y/N):
 ```
 When enabled, AIs should append stable project-specific decisions to that file. After updates, re-run setup so generated tool outputs include the latest learnings.
 
-**Step 4: Select Frameworks & Processes** (if applicable)
+**Step 5: Select Frameworks, Structures & Processes** (if applicable)
 
 That's it! Your AI tools are now configured with consistent coding standards.
 
