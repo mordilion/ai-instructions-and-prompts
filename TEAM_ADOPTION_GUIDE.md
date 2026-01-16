@@ -179,7 +179,7 @@ These may conflict with established practices:
 
 - [ ] Clone repository
 
-- [ ] Run setup script for primary AI tool (Cursor/Claude)
+- [ ] Run setup script for primary AI tool (Cursor/Claude Code)
 
 - [ ] Review generated configs
 

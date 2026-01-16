@@ -28,7 +28,7 @@ Your Rules (one source) → Setup Script → All AI Tools Configured
 
 ## ✨ Features
 
-- **🔧 Multi-Tool Support** – 10 AI coding assistants: Cursor, Claude, GitHub Copilot, Windsurf, Aider, Google AI Studio, Amazon Q Developer, Tabnine, Cody, Continue.dev
+- **🔧 Multi-Tool Support** – 10 AI coding assistants: Cursor, Claude Code, GitHub Copilot, Windsurf, Aider, Google AI Studio, Amazon Q Developer, Tabnine, Cody, Continue.dev
 - **🌍 Multi-Language** – Kotlin, JavaScript, TypeScript, HTML, CSS, Sass/SCSS, Less, PostCSS, Stylus, YAML, JSON, dotenv (.env), Dockerfile, SQL, Java, Python, Dart/Flutter, .NET/C#, PHP, Swift, Node.js, Bash, PowerShell
 - **📦 Framework-Specific** – React, Next.js, NestJS, AdonisJS, Laravel, ASP.NET Core, Spring Boot, Django, FastAPI, and 50+ more
 - **🏗️ Structure Templates** – Clean Architecture, Vertical Slices, Feature-First, Modular, MVVM, MVI, DDD, and more
@@ -84,7 +84,7 @@ Setup generates tool-specific outputs into your project root.
 
 Examples:
 - Cursor: `.cursor/rules/**/*.mdc`
-- Claude: `.claude/rules/**/*.md`
+- Claude Code: `.claude/rules/**/*.md`
 - GitHub Copilot: `.github/copilot-instructions.md`
 
 (See **Supported AI Tools** below for the full mapping.)
@@ -97,8 +97,7 @@ The setup wizard will guide you through:
 ```
 Select AI tools to configure:
   1. Cursor ⭐
-  2. Claude CLI ⭐
-  3. Claude Code ⭐
+  2. Claude Code ⭐
   ...
 ```
 
@@ -228,7 +227,7 @@ Want to add company-specific standards, internal processes, or override core rul
 | Tool | Output | Description |
 |------|--------|-------------|
 | **Cursor** ⭐ | `.cursor/rules/*.mdc` | Separate rule files with glob patterns |
-| **Claude** ⭐ | `.claude/rules/**/*.md` | Modular project rules (supports `paths:` for scoping) |
+| **Claude Code** ⭐ | `.claude/rules/**/*.md` | Modular project rules (supports `paths:` for scoping) |
 | **GitHub Copilot** | `.github/copilot-instructions.md` | Repository-level instructions |
 | **Windsurf** | `.windsurfrules` | Single concatenated file |
 | **Aider** | `CONVENTIONS.md` | Convention file for Aider |

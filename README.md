@@ -8,7 +8,7 @@
 
 ---
 
-Define your coding standards once, generate configurations for **10 AI coding assistants** including Cursor, Claude,
+Define your coding standards once, generate configurations for **10 AI coding assistants** including Cursor, Claude Code,
 Copilot, Windsurf, Aider, Google AI Studio, Amazon Q, Tabnine, Cody, and Continue.dev.
 
 ## ✨ Features

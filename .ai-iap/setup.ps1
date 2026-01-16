@@ -6,7 +6,7 @@
 
 .DESCRIPTION
     This script sets up AI coding assistant configurations for various tools
-    including Cursor, Claude CLI, GitHub Copilot, Windsurf, and Aider.
+    including Cursor, Claude Code, GitHub Copilot, Windsurf, and Aider.
 
 .EXAMPLE
     .\.ai-iap\setup.ps1

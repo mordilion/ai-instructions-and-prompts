@@ -11,7 +11,7 @@
       "recommended": true
     },
     "claude": {
-      "name": "Claude (CLI & Code)",
+      "name": "Claude Code",
       "outputDir": ".claude/rules",
       "fileExtension": ".md",
       "useFrontmatter": true,
