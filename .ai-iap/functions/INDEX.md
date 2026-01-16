@@ -8,7 +8,7 @@
 
 **BEFORE** implementing **ANY** of these patterns, **CHECK THIS INDEX**:
 
-- ✅ **DO** check `.ai-iap-custom/functions/INDEX.md` first (if it exists) for company-specific patterns
+- ✅ **DO** check for a **custom/company functions index** first (if one exists in this project)
 - ❌ **DON'T** generate error handling code from scratch
 - ❌ **DON'T** guess async/await implementations
 - ❌ **DON'T** create validation logic without checking here first
@@ -123,7 +123,7 @@ Each function provides **multiple implementations** per language:
 
 ## Adding Custom Functions
 
-See **CUSTOMIZATION.md** for instructions on adding your own function patterns.
+If your team maintains custom function patterns, keep them in a separate, update-safe location and ensure AIs check them before these core patterns.
 
 ---
 

@@ -43,14 +43,14 @@
 
 ## 📌 Project Learnings Capture (Optional, Setup-Enabled)
 
-If your project has `.ai-iap-custom/` and the file `.ai-iap-custom/rules/general/learnings.md` exists, treat it as the **single source of truth** for project-specific learnings and decisions from user conversations.
+If your project has a **project learnings file** (often named `learnings.md`) created by your setup/customization workflow, treat it as the **single source of truth** for project-specific learnings and decisions from user conversations.
 
 > **ALWAYS**:
-> - Append **new, stable learnings** (decisions, conventions, constraints, “how we do things here”) to `.ai-iap-custom/rules/general/learnings.md`
+> - Append **new, stable learnings** (decisions, conventions, constraints, “how we do things here”) to the project learnings file
 > - Keep additions **token-efficient** but **unambiguous** so multiple AIs interpret them the same way
 > - Prefer short directives and concrete examples over long prose
 > - Avoid duplication; update/replace outdated learnings instead of piling on
-> - Tell the user to **re-run setup** so the new/updated learnings file is included in generated AI tool outputs
+> - Tell the user to **re-run setup/regeneration** so the new/updated learnings are included in generated AI tool outputs
 
 > **NEVER**:
 > - Store secrets, API keys, credentials, or sensitive data in learnings files

@@ -4,6 +4,21 @@
 
 ---
 
+## 🚨 When the user asks you to commit (MANDATORY)
+
+> **NEVER** create a commit unless the user explicitly asks (e.g., "commit", "make a commit", "create a commit").
+>
+> When asked to commit, **ALWAYS**:
+> - Review changes (`git status`, staged + unstaged diffs)
+> - Ensure no secrets/credentials are included (e.g., `.env`, tokens, private keys)
+> - Stage only files for **one logical change**
+> - Write the message using the rules below
+> - Commit, then re-run `git status` to verify
+>
+> If there are **no changes**, say so and **do not** create an empty commit.
+
+---
+
 ## Format
 
 > **ALWAYS** follow this structure:
