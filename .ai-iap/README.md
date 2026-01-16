@@ -463,16 +463,23 @@ Functions are **5-20 line code patterns** for common coding tasks, shown **acros
 | **Input Validation** | Data validation, sanitization, type checking | All 8 | [input-validation.md](functions/input-validation.md) |
 | **Database Queries** | Safe queries, parameterization, SQL injection prevention | All 8 | [database-query.md](functions/database-query.md) |
 | **HTTP Requests** | API calls, retry logic, timeout handling | All 8 | [http-requests.md](functions/http-requests.md) |
+| **Logging** | Structured logs, correlation IDs, redaction | All 8 | [logging.md](functions/logging.md) |
+| **Caching** | TTL caches, invalidation, distributed caching | All 8 | [caching.md](functions/caching.md) |
+| **Config & Secrets** | Env/config loading, fail-fast validation, redaction | All 8 | [config-secrets.md](functions/config-secrets.md) |
+| **Auth & Authorization** | JWT/session auth, RBAC/policy checks | All 8 | [auth-authorization.md](functions/auth-authorization.md) |
+| **Rate Limiting** | Throttling, 429 handling, abuse protection | All 8 | [rate-limiting.md](functions/rate-limiting.md) |
+| **Webhooks** | Signature verification, idempotency basics | All 8 | [webhooks.md](functions/webhooks.md) |
+| **Money & Decimals** | Minor units, decimal math, rounding rules | All 8 | [money-decimal.md](functions/money-decimal.md) |
 
 **All functions cover**: TypeScript, Python, Java, C#, PHP, Kotlin, Swift, Dart
 
 ### 🚨 CRITICAL RULE for AI Assistants
 
-**BEFORE** implementing any of these 5 patterns, **ALWAYS CHECK** `functions/INDEX.md` first:
+**BEFORE** implementing any of these patterns, **ALWAYS CHECK** `functions/INDEX.md` first:
 
 ```
 AI Workflow:
-1. User asks to implement error handling / async / validation / DB query / HTTP request
+1. User asks to implement a common pattern (errors/async/validation/DB/HTTP/etc.)
 2. AI checks `.ai-iap/functions/INDEX.md` ← MANDATORY STEP
 3. AI opens relevant function file (e.g., error-handling.md)
 4. AI chooses appropriate framework version (Plain, Prisma, Laravel, etc.)

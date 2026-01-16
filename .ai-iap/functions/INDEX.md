@@ -40,6 +40,7 @@
 | **Auth & Authorization** | JWT/session auth, RBAC/policy checks | All 8 | When protecting endpoints and enforcing permissions | [auth-authorization.md](auth-authorization.md) |
 | **Rate Limiting** | Throttling, 429 handling, abuse protection | All 8 | When protecting public endpoints and auth flows | [rate-limiting.md](rate-limiting.md) |
 | **Webhooks** | Signature verification, idempotency basics | All 8 | When receiving third-party events securely | [webhooks.md](webhooks.md) |
+| **Money & Decimals** | Minor units, decimal math, rounding rules | All 8 | When dealing with prices, totals, tax, and currency | [money-decimal.md](money-decimal.md) |
 
 ---
 
@@ -126,6 +127,6 @@ See **CUSTOMIZATION.md** for instructions on adding your own function patterns.
 
 ---
 
-**Last Updated**: 2026-01-09
-**Total Functions**: 11
+**Last Updated**: 2026-01-16
+**Total Functions**: 12
 **Languages Covered**: 8
