@@ -1,0 +1,70 @@
+name: Bug report
+description: Report a reproducible bug
+title: "bug: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug.
+
+        Please avoid sharing secrets, tokens, or private URLs in logs or screenshots.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the bug and what you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Minimal steps to reproduce the behavior.
+      placeholder: |
+        1. Run ...
+        2. Select ...
+        3. See error ...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / output
+      description: Paste relevant output. Redact secrets.
+      render: text
+    validations:
+      required: false
+  - type: dropdown
+    id: os
+    attributes:
+      label: OS
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: shell
+    attributes:
+      label: Shell
+      options:
+        - PowerShell (pwsh)
+        - Windows PowerShell
+        - Bash
+        - Zsh
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: version
+    attributes:
+      label: Version / commit
+      description: Link the commit hash or tag you used.
+      placeholder: e.g. main @ abc1234
+    validations:
+      required: false
+

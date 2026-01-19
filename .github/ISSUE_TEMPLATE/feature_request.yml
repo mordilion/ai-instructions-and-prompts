@@ -1,0 +1,48 @@
+name: Feature request
+description: Suggest an improvement or new capability
+title: "feat: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea. This project is a meta-project that generates AI rules/prompts for multiple tools.
+        Please describe the impact on cross-tool consistency and rerunnable setup when relevant.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What problem are you trying to solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What do you want to happen? Include examples if helpful.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What else did you consider?
+    validations:
+      required: false
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Rules library
+        - Processes library
+        - Functions library
+        - Setup scripts
+        - Generated outputs / tool integration
+        - Documentation
+        - CI / workflows
+        - Other
+    validations:
+      required: true
+

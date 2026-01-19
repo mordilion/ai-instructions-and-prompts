@@ -1,0 +1,9 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation
+    url: https://github.com/HenningHuncke/ai-instructions-and-prompts#readme
+    about: Start with README and the full docs
+  - name: Security policy
+    url: https://github.com/HenningHuncke/ai-instructions-and-prompts/security/policy
+    about: Please report vulnerabilities privately
+
