@@ -77,4 +77,3 @@ If you add or change a function pattern:
 ## Licensing
 
 By contributing, you agree that your contributions will be licensed under the MIT License (see `LICENSE`).
-

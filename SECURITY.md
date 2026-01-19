@@ -28,4 +28,3 @@ Include as much of the following as possible:
 - We will coordinate disclosure timing once a fix or mitigation is available.
 
 Thanks for helping keep this project and its downstream users safe.
-

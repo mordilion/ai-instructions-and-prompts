@@ -21,4 +21,3 @@ If you’re stuck:
 ## Security issues
 
 For security vulnerabilities, please follow `SECURITY.md` and avoid posting details publicly.
-
