@@ -440,17 +440,20 @@ httpClient.DefaultRequestHeaders.Authorization =
 
 ## Adding Custom Design Patterns
 
-Custom design patterns are **company-specific architectural implementations** that extend or specialize the core design patterns library.
+Custom design patterns are **company-specific architectural implementations** that extend or
+specialize the core design patterns library.
 
 ### When to Add Custom Design Patterns
 
 ✅ **Good use cases**:
+
 - Company-specific architectural patterns unique to your domain
 - Industry-specific pattern implementations (e.g., financial, healthcare, e-commerce)
 - Custom framework integrations for standard patterns (e.g., Singleton with company DI container)
 - Team-preferred pattern variants with company conventions
 
 ❌ **Don't create custom patterns for**:
+
 - Standard Gang of Four patterns without customization (use core library)
 - Patterns that work universally across all companies
 - One-off implementations (document in code comments instead)
@@ -469,6 +472,7 @@ Choose category: `creational`, `structural`, or `behavioral`
 ### Step 2: Implement for All Languages
 
 Update the template with:
+
 - Pattern name and purpose
 - Company-specific use cases
 - Complete implementations (20-100 lines) for all 8 languages
@@ -490,6 +494,7 @@ Add entry to `.ai-iap-custom/code-library/design-patterns/INDEX.md` (create if d
 ### Step 4: Verify AI Priority
 
 AIs automatically check:
+
 1. `.ai-iap-custom/code-library/design-patterns/` first ← **Your patterns**
 2. Then `.ai-iap/code-library/design-patterns/` ← Core patterns
 
