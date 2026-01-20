@@ -187,7 +187,7 @@ These may conflict with established practices:
 
 - [ ] Re-run setup in **Modify selection** mode when you need to add/remove tools, languages, frameworks, or processes
 
-- [ ] Create/update `.ai-iap-custom/` with team overrides and custom function patterns
+- [ ] Create/update `.ai-iap-custom/` with team overrides and custom code patterns
 
 - [ ] Test with 1-2 pilot projects
 
