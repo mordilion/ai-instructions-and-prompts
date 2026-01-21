@@ -23,7 +23,7 @@ Copilot, Windsurf, Aider, Google AI Studio, Amazon Q, Tabnine, Cody, and Continu
 - 🔄 **Process Guides** – CI/CD, Testing, Logging, Docker, Authentication,
   Migrations, API Documentation (core application languages)
 - 🔁 **Rerunnable Setup** – Remembers your last selection in `.ai-iap-state.json` and supports add/remove on reruns
-- 🎯 **Code Library** – 12 implementation patterns + 15 design patterns across all 8 languages – reduces AI
+- 🎯 **Code Library** – 17 implementation patterns + 15 design patterns across all 8 languages – reduces AI
   guessing by 70-80%
 - 🎨 **Extension System** – Add company standards, override rules, custom processes (update-safe)
 - ⚡ **Interactive Setup** – Wizard guides you through configuration

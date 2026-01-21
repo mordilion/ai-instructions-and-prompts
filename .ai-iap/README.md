@@ -475,6 +475,11 @@ All patterns are shown **across all 8 core application languages** in a single f
 | **Rate Limiting** | Throttling, 429 handling, abuse protection | All 8 | [rate-limiting.md](code-library/functions/rate-limiting.md) |
 | **Webhooks** | Signature verification, idempotency basics | All 8 | [webhooks.md](code-library/functions/webhooks.md) |
 | **Money & Decimals** | Minor units, decimal math, rounding rules | All 8 | [money-decimal.md](code-library/functions/money-decimal.md) |
+| **File Operations** | Upload, download, streaming, safe deletion | All 8 | [file-operations.md](code-library/functions/file-operations.md) |
+| **Pagination** | Offset, cursor, keyset pagination for APIs | All 8 | [pagination.md](code-library/functions/pagination.md) |
+| **Background Jobs** | Task queues, scheduling, async processing | All 8 | [background-jobs.md](code-library/functions/background-jobs.md) |
+| **Email Sending** | SMTP, templates, attachments, notifications | All 8 | [email-sending.md](code-library/functions/email-sending.md) |
+| **Search & Filtering** | Query building, full-text search, dynamic filters | All 8 | [search-filtering.md](code-library/functions/search-filtering.md) |
 
 ### Design Patterns (15)
 

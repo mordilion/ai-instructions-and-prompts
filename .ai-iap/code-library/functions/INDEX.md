@@ -15,6 +15,9 @@
 - ❌ **DON'T** create validation logic without checking here first
 - ❌ **DON'T** write database queries without using provided patterns
 - ❌ **DON'T** implement HTTP clients without checking available options
+- ❌ **DON'T** implement file uploads without security validation
+- ❌ **DON'T** create pagination from scratch
+- ❌ **DON'T** write email sending without checking templates
 
 - ✅ **DO** check this INDEX before implementing any covered pattern
 - ✅ **DO** open the function file and read YAML metadata for framework options
@@ -42,6 +45,11 @@
 | **Rate Limiting** | Throttling, 429 handling, abuse protection | All 8 | When protecting public endpoints and auth flows | [rate-limiting.md](rate-limiting.md) |
 | **Webhooks** | Signature verification, idempotency basics | All 8 | When receiving third-party events securely | [webhooks.md](webhooks.md) |
 | **Money & Decimals** | Minor units, decimal math, rounding rules | All 8 | When dealing with prices, totals, tax, and currency | [money-decimal.md](money-decimal.md) |
+| **File Operations** | Upload, download, streaming, safe deletion | All 8 | When handling file uploads, downloads, storage | [file-operations.md](file-operations.md) |
+| **Pagination** | Offset, cursor, keyset pagination | All 8 | When returning large datasets in APIs | [pagination.md](pagination.md) |
+| **Background Jobs** | Task queues, scheduling, retries | All 8 | When processing tasks asynchronously | [background-jobs.md](background-jobs.md) |
+| **Email Sending** | SMTP, templates, attachments | All 8 | When sending transactional or notification emails | [email-sending.md](email-sending.md) |
+| **Search & Filtering** | Query building, full-text search, dynamic filters | All 8 | When implementing search and filtering features | [search-filtering.md](search-filtering.md) |
 
 ---
 
@@ -137,5 +145,5 @@ If your team maintains custom function patterns, keep them in a separate, update
 ---
 
 **Last Updated**: 2026-01-20
-**Total Functions**: 12
+**Total Functions**: 17
 **Languages Covered**: 8

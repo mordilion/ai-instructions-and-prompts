@@ -26,7 +26,7 @@
 
 ## Library Contents
 
-### [Implementation Patterns](functions/INDEX.md) (12 patterns)
+### [Implementation Patterns](functions/INDEX.md) (17 patterns)
 
 Tactical, small-scope code snippets for common programming tasks:
 
@@ -38,6 +38,9 @@ Tactical, small-scope code snippets for common programming tasks:
 | **External Communication** | HTTP requests, rate limiting | API consumption, abuse protection |
 | **Infrastructure** | Logging, caching, config/secrets | Observability, performance, configuration |
 | **Business Logic** | Auth/authorization, money/decimals | Security, financial calculations |
+| **File Management** | Upload, download, streaming, deletion | File handling, storage |
+| **Data Presentation** | Pagination, search/filtering | Large datasets, API responses |
+| **Async Processing** | Background jobs, email sending | Non-blocking operations, notifications |
 
 **Browse**: [functions/INDEX.md](functions/INDEX.md)
 
@@ -129,6 +132,6 @@ If your team maintains custom patterns:
 ---
 
 **Last Updated**: 2026-01-20
-**Total Implementation Patterns**: 12
+**Total Implementation Patterns**: 17
 **Total Design Patterns**: 15 (4 Creational, 5 Structural, 6 Behavioral)
 **Languages Covered**: 8
