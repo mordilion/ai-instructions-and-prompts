@@ -1,29 +1,22 @@
 # Svelte/SvelteKit (JavaScript)
 
-> **Scope**: Apply these rules when working with Svelte or SvelteKit applications using JavaScript.
+> **Scope**: Svelte/SvelteKit applications (JavaScript)  
+> **Applies to**: .svelte files (JavaScript)  
+> **Extends**: javascript/architecture.md
 
-## Overview
+## CRITICAL REQUIREMENTS
 
-Svelte JavaScript version - no virtual DOM, compiles to vanilla JS. For TypeScript, see `typescript/frameworks/svelte.md`.
-
-## Best Practices
-
-**MUST**:
-- Use Runes ($state, $derived, $effect) in Svelte 5
-- Use (item.id) keys in {#each} loops
-- Use +page.server.js for server-side data
-- Use form actions for mutations
-
-**SHOULD**:
-- Use stores for shared state
-- Use load functions for data fetching
-- Use $lib alias for imports
-
-**AVOID**:
-- Legacy syntax (use Runes)
-- Client-side data fetching (use load functions)
-- Missing keys in loops
-- Exposing secrets to client
+> **ALWAYS**: Use Runes ($state, $derived, $effect) in Svelte 5
+> **ALWAYS**: Use (item.id) keys in {#each} loops
+> **ALWAYS**: Use +page.server.js for server-side data
+> **ALWAYS**: Use form actions for mutations
+> **ALWAYS**: Use stores for shared state
+> 
+> **NEVER**: Use legacy syntax (use Runes)
+> **NEVER**: Client-side data fetching (use load functions)
+> **NEVER**: Missing keys in loops
+> **NEVER**: Expose secrets to client
+> **NEVER**: Index as key in {#each}
 
 ## 1. Project Structure (SvelteKit)
 ```
@@ -131,4 +124,19 @@ export const actions = {
 - **{#key}**: Force re-render when value changes.
 - **{#await}**: Handle async data in templates.
 - **$effect.pre**: Run before DOM updates.
+
+## AI Self-Check
+
+- [ ] Using Runes ($state, $derived, $effect)?
+- [ ] Keys in {#each} loops (item.id)?
+- [ ] +page.server.js for server data?
+- [ ] Form actions for mutations?
+- [ ] Stores for shared state?
+- [ ] Load functions for data fetching?
+- [ ] $lib alias for imports?
+- [ ] No legacy syntax?
+- [ ] No client-side data fetching?
+- [ ] No missing keys in loops?
+- [ ] No secrets exposed to client?
+- [ ] {#await} for async rendering?
 

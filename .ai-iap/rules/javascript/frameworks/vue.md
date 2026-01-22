@@ -1,29 +1,22 @@
 # Vue.js (JavaScript)
 
-> **Scope**: Apply these rules when working with Vue.js 3 applications using JavaScript.
+> **Scope**: Vue.js 3 applications (JavaScript)  
+> **Applies to**: .vue files (JavaScript)  
+> **Extends**: javascript/architecture.md
 
-## Overview
+## CRITICAL REQUIREMENTS
 
-Vue.js JavaScript version - uses Composition API without TypeScript. For TypeScript, see `typescript/frameworks/vue.md`.
-
-## Best Practices
-
-**MUST**:
-- Use Composition API with `<script setup>`
-- Use defineProps and defineEmits  
-- Use .value for refs
-- Use :key in v-for loops
-
-**SHOULD**:
-- Use composables for reusable logic
-- Use computed for derived state
-- Use Pinia for state management
-
-**AVOID**:
-- Options API (use Composition API)
-- Mutating props
-- Missing .value on refs
-- Index as key in v-for
+> **ALWAYS**: Use Composition API with `<script setup>`
+> **ALWAYS**: Use defineProps and defineEmits
+> **ALWAYS**: Use .value for refs
+> **ALWAYS**: Use :key in v-for loops
+> **ALWAYS**: Use Pinia for state management
+> 
+> **NEVER**: Use Options API (use Composition API)
+> **NEVER**: Mutate props
+> **NEVER**: Missing .value on refs
+> **NEVER**: Index as key in v-for
+> **NEVER**: Expose reactive state (use computed/readonly)
 
 ## 1. Project Structure
 ```
@@ -143,4 +136,19 @@ export const useAuthStore = defineStore('auth', () => {
 - **defineAsyncComponent**: Lazy load components.
 - **v-memo**: Memoize template sections.
 - **shallowRef**: For large objects that don't need deep reactivity.
+
+## AI Self-Check
+
+- [ ] Composition API with `<script setup>`?
+- [ ] defineProps and defineEmits used?
+- [ ] .value for refs?
+- [ ] :key in v-for loops?
+- [ ] Pinia for state management?
+- [ ] Composables for reusable logic?
+- [ ] computed for derived state?
+- [ ] No Options API?
+- [ ] No mutating props?
+- [ ] No missing .value on refs?
+- [ ] No index as key?
+- [ ] defineAsyncComponent for code splitting?
 

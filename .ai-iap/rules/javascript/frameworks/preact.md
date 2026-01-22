@@ -1,26 +1,22 @@
 # Preact
 
-> **Scope**: Apply these rules when working with Preact, the lightweight (3kB) React alternative.
+> **Scope**: Preact lightweight React alternative  
+> **Applies to**: JavaScript/TypeScript files using Preact  
+> **Extends**: javascript/architecture.md
 
-## Overview
+## CRITICAL REQUIREMENTS
 
-Preact is a fast 3kB React alternative with the same API. Use preact/compat for full React compatibility.
-
-## Best Practices
-
-**MUST**:
-- Use class and for (NOT className/htmlFor)
-- Use onInput for real-time updates (NOT onChange)
-- Import from preact/hooks (NOT react)
-
-**SHOULD**:
-- Use Signals for global state
-- Use preact/compat for React libraries
-- Use lazy loading for code splitting
-
-**AVOID**:
-- Assuming React behavior (check differences)
-- Large bundles (defeats purpose)
+> **ALWAYS**: Use class and for (not className/htmlFor)
+> **ALWAYS**: Use onInput for real-time updates (not onChange)
+> **ALWAYS**: Import from preact/hooks (not react)
+> **ALWAYS**: Keep bundle small (<10kB gzipped)
+> **ALWAYS**: Use Signals for global state
+> 
+> **NEVER**: Assume React behavior (check differences)
+> **NEVER**: Large bundles (defeats purpose)
+> **NEVER**: Import from react (use preact/compat)
+> **NEVER**: className/htmlFor (use class/for)
+> **NEVER**: onChange for inputs (use onInput)
 
 ## 1. When to Use Preact
 - **Performance Critical**: Smaller bundle size than React.
@@ -79,4 +75,19 @@ const Counter = () => <button onClick={() => count.value++}>Count: {count}</butt
 // vite.config.js
 { resolve: { alias: { 'react': 'preact/compat', 'react-dom': 'preact/compat' } } }
 ```
+
+## AI Self-Check
+
+- [ ] Using class and for (not className/htmlFor)?
+- [ ] Using onInput (not onChange)?
+- [ ] Importing from preact/hooks (not react)?
+- [ ] Bundle size <10kB gzipped?
+- [ ] Signals for global state?
+- [ ] preact/compat for React libraries?
+- [ ] Lazy loading for code splitting?
+- [ ] No assuming React behavior?
+- [ ] No large bundles?
+- [ ] preact/compat aliased in build config?
+- [ ] Functional components preferred?
+- [ ] Hooks used correctly?
 

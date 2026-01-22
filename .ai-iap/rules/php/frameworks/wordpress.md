@@ -1,33 +1,22 @@
 # WordPress Development
 
-> **Scope**: Apply these rules when developing WordPress themes and plugins.
+> **Scope**: WordPress themes and plugins  
+> **Applies to**: PHP files in WordPress projects  
+> **Extends**: php/architecture.md, php/code-style.md, php/security.md
 
-## Overview
+## CRITICAL REQUIREMENTS
 
-WordPress is a PHP CMS powering 43% of websites. When developing plugins/themes, follow WordPress coding standards and security best practices.
-
-**Key Capabilities**:
-- **Hooks System**: Actions and filters for extensibility
-- **Custom Post Types**: Extend content types
-- **REST API**: Built-in API endpoints
-- **Plugin/Theme Architecture**: Modular extensions
-- **wpdb**: Database abstraction layer
-
-## Best Practices
-
-**MUST**:
-- Check `ABSPATH` constant (security)
-- Use `$wpdb->prepare()` for ALL SQL queries
-- Verify nonces for form submissions
-- Check user capabilities before sensitive operations
-- Escape ALL output (esc_html, esc_url, esc_attr)
-
-**SHOULD**:
-- Use WordPress coding standards
-- Prefix all functions/classes
-- Use translation functions (__(), _e())
-- Enqueue scripts/styles properly
-- Use custom post types over custom tables
+> **ALWAYS**: Check `ABSPATH` constant
+> **ALWAYS**: Use `$wpdb->prepare()` for ALL SQL
+> **ALWAYS**: Verify nonces for form submissions
+> **ALWAYS**: Check user capabilities before operations
+> **ALWAYS**: Escape ALL output (esc_html, esc_url, esc_attr)
+> 
+> **NEVER**: Skip `$wpdb->prepare()` (SQL injection risk)
+> **NEVER**: Trust user input
+> **NEVER**: Skip nonce verification
+> **NEVER**: Skip capability checks
+> **NEVER**: Output unescaped data
 
 **AVOID**:
 - Direct SQL without prepare (SQL injection!)
@@ -131,3 +120,18 @@ wp_localize_script('my-script', 'myPlugin', ['ajaxUrl' => admin_url('admin-ajax.
 - **Escape Late**: Escape just before output
 - **Prepare SQL**: Always use `$wpdb->prepare()`
 - **i18n**: Wrap strings in `__()` or `_e()`
+
+## AI Self-Check
+
+- [ ] ABSPATH constant checked?
+- [ ] $wpdb->prepare() for ALL SQL?
+- [ ] Nonces verified for forms?
+- [ ] User capabilities checked?
+- [ ] ALL output escaped (esc_html, esc_url, esc_attr)?
+- [ ] Functions/classes prefixed?
+- [ ] Translation functions used (__(), _e())?
+- [ ] Scripts/styles enqueued properly (not hardcoded)?
+- [ ] Custom post types (not custom tables)?
+- [ ] Hooks used correctly (actions/filters)?
+- [ ] No direct SQL without prepare?
+- [ ] No unescaped output?
