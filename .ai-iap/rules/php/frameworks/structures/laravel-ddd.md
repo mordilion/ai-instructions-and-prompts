@@ -1,7 +1,22 @@
 # Laravel Domain-Driven Design Structure
 
-> **Scope**: Use this structure for complex Laravel apps with DDD approach.
-> **Precedence**: When loaded, this structure overrides any default folder organization from the base Laravel rules.
+> **Scope**: DDD structure for Laravel apps  
+> **Applies to**: Laravel projects with DDD  
+> **Extends**: php/frameworks/laravel.md
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Domain layer has no Laravel dependencies
+> **ALWAYS**: Actions for business operations
+> **ALWAYS**: Value Objects for domain concepts
+> **ALWAYS**: DTOs for data transfer
+> **ALWAYS**: Repository pattern for data access
+> 
+> **NEVER**: Laravel imports in Domain layer
+> **NEVER**: Infrastructure depends on Domain
+> **NEVER**: Mix concerns across layers
+> **NEVER**: Skip Value Objects for domain concepts
+> **NEVER**: Expose Eloquent models outside Domain
 
 ## Project Structure
 ```
@@ -72,4 +87,17 @@ class UserData extends DataTransferObject
 - Long-lived enterprise apps
 - Need for testability
 - Teams with DDD experience
+
+## AI Self-Check
+
+- [ ] Domain layer has no Laravel dependencies?
+- [ ] Actions for business operations?
+- [ ] Value Objects for domain concepts?
+- [ ] DTOs for data transfer?
+- [ ] Repository pattern for data access?
+- [ ] Dependency flow: Presentation → Application → Domain ← Infrastructure?
+- [ ] No Laravel imports in Domain?
+- [ ] No Infrastructure → Domain dependency?
+- [ ] Domain concepts expressed as Value Objects?
+- [ ] Actions encapsulate business logic?
 

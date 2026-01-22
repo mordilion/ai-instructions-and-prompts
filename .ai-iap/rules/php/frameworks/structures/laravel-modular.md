@@ -1,7 +1,22 @@
 # Laravel Modular Structure
 
-> **Scope**: Use this structure for large Laravel apps organized by domain/module.
-> **Precedence**: When loaded, this structure overrides any default folder organization from the base Laravel rules.
+> **Scope**: Module-organized structure for Laravel  
+> **Applies to**: Laravel projects with modular structure  
+> **Extends**: php/frameworks/laravel.md
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Modules in app/Modules/
+> **ALWAYS**: Each module self-contained (Controllers, Models, Services, Routes)
+> **ALWAYS**: ServiceProvider per module
+> **ALWAYS**: Shared folder for cross-module code
+> **ALWAYS**: Modules independent (minimal coupling)
+> 
+> **NEVER**: Cross-module dependencies (use Shared/)
+> **NEVER**: Split module across locations
+> **NEVER**: Generic Services folder (module-specific)
+> **NEVER**: Share state between modules directly
+> **NEVER**: Deep nesting in modules
 
 ## Project Structure
 ```
@@ -70,4 +85,17 @@ class UsersServiceProvider extends ServiceProvider
 - Multiple teams
 - Domain-driven design
 - Potential microservice extraction
+
+## AI Self-Check
+
+- [ ] Modules in app/Modules/?
+- [ ] Each module self-contained?
+- [ ] ServiceProvider per module?
+- [ ] Shared folder for cross-module code?
+- [ ] Modules independent?
+- [ ] Module routes in module folder?
+- [ ] No cross-module dependencies (using Shared/)?
+- [ ] No split modules across locations?
+- [ ] No generic Services folder?
+- [ ] ModuleServiceProvider registered?
 

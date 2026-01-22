@@ -1,6 +1,22 @@
 # Laravel Traditional Structure
 
-> Laravel's conventional MVC structure with models, controllers, and views organized by type. Best for standard CRUD applications.
+> **Scope**: Traditional MVC structure for Laravel  
+> **Applies to**: Laravel projects with traditional structure  
+> **Extends**: php/frameworks/laravel.md
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Controllers in app/Http/Controllers/
+> **ALWAYS**: Models in app/Models/
+> **ALWAYS**: Services in app/Services/
+> **ALWAYS**: Repositories for data access
+> **ALWAYS**: Controllers thin (delegate to services)
+> 
+> **NEVER**: Business logic in controllers
+> **NEVER**: Controllers call models directly (use services)
+> **NEVER**: Fat controllers
+> **NEVER**: Skip repository pattern
+> **NEVER**: Mix concerns
 
 ## Directory Structure
 
@@ -54,3 +70,16 @@ class UserController extends Controller {
 ## When to Use
 - Traditional Laravel apps
 - CRUD-focused applications
+
+## AI Self-Check
+
+- [ ] Controllers in app/Http/Controllers/?
+- [ ] Models in app/Models/?
+- [ ] Services in app/Services/?
+- [ ] Repositories for data access?
+- [ ] Controllers thin?
+- [ ] Services handle business logic?
+- [ ] No business logic in controllers?
+- [ ] No controllers calling models directly?
+- [ ] No fat controllers?
+- [ ] Repository pattern used?
