@@ -1,40 +1,22 @@
 # Flutter Framework
 
-> **Scope**: Apply these rules when working with Flutter projects (`.dart` files with Flutter imports).
+> **Scope**: Flutter mobile, web, and desktop applications  
+> **Applies to**: *.dart files with Flutter imports  
+> **Extends**: dart/architecture.md, dart/code-style.md
 
-## Overview
+## CRITICAL REQUIREMENTS
 
-Flutter is Google's UI framework for building natively compiled applications from a single codebase for mobile, web, and desktop.
-
-**Key Capabilities**:
-- **Hot Reload**: Instant UI updates
-- **Widget Composition**: Everything is a widget
-- **Native Performance**: Compiled to native code
-- **Rich Widgets**: Material and Cupertino designs
-- **Cross-Platform**: iOS, Android, Web, Desktop
-
-## Best Practices
-
-**MUST**:
-- Use const constructors (performance optimization)
-- Use StatelessWidget when possible
-- Dispose controllers in dispose()
-- Use ListView.builder for long lists
-- Use keys for stateful widgets in lists
-
-**SHOULD**:
-- Use BLoC/Riverpod for state management
-- Use GoRouter for navigation
-- Use dependency injection (GetIt/Riverpod)
-- Extract widgets (keep build methods small)
-- Use MediaQuery.of(context) sparingly
-
-**AVOID**:
-- setState in loops
-- Direct Navigator.push (use named routes)
-- Services instantiated in widgets
-- Column with List.map (use ListView.builder)
-- Missing const on stateless widgets
+> **ALWAYS**: Use const constructors for performance
+> **ALWAYS**: Use StatelessWidget when no state needed
+> **ALWAYS**: Dispose controllers in dispose()
+> **ALWAYS**: Use ListView.builder for long lists
+> **ALWAYS**: Use keys for stateful widgets in lists
+> 
+> **NEVER**: Use setState in loops
+> **NEVER**: Instantiate services in widgets
+> **NEVER**: Use Column with List.map (use ListView.builder)
+> **NEVER**: Missing const on stateless widgets
+> **NEVER**: Forget to dispose controllers
 
 ## 1. Widget Structure
 - **Composition over Inheritance**: Build complex UIs by composing small widgets.
@@ -90,4 +72,19 @@ final userRepo = UserRepositoryImpl(ApiClient());  // Inside widget
 - **ListView.builder**: For long lists (never `Column` with `List.map`).
 - **RepaintBoundary**: Isolate frequently updating widgets.
 - **Avoid**: `setState` in loops, rebuilding entire trees.
+
+## AI Self-Check
+
+- [ ] Using const constructors everywhere possible?
+- [ ] StatelessWidget when no state needed?
+- [ ] Controllers disposed in dispose()?
+- [ ] ListView.builder for long lists (not Column + List.map)?
+- [ ] Keys used for stateful widgets in lists?
+- [ ] State management (BLoC/Riverpod) for complex state?
+- [ ] Dependency injection for services (not instantiated in widgets)?
+- [ ] Build methods kept small (extracted widgets)?
+- [ ] No setState in loops?
+- [ ] No services instantiated in widgets?
+- [ ] Named routes or GoRouter (not direct Navigator.push)?
+- [ ] MediaQuery.of(context) used sparingly?
 

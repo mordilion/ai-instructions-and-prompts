@@ -1,39 +1,22 @@
 # BLoC Pattern (Business Logic Component)
 
-> **Scope**: Apply these rules when using BLoC/Cubit for state management in Flutter.
+> **Scope**: BLoC/Cubit state management in Flutter  
+> **Applies to**: *.dart files using BLoC/Cubit  
+> **Extends**: dart/architecture.md, dart/frameworks/flutter.md
 
-## Overview
+## CRITICAL REQUIREMENTS
 
-BLoC (Business Logic Component) separates business logic from UI using streams and events. It follows reactive programming principles with clear separation of concerns.
-
-**Key Capabilities**:
-- **Event-Driven**: UI dispatches events, BLoC emits states
-- **Testable**: Pure business logic easy to test
-- **Predictable**: Finite states, clear transitions
-- **Reactive**: Streams for async state changes
-
-## Best Practices
-
-**MUST**:
-- Use sealed classes for events and states (Dart 3+)
-- Emit states in event handlers (NO direct UI updates)
-- Use Cubit for simple state (BLoC for complex)
-- Close BLoCs in dispose()
-- Use BlocProvider for dependency injection
-
-**SHOULD**:
-- Use descriptive event names (LoginRequested)
-- Model finite states (Initial, Loading, Success, Failure)
-- Use BlocBuilder for UI updates
-- Use BlocListener for side effects (navigation, snackbars)
-- Extract business logic to repositories
-
-**AVOID**:
-- Logic in UI (use BLoC/Cubit)
-- Mutable state classes
-- Multiple BLoCs for simple state
-- Missing error states
-- Direct BLoC instantiation (use BlocProvider)
+> **ALWAYS**: Use sealed classes for events and states (Dart 3+)
+> **ALWAYS**: Emit states in event handlers (not direct UI updates)
+> **ALWAYS**: Close BLoCs in dispose()
+> **ALWAYS**: Use BlocProvider for dependency injection
+> **ALWAYS**: Model finite states (Initial, Loading, Success, Failure)
+> 
+> **NEVER**: Put business logic in UI (use BLoC/Cubit)
+> **NEVER**: Use mutable state classes
+> **NEVER**: Instantiate BLoCs directly (use BlocProvider)
+> **NEVER**: Missing error states
+> **NEVER**: Multiple BLoCs for simple state (use Cubit)
 
 ## 1. BLoC Structure
 ```
@@ -85,4 +68,19 @@ blocTest<AuthBloc, AuthState>(
   expect: () => [AuthLoading(), isA<AuthSuccess>()],
 );
 ```
+
+## AI Self-Check
+
+- [ ] Using sealed classes for events and states?
+- [ ] States emitted in event handlers (not UI)?
+- [ ] BLoCs closed in dispose()?
+- [ ] BlocProvider for dependency injection?
+- [ ] Finite states modeled (Initial, Loading, Success, Failure)?
+- [ ] Error states included?
+- [ ] Business logic in BLoC/Cubit (not UI)?
+- [ ] Immutable state classes (copyWith pattern)?
+- [ ] BlocBuilder for UI updates?
+- [ ] BlocListener for side effects?
+- [ ] Cubit for simple state, BLoC for complex?
+- [ ] bloc_test for testing?
 

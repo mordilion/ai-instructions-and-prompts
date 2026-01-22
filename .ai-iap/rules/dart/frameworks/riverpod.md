@@ -1,40 +1,22 @@
 # Riverpod State Management
 
-> **Scope**: Apply these rules when using Riverpod for state management in Flutter.
+> **Scope**: Riverpod state management in Flutter  
+> **Applies to**: *.dart files using Riverpod  
+> **Extends**: dart/architecture.md, dart/frameworks/flutter.md
 
-## Overview
+## CRITICAL REQUIREMENTS
 
-Riverpod is a reactive caching and data-binding framework for Flutter and Dart. It's a complete rewrite of Provider with improved safety, testability, and features.
-
-**Key Capabilities**:
-- **Compile-Safe**: No BuildContext required
-- **Testable**: Easy to mock and test
-- **Code Generation**: Type-safe providers (@riverpod)
-- **Auto-Dispose**: Automatic cleanup
-- **Dev Tools**: State inspection and time travel
-
-## Best Practices
-
-**MUST**:
-- Use @riverpod code generation (NOT manual providers)
-- Use ref.watch in build (NO ref.read)
-- Use ref.read for event handlers/callbacks
-- Use AsyncValue for async operations
-- Wrap app with ProviderScope
-
-**SHOULD**:
-- Use Notifier/AsyncNotifier (Riverpod 2.0+)
-- Use freezed for state classes
-- Use family for parameterized providers
-- Use autoDispose for temporary state
-- Keep providers small and focused
-
-**AVOID**:
-- Provider hell (too many providers)
-- ref.read in build methods
-- Manual StateNotifier (use code generation)
-- Mutable state
-- Global state when not needed
+> **ALWAYS**: Use @riverpod code generation (not manual providers)
+> **ALWAYS**: Use ref.watch in build methods
+> **ALWAYS**: Use ref.read for event handlers/callbacks
+> **ALWAYS**: Use AsyncValue for async operations
+> **ALWAYS**: Wrap app with ProviderScope
+> 
+> **NEVER**: Use ref.read in build methods
+> **NEVER**: Use manual StateNotifier (use code generation)
+> **NEVER**: Use mutable state
+> **NEVER**: Create provider hell (too many providers)
+> **NEVER**: Use global state when not needed
 
 ## 1. Provider Types
 | Provider | Use Case |
@@ -114,4 +96,19 @@ final user = ref.watch(userProvider('user-123'));
 - **ProviderScope**: Wrap app at root.
 - **ConsumerWidget/ConsumerStatefulWidget**: For widgets that need providers.
 - **Avoid**: Watching providers in initState, creating providers in build.
+
+## AI Self-Check
+
+- [ ] Using @riverpod code generation (not manual)?
+- [ ] ref.watch in build methods (not ref.read)?
+- [ ] ref.read for event handlers/callbacks?
+- [ ] AsyncValue for async operations?
+- [ ] App wrapped with ProviderScope?
+- [ ] Notifier/AsyncNotifier used (Riverpod 2.0+)?
+- [ ] freezed for state classes?
+- [ ] family for parameterized providers?
+- [ ] autoDispose for temporary state?
+- [ ] Providers small and focused?
+- [ ] ConsumerWidget/ConsumerStatefulWidget?
+- [ ] No ref.read in build methods?
 

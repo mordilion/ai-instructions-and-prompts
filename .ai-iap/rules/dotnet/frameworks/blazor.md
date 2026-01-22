@@ -1,17 +1,22 @@
 # Blazor Framework
 
-> **Scope**: Apply these rules when working with Blazor WebAssembly or Blazor Server applications.
+> **Scope**: Blazor WebAssembly and Blazor Server applications  
+> **Applies to**: *.razor, *.cs files in Blazor projects  
+> **Extends**: dotnet/architecture.md, dotnet/code-style.md
 
-## Overview
+## CRITICAL REQUIREMENTS
 
-Blazor enables building interactive web UIs using C# instead of JavaScript. Blazor WebAssembly runs in browser via WebAssembly; Blazor Server runs on server with SignalR connection.
-
-**Key Capabilities**:
-- **C# for Web**: Write frontend in C#/.NET
-- **Component-Based**: Reusable Razor components
-- **Two Hosting Models**: WebAssembly (client) or Server (SignalR)
-- **Full .NET**: Access entire .NET ecosystem
-- **Hot Reload**: Fast development cycle
+> **ALWAYS**: Use `[Parameter]` for component inputs
+> **ALWAYS**: Use `EventCallback<T>` for component outputs
+> **ALWAYS**: Use dependency injection for services
+> **ALWAYS**: Use async Task for event handlers (not async void)
+> **ALWAYS**: Implement IAsyncDisposable for cleanup
+> 
+> **NEVER**: Use static state in components
+> **NEVER**: Use async void for event handlers
+> **NEVER**: Forget to call StateHasChanged after async operations
+> **NEVER**: Access services after disposal
+> **NEVER**: Use SignalR client state in Blazor Server (already connected)
 
 ## Pattern Selection
 
@@ -41,15 +46,53 @@ Blazor enables building interactive web UIs using C# instead of JavaScript. Blaz
 
 ## Core Patterns
 
-| Pattern | Example |
-|---------|---------|
-| **Component Parameters** | `[Parameter] public User User { get; set; }` |
-| **Event Callbacks** | `[Parameter] public EventCallback<int> OnDelete { get; set; }` |
-| **State Management** | `@inject IUserService UserService` (NOT static state) |
-| **Event Handling** | `<button @onclick="HandleClickAsync">` (async Task) |
-| **Forms** | `<EditForm Model="@model" OnValidSubmit="HandleSubmit">` |
-| **Virtualization** | `<Virtualize Items="@users" Context="user">` |
-| **JS Interop** | `await JSRuntime.InvokeAsync<T>("method", args)` |
+### Component with Parameters
+
+```razor
+@* UserCard.razor *@
+@inject IUserService UserService
+
+<div class="user-card">
+    <h3>@User.Name</h3>
+    <button @onclick="HandleDeleteAsync">Delete</button>
+</div>
+
+@code {
+    [Parameter] public User User { get; set; } = null!;
+    [Parameter] public EventCallback<int> OnDelete { get; set; }
+
+    private async Task HandleDeleteAsync()
+    {
+        await UserService.DeleteAsync(User.Id);
+        await OnDelete.InvokeAsync(User.Id);
+    }
+}
+```
+
+### Service Injection & Lifecycle
+
+```csharp
+@implements IAsyncDisposable
+@inject IUserService UserService
+@inject IJSRuntime JS
+
+@code {
+    private List<User> users = new();
+    private CancellationTokenSource? cts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        cts = new CancellationTokenSource();
+        users = await UserService.GetAllAsync(cts.Token);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        cts?.Cancel();
+        cts?.Dispose();
+    }
+}
+```
 
 ## Hosting Models
 
@@ -59,9 +102,18 @@ Blazor enables building interactive web UIs using C# instead of JavaScript. Blaz
 | **DB Access** | Direct | Via API |
 | **Offline** | No | Yes (PWA) |
 
-## Best Practices
+## AI Self-Check
 
-**MUST**: [Parameter], EventCallback, async Task, DI services, IAsyncDisposable  
-**SHOULD**: EditForm, CommunityToolkit.Mvvm, ShouldRender, Virtualize  
-**AVOID**: Static state, async void, forgetting StateHasChanged
+- [ ] Using `[Parameter]` for component inputs?
+- [ ] Using `EventCallback<T>` for component outputs?
+- [ ] Dependency injection for services (not static)?
+- [ ] async Task for event handlers (not async void)?
+- [ ] IAsyncDisposable implemented for cleanup?
+- [ ] StateHasChanged called after async operations?
+- [ ] EditForm for form handling?
+- [ ] Virtualize for large lists?
+- [ ] No static state in components?
+- [ ] No services accessed after disposal?
+- [ ] Hosting model appropriate (Server vs WASM)?
+- [ ] Cascading parameters for deep trees?
 

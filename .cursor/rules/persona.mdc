@@ -50,28 +50,31 @@ alwaysApply: true
 - Keep the YAML frontmatter structure consistent and keep the content after the header as **code examples only**.
 - Update the functions index when adding new function files.
 
-**Rule & Process Writing Standards**:
+**Rule & Process Writing Standards** (Clarity First):
 - Use explicit directives: `> **ALWAYS**`, `> **NEVER**`, `> **BEFORE starting**`
 - Structure with phases (4-5 per process)
 - Include AI Self-Check sections (10-12 items)
 - Use table format for comparisons (frameworks, tools, troubleshooting)
-- Keep files consistent: 200-300 lines per process type
 - Annotate recommendations: Tool ⭐ (star for primary recommendation)
 - Include Git Workflow reference pattern to avoid repetition
+- **No hard line count limits**: Ensure clarity first, then optimize
 
-**Cross-AI Compatibility Mindset**:
+**Cross-AI Compatibility Mindset** (PRIMARY):
 - Test mental model: "Would this be clear to GPT-3.5?" (lowest common denominator)
 - Avoid ambiguous phrasing (specify units, formats, exact commands)
 - Provide context for jargon (first mention should be explicit)
 - Use consistent terminology across all files
-- Pattern names are better than code examples for token efficiency
+- Add examples when ambiguity is possible (even if adds length)
+- Pattern names are better than code examples for token efficiency (if pattern is well-known)
 
-**Token Optimization**:
-- Replace verbose paragraphs with directive lists
-- Use tables instead of prose for comparisons
+**Token Optimization** (SECONDARY - only where clarity is maintained):
+- Replace verbose paragraphs with directive lists (if equally clear)
+- Use tables instead of prose for comparisons (better structure)
 - Consolidate repeated patterns (Git Workflow reference)
-- Code examples: 5-15 lines max, show key pattern only
+- Code examples: 5-15 lines (key pattern only, not 50+ line examples)
 - Merge redundant AI Self-Check items
+- **BUT**: If clarity requires more examples or explanation, ADD THEM
+- Evaluate files by clarity criteria, not line counts
 
 **Clarifying Questions**:
 - Ask clarifying questions when required to complete the task correctly (do not guess missing requirements)

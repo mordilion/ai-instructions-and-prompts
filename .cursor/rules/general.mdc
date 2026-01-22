@@ -72,15 +72,26 @@ alwaysApply: true
    - **ALWAYS** use explicit directives: `> **ALWAYS**` and `> **NEVER**`
    - **ALWAYS** include concrete examples when ambiguity is possible
    - **NEVER** sacrifice clarity for token count
+   - **NEVER** use line counts as hard limits (15 lines or 150 lines - both OK if clear)
    - Goal: Same architectural result across all AIs
+   
+   **Clarity Evaluation Criteria** (not line count):
+   - Can two different AIs produce architecturally equivalent results from this?
+   - Are directives explicit enough (`> **ALWAYS**` / `> **NEVER**` format)?
+   - Is there an AI Self-Check section (helps all AIs validate)?
+   - Are there concrete examples (not just prose)?
+   - Would GPT-3.5 understand this the SAME as Claude/GPT-4?
+   - Any room for different interpretations?
 
 2. **Token Efficiency** (SECONDARY - only where clarity is maintained)
    - Prefer concise directives over verbose paragraphs (if equally clear)
    - Use tables instead of prose for comparisons (better structure)
    - Prefer pattern names over code examples (if pattern is well-known)
-   - One clear example per concept (not zero, not five)
-   - Target guidelines: 80-150 lines for rules, 200-300 for processes
-   - **BUT**: If clarity requires more examples or explanation, ADD THEM
+   - Code examples: 5-15 lines (key pattern only, not 50+ line examples)
+   - Remove verbosity: "In order to achieve X, you should consider Y" → "**ALWAYS**: Use Y for X"
+   - **No hard line count limits**: A clear 20-line file is better than a confusing 80-line file
+   - **When to add content**: Missing directives, no AI Self-Check, ambiguous patterns
+   - **When to condense**: Verbose prose, 50+ line code examples, repeated explanations
 
 3. **Consistency & Structure**
    - Pattern-based: Consistent format across all files

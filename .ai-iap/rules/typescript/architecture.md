@@ -5,6 +5,20 @@
 > **Extends**: General architecture rules
 > **Precedence**: Structure > Framework > Language > General
 
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Enable `strict: true` in tsconfig.json
+> **ALWAYS**: Use interfaces for objects, types for unions/primitives
+> **ALWAYS**: Prefer `unknown` over `any`
+> **ALWAYS**: Use dependency injection (constructor)
+> **ALWAYS**: Explicit return types for public methods
+> 
+> **NEVER**: Use `any` (use `unknown` + type guards)
+> **NEVER**: Export everything (explicit exports only)
+> **NEVER**: Mutate readonly types
+> **NEVER**: Ignore TypeScript errors with `@ts-ignore`
+> **NEVER**: Use enums for strings (use union types)
+
 ## Rule Precedence Matrix
 
 When rules conflict across multiple files, use this priority order:
@@ -91,3 +105,18 @@ export * from './post';
 | **Strict Mode** | Enable `strict: true` in tsconfig |
 | **Enums/Unions** | `type Role = 'admin' \| 'user'` or `enum Status` |
 | **Utility Types** | `Partial<T>`, `Required<T>`, `Readonly<T>`, `Pick<T, K>`, `Omit<T, K>` |
+
+## AI Self-Check
+
+- [ ] `strict: true` enabled in tsconfig.json?
+- [ ] Using interfaces for objects, types for unions?
+- [ ] Preferring `unknown` over `any`?
+- [ ] Dependency injection via constructor?
+- [ ] Explicit return types for public methods?
+- [ ] No `any` usage (using `unknown` + type guards)?
+- [ ] Explicit exports only (no export *)?
+- [ ] No mutations of readonly types?
+- [ ] No `@ts-ignore` (using `@ts-expect-error` if needed)?
+- [ ] Union types instead of string enums?
+- [ ] Feature-first module structure?
+- [ ] Barrel exports for public API?
