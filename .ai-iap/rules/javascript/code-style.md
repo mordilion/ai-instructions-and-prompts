@@ -1,11 +1,27 @@
 # JavaScript Code Style
 
-> **Scope**: Apply these rules ONLY when working with JavaScript files (`.js`, `.jsx`, `.mjs`, `.cjs`) and JavaScript sections in component files (e.g. `.vue`, `.svelte`). These extend the general code style guidelines.
+> **Scope**: JavaScript formatting (`.js`, `.jsx`, `.mjs`, `.cjs`)  
+> **Applies to**: JavaScript files and sections in component files  
+> **Extends**: General code style guidelines
 
-## 1. Core Principles
-- **Version**: ES2022+ features. Use modern syntax.
-- **Documentation**: JSDoc for all public functions and complex types.
-- **Immutability**: `const` by default. Mutate only when necessary.
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Use ES2022+ features (modern syntax)
+> **ALWAYS**: JSDoc for public functions
+> **ALWAYS**: const by default (not let/var)
+> **ALWAYS**: Named exports (not default)
+> **ALWAYS**: ESLint + Prettier for formatting
+> 
+> **NEVER**: Use var (use const/let)
+> **NEVER**: Use default exports
+> **NEVER**: Skip JSDoc for public APIs
+> **NEVER**: Mutate const objects without reason
+> **NEVER**: Use == (use ===)
+
+## 1. Core Patterns
+- **Version**: ES2022+ features
+- **Documentation**: JSDoc for all public functions
+- **Immutability**: const by default
 
 ## 2. Structure
 - **Files**: One exported item per file preferred.
@@ -63,4 +79,19 @@ async function fetchUser(id) {
   - ❌ Bad: `console.log('Error:', error); return null;`
 - **No Magic Numbers**: Use named constants.
 - **Components** (React/Vue): Functional preferred. Use hooks/composables.
+
+## AI Self-Check
+
+- [ ] Using ES2022+ features?
+- [ ] JSDoc for public functions?
+- [ ] const by default (not let/var)?
+- [ ] Named exports (not default)?
+- [ ] ESLint + Prettier configured?
+- [ ] No var usage?
+- [ ] No default exports?
+- [ ] === (not ==)?
+- [ ] async/await (not .then() chains)?
+- [ ] Throwing errors (not console.log + return null)?
+- [ ] kebab-case for files?
+- [ ] camelCase for functions/variables?
 

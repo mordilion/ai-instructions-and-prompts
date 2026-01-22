@@ -4,10 +4,24 @@
 > **Extends**: General security rules
 > **Applies to**: *.js, *.jsx, *.mjs, *.cjs, *.vue, *.svelte
 
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Use parameterized queries / ORM (Prisma, Sequelize)
+> **ALWAYS**: Validate inputs with schema validators (Ajv, Joi, Zod)
+> **ALWAYS**: bcrypt/argon2 for password hashing
+> **ALWAYS**: httpOnly cookies for auth tokens
+> **ALWAYS**: CSP headers (avoid unsafe-inline/unsafe-eval)
+> 
+> **NEVER**: Concatenate untrusted input into SQL
+> **NEVER**: Use eval(), new Function() on user input
+> **NEVER**: dangerouslySetInnerHTML without sanitization
+> **NEVER**: Store tokens in localStorage
+> **NEVER**: Expose stack traces to clients
+
 ## 0. Embedded SQL (when SQL appears inside JavaScript)
-- **ALWAYS**: Use parameterized queries / prepared statements (or a safe ORM). This applies to any SQL you embed in JS code.
-- **NEVER**: Concatenate or interpolate untrusted input into SQL.
-- **If** you must select dynamic table/column names: use strict allowlists (do not pass user input through).
+- Use parameterized queries / prepared statements (or a safe ORM)
+- NEVER concatenate or interpolate untrusted input into SQL
+- If dynamic table/column names needed: use strict allowlists
 
 ## 1. Backend (Node.js) Security
 
@@ -57,12 +71,17 @@
 - Express: enable `helmet`, `cors` with explicit origins, `express-rate-limit`, and validate body with `ajv`/`joi`. Follow the Express framework guidance (if selected).
 - React: prefer JSX escaping, keep DOMPurify usage centralized. Follow the React framework guidance (if selected).
 
-## 5. Quick checklist
-- Validate inputs (Ajv/Joi)
-- Use parameterized queries/ORM
-- Scan dependencies (`npm audit` / Dependabot)
-- Reject unsafe eval/exec
-- Use secure, HttpOnly cookies for auth
-- Enforce CSP and avoid `unsafe-*` policies
+## AI Self-Check
 
-Follow the general security rules; the language-specific rules above are additive.
+- [ ] Parameterized queries / ORM (not string concatenation in SQL)?
+- [ ] Input validation (Ajv, Joi, Zod)?
+- [ ] bcrypt/argon2 for passwords?
+- [ ] httpOnly cookies for auth tokens?
+- [ ] CSP headers configured?
+- [ ] npm audit / Dependabot enabled?
+- [ ] No eval(), new Function() on user input?
+- [ ] No dangerouslySetInnerHTML without DOMPurify?
+- [ ] No tokens in localStorage?
+- [ ] No stack traces exposed to clients?
+- [ ] Helmet middleware (Node.js)?
+- [ ] CORS specific origins?
