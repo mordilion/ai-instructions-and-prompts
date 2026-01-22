@@ -5,6 +5,20 @@
 > **Extends**: General architecture rules
 > **Precedence**: Structure > Framework > Language > General
 
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Use dependency injection (constructor)
+> **ALWAYS**: Use Optional<T> for nullable return types
+> **ALWAYS**: Prefer interfaces over concrete classes
+> **ALWAYS**: Use try-with-resources for AutoCloseable
+> **ALWAYS**: Package by feature (not layer)
+> 
+> **NEVER**: Use field injection (@Autowired on fields)
+> **NEVER**: Return null (use Optional<T>)
+> **NEVER**: Catch generic Exception (catch specific)
+> **NEVER**: Use static mutable state
+> **NEVER**: Expose mutable collections
+
 ## Rule Precedence Matrix
 
 When rules conflict across multiple files, use this priority order:
@@ -127,3 +141,18 @@ public sealed interface Result<T> permits Success, Failure {}
 record Success<T>(T data) implements Result<T> {}
 record Failure<T>(String error) implements Result<T> {}
 ```
+
+## AI Self-Check
+
+- [ ] Using dependency injection (constructor)?
+- [ ] Using Optional<T> for nullable returns?
+- [ ] Prefer interfaces over concrete classes?
+- [ ] try-with-resources for AutoCloseable?
+- [ ] Package by feature (not layer)?
+- [ ] Records for immutable data (Java 14+)?
+- [ ] Streams for collection operations?
+- [ ] No field injection (@Autowired on fields)?
+- [ ] No null returns (using Optional)?
+- [ ] No generic Exception catches?
+- [ ] No static mutable state?
+- [ ] Immutable collections exposed?

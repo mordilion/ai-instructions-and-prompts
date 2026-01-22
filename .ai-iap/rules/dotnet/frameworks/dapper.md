@@ -1,36 +1,22 @@
 # Dapper Micro ORM
 
-> **Scope**: Apply these rules when using Dapper for database access in .NET.
+> **Scope**: Dapper for database access in .NET  
+> **Applies to**: *.cs files using Dapper  
+> **Extends**: dotnet/architecture.md, dotnet/code-style.md
 
-## Overview
+## CRITICAL REQUIREMENTS
 
-Dapper is a lightweight micro-ORM for .NET providing fast, simple database access. It extends IDbConnection with query methods while maintaining raw SQL control.
-
-**Key Capabilities**:
-- **High Performance**: Fastest .NET ORM
-- **Simple**: Minimal abstraction over ADO.NET
-- **Flexible**: Full SQL control
-- **Async**: Full async/await support
-
-## Best Practices
-
-**MUST**:
-- Use parameterized queries (NO string concatenation)
-- Use `using` statements for connections
-- Use async methods (QueryAsync, ExecuteAsync)
-- Use transactions for multi-statement operations
-
-**SHOULD**:
-- Use repository pattern
-- Use connection factory/context
-- Use stored procedures for complex logic
-- Use multi-mapping for joins
-
-**AVOID**:
-- SQL injection (use parameters)
-- Leaking connections (use using)
-- Synchronous methods in web apps
-- Exposing IDbConnection outside repositories
+> **ALWAYS**: Use parameterized queries (not string concatenation)
+> **ALWAYS**: Use `using` statements for connections
+> **ALWAYS**: Use async methods (QueryAsync, ExecuteAsync)
+> **ALWAYS**: Use transactions for multi-statement operations
+> **ALWAYS**: Use repository pattern (not direct IDbConnection)
+> 
+> **NEVER**: Use SQL string concatenation (SQL injection risk)
+> **NEVER**: Leak connections (always dispose)
+> **NEVER**: Use synchronous methods in web apps
+> **NEVER**: Expose IDbConnection outside repositories
+> **NEVER**: Skip error handling
 
 ## 1. Connection Factory
 ```csharp
@@ -112,3 +98,18 @@ var users = await conn.QueryAsync<User>("sp_GetActiveUsers", new { DaysActive = 
 - **Using Statements**: Always dispose connections
 - **Async**: Use async methods for all DB operations
 - **Mapping**: Use conventions or `[Column]` for custom mapping
+
+## AI Self-Check
+
+- [ ] Using parameterized queries (not string concatenation)?
+- [ ] `using` statements for connections?
+- [ ] Async methods (QueryAsync, ExecuteAsync)?
+- [ ] Transactions for multi-statement operations?
+- [ ] Repository pattern (not direct IDbConnection)?
+- [ ] Connection factory/context?
+- [ ] Error handling implemented?
+- [ ] No SQL injection vulnerabilities?
+- [ ] Connections disposed properly?
+- [ ] No synchronous methods in web apps?
+- [ ] Multi-mapping for joins?
+- [ ] Stored procedures for complex logic?

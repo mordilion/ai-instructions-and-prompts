@@ -1,40 +1,22 @@
 # MediatR (CQRS Pattern)
 
-> **Scope**: Apply these rules when using MediatR for CQRS in .NET.
+> **Scope**: MediatR for CQRS in .NET applications  
+> **Applies to**: *.cs files using MediatR  
+> **Extends**: dotnet/architecture.md, dotnet/code-style.md
 
-## Overview
+## CRITICAL REQUIREMENTS
 
-MediatR implements the Mediator pattern, enabling CQRS (Command Query Responsibility Segregation) in .NET applications. It decouples request handling from business logic.
-
-**Key Capabilities**:
-- **CQRS**: Separate commands (write) from queries (read)
-- **Mediator Pattern**: Decoupled request/response
-- **Pipeline Behaviors**: Cross-cutting concerns (validation, logging)
-- **Single Responsibility**: One handler per request
-- **Testability**: Easy to unit test handlers
-
-## Best Practices
-
-**MUST**:
-- Use records for commands/queries (immutable)
-- One handler per request type
-- Return DTOs from queries (NEVER entities)
-- Use pipeline behaviors for validation
-- Use FluentValidation with validation behavior
-
-**SHOULD**:
-- Organize by feature (vertical slices)
-- Use Result pattern for error handling
-- Use cancellation tokens
-- Keep handlers thin (delegate to services)
-- Use IRequest<T> for type safety
-
-**AVOID**:
-- Logic in controllers (use MediatR)
-- Mutable command/query objects
-- Exposing entities from queries
-- Missing validation
-- Fat handlers (delegate to domain services)
+> **ALWAYS**: Use records for commands/queries (immutable)
+> **ALWAYS**: One handler per request type
+> **ALWAYS**: Return DTOs from queries (not entities)
+> **ALWAYS**: Use pipeline behaviors for validation
+> **ALWAYS**: Use FluentValidation with validation behavior
+> 
+> **NEVER**: Put logic in controllers (use MediatR)
+> **NEVER**: Use mutable command/query objects
+> **NEVER**: Expose entities from queries
+> **NEVER**: Skip validation
+> **NEVER**: Create fat handlers (delegate to services)
 
 ## 1. Project Structure
 ```
@@ -128,3 +110,18 @@ public async Task<ActionResult<int>> Create(CreateUserCommand command)
 - **Records for Requests**: Immutable command/query objects
 - **DTOs for Queries**: Never return entities
 - **Pipeline Behaviors**: Validation, logging, performance
+
+## AI Self-Check
+
+- [ ] Using records for commands/queries?
+- [ ] One handler per request type?
+- [ ] Returning DTOs from queries (not entities)?
+- [ ] Pipeline behaviors for validation?
+- [ ] FluentValidation with validation behavior?
+- [ ] Feature-organized (vertical slices)?
+- [ ] Result pattern for error handling?
+- [ ] Cancellation tokens used?
+- [ ] Handlers kept thin (delegating to services)?
+- [ ] IRequest<T> for type safety?
+- [ ] No logic in controllers?
+- [ ] No exposed entities from queries?
