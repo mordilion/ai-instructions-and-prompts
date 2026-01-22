@@ -1,11 +1,25 @@
 # CSS Code Style
 
-> **Scope**: Apply these rules ONLY when working with stylesheets (`*.css`, `*.scss`, etc.) and style sections in component files (e.g., `.vue`, `.svelte`). These extend the general code style guidelines.
+> **Scope**: CSS formatting  
+> **Extends**: General code style guidelines
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: 2-space indentation
+> **ALWAYS**: One selector per line
+> **ALWAYS**: Property ordering (layout → box → typography → visuals)
+> **ALWAYS**: CSS variables for repeated values
+> 
+> **NEVER**: Use !important
+> **NEVER**: Deep descendant selectors
+> **NEVER**: Hardcode colors/spacing
+> **NEVER**: Style by tag (except base styles)
+> **NEVER**: App-wide resets in component styles
 
 ## 1. Formatting
-- **Indentation**: 2 spaces.
-- **One selector per line**: Prefer multi-line blocks for readability.
-- **Ordering**: Group properties consistently (layout → box model → typography → visuals → animation).
+- 2 spaces indentation
+- One selector per line
+- Consistent property ordering
 
 ## 2. Best Practices
 - **Prefer**: CSS variables for repeated values.
@@ -22,3 +36,16 @@
 - **Prefer**: Scoped styles where supported.
 - **Never**: Put application-wide resets inside a component’s `<style>` block.
 
+
+## AI Self-Check
+
+- [ ] 2-space indentation?
+- [ ] One selector per line?
+- [ ] Property ordering consistent?
+- [ ] CSS variables for repeated values?
+- [ ] No !important?
+- [ ] No deep descendant selectors?
+- [ ] No hardcoded colors/spacing?
+- [ ] rem for sizing?
+- [ ] Scoped styles in components?
+- [ ] No app resets in component styles?

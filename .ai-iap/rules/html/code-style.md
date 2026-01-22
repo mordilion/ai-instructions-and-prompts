@@ -1,11 +1,25 @@
 # HTML Code Style
 
-> **Scope**: Apply these rules ONLY when working with `.html` / `.htm` files and HTML/template sections in component files (e.g. `.vue`, `.svelte`). These extend the general code style guidelines.
+> **Scope**: HTML formatting  
+> **Extends**: General code style guidelines
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: 2-space indentation
+> **ALWAYS**: Quote attribute values (double quotes)
+> **ALWAYS**: alt text for images
+> **ALWAYS**: Labels for form inputs
+> 
+> **NEVER**: Inline event handlers (onclick, onload)
+> **NEVER**: Inline scripts (use external files)
+> **NEVER**: Forms without labels
+> **NEVER**: Images without alt
+> **NEVER**: Buttons for navigation (use <a>)
 
 ## 1. Formatting
-- **Indentation**: 2 spaces per level.
-- **Attributes**: One per line when a tag has many attributes.
-- **Quoting**: Always quote attribute values with double quotes.
+- 2 spaces per level
+- One attribute per line (many attributes)
+- Double quotes for attributes
 
 ## 2. Inline JavaScript (when unavoidable)
 - **NEVER**: Use inline event handlers (`onclick="..."`, `onload="..."`).
@@ -21,4 +35,17 @@
 - **Images**: Always provide `alt` text (empty `alt=""` for decorative).
 - **Buttons/Links**: Use `<button>` for actions, `<a>` for navigation.
 - **Labels**: Every form input must have an associated `<label>`.
+
+## AI Self-Check
+
+- [ ] 2-space indentation?
+- [ ] Attributes quoted (double quotes)?
+- [ ] alt text for images?
+- [ ] Labels for form inputs?
+- [ ] No inline event handlers?
+- [ ] No inline scripts?
+- [ ] External JS/CSS used?
+- [ ] Semantic markup (header, nav, main)?
+- [ ] <button> for actions, <a> for navigation?
+- [ ] data-* for JS hooks?
 
