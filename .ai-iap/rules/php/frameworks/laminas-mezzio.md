@@ -1,32 +1,22 @@
 # Laminas Mezzio Framework
 
-> **Scope**: Apply these rules when working with Laminas Mezzio (PSR-15 middleware).
+> **Scope**: Laminas Mezzio (PSR-15 middleware)  
+> **Applies to**: PHP files in Laminas Mezzio projects  
+> **Extends**: php/architecture.md, php/code-style.md
 
-## Overview
+## CRITICAL REQUIREMENTS
 
-Laminas Mezzio is a PSR-15 middleware microframework. It's lightweight, standards-compliant, and perfect for APIs and microservices.
-
-**Key Capabilities**:
-- **PSR-15 Middleware**: Standard middleware pattern
-- **PSR-7 HTTP Messages**: Immutable request/response
-- **Micro-Framework**: Minimal, flexible
-- **DI Container**: Multiple container support
-- **Pipeline Architecture**: Layered middleware processing
-
-## Best Practices
-
-**MUST**:
-- Use RequestHandlerInterface for handlers
-- Use MiddlewareInterface for middleware
-- Return ResponseInterface (NO echo/print)
-- Use factories for ALL dependencies
-- Use immutable request attributes
-
-**SHOULD**:
-- One handler per endpoint
-- Use pipeline for global middleware
-- Use ConfigProvider for DI
-- Use route-specific middleware
+> **ALWAYS**: Use RequestHandlerInterface for handlers
+> **ALWAYS**: Use MiddlewareInterface for middleware
+> **ALWAYS**: Return ResponseInterface (not echo/print)
+> **ALWAYS**: Use factories for ALL dependencies
+> **ALWAYS**: Immutable request attributes
+> 
+> **NEVER**: Use echo/print (return ResponseInterface)
+> **NEVER**: Mutable request attributes
+> **NEVER**: Skip factory pattern for DI
+> **NEVER**: Fat handlers (delegate to services)
+> **NEVER**: Skip input validation
 
 **AVOID**:
 - Mutable request modifications
@@ -123,3 +113,18 @@ class ConfigProvider
 - **Immutable Requests**: Use `withAttribute()` to pass data
 - **Pipeline Order**: Error handling → Routing → Dispatch → NotFound
 - **Single Action**: One handler per HTTP endpoint
+
+## AI Self-Check
+
+- [ ] RequestHandlerInterface for handlers?
+- [ ] MiddlewareInterface for middleware?
+- [ ] ResponseInterface returned (not echo/print)?
+- [ ] Factories for ALL dependencies?
+- [ ] Immutable request attributes?
+- [ ] One handler per endpoint?
+- [ ] Pipeline for global middleware?
+- [ ] ConfigProvider for DI?
+- [ ] No echo/print?
+- [ ] No mutable request attributes?
+- [ ] No fat handlers (delegating to services)?
+- [ ] Input validation present?
