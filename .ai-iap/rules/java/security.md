@@ -4,10 +4,24 @@
 > **Extends**: General security rules
 > **Applies to**: *.java files
 
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Use parameterized queries / prepared statements
+> **ALWAYS**: BCryptPasswordEncoder(12) for passwords
+> **ALWAYS**: HTTPS redirect in production
+> **ALWAYS**: @PreAuthorize for method security
+> **ALWAYS**: Validate and sanitize all inputs
+> 
+> **NEVER**: Concatenate untrusted input into SQL
+> **NEVER**: Use MD5/SHA1 for passwords
+> **NEVER**: Store secrets in code or version control
+> **NEVER**: Expose stack traces to clients
+> **NEVER**: Disable CSRF for session-based auth
+
 ## 0. Embedded SQL (when SQL appears inside Java)
-- **ALWAYS**: Use parameterized queries / prepared statements (or a safe ORM). This applies to any SQL you embed in Java code.
-- **NEVER**: Concatenate untrusted input into SQL (including in `@Query` strings or native queries).
-- **If** you must select dynamic table/column names: use strict allowlists (do not pass user input through).
+- Use parameterized queries / prepared statements (or a safe ORM)
+- NEVER concatenate untrusted input into SQL (including in `@Query` strings or native queries)
+- If dynamic table/column names needed: use strict allowlists
 
 ## 1. Spring Security
 

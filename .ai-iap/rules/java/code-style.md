@@ -1,10 +1,22 @@
 # Java Code Style
 
-## General Rules
+> **Scope**: Java formatting and maintainability  
+> **Applies to**: *.java files  
+> **Extends**: General code style, java/architecture.md
 
-- **Google Java Style** or **Sun conventions**
-- **Immutability** preferred
-- **Lombok** for boilerplate
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Use Google Java Style or Sun conventions
+> **ALWAYS**: Prefer immutability (final fields, records)
+> **ALWAYS**: Use Optional<T> for nullable returns
+> **ALWAYS**: Use var when type is obvious
+> **ALWAYS**: Use try-with-resources for AutoCloseable
+> 
+> **NEVER**: Return null (use Optional<T>)
+> **NEVER**: Use raw types (use generics)
+> **NEVER**: Catch generic Exception
+> **NEVER**: Use field injection
+> **NEVER**: Mutate collections after creation
 
 ## Naming Conventions
 
@@ -73,3 +85,18 @@ if (obj instanceof User user) {
     System.out.println(user.getName());
 }
 ```
+
+## AI Self-Check
+
+- [ ] Following Google Java Style or Sun conventions?
+- [ ] Preferring immutability (final fields)?
+- [ ] Using Optional<T> for nullable returns?
+- [ ] Using var when type is obvious?
+- [ ] try-with-resources for AutoCloseable?
+- [ ] Lombok for boilerplate reduction?
+- [ ] Records for immutable data (Java 14+)?
+- [ ] No null returns?
+- [ ] No raw types (using generics)?
+- [ ] No generic Exception catches?
+- [ ] No field injection?
+- [ ] Collections immutable after creation?

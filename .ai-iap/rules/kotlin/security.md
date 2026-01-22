@@ -4,10 +4,24 @@
 > **Extends**: General security rules
 > **Applies to**: *.kt, *.kts files
 
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Use parameterized queries / prepared statements
+> **ALWAYS**: AndroidKeyStore for sensitive data (Android)
+> **ALWAYS**: Certificate pinning for critical APIs
+> **ALWAYS**: JWT validation with expiration
+> **ALWAYS**: BCrypt for password hashing
+> 
+> **NEVER**: Concatenate untrusted input into SQL
+> **NEVER**: Store secrets in SharedPreferences/plaintext
+> **NEVER**: Disable SSL validation
+> **NEVER**: Use MD5/SHA1 for passwords
+> **NEVER**: Expose stack traces to clients
+
 ## 0. Embedded SQL (when SQL appears inside Kotlin)
-- **ALWAYS**: Use parameterized queries / prepared statements (or a safe ORM). This applies to any SQL you embed in Kotlin code.
-- **NEVER**: Concatenate or template untrusted input into SQL.
-- **If** you must select dynamic table/column names: use strict allowlists (do not pass user input through).
+- Use parameterized queries / prepared statements (or a safe ORM)
+- NEVER concatenate or template untrusted input into SQL
+- If dynamic table/column names needed: use strict allowlists
 
 ## 1. Android Security
 

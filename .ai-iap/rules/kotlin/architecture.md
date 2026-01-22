@@ -1,35 +1,48 @@
 # Kotlin Architecture Guidelines
 
-## Core Principles
+> **Scope**: Kotlin architectural patterns and principles  
+> **Applies to**: *.kt files  
+> **Extends**: General architecture rules
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Package by feature (not layer)
+> **ALWAYS**: Use constructor injection for DI
+> **ALWAYS**: Use sealed classes for finite states
+> **ALWAYS**: Use coroutines for async (not callbacks)
+> **ALWAYS**: Use Flow for reactive streams
+> 
+> **NEVER**: Use callbacks (use coroutines)
+> **NEVER**: Use field injection
+> **NEVER**: Expose mutable state
+> **NEVER**: Use GlobalScope (use structured concurrency)
+> **NEVER**: Block coroutine dispatcher
+
+## Core Patterns
 
 ### 1. Package by Feature
-- Organize code by business domain/feature rather than technical layer
-- Keep related functionality together for better cohesion
+- Organize by business domain/feature rather than layer
 - Example: `com.app.user`, `com.app.order`, `com.app.payment`
 
 ### 2. Dependency Injection
-- Use constructor injection as the primary DI mechanism
-- Leverage frameworks like Koin or Dagger/Hilt for Android
-- Keep dependencies explicit and testable
+- Constructor injection as primary DI mechanism
+- Use Koin or Dagger/Hilt for Android
 
 ### 3. Repository Pattern
 - Separate data access logic from business logic
-- Use interfaces for repositories to enable easy testing
-- Repositories handle data sources (network, database, cache)
+- Use interfaces for repositories (testing)
 
 ### 4. Use Case / Interactor Pattern
-- Encapsulate single business operations in dedicated classes
-- Keep use cases small and focused (Single Responsibility)
-- Use cases orchestrate between repositories and other services
+- Encapsulate single business operations
+- Keep use cases small and focused
 
 ### 5. Sealed Classes for State
-- Use sealed classes/interfaces to represent finite states
-- Enable exhaustive when expressions for compile-time safety
-- Perfect for UI states, network results, navigation events
+- Represent finite states with sealed classes
+- Enable exhaustive when expressions
 
 ### 6. Coroutines for Async
-- Use coroutines instead of callbacks or RxJava
-- Leverage structured concurrency for lifecycle management
+- Use coroutines instead of callbacks/RxJava
+- Leverage structured concurrency
 - Use Flow for reactive streams
 
 ## Architecture Patterns
@@ -73,4 +86,19 @@ src/
 - Null safety (?, ?:, let, etc.)
 - Extension functions for utility operations
 - Sealed classes for exhaustive state handling
+
+## AI Self-Check
+
+- [ ] Package by feature (not layer)?
+- [ ] Using constructor injection for DI?
+- [ ] Sealed classes for finite states?
+- [ ] Coroutines for async (not callbacks)?
+- [ ] Flow for reactive streams?
+- [ ] Repository pattern for data access?
+- [ ] Use cases for business operations?
+- [ ] Immutable data structures (val, data classes)?
+- [ ] No GlobalScope (using structured concurrency)?
+- [ ] No !! (non-null assertion)?
+- [ ] No mutable global state?
+- [ ] Null safety (?, ?:, let)?
 
