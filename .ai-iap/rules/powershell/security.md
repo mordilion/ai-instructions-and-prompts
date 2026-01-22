@@ -1,13 +1,27 @@
 # PowerShell Security
 
-> **Scope**: PowerShell-specific security.  
+> **Scope**: PowerShell-specific security  
 > **Extends**: General security rules  
 > **Applies to**: `*.ps1, *.psm1, *.psd1`
 
-## 1. Code Execution (MUST be safe)
-- **NEVER**: Use `Invoke-Expression` (`iex`) on untrusted or dynamic input.
-- **NEVER**: Execute downloaded scripts without validation.
-- **ALWAYS**: Prefer calling commands/cmdlets with parameters rather than constructing command strings.
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Validate all parameters with attributes
+> **ALWAYS**: Use -LiteralPath for file operations
+> **ALWAYS**: Prefer HTTPS and verify integrity
+> **ALWAYS**: Minimize admin actions
+> **ALWAYS**: Support -WhatIf for destructive ops
+> 
+> **NEVER**: Use Invoke-Expression on untrusted input
+> **NEVER**: Execute downloaded scripts without validation
+> **NEVER**: Hardcode secrets
+> **NEVER**: Log secrets
+> **NEVER**: Disable TLS/SSL validation
+
+## 1. Code Execution
+- NEVER use `Invoke-Expression` on untrusted input
+- NEVER execute downloaded scripts without validation
+- Prefer calling cmdlets with parameters
 
 ## 2. Inputs & Injection Risks
 - **ALWAYS**: Validate parameters using type constraints and validation attributes.
@@ -29,4 +43,19 @@
 - **ALWAYS**: For destructive operations, require confirmation or support `-WhatIf` / `-Confirm`.
 
 Follow the general security rules; the rules above are additive.
+
+## AI Self-Check
+
+- [ ] All parameters validated with attributes?
+- [ ] Using -LiteralPath for file operations?
+- [ ] HTTPS preferred and integrity verified?
+- [ ] Admin actions minimized?
+- [ ] -WhatIf supported for destructive ops?
+- [ ] No Invoke-Expression on untrusted input?
+- [ ] No downloaded scripts executed without validation?
+- [ ] No hardcoded secrets?
+- [ ] No secrets logged?
+- [ ] No TLS/SSL validation disabled?
+- [ ] SecretManagement for secrets?
+- [ ] Checksums verified for downloads?
 

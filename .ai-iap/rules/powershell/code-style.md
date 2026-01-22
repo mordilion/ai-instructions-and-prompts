@@ -1,11 +1,27 @@
 # PowerShell Code Style
 
-> **Scope**: Apply these rules ONLY when working with PowerShell (`*.ps1`, `*.psm1`, `*.psd1`). These extend the general code style guidelines.
+> **Scope**: PowerShell formatting (`*.ps1`, `*.psm1`, `*.psd1`)  
+> **Applies to**: PowerShell scripts and modules  
+> **Extends**: General code style guidelines
 
-## 1. Core Principles
-- **Prefer objects** over strings; avoid pre-formatting data.
-- **No aliases** in scripts/modules (use full cmdlet names).
-- **Consistency**: Keep indentation and casing consistent (4-space indentation is common).
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Use Verb-Noun naming with approved verbs
+> **ALWAYS**: [CmdletBinding()] for advanced functions
+> **ALWAYS**: PascalCase for parameters
+> **ALWAYS**: Full cmdlet names (no aliases)
+> **ALWAYS**: PSScriptAnalyzer for linting
+> 
+> **NEVER**: Use aliases in scripts/modules
+> **NEVER**: Format strings in pipeline
+> **NEVER**: Skip parameter validation
+> **NEVER**: Swallow errors silently
+> **NEVER**: Use Write-Host for pipeline data
+
+## 1. Core Patterns
+- **Prefer objects** over strings
+- **No aliases** in scripts/modules
+- **Consistency**: 4-space indentation
 
 ## 2. Naming
 - **Functions**: Use `Verb-Noun` with approved verbs (e.g., `Get-`, `Set-`, `New-`, `Remove-`).
@@ -33,5 +49,20 @@
 
 ## 7. Tooling
 - **ALWAYS**: Run `PSScriptAnalyzer` on changed files; address warnings unless you can justify a suppression.
+
+## AI Self-Check
+
+- [ ] Verb-Noun naming with approved verbs?
+- [ ] [CmdletBinding()] for advanced functions?
+- [ ] PascalCase for parameters?
+- [ ] Full cmdlet names (no aliases)?
+- [ ] PSScriptAnalyzer passing?
+- [ ] Objects output (not formatted strings)?
+- [ ] Pester tests for modules?
+- [ ] No aliases in scripts?
+- [ ] No formatted strings in pipeline?
+- [ ] No swallowed errors?
+- [ ] Write-Verbose/Warning for logging?
+- [ ] Join-Path for path operations?
 - **ALWAYS**: Use Pester for tests of reusable modules/functions.
 

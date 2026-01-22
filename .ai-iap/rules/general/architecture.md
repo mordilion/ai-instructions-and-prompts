@@ -2,10 +2,24 @@
 
 > **Scope**: These are baseline rules for ALL languages. Language-specific rules take precedence.
 
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Feature-first structure (not by type)
+> **ALWAYS**: Dependency injection via constructors
+> **ALWAYS**: Interfaces for abstractions
+> **ALWAYS**: Fail fast (validate at boundaries)
+> **ALWAYS**: Zero circular dependencies
+> 
+> **NEVER**: Inner layers import from outer layers
+> **NEVER**: Concrete implementations (use interfaces)
+> **NEVER**: God classes (>5 dependencies)
+> **NEVER**: Expose DB exceptions to UI layer
+> **NEVER**: Silent failures (log or rethrow)
+
 ## 1. Core Principles
-- **Dependency Rule**: Inner layers (Domain) MUST NOT import from outer layers (DB, UI, Framework).
-- **Separation**: Distinct layers: Presentation → Application → Domain → Infrastructure.
-- **Loose Coupling**: Interact via interfaces, NEVER concrete implementations.
+- **Dependency Rule**: Inner layers (Domain) MUST NOT import from outer layers
+- **Separation**: Distinct layers: Presentation → Application → Domain → Infrastructure
+- **Loose Coupling**: Interact via interfaces
 
 ## 2. Structure
 - **Feature-First**: Group business logic by feature (`User/`, `Order/`), NOT by type (`Controllers/`, `Models/`).
@@ -31,4 +45,19 @@
 - **Leaky Abstraction**: NEVER expose DB exceptions, SQL, or ORM objects to UI layer.
   - ❌ Bad: `catch (SqlException e) { return Error(e.Message); }`
   - ✅ Good: `catch (SqlException) { throw new DomainException("User not found"); }`
+
+## AI Self-Check
+
+- [ ] Feature-first structure (not by type)?
+- [ ] Dependency injection via constructors?
+- [ ] Interfaces for abstractions?
+- [ ] Fail fast (validate at boundaries)?
+- [ ] Zero circular dependencies?
+- [ ] Dependency Rule followed (inner → outer)?
+- [ ] Domain exceptions for errors?
+- [ ] No God classes (>5 dependencies)?
+- [ ] No exposed DB exceptions to UI?
+- [ ] No silent failures?
+- [ ] Design patterns used appropriately?
+- [ ] Repository/Service suffixes used?
 
