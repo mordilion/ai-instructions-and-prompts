@@ -1,6 +1,22 @@
 # Android MVI Structure
 
-> **Scope**: This structure extends the Android framework rules. When selected, use this folder organization instead of the default.
+> **Scope**: MVI structure for Android  
+> **Applies to**: Android projects with MVI  
+> **Extends**: java/frameworks/android.md
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Intent for user actions
+> **ALWAYS**: State for UI state
+> **ALWAYS**: Reducer for state updates
+> **ALWAYS**: Immutable state classes
+> **ALWAYS**: Single state flow
+> 
+> **NEVER**: Mutable state
+> **NEVER**: Multiple state sources
+> **NEVER**: Business logic in UI
+> **NEVER**: Skip Intent classes
+> **NEVER**: Direct state mutation
 
 ## Project Structure
 ```
@@ -78,4 +94,17 @@ public class UserViewModel extends ViewModel {
 - Need for predictable state management
 - Large teams requiring strict patterns
 - Apps with complex user interactions
+
+## AI Self-Check
+
+- [ ] Intent classes for user actions?
+- [ ] State classes for UI state?
+- [ ] Reducer for state updates?
+- [ ] Immutable state classes?
+- [ ] Single state flow?
+- [ ] No mutable state?
+- [ ] No multiple state sources?
+- [ ] No business logic in UI?
+- [ ] Intent pattern followed?
+- [ ] State transitions predictable?
 

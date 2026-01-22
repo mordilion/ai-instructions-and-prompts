@@ -1,6 +1,22 @@
 # Android Clean Architecture
 
-> **Scope**: This structure extends the Android framework rules. When selected, use this folder organization instead of the default.
+> **Scope**: Clean Architecture structure for Android  
+> **Applies to**: Android projects with Clean Architecture  
+> **Extends**: java/frameworks/android.md
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Domain layer has no Android dependencies
+> **ALWAYS**: UseCase classes for business operations
+> **ALWAYS**: Repository interfaces in Domain
+> **ALWAYS**: Repository implementations in Data
+> **ALWAYS**: Dependency flow: Presentation → Domain ← Data
+> 
+> **NEVER**: Android imports in Domain layer
+> **NEVER**: Presentation depends on Data directly
+> **NEVER**: Domain depends on Data or Presentation
+> **NEVER**: Skip UseCase pattern
+> **NEVER**: Expose entities outside Domain
 
 ## Project Structure
 ```
@@ -91,4 +107,17 @@ public class UserViewModel extends ViewModel {
 - Need for framework independence
 - Teams experienced with Clean Architecture
 - Potential for sharing domain logic across platforms
+
+## AI Self-Check
+
+- [ ] Domain layer has no Android dependencies?
+- [ ] UseCase classes for business operations?
+- [ ] Repository interfaces in Domain?
+- [ ] Repository implementations in Data?
+- [ ] Dependency flow: Presentation → Domain ← Data?
+- [ ] No Android imports in Domain?
+- [ ] No Presentation → Data direct dependency?
+- [ ] No Domain → Presentation/Data dependency?
+- [ ] UseCases encapsulate business logic?
+- [ ] Entities in Domain layer?
 
