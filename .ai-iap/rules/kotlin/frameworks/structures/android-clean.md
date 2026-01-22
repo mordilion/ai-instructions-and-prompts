@@ -1,7 +1,22 @@
 # Android Clean Architecture
 
-## Overview
-Clean Architecture with strict layer separation and dependency inversion for highly testable Android apps.
+> **Scope**: Clean Architecture structure for Android (Kotlin)  
+> **Applies to**: Android Kotlin projects with Clean Architecture  
+> **Extends**: kotlin/frameworks/android.md
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Domain layer has no Android dependencies
+> **ALWAYS**: UseCase classes for business operations
+> **ALWAYS**: Repository interfaces in Domain
+> **ALWAYS**: Repository implementations in Data
+> **ALWAYS**: Dependency flow: Presentation → Domain ← Data
+> 
+> **NEVER**: Android imports in Domain layer
+> **NEVER**: Presentation depends on Data directly
+> **NEVER**: Domain depends on Data or Presentation
+> **NEVER**: Skip UseCase pattern
+> **NEVER**: Expose data entities outside Data layer
 
 ## Directory Structure
 
@@ -138,3 +153,16 @@ object UserModule {
 - Large, complex applications
 - Long-term projects
 - Multi-platform projects
+
+## AI Self-Check
+
+- [ ] Domain layer has no Android dependencies?
+- [ ] UseCase classes for business operations?
+- [ ] Repository interfaces in Domain?
+- [ ] Repository implementations in Data?
+- [ ] Dependency flow: Presentation → Domain ← Data?
+- [ ] No Android imports in Domain?
+- [ ] No Presentation → Data direct dependency?
+- [ ] No Domain → Presentation/Data dependency?
+- [ ] UseCases encapsulate business logic?
+- [ ] Feature-organized structure?

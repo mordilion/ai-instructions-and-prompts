@@ -1,7 +1,22 @@
 # Spring Boot Layered Structure
 
-## Overview
-Traditional layered architecture: code organized by technical responsibilities.
+> **Scope**: Layered structure for Spring Boot (Kotlin)  
+> **Applies to**: Spring Boot Kotlin projects with layered structure  
+> **Extends**: kotlin/frameworks/spring-boot.md
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Controllers in controller/ package
+> **ALWAYS**: Services in service/ package
+> **ALWAYS**: Repositories extend JpaRepository
+> **ALWAYS**: DTOs for API contracts (not entities)
+> **ALWAYS**: Controllers thin (delegate to services)
+> 
+> **NEVER**: Business logic in controllers
+> **NEVER**: Controllers call repositories directly
+> **NEVER**: Return entities from controllers
+> **NEVER**: Fat controllers
+> **NEVER**: Skip service layer
 
 ## Directory Structure
 
@@ -122,3 +137,16 @@ class GlobalExceptionHandler {
 ## When to Use
 - Traditional enterprise apps
 - CRUD-focused applications
+
+## AI Self-Check
+
+- [ ] Controllers in controller/ package?
+- [ ] Services in service/ package?
+- [ ] Repositories extend JpaRepository?
+- [ ] DTOs for API contracts (not entities)?
+- [ ] Controllers thin?
+- [ ] Services handle business logic?
+- [ ] Mappers for entity ↔ DTO conversion?
+- [ ] No business logic in controllers?
+- [ ] No controllers calling repositories directly?
+- [ ] No entities returned from controllers?

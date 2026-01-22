@@ -1,7 +1,22 @@
 # Ktor Clean Architecture
 
-## Overview
-Clean Architecture for Ktor with strict layer separation and framework-independent business logic.
+> **Scope**: Clean Architecture structure for Ktor  
+> **Applies to**: Ktor projects with Clean Architecture  
+> **Extends**: kotlin/frameworks/ktor.md
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Domain layer has no Ktor dependencies
+> **ALWAYS**: UseCase classes for business operations
+> **ALWAYS**: Repository interfaces in Domain
+> **ALWAYS**: Repository implementations in Data
+> **ALWAYS**: Routes in Presentation layer
+> 
+> **NEVER**: Ktor imports in Domain layer
+> **NEVER**: Presentation depends on Data directly
+> **NEVER**: Domain depends on Data or Presentation
+> **NEVER**: Business logic in routes
+> **NEVER**: Skip UseCase pattern
 
 ## Directory Structure
 
@@ -139,3 +154,16 @@ fun Application.configureRouting() {
 - Large, complex APIs
 - Long-term projects
 - Multi-platform projects
+
+## AI Self-Check
+
+- [ ] Domain layer has no Ktor dependencies?
+- [ ] UseCase classes for business operations?
+- [ ] Repository interfaces in Domain?
+- [ ] Repository implementations in Data?
+- [ ] Routes in Presentation layer?
+- [ ] No Ktor imports in Domain?
+- [ ] No Presentation → Data direct dependency?
+- [ ] No business logic in routes?
+- [ ] UseCases pure Kotlin?
+- [ ] Feature-organized?

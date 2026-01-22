@@ -1,7 +1,22 @@
 # Ktor Modular Structure
 
-## Overview
-Feature-first modular structure for Ktor.
+> **Scope**: Modular structure for Ktor  
+> **Applies to**: Ktor projects with modular structure  
+> **Extends**: kotlin/frameworks/ktor.md
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Co-locate feature files (model, repo, service, routes)
+> **ALWAYS**: Features independent (minimal coupling)
+> **ALWAYS**: common/ folder for cross-feature code
+> **ALWAYS**: Repository pattern per feature
+> **ALWAYS**: Routes per feature
+> 
+> **NEVER**: Cross-feature dependencies (use common/)
+> **NEVER**: Split feature across locations
+> **NEVER**: Generic services folder
+> **NEVER**: Share state between features directly
+> **NEVER**: Deep folder nesting
 
 ## Directory Structure
 
@@ -109,3 +124,16 @@ fun Application.configureStatusPages() {
 ## When to Use
 - Small to medium APIs
 - Microservices
+
+## AI Self-Check
+
+- [ ] Features co-located (model, repo, service, routes)?
+- [ ] Features independent?
+- [ ] common/ folder for cross-feature code?
+- [ ] Repository pattern per feature?
+- [ ] Routes per feature?
+- [ ] No cross-feature dependencies (using common/)?
+- [ ] No split features across locations?
+- [ ] No generic services folder?
+- [ ] Features self-contained?
+- [ ] Minimal feature coupling?
