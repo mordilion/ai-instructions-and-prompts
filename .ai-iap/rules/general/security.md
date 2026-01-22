@@ -2,15 +2,28 @@
 
 > **Scope**: Baseline security for ALL languages. Language-specific rules take precedence.
 
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Validate ALL user input (length, format, type, range)
+> **ALWAYS**: Use parameterized queries / ORM (not string concatenation)
+> **ALWAYS**: Hash passwords (BCrypt/Argon2, 12+ cost)
+> **ALWAYS**: HTTPS in production (TLS 1.2+)
+> **ALWAYS**: Verify permissions on every protected resource
+> 
+> **NEVER**: Trust user input (GET, POST, headers, cookies)
+> **NEVER**: String concatenation in SQL
+> **NEVER**: Use MD5/SHA1 for passwords
+> **NEVER**: Hardcode secrets or commit to Git
+> **NEVER**: Expose stack traces to clients
+
 ## 1. OWASP Top 10 Protection
 
 ### Input Validation
-- **ALWAYS**: Validate ALL user input (length, format, type, range).
-- **ALWAYS**: Use allowlists over denylists.
-- **NEVER**: Trust `GET`, `POST`, headers, cookies, or URL parameters.
-- **SQL Injection**: Parameterized queries/ORM ONLY. NEVER string concatenation/interpolation.
-- **XSS**: Auto-escape output by default. Sanitize HTML if required (use framework tools).
-- **Path Traversal**: Validate file paths. Generate safe filenames (UUIDs). Check file types via content, not extension.
+- Validate ALL user input (length, format, type, range)
+- Use allowlists over denylists
+- **SQL Injection**: Parameterized queries/ORM ONLY
+- **XSS**: Auto-escape output by default
+- **Path Traversal**: Validate file paths, generate safe filenames
 
 ### Authentication
 - **ALWAYS**: Hash passwords (BCrypt/Argon2, 12+ cost). NEVER MD5/SHA1/plaintext.
@@ -92,6 +105,8 @@
 ## AI Self-Check
 
 Before generating code:
+## AI Self-Check
+
 - [ ] Parameterized queries (no string concatenation)?
 - [ ] Password hashing (BCrypt/Argon2, 12+ rounds)?
 - [ ] Input validation on ALL user data?
@@ -102,3 +117,5 @@ Before generating code:
 - [ ] Rate limiting on auth endpoints?
 - [ ] Error messages don't expose internals?
 - [ ] File uploads validated (type, size)?
+- [ ] Authorization checks on every protected resource?
+- [ ] Dependency scanning enabled?
