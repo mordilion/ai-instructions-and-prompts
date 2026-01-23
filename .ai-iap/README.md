@@ -683,37 +683,38 @@ Understanding how many tokens your rule selection consumes helps optimize AI con
 
 | Language | Base (+Security) | Documentation (Optional) | Frameworks | Structures | Total |
 |----------|------------------|--------------------------|------------|------------|-------|
-| **General** (always loaded) | 1,075 + 1,200 | 3,850 (if all selected) | – | – | **2,275 - 6,125** |
-| **JavaScript** | 1,012 | 4,596 | 1,162 | – | **6,770** |
-| **TypeScript** | 852 + 1,050 | 11,000 | 5,800 | 1,540 | **20,240** |
-| **Node.js** | – | 2,879 | – | – | **2,879** |
-| **Java** | 1,662 + 1,065 | 10,011 | 4,910 | 1,725 | **19,373** |
-| **Python** | 1,746 + 1,260 | 9,686 | 10,060 | 1,585 | **24,337** |
-| **Kotlin** | 2,671 + 1,020 | 16,354 | 25,815 | 1,770 | **47,630** |
-| **Swift** | 4,015 + 795 | 16,862 | 3,885 | 1,675 | **27,232** |
-| **Dart** | 823 + 1,095 | 3,535 | 1,595 | 1,630 | **8,678** |
-| **.NET** | 844 + 1,020 | 5,008 | 1,356 | 1,540 | **9,768** |
-| **PHP** | 860 + 1,050 | 5,158 | 1,553 | 1,585 | **10,206** |
-| **HTML** | 587 + 245 | – | – | – | **832** |
-| **CSS** | 595 + 208 | – | – | – | **803** |
-| **Sass/SCSS** | 369 + 137 | – | – | – | **506** |
-| **Less** | 288 + 126 | – | – | – | **414** |
-| **PostCSS** | 282 + 124 | – | – | – | **406** |
-| **Stylus** | 285 + 123 | – | – | – | **408** |
-| **YAML** | 366 + 198 | – | – | – | **564** |
-| **JSON** | 257 + 160 | – | – | – | **417** |
-| **dotenv (.env)** | 270 + 193 | – | – | – | **462** |
-| **Dockerfile** | 300 + 222 | – | – | – | **521** |
-| **SQL** | 305 + 194 | – | – | – | **500** |
-| **Bash** | 878 + 484 | – | – | – | **1,362** |
-| **PowerShell** | 916 + 394 | – | – | – | **1,310** |
+| **General** (always loaded) | 7,068 + 1,186 | 3,585 (if all selected) | – | – | **8,254 - 11,839** |
+| **TypeScript** | 1,994 + 1,102 | – | 5,800 | 1,540 | **~12,436** |
+| **JavaScript** | 1,563 + 1,058 | – | 1,162 | – | **~6,783** |
+| **Java** | 1,746 + 1,097 | – | 4,910 | 1,725 | **~11,478** |
+| **Python** | 1,167 + 1,346 | – | 10,060 | 1,585 | **~16,158** |
+| **Kotlin** | 1,527 + 1,022 | – | 25,815 | 1,770 | **~32,134** |
+| **Swift** | 1,334 + 862 | – | 3,885 | 1,675 | **~9,756** |
+| **PHP** | 1,336 + 1,093 | – | 1,553 | 1,585 | **~7,567** |
+| **Dart** | 1,354 + 1,029 | – | 1,595 | 1,630 | **~7,608** |
+| **.NET/C#** | 1,239 + 1,094 | – | 1,356 | 1,540 | **~7,229** |
+| **Bash** | 1,440 + 790 | – | – | – | **2,230** |
+| **PowerShell** | 1,392 + 610 | – | – | – | **2,002** |
+| **HTML** | 733 + 436 | – | – | – | **1,169** |
+| **CSS** | 689 + 240 | – | – | – | **929** |
+| **SQL** | 451 + 244 | – | – | – | **695** |
+| **YAML** | 440 + 262 | – | – | – | **702** |
+| **Dockerfile** | 508 + 268 | – | – | – | **776** |
+| **dotenv (.env)** | 337 + 253 | – | – | – | **590** |
+| **JSON** | 328 + 133 | – | – | – | **461** |
+| **Sass/SCSS** | 281 + 129 | – | – | – | **410** |
+| **Less** | 281 + 129 | – | – | – | **410** |
+| **PostCSS** | 285 + 130 | – | – | – | **415** |
+| **Stylus** | 283 + 130 | – | – | – | **413** |
 | **Grand Total** | | | | | **~180,000 - 184,000** |
 
-> **Documentation Standards**: Three optional files (~3,850 tokens total) provide baseline documentation standards for code comments, project documentation, and APIs. Selected during setup based on project type. Language-specific process files reference these standards to avoid duplication.
+> **General Rules**: Updated to 8,254 tokens (previously 2,275) due to role-based adaptive behavior in persona.md, which enables AI to detect user expertise and adapt questioning accordingly.
+
+> **Documentation Standards**: Three optional files (3,585 tokens total) provide baseline documentation standards for code comments, project documentation, and APIs. Selected during setup based on project type. Language-specific process files reference these standards to avoid duplication.
 
 > **Process Files**: Token-optimized (6.7% reduction overall). Files standardized to 195-285 lines each with Git Workflow reference pattern, consolidated tables, and streamlined AI Self-Check (10-12 items). CI/CD files reduced 38%, API Documentation files reduced 30-32% by referencing general documentation standards.
 
-> **Security Rules**: Token-optimized (80% reduction from code examples). Each language includes concise security guidance (~1,000-1,200 tokens) covering OWASP Top 10, authentication, SQL injection prevention, and framework-specific patterns.
+> **Security Rules**: Token-optimized (80% reduction from code examples). Each language includes concise security guidance covering OWASP Top 10, authentication, SQL injection prevention, and framework-specific patterns.
 
 ### Typical Selection Examples
 
