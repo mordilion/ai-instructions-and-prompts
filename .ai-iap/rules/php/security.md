@@ -100,13 +100,9 @@
 
 ## AI Self-Check
 
-Before generating PHP code:
-- [ ] Prepared statements / ORM (no string concatenation)?
-## AI Self-Check
-
-- [ ] Parameterized queries (no string concatenation in SQL)?
+- [ ] Parameterized queries (no string concat)?
 - [ ] Eloquent ORM or Query Builder?
-- [ ] `password_hash()` / Laravel `Hash::make()`?
+- [ ] `password_hash()` or Laravel `Hash::make()`?
 - [ ] Input validation on all user data?
 - [ ] CSRF tokens enabled?
 - [ ] Blade/Twig auto-escaping (no raw output)?
@@ -114,5 +110,6 @@ Before generating PHP code:
 - [ ] HTTPS enforced?
 - [ ] Error display disabled in production?
 - [ ] Secrets in `.env` (not committed)?
-- [ ] No eval() or exec() on user input?
+- [ ] No `eval()` or `exec()` on user input?
 - [ ] `htmlspecialchars()` for HTML output?
+- [ ] Dependency scanning (`composer audit`)?

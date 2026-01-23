@@ -115,20 +115,15 @@
 
 ## AI Self-Check
 
-Before generating Python code:
-- [ ] Django ORM or SQLAlchemy (no f-strings in SQL)?
-- [ ] `bcrypt` / `passlib` for passwords?
-## AI Self-Check
-
 - [ ] Parameterized queries (no f-strings in SQL)?
 - [ ] Django ORM or SQLAlchemy (not raw SQL)?
 - [ ] bcrypt for password hashing?
-- [ ] HTTPS in production?
+- [ ] HTTPS in production + secure cookies?
 - [ ] Pydantic validation (FastAPI) or Django forms?
-- [ ] HTTPS + secure cookies?
 - [ ] CSRF protection enabled?
 - [ ] No `eval()`, `exec()`, `pickle.loads()` with user input?
-- [ ] `secure_filename()` for uploads?
+- [ ] `secure_filename()` for file uploads?
 - [ ] Environment variables validated at startup?
-- [ ] CORS specific origins?
+- [ ] CORS specific origins (not wildcard)?
 - [ ] Rate limiting configured?
+- [ ] Dependency scanning (`pip-audit`, `safety`)?

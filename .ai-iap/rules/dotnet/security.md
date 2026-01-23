@@ -97,20 +97,15 @@
 
 ## AI Self-Check
 
-Before generating C# code:
+- [ ] Parameterized queries (no string concat in SQL)?
 - [ ] ASP.NET Core Identity or BCrypt for passwords?
-- [ ] `[Authorize]` on protected endpoints?
-## AI Self-Check
-
-- [ ] Parameterized queries (no string concatenation in SQL)?
-- [ ] Identity for authentication?
-- [ ] BCrypt or PBKDF2 for passwords?
 - [ ] [Authorize] on controllers/actions?
-- [ ] Data annotations + `[ValidateAntiForgeryToken]`?
+- [ ] Data annotations + [ValidateAntiForgeryToken]?
 - [ ] EF parameterized queries?
 - [ ] HTTPS + HSTS configured?
-- [ ] Secrets in User Secrets/Key Vault?
-- [ ] CORS specific origins?
+- [ ] Secrets in User Secrets/Key Vault (not appsettings)?
+- [ ] CORS specific origins (not wildcard)?
 - [ ] Rate limiting configured?
-- [ ] Global exception handler (no stack traces)?
+- [ ] Global exception handler (no stack traces in production)?
 - [ ] Security headers configured?
+- [ ] Dependency scanning (NuGet)?

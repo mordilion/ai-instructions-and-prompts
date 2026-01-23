@@ -39,18 +39,6 @@
 | **Missing 'use client'** | useState without directive | Add 'use client' |
 | **API Routes** | API route for mutation | Server Action |
 
-## AI Self-Check
-
-- [ ] Using App Router?
-- [ ] Server Components default?
-- [ ] 'use client' when needed?
-- [ ] Server Actions for mutations?
-- [ ] loading.tsx implemented?
-- [ ] error.tsx implemented?
-- [ ] No useEffect for data?
-- [ ] No secrets in client?
-- [ ] Proper async/await?
-
 ## Key Features
 
 | Feature | Purpose |
