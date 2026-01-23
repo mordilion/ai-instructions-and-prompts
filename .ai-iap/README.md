@@ -31,7 +31,8 @@ Your Rules (one source) → Setup Script → All AI Tools Configured
 - **🔧 Multi-Tool Support** – 10 AI coding assistants: Cursor, Claude Code, GitHub Copilot, Windsurf, Aider, Google AI Studio, Amazon Q Developer, Tabnine, Cody, Continue.dev
 - **🧠 Role-Based Adaptive AI** – AI detects your expertise level (Product Manager, Software Engineer, DevOps, Junior) and adapts its questions accordingly – eliminates assumptions and provides role-appropriate guidance
 - **🌍 Multi-Language** – Kotlin, JavaScript, TypeScript, HTML, CSS, Sass/SCSS, Less, PostCSS, Stylus, YAML, JSON, dotenv (.env), Dockerfile, SQL, Java, Python, Dart/Flutter, .NET/C#, PHP, Swift, Node.js, Bash, PowerShell
-- **📦 Framework-Specific** – React, Next.js, NestJS, AdonisJS, Laravel, ASP.NET Core, Spring Boot, Django, FastAPI, and 50+ more
+- **📦 Framework-Specific** – React, Next.js, NestJS, AdonisJS, Laravel, ASP.NET Core, Spring Boot, Django, FastAPI,
+  Tailwind CSS, Bootstrap, and 52+ more
 - **🏗️ Structure Templates** – Clean Architecture, Vertical Slices, Feature-First, Modular, MVVM, MVI, DDD, and more
 - **🎨 UI/Design Rules** – Reusable component-first UI guidance (variants, states, accessibility, tokens)
 - **🔒 Security Rules** – OWASP Top 10 coverage for all languages (token-optimized, 80% more efficient)
@@ -311,7 +312,12 @@ Want to add company-specific standards, internal processes, or override core rul
 HTML rules (including guidance for safe JavaScript embedding).
 
 ### CSS
-CSS rules (including style blocks in component files like `.vue` / `.svelte`).
+| Category | Frameworks |
+|----------|------------|
+| Utility-First | Tailwind CSS ⭐ |
+| Component-Based | Bootstrap |
+
+CSS base rules (including style blocks in component files like `.vue` / `.svelte`).
 
 ### Sass/SCSS
 Sass/SCSS rules (modules, nesting discipline, tokens, maintainable architecture).
@@ -696,7 +702,7 @@ Understanding how many tokens your rule selection consumes helps optimize AI con
 | **Bash** | 1,440 + 790 | – | – | – | **2,230** |
 | **PowerShell** | 1,392 + 610 | – | – | – | **2,002** |
 | **HTML** | 733 + 436 | – | – | – | **1,169** |
-| **CSS** | 689 + 240 | – | – | – | **929** |
+| **CSS** | 689 + 240 | – | 3,530 (Tailwind + Bootstrap) | – | **929 - 4,459** |
 | **SQL** | 451 + 244 | – | – | – | **695** |
 | **YAML** | 440 + 262 | – | – | – | **702** |
 | **Dockerfile** | 508 + 268 | – | – | – | **776** |
@@ -709,6 +715,8 @@ Understanding how many tokens your rule selection consumes helps optimize AI con
 | **Grand Total** | | | | | **~180,000 - 184,000** |
 
 > **General Rules**: Updated to 8,254 tokens (previously 2,275) due to role-based adaptive behavior in persona.md, which enables AI to detect user expertise and adapt questioning accordingly.
+
+> **CSS Frameworks**: Tailwind CSS (1,552 tokens) and Bootstrap (1,978 tokens) are optional framework selections. CSS base rules are 929 tokens, so selecting both frameworks brings the total to 4,459 tokens.
 
 > **Documentation Standards**: Three optional files (3,585 tokens total) provide baseline documentation standards for code comments, project documentation, and APIs. Selected during setup based on project type. Language-specific process files reference these standards to avoid duplication.
 
