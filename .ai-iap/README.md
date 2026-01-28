@@ -30,6 +30,7 @@ Your Rules (one source) → Setup Script → All AI Tools Configured
 
 - **🔧 Multi-Tool Support** – 10 AI coding assistants: Cursor, Claude Code, GitHub Copilot, Windsurf, Aider, Google AI Studio, Amazon Q Developer, Tabnine, Cody, Continue.dev
 - **🧠 Role-Based Adaptive AI** – AI detects your expertise level (Product Manager, Software Engineer, DevOps, Junior) and adapts its questions accordingly – eliminates assumptions and provides role-appropriate guidance
+- **✅ Rule Compliance** – AI must follow all applicable rules; nothing is optional unless explicitly marked
 - **🌍 Multi-Language** – Kotlin, JavaScript, TypeScript, HTML, CSS, Sass/SCSS, Less, PostCSS, Stylus, YAML, JSON, dotenv (.env), Dockerfile, SQL, Java, Python, Dart/Flutter, .NET/C#, PHP, Swift, Node.js, Bash, PowerShell
 - **📦 Framework-Specific** – React, Next.js, NestJS, AdonisJS, Laravel, ASP.NET Core, Spring Boot, Django, FastAPI,
   Tailwind CSS, Bootstrap, and 52+ more
@@ -84,6 +85,10 @@ AI: "Let's discuss the technical approach:
 ```
 
 **Result**: No more assumptions, appropriate questions for your expertise level!
+
+### Rule Compliance
+
+All rules loaded into the AI context are **mandatory**. AIs must follow all applicable rules and **must not** treat any rule as optional unless explicitly marked optional.
 
 ---
 
