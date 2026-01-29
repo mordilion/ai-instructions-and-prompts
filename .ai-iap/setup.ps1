@@ -1697,6 +1697,7 @@ function Get-SkillDescription {
 function New-ConcatenatedConfig {
     param(
         [PSCustomObject]$Config,
+        [string]$ToolKey,
         [string]$ToolName,
         [string]$OutputFile,
         [string[]]$SelectedLanguages,
@@ -1727,6 +1728,17 @@ function New-ConcatenatedConfig {
 <!-- https://github.com/your-repo/ai-instructions-and-prompts -->
 
 "@
+
+    $preambleFile = $null
+    if ($Config.tools.$ToolKey -and $Config.tools.$ToolKey.preambleFile) {
+        $preambleFile = [string]$Config.tools.$ToolKey.preambleFile
+    }
+    if (-not [string]::IsNullOrWhiteSpace($preambleFile)) {
+        $preambleContent = Read-InstructionFile -Lang "general" -File $preambleFile
+        if ($null -ne $preambleContent) {
+            $content += $preambleContent + "`n`n---`n`n"
+        }
+    }
     
     foreach ($lang in $SelectedLanguages) {
         # Add base language files
@@ -1839,28 +1851,28 @@ function New-ToolConfig {
             New-ClaudeConfig -Config $Config -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards
         }
         "github-copilot" {
-            New-ConcatenatedConfig -Config $Config -ToolName "GitHub Copilot" -OutputFile ".github\copilot-instructions.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards
+            New-ConcatenatedConfig -Config $Config -ToolKey "github-copilot" -ToolName "GitHub Copilot" -OutputFile ".github\copilot-instructions.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards
         }
         "windsurf" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Windsurf" -OutputFile ".windsurfrules" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards
+            New-ConcatenatedConfig -Config $Config -ToolKey "windsurf" -ToolName "Windsurf" -OutputFile ".windsurfrules" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards
         }
         "aider" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Aider" -OutputFile "CONVENTIONS.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards
+            New-ConcatenatedConfig -Config $Config -ToolKey "aider" -ToolName "Aider" -OutputFile "CONVENTIONS.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards
         }
         "google-ai-studio" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Google AI Studio" -OutputFile "GOOGLE_AI_STUDIO.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards
+            New-ConcatenatedConfig -Config $Config -ToolKey "google-ai-studio" -ToolName "Google AI Studio" -OutputFile "GOOGLE_AI_STUDIO.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards
         }
         "amazon-q" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Amazon Q Developer" -OutputFile "AMAZON_Q.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards
+            New-ConcatenatedConfig -Config $Config -ToolKey "amazon-q" -ToolName "Amazon Q Developer" -OutputFile "AMAZON_Q.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards
         }
         "tabnine" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Tabnine" -OutputFile "TABNINE.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards
+            New-ConcatenatedConfig -Config $Config -ToolKey "tabnine" -ToolName "Tabnine" -OutputFile "TABNINE.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards
         }
         "cody" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Cody (Sourcegraph)" -OutputFile ".cody\instructions.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards
+            New-ConcatenatedConfig -Config $Config -ToolKey "cody" -ToolName "Cody (Sourcegraph)" -OutputFile ".cody\instructions.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards
         }
         "continue" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Continue.dev" -OutputFile ".continue\instructions.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards
+            New-ConcatenatedConfig -Config $Config -ToolKey "continue" -ToolName "Continue.dev" -OutputFile ".continue\instructions.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards
         }
         default {
             Write-WarningMessage "Unknown tool: $Tool"

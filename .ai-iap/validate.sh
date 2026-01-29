@@ -130,6 +130,24 @@ else
     test_result "All rule files exist" "false" "Missing: ${missing_files[*]}"
 fi
 
+# Test 4b: Tool preamble files exist (if configured)
+missing_preambles=()
+while IFS= read -r tool_key; do
+    preamble_file=$(jq -r ".tools[\"$tool_key\"].preambleFile // empty" "$CONFIG_FILE")
+    if [[ -n "$preamble_file" ]]; then
+        preamble_path="$RULES_DIR/general/$preamble_file.md"
+        if [[ ! -f "$preamble_path" ]]; then
+            missing_preambles+=("general/$preamble_file.md (tool: $tool_key)")
+        fi
+    fi
+done < <(jq -r '.tools | keys[]' "$CONFIG_FILE")
+
+if [[ ${#missing_preambles[@]} -eq 0 ]]; then
+    test_result "All tool preamble files exist" "true"
+else
+    test_result "All tool preamble files exist" "false" "Missing: ${missing_preambles[*]}"
+fi
+
 # Test 5: All markdown files have valid structure
 invalid_markdown=()
 while IFS= read -r md_file; do

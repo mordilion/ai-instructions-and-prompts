@@ -25,56 +25,64 @@
       "outputFile": ".github/copilot-instructions.md",
       "fileExtension": ".md",
       "useFrontmatter": false,
-      "concatenate": true
+      "concatenate": true,
+      "preambleFile": "compliance-preamble"
     },
     "windsurf": {
       "name": "Windsurf",
       "outputFile": ".windsurfrules",
       "fileExtension": "",
       "useFrontmatter": false,
-      "concatenate": true
+      "concatenate": true,
+      "preambleFile": "compliance-preamble"
     },
     "aider": {
       "name": "Aider",
       "outputFile": "CONVENTIONS.md",
       "fileExtension": ".md",
       "useFrontmatter": false,
-      "concatenate": true
+      "concatenate": true,
+      "preambleFile": "compliance-preamble"
     },
     "google-ai-studio": {
       "name": "Google AI Studio",
       "outputFile": "GOOGLE_AI_STUDIO.md",
       "fileExtension": ".md",
       "useFrontmatter": false,
-      "concatenate": true
+      "concatenate": true,
+      "preambleFile": "compliance-preamble"
     },
     "amazon-q": {
       "name": "Amazon Q Developer",
       "outputFile": "AMAZON_Q.md",
       "fileExtension": ".md",
       "useFrontmatter": false,
-      "concatenate": true
+      "concatenate": true,
+      "preambleFile": "compliance-preamble"
     },
     "tabnine": {
       "name": "Tabnine",
       "outputFile": "TABNINE.md",
       "fileExtension": ".md",
       "useFrontmatter": false,
-      "concatenate": true
+      "concatenate": true,
+      "preambleFile": "compliance-preamble"
     },
     "cody": {
       "name": "Cody (Sourcegraph)",
       "outputFile": ".cody/instructions.md",
       "fileExtension": ".md",
       "useFrontmatter": false,
-      "concatenate": true
+      "concatenate": true,
+      "preambleFile": "compliance-preamble"
     },
     "continue": {
       "name": "Continue.dev",
       "outputFile": ".continue/instructions.md",
       "fileExtension": ".md",
       "useFrontmatter": false,
-      "concatenate": true
+      "concatenate": true,
+      "preambleFile": "compliance-preamble"
     }
   },
   "languages": {

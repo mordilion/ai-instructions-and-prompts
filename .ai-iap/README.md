@@ -138,6 +138,8 @@ Examples:
 
 (See **Supported AI Tools** below for the full mapping.)
 
+**Note**: Concatenated outputs (Copilot, Windsurf, Aider, etc.) include a short compliance preamble at the top. The content is read from `rules/general/compliance-preamble.md` via `tools.*.preambleFile` in `config.json`.
+
 ### 3. Follow the Wizard
 
 The setup wizard will guide you through:

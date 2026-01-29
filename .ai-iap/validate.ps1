@@ -155,6 +155,19 @@ foreach ($langKey in $config.languages.PSObject.Properties.Name) {
     }
 }
 
+# Test 4b: Tool preamble files exist (if configured)
+$missingPreambles = @()
+foreach ($toolKey in $config.tools.PSObject.Properties.Name) {
+    $tool = $config.tools.$toolKey
+    if ($null -ne $tool.preambleFile -and -not [string]::IsNullOrWhiteSpace($tool.preambleFile)) {
+        $preamblePath = Join-Path (Join-Path $Script:RulesDir "general") ("$($tool.preambleFile).md")
+        if (-not (Test-Path $preamblePath)) {
+            $missingPreambles += "general/$($tool.preambleFile).md (tool: $toolKey)"
+        }
+    }
+}
+Test-Result "All tool preamble files exist" ($missingPreambles.Count -eq 0) "Missing: $($missingPreambles -join ', ')"
+
 Test-Result "All rule files exist" ($missingFiles.Count -eq 0) "Missing: $($missingFiles -join ', ')"
 
 # Test 5: All markdown files have valid structure

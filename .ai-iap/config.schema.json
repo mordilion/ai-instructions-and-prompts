@@ -26,6 +26,7 @@
             "supportsGlobs": { "type": "boolean" },
             "supportsSubfolders": { "type": "boolean" },
             "concatenate": { "type": "boolean" },
+            "preambleFile": { "type": "string" },
             "recommended": { "type": "boolean" }
           },
           "additionalProperties": false
