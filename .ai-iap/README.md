@@ -193,7 +193,7 @@ Enable commit standards? (y/N):
 Enable project learnings capture to .ai-iap-custom/rules/general/learnings.md?
 Enable learnings capture? (y/N):
 ```
-When enabled, AIs should append stable project-specific decisions to that file. Setup also includes the learnings-capture rules in generated outputs. After updates, re-run setup so generated tool outputs include the latest learnings.
+When enabled, AIs should append stable project-specific decisions to that file. Setup includes the learnings-capture rules in generated outputs so AIs know to update `.ai-iap-custom/rules/general/learnings.md` directly.
 
 **Step 6: Select Frameworks, Structures & Processes** (if applicable)
 

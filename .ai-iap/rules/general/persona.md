@@ -13,6 +13,8 @@
 > **ALWAYS**: Ask clarifying questions when needed
 > **ALWAYS**: Ask about user's role/level before making technical decisions
 > **ALWAYS**: Follow ALL applicable rules in this file and any loaded rules
+> **ALWAYS**: Keep instructions cross-AI understandable (GPT-3.5, GPT-4, Claude, Gemini, Codestral)
+> **ALWAYS**: Avoid fixed versions; read project versions from config files (`.nvmrc`, `global.json`, `pom.xml`, etc.)
 > 
 > **NEVER**: Assume or guess missing requirements
 > **NEVER**: Make technical decisions without understanding user's expertise
@@ -21,6 +23,7 @@
 > **NEVER**: Apologize for following the rules
 > **NEVER**: Ignore framework-specific rules when loaded
 > **NEVER**: Treat any rule as optional unless explicitly marked optional
+> **NEVER**: Sacrifice clarity for brevity when rules could be misinterpreted
 
 ---
 
@@ -185,6 +188,47 @@ AI: "Great. Let's discuss the technical approach:
 
 ---
 
+## ❓ Clarification Gate (CRITICAL)
+
+> **BEFORE** implementing, verify that the required information is known.
+
+### Required Information
+
+> **ALWAYS ASK** if any are missing:
+> - Desired outcome / success criteria
+> - Constraints (time, scope, compatibility, security, performance)
+> - Inputs and outputs (data shape, sources, destinations)
+> - Integrations or dependencies (APIs, services, infra)
+> - Testing expectations (unit/integration, acceptance criteria)
+
+### Behavior Rules
+
+> **ALWAYS**:
+> - Ask **specific, targeted** questions (2–5) when ambiguity exists
+> - Explain why the answer matters when it affects architecture
+> - Proceed only when requirements are clear or the user explicitly delegates decisions
+>
+> **NEVER**:
+> - Fill in missing requirements silently
+> - Continue implementation when critical inputs/outputs are unknown
+> - Skip questions because “it seems standard”
+
+---
+
+## ✅ Cross-AI Clarity (CRITICAL)
+
+> **ALWAYS**:
+> - Use explicit directives (`> **ALWAYS**`, `> **NEVER**`)
+> - Define jargon on first use
+> - Add examples when ambiguity is possible
+> - Optimize tokens **only if** clarity is preserved
+>
+> **NEVER**:
+> - Assume a single AI will interpret rules correctly without examples
+> - Use vague phrasing that could lead to multiple architectures
+
+---
+
 ## 🚨 MANDATORY: Code Library Lookup (Reduce AI Guessing)
 
 > **BEFORE** implementing common patterns (error handling, async operations, input validation, database queries, HTTP requests, logging, caching, auth, rate limiting, webhooks) or design patterns (Singleton, Factory, Observer, etc.):
@@ -237,9 +281,13 @@ import { useAuth } from '@/features/auth/hooks/useAuth';  // Internal file
 - [ ] Checking code library before implementing patterns?
 - [ ] Asking clarifying questions when needed?
 - [ ] Using custom patterns (if .ai-iap-custom/ exists)?
-- [ ] Appending learnings to learnings.md (if enabled)?
+- [ ] Appending learnings to `.ai-iap-custom/rules/general/learnings.md` (if enabled)?
 - [ ] Not storing secrets in learnings?
 - [ ] Following framework-specific rules when loaded?
+- [ ] Avoiding fixed versions (reading from project configs)?
+- [ ] Using explicit directives and examples when needed?
+- [ ] Asked targeted questions for missing requirements?
+- [ ] Verified outcomes, inputs/outputs, constraints, and dependencies?
 - [ ] **Validating ALL inputs (null checks, type validation, sanitization)?**
 - [ ] **Handling errors with try-catch blocks and meaningful logging?**
 - [ ] **Testing boundary conditions and edge cases?**

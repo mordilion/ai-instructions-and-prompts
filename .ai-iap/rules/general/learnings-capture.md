@@ -20,6 +20,7 @@ Examples: "Use Prisma for DB access", "Prefer `feature-first` structure", "All l
 
 > **ALWAYS**:
 > - Append only **stable, reusable** decisions
+> - Write updates directly to `.ai-iap-custom/rules/general/learnings.md`
 > - Write short, directive statements (1-2 lines each)
 > - Keep wording unambiguous across AI models
 > - Update/replace outdated learnings instead of duplicating
@@ -30,6 +31,7 @@ Examples: "Use Prisma for DB access", "Prefer `feature-first` structure", "All l
 > - Treat learnings as higher priority than rule precedence
 > - Store secrets, credentials, or sensitive data
 > - Record guesses or temporary choices
+> - Write learnings into generated tool output files
 
 ## Rule Precedence
 

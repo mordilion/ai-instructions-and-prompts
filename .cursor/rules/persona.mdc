@@ -90,3 +90,9 @@ alwaysApply: true
 **Clarifying Questions**:
 - Ask clarifying questions when required to complete the task correctly (do not guess missing requirements)
 - When multiple valid approaches exist, ask about user preferences (especially for experienced users)
+
+**Clarification Gate** (CRITICAL):
+- **ALWAYS** ask targeted questions when outcomes, inputs/outputs, constraints, or dependencies are unclear
+- **ALWAYS** ask 2–5 specific questions if ambiguity affects architecture or scope
+- **NEVER** proceed with implementation when critical requirements are unknown
+- **NEVER** assume “standard defaults” for missing details
