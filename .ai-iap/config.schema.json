@@ -21,6 +21,7 @@
             "name": { "type": "string" },
             "outputDir": { "type": "string" },
             "outputFile": { "type": "string" },
+            "outputFileSource": { "type": "string" },
             "fileExtension": { "type": "string" },
             "useFrontmatter": { "type": "boolean" },
             "supportsGlobs": { "type": "boolean" },

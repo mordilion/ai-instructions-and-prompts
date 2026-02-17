@@ -148,6 +148,24 @@ else
     test_result "All tool preamble files exist" "false" "Missing: ${missing_preambles[*]}"
 fi
 
+# Test 4c: Tool outputFileSource files exist (if configured)
+missing_tool_sources=()
+while IFS= read -r tool_key; do
+    source_file=$(jq -r ".tools[\"$tool_key\"].outputFileSource // empty" "$CONFIG_FILE")
+    if [[ -n "$source_file" ]]; then
+        source_path="$RULES_DIR/general/$source_file.md"
+        if [[ ! -f "$source_path" ]]; then
+            missing_tool_sources+=("general/$source_file.md (tool: $tool_key)")
+        fi
+    fi
+done < <(jq -r '.tools | keys[]' "$CONFIG_FILE")
+
+if [[ ${#missing_tool_sources[@]} -eq 0 ]]; then
+    test_result "All tool outputFileSource files exist" "true"
+else
+    test_result "All tool outputFileSource files exist" "false" "Missing: ${missing_tool_sources[*]}"
+fi
+
 # Test 5: All markdown files have valid structure
 invalid_markdown=()
 while IFS= read -r md_file; do

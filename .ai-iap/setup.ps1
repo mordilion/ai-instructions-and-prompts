@@ -1812,6 +1812,17 @@ function New-ToolConfig {
         }
         "claude" {
             New-ClaudeConfig -Config $Config -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards
+
+            if ($Config.tools.claude.outputFile -and $Config.tools.claude.outputFileSource) {
+                $source = [string]$Config.tools.claude.outputFileSource
+                $content = Read-InstructionFile -Lang "general" -File $source
+                if ($null -ne $content) {
+                    $outputFile = Join-Path $Script:ProjectRoot $Config.tools.claude.outputFile
+                    $content | Out-File -FilePath $outputFile -Encoding UTF8 -NoNewline
+                    $relativePath = $outputFile.Replace($Script:ProjectRoot, "").TrimStart("\", "/")
+                    Write-SuccessMessage "Created $relativePath"
+                }
+            }
         }
         "github-copilot" {
             New-ConcatenatedConfig -Config $Config -ToolKey "github-copilot" -ToolName "GitHub Copilot" -OutputFile ".github\copilot-instructions.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards

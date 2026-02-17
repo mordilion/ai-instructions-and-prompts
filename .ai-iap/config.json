@@ -13,6 +13,8 @@
     "claude": {
       "name": "Claude Code",
       "outputDir": ".claude/rules",
+      "outputFile": "CLAUDE.md",
+      "outputFileSource": "claude-project-rules",
       "fileExtension": ".md",
       "useFrontmatter": true,
       "concatenate": false,

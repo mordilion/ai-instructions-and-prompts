@@ -2225,6 +2225,16 @@ generate_tool() {
             ;;
         claude)
             generate_claude
+            local output_file source content
+            output_file=$(jq -r '.tools.claude.outputFile // empty' "$WORKING_CONFIG")
+            source=$(jq -r '.tools.claude.outputFileSource // empty' "$WORKING_CONFIG")
+            if [[ -n "$output_file" && -n "$source" ]]; then
+                content=$(read_instruction_file "general" "$source") || true
+                if [[ -n "${content:-}" ]]; then
+                    echo "$content" > "$PROJECT_ROOT/$output_file"
+                    print_success "Created ${output_file}"
+                fi
+            fi
             ;;
         github-copilot)
             generate_concatenated "GitHub Copilot" ".github/copilot-instructions.md" ""

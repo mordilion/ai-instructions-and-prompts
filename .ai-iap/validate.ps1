@@ -168,6 +168,19 @@ foreach ($toolKey in $config.tools.PSObject.Properties.Name) {
 }
 Test-Result "All tool preamble files exist" ($missingPreambles.Count -eq 0) "Missing: $($missingPreambles -join ', ')"
 
+# Test 4c: Tool output file sources exist (if configured)
+$missingToolSources = @()
+foreach ($toolKey in $config.tools.PSObject.Properties.Name) {
+    $tool = $config.tools.$toolKey
+    if ($null -ne $tool.outputFileSource -and -not [string]::IsNullOrWhiteSpace($tool.outputFileSource)) {
+        $sourcePath = Join-Path (Join-Path $Script:RulesDir "general") ("$($tool.outputFileSource).md")
+        if (-not (Test-Path $sourcePath)) {
+            $missingToolSources += "general/$($tool.outputFileSource).md (tool: $toolKey)"
+        }
+    }
+}
+Test-Result "All tool outputFileSource files exist" ($missingToolSources.Count -eq 0) "Missing: $($missingToolSources -join ', ')"
+
 Test-Result "All rule files exist" ($missingFiles.Count -eq 0) "Missing: $($missingFiles -join ', ')"
 
 # Test 5: All markdown files have valid structure

@@ -134,11 +134,14 @@ Setup generates tool-specific outputs into your project root.
 Examples:
 - Cursor: `.cursor/rules/**/*.mdc`
 - Claude Code: `.claude/rules/**/*.md`
+- Claude Code (project rules): `CLAUDE.md`
 - GitHub Copilot: `.github/copilot-instructions.md`
 
 (See **Supported AI Tools** below for the full mapping.)
 
 **Note**: Concatenated outputs (Copilot, Windsurf, Aider, etc.) include a short compliance preamble at the top. The content is read from `rules/general/compliance-preamble.md` via `tools.*.preambleFile` in `config.json`.
+
+**Claude note**: `CLAUDE.md` is generated from `rules/general/claude-project-rules.md` to keep a short, high-signal project rules list.
 
 ### 3. Follow the Wizard
 
