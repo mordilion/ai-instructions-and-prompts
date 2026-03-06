@@ -77,9 +77,9 @@ if [[ -f .ai-iap/setup-agents.sh ]]; then
     test_item "setup-agents.sh sources setup-common.sh" "$(grep -q 'source.*setup-common' .ai-iap/setup-agents.sh && echo true || echo false)"
 fi
 
-# Test 7: Setup scripts have merge functions
-if [[ -f .ai-iap/setup.sh ]]; then
-    if grep -q "merge_custom_config\|CUSTOM_CONFIG" .ai-iap/setup.sh; then
+# Test 7: Setup scripts have merge functions (logic lives in setup-common)
+if [[ -f .ai-iap/setup-common.sh ]]; then
+    if grep -q "merge_custom_config\|CUSTOM_CONFIG" .ai-iap/setup-common.sh; then
         test_item "Bash setup script has merge function" "true"
     else
         test_item "Bash setup script has merge function" "false"
@@ -88,8 +88,8 @@ else
     test_item "Bash setup script has merge function" "false"
 fi
 
-if [[ -f .ai-iap/setup.ps1 ]]; then
-    if grep -q "Merge-CustomConfig\|CustomConfig" .ai-iap/setup.ps1; then
+if [[ -f .ai-iap/setup-common.ps1 ]]; then
+    if grep -q "Merge-CustomConfig\|CustomConfig" .ai-iap/setup-common.ps1; then
         test_item "PowerShell setup script has merge function" "true"
     else
         test_item "PowerShell setup script has merge function" "false"
@@ -111,13 +111,15 @@ if [[ -f .ai-iap-custom/config.example.json ]]; then
     test_item "TypeScript has 'customProcesses'" "$has_custom_processes"
 fi
 
-# Test 9: Merge function syntax (basic check)
-if [[ -f .ai-iap/setup.sh ]]; then
-    if grep -q "MERGED_CONFIG_FILE" .ai-iap/setup.sh && grep -q "WORKING_CONFIG" .ai-iap/setup.sh; then
+# Test 9: Merge function syntax (basic check) - variables live in setup-common.sh
+if [[ -f .ai-iap/setup-common.sh ]]; then
+    if grep -q "MERGED_CONFIG_FILE" .ai-iap/setup-common.sh && grep -q "WORKING_CONFIG" .ai-iap/setup-common.sh; then
         test_item "Bash merge variables defined" "true"
     else
         test_item "Bash merge variables defined" "false"
     fi
+else
+    test_item "Bash merge variables defined" "false"
 fi
 
 # Summary
