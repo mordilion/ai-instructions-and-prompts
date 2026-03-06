@@ -193,12 +193,17 @@ The rule will be included alongside core TypeScript rules.
 
 ## Adding Custom Claude Code Agents
 
-When you use **Claude Code** and run setup, you can choose **role-based agents** that get **project rules injected** (e.g. iOS Developer, PHP Developer, Vue.js Developer, SEO Specialist, UI/UX Designer). You can also **define your own agents** so they use your chosen languages and frameworks.
+When you use **Claude Code** and run setup, you can choose **role-based agents** that get **project rules
+injected** (e.g. iOS Developer, PHP Developer, Vue.js Developer, SEO Specialist, UI/UX Designer). You can
+also **define your own agents** so they use your chosen languages and frameworks.
 
 ### Built-in vs custom
 
-- **Built-in**: `.ai-iap/claude-subagents.json` defines generic subagents (code-reviewer, test-writer, …) and **agentTemplates** (ios-developer, php-developer, vue-developer, seo-specialist, ui-ux-designer). Templates use `ruleBindings` to inject rules from this repo.
-- **Custom**: Create `.ai-iap-custom/claude-agents.json` with the same shape as `agentTemplates`. Setup merges them into the agent list; when you select them, it generates `.claude/agents/<name>.md` with the injected rules.
+- **Built-in**: `.ai-iap/claude-subagents.json` defines generic subagents (code-reviewer, test-writer, …) and
+  **agentTemplates** (ios-developer, php-developer, vue-developer, seo-specialist, ui-ux-designer). Templates use
+  `ruleBindings` to inject rules from this repo.
+- **Custom**: Create `.ai-iap-custom/claude-agents.json` with the same shape as `agentTemplates`. Setup merges them
+  into the agent list; when you select them, it generates `.claude/agents/<name>.md` with the injected rules.
 
 ### Custom agents file format
 
@@ -221,25 +226,43 @@ Create `.ai-iap-custom/claude-agents.json`:
 }
 ```
 
-- **ruleBindings**: Object. Keys = language IDs from `config.json` (e.g. `general`, `swift`, `php`, `typescript`, `html`, `css`). Values = array of framework IDs for that language (e.g. `["laravel"]`, `["vue"]`, `["tailwind"]`). Use `[]` for language-only rules.
-- **personaSpecialization**: Optional. One agent = one specialisation. Values: `software` (iOS/PHP/Vue/backend/frontend developer), `seo` (discoverability, meta, structured data), `ui-ux` (design system, components, accessibility), `testing` (test strategy, QA, automation), `devops` (CI/CD, infra, SRE), `generic` (full adaptive persona that asks about user role). Default: `software`. When set, the agent gets **persona-core** + **persona-specialist-{value}** instead of the full multi-role persona.
+- **ruleBindings**: Object. Keys = language IDs from `config.json` (e.g. `general`, `swift`, `php`, `typescript`,
+  `html`, `css`). Values = array of framework IDs for that language (e.g. `["laravel"]`, `["vue"]`, `["tailwind"]`).
+  Use `[]` for language-only rules.
+- **personaSpecialization**: Optional. One agent = one specialisation. Values: `software` (iOS/PHP/Vue/backend/frontend
+  developer), `seo` (discoverability, meta, structured data), `ui-ux` (design system, components, accessibility),
+  `testing` (test strategy, QA, automation), `devops` (CI/CD, infra, SRE), `generic` (full adaptive persona that asks
+  about user role). Default: `software`. When set, the agent gets **persona-core** + **persona-specialist-{value}**
+  instead of the full multi-role persona.
 - **tools**: Comma-separated Claude Code tool names (e.g. `Read, Grep, Glob, Write, Edit, Bash`).
 - **model**: `sonnet`, `opus`, `haiku`, or `inherit`.
 
 ### Persona split (one agent, one specialisation)
 
-Rules under `.ai-iap/rules/general/` include a **persona** that defines how the AI behaves. For agents, the setup can inject a **split persona** so each agent has a single specialisation:
+Rules under `.ai-iap/rules/general/` include a **persona** that defines how the AI behaves. For agents, the setup can
+inject a **split persona** so each agent has a single specialisation:
 
-- **persona-core.md** – Shared rules (defensive programming, clarification gate, code library lookup, self-check). No multi-role table.
-- **persona-specialist-software.md** – Senior Software Engineer: decides technical approach; asks about requirements and scope.
-- **persona-specialist-seo.md** – SEO specialist: focuses on meta, structured data, discoverability; asks about business goals and content strategy.
-- **persona-specialist-ui-ux.md** – UI/UX and design system: focuses on components, accessibility, layout; asks about brand and user flows.
-- **persona-specialist-testing.md** – Testing/QA: test strategy, unit/integration/e2e, automation; asks about acceptance criteria and coverage goals.
-- **persona-specialist-devops.md** – DevOps/SRE: CI/CD, infra, deployment, observability; asks about environments and deployment strategy.
+- **persona-core.md** – Shared rules (defensive programming, clarification gate, code library lookup, self-check).
+  No multi-role table.
+- **persona-specialist-software.md** – Senior Software Engineer: decides technical approach; asks about requirements
+  and scope.
+- **persona-specialist-seo.md** – SEO specialist: focuses on meta, structured data, discoverability; asks about
+  business goals and content strategy.
+- **persona-specialist-ui-ux.md** – UI/UX and design system: focuses on components, accessibility, layout; asks about
+  brand and user flows.
+- **persona-specialist-testing.md** – Testing/QA: test strategy, unit/integration/e2e, automation; asks about
+  acceptance criteria and coverage goals.
+- **persona-specialist-devops.md** – DevOps/SRE: CI/CD, infra, deployment, observability; asks about environments and
+  deployment strategy.
 
-When `personaSpecialization` is `software`, `seo`, `ui-ux`, `testing`, or `devops`, the agent prompt uses **persona-core** + the matching specialist file. When `generic` or omitted, the full **persona.md** (with role-adaptive behavior) is used.
+When `personaSpecialization` is `software`, `seo`, `ui-ux`, `testing`, or `devops`, the agent prompt uses
+**persona-core** + the matching specialist file. When `generic` or omitted, the full **persona.md** (with
+role-adaptive behavior) is used.
 
-Example: an **iOS Developer**, **PHP Developer**, **Vue.js Developer (TypeScript)**, **SEO Specialist**, and **UI/UX Designer** are in `.ai-iap/examples/claude-agents.example.json`. Copy that file to `.ai-iap-custom/claude-agents.json`, run setup, select Claude Code and then “Set up Claude Code agents?”, and pick the roles you want. Generated agents in `.claude/agents/` will contain the injected project rules.
+Example: an **iOS Developer**, **PHP Developer**, **Vue.js Developer (TypeScript)**, **SEO Specialist**, and
+**UI/UX Designer** are in `.ai-iap/examples/claude-agents.example.json`.
+Copy that file to `.ai-iap-custom/claude-agents.json`, run setup, select Claude Code and then “Set up Claude Code agents?”, and pick the roles you want.
+Generated agents in `.claude/agents/` will contain the injected project rules.
 
 ---
 
