@@ -356,6 +356,8 @@ globs:
 
 **Tip**: Ensure `paths:` patterns match your repo layout so rules only apply to relevant files.
 
+**Claude Code subagents**: To add or remove subagents (e.g. code-reviewer, codebase-explorer), re-run setup and choose "reuse" then when prompted "Set up Claude Code subagents?" answer yes and pick the ones you want. Generated subagent files in `.claude/agents/` are marked `aiIapManaged: true` and are removed on cleanup when you run setup in cleanup mode.
+
 ---
 
 ### GitHub Copilot: Instructions not being followed

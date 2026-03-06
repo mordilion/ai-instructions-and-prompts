@@ -113,11 +113,39 @@ cp -r .ai-iap /path/to/your/project/
 chmod +x .ai-iap/setup.sh && ./.ai-iap/setup.sh
 ```
 
+### Scope: Project vs Global
+
+When you run setup, you choose where to apply the configuration:
+
+- **This project** – Generated files go into the current directory (e.g. `.claude/`, `.cursor/`). State is stored in `.ai-iap-state.json` in the project. Use for version-controlled, per-repo setup.
+- **Global (user)** – Generated files go to your home directory (e.g. `~/.claude/`, `~/.cursor/`). State is stored in `~/.ai-iap-state.json`. Use for personal defaults across all projects. Only Cursor and Claude Code are offered when scope is global (other tools are project-bound).
+
+### Setup split: Rules vs Agents
+
+Setup is split into two **standalone scripts** (no shared argument to one file). Each has its own code path for easier maintenance.
+
+**Bash (macOS / Linux):**
+- **`setup-common.sh`** – Shared library (sourced by both). Constants, config loading, state, scope, cleanup, generation helpers.
+- **`setup-rules.sh`** – Rules flow only: tools, languages, frameworks, structures, processes, then generates Cursor/Claude/Copilot/etc. outputs.
+- **`setup-agents.sh`** – Agents flow only: define Claude Code agents (name, description, tech stack), then generates `.claude/agents/*.md`.
+
+**PowerShell (Windows):**
+- **`setup-common.ps1`** – Shared library (dot-sourced by both). Same responsibilities as the Bash common script.
+- **`setup-rules.ps1`** – Rules flow only (dot-sources `setup-common.ps1`, then runs the rules wizard and generation).
+- **`setup-agents.ps1`** – Agents flow: when Bash (Git Bash or WSL) is available, runs **`setup-agents.sh`**; otherwise prompts to use Git Bash or WSL for full agent setup.
+
+Use the script that matches what you want to configure:
+
+- **Rules** – Run **`./.ai-iap/setup-rules.sh`** (Bash) or **`.\.ai-iap\setup-rules.ps1`** (PowerShell).
+- **Agents** – Run **`./.ai-iap/setup-agents.sh`** (Bash) or **`.\.ai-iap\setup-agents.ps1`** (PowerShell; uses Bash when available).
+
+You can also run **`./.ai-iap/setup.sh`** or **`.\.ai-iap\setup.ps1`** (dispatcher) and choose "Rules only" or "Agents only" when prompted; it then runs the corresponding script.
+
 ### Re-running Setup (Add/Remove Languages & Tools)
 
 You can safely run setup multiple times.
 
-- The setup script stores your last choices in `.ai-iap-state.json`
+- The setup script stores your last choices in `.ai-iap-state.json` (project) or `~/.ai-iap-state.json` (global)
 - On rerun, you can **reuse**, **modify**, or **clean up** previously generated outputs
 - Cleanup is **safe by default**: only files marked `aiIapManaged: true` (or files with the generated header comment) are removed
 
@@ -129,9 +157,9 @@ When you choose **Modify selection**, the wizard will show your previous selecti
 
 ### Generated Outputs (High Level)
 
-Setup generates tool-specific outputs into your project root.
+Setup generates tool-specific outputs into your chosen **output root** (project directory or, for global scope, your home directory).
 
-Examples:
+Examples (project scope):
 - Cursor: `.cursor/rules/**/*.mdc`
 - Claude Code: `.claude/rules/**/*.md`
 - Claude Code (project rules): `CLAUDE.md`
@@ -141,13 +169,16 @@ Examples:
 
 **Note**: Concatenated outputs (Copilot, Windsurf, Aider, etc.) include a short compliance preamble at the top. The content is read from `rules/general/compliance-preamble.md` via `tools.*.preambleFile` in `config.json`.
 
-**Claude note**: `CLAUDE.md` is generated from `rules/general/claude-project-rules.md` to keep a short, high-signal project rules list.
+**Claude note**: `CLAUDE.md` is generated from `rules/general/claude-project-rules.md` to keep a short, high-signal project rules list. When Claude Code is selected, the wizard can also set up **agents** (`.claude/agents/*.md`): generic helpers (code-reviewer, test-writer, …) or **role-based agents** that have **project rules injected** (e.g. iOS Developer, PHP Developer, Vue.js Developer, SEO Specialist, UI/UX Designer). You can define your own roles in `.ai-iap-custom/claude-agents.json` (see CUSTOMIZATION.md). Subagents are project-level and safe to commit.
 
 ### 3. Follow the Wizard
 
 The setup wizard will guide you through:
 
-**Step 1: Select AI Tools**
+**Step 0: Where to apply (scope)**  
+Choose **This project** or **Global (user)**. When running `setup.sh`, choose **Rules only** or **Agents only** (or use `setup-rules.sh` / `setup-agents.sh` to skip that).
+
+**Step 1: Select AI Tools** (rules only; skipped when running setup-agents)
 ```
 Select AI tools to configure:
   1. Cursor ⭐
@@ -199,6 +230,17 @@ Enable learnings capture? (y/N):
 When enabled, AIs should append stable project-specific decisions to that file. Setup includes the learnings-capture rules in generated outputs so AIs know to update `.ai-iap-custom/rules/general/learnings.md` directly.
 
 **Step 6: Select Frameworks, Structures & Processes** (if applicable)
+
+**Claude Code agents** (run `./.ai-iap/setup-agents.sh`)
+
+Agents are always defined by you: no presets. **One agent = one specialisation.** You choose how many agents and for each:
+
+- **Name** (slug, e.g. ios-developer)
+- **Description** (when Claude should use this agent)
+- **Tech stack** – preset (iOS, Vue.js, PHP Laravel, SEO, UI/UX, SEO & Linguistic) or Custom (pick languages and frameworks from config)
+- **Persona specialisation** – Software/Developer (default), SEO, UI/UX, or Generic (full adaptive persona). Each agent gets a focused persona slice so behaviour matches its role (see [CUSTOMIZATION.md](CUSTOMIZATION.md#persona-split-one-agent-one-specialisation)).
+
+Example: "I need 4 agents: one for iOS, one for Vue.js, one for SEO and Linguistic, one for PHP with Laravel" → run setup-agents, enter 4, then for each agent set name, description, tech stack, and persona. Generated files go to `.claude/agents/` (or global scope).
 
 That's it! Your AI tools are now configured with consistent coding standards.
 
@@ -281,7 +323,7 @@ Want to add company-specific standards, internal processes, or override core rul
 | Tool | Output | Description |
 |------|--------|-------------|
 | **Cursor** ⭐ | `.cursor/rules/*.mdc` | Separate rule files with glob patterns |
-| **Claude Code** ⭐ | `.claude/rules/**/*.md` | Modular project rules (supports `paths:` for scoping) |
+| **Claude Code** ⭐ | `.claude/rules/**/*.md`, `CLAUDE.md`, `.claude/agents/*.md` | Modular rules, project rules file, optional subagents (code-reviewer, explorer, test-writer, etc.) |
 | **GitHub Copilot** | `.github/copilot-instructions.md` | Repository-level instructions |
 | **Windsurf** | `.windsurfrules` | Single concatenated file |
 | **Aider** | `CONVENTIONS.md` | Convention file for Aider |

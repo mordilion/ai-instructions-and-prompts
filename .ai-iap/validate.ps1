@@ -255,6 +255,82 @@ foreach ($langKey in $config.languages.PSObject.Properties.Name) {
 
 Test-Result "All framework dependencies exist" ($unresolvedDeps.Count -eq 0) "Unresolved: $($unresolvedDeps -join ', ')"
 
+# Test 9: Setup split scripts and common library
+$setupCommonPath = Join-Path $Script:ScriptDir "setup-common.sh"
+$setupRulesPath = Join-Path $Script:ScriptDir "setup-rules.sh"
+$setupAgentsPath = Join-Path $Script:ScriptDir "setup-agents.sh"
+Test-Result "setup-common.sh exists" (Test-Path $setupCommonPath)
+Test-Result "setup-rules.sh exists" (Test-Path $setupRulesPath)
+Test-Result "setup-agents.sh exists" (Test-Path $setupAgentsPath)
+if (Test-Path $setupRulesPath) {
+    $rulesContent = Get-Content $setupRulesPath -Raw
+    Test-Result "setup-rules.sh sources setup-common.sh" ($rulesContent -match "setup-common")
+}
+if (Test-Path $setupAgentsPath) {
+    $agentsContent = Get-Content $setupAgentsPath -Raw
+    Test-Result "setup-agents.sh sources setup-common.sh" ($agentsContent -match "setup-common")
+}
+
+# Test 10: Windows (PowerShell) setup split
+$setupCommonPs1Path = Join-Path $Script:ScriptDir "setup-common.ps1"
+$setupRulesPs1Path = Join-Path $Script:ScriptDir "setup-rules.ps1"
+$setupAgentsPs1Path = Join-Path $Script:ScriptDir "setup-agents.ps1"
+Test-Result "setup-common.ps1 exists" (Test-Path $setupCommonPs1Path)
+Test-Result "setup-rules.ps1 exists" (Test-Path $setupRulesPs1Path)
+Test-Result "setup-agents.ps1 exists" (Test-Path $setupAgentsPs1Path)
+if (Test-Path $setupRulesPs1Path) {
+    $rulesPs1Content = Get-Content $setupRulesPs1Path -Raw
+    Test-Result "setup-rules.ps1 dot-sources setup-common.ps1" ($rulesPs1Content -match "setup-common\.ps1")
+}
+if (Test-Path $setupAgentsPs1Path) {
+    $agentsPs1Content = Get-Content $setupAgentsPs1Path -Raw
+    Test-Result "setup-agents.ps1 dot-sources setup-common.ps1" ($agentsPs1Content -match "setup-common\.ps1")
+}
+
+# Test 11: State file schema (if present: valid JSON and expected keys)
+$statePath = Join-Path $Script:RepoRoot ".ai-iap-state.json"
+if (Test-Path $statePath) {
+    try {
+        $stateJson = Get-Content $statePath -Raw | ConvertFrom-Json
+        Test-Result "State file is valid JSON" $true
+        $hasVersion = $null -ne $stateJson.version
+        $hasSelectedTools = $null -ne $stateJson.selectedTools
+        Test-Result "State file has version and selectedTools" ($hasVersion -and $hasSelectedTools) "Missing required keys"
+    } catch {
+        Test-Result "State file is valid JSON" $false $_.Exception.Message
+    }
+} else {
+    Test-Result "State file (optional, not in repo)" $true
+}
+
+# Test 12: Claude agents config (claude-subagents.json optional)
+$claudeSubagentsPath = Join-Path $Script:ScriptDir "claude-subagents.json"
+if (Test-Path $claudeSubagentsPath) {
+    try {
+        $null = Get-Content $claudeSubagentsPath -Raw | ConvertFrom-Json
+        Test-Result "claude-subagents.json is valid JSON" $true
+    } catch {
+        Test-Result "claude-subagents.json is valid JSON" $false $_.Exception.Message
+    }
+} else {
+    Test-Result "claude-subagents.json (optional) present" $true
+}
+
+# Test 13: Custom agents example (claude-agents.example.json)
+$claudeAgentsExamplePath = Join-Path $Script:ScriptDir "examples\claude-agents.example.json"
+if (Test-Path $claudeAgentsExamplePath) {
+    try {
+        $agentsExample = Get-Content $claudeAgentsExamplePath -Raw | ConvertFrom-Json
+        Test-Result "claude-agents.example.json is valid JSON" $true
+        $hasAgentsArray = $null -ne $agentsExample.agents -and $agentsExample.agents -is [Array]
+        Test-Result "claude-agents.example.json has agents array" $hasAgentsArray "Missing or invalid agents array"
+    } catch {
+        Test-Result "claude-agents.example.json is valid JSON" $false $_.Exception.Message
+    }
+} else {
+    Test-Result "claude-agents.example.json (optional)" $true
+}
+
 # Summary
 Write-Host "`n=== Summary ===" -ForegroundColor Cyan
 Write-Host "Passed: $Script:PassCount" -ForegroundColor Green

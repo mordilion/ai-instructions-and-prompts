@@ -200,6 +200,80 @@ else
     test_result "All framework dependencies exist" "false" "Unresolved: ${unresolved_deps[*]}"
 fi
 
+# Test 7: Setup split scripts and common library
+test_result "setup-common.sh exists" "$([[ -f "$SCRIPT_DIR/setup-common.sh" ]] && echo true || echo false)"
+if [[ -f "$SCRIPT_DIR/setup-rules.sh" ]]; then
+    test_result "setup-rules.sh exists" "true"
+    if grep -q 'source.*setup-common' "$SCRIPT_DIR/setup-rules.sh"; then
+        test_result "setup-rules.sh sources setup-common.sh" "true"
+    else
+        test_result "setup-rules.sh sources setup-common.sh" "false" "Missing source setup-common"
+    fi
+else
+    test_result "setup-rules.sh exists" "false" "Missing setup-rules.sh"
+fi
+
+if [[ -f "$SCRIPT_DIR/setup-agents.sh" ]]; then
+    test_result "setup-agents.sh exists" "true"
+    if grep -q 'source.*setup-common' "$SCRIPT_DIR/setup-agents.sh"; then
+        test_result "setup-agents.sh sources setup-common.sh" "true"
+    else
+        test_result "setup-agents.sh sources setup-common.sh" "false" "Missing source setup-common"
+    fi
+else
+    test_result "setup-agents.sh exists" "false" "Missing setup-agents.sh"
+fi
+
+# Test 8: State file schema (if state file exists in repo, must be valid JSON; may contain scope, setupType, selectedCustomAgents)
+STATE_EXAMPLE="$SCRIPT_DIR/../.ai-iap-state.json"
+if [[ -f "$STATE_EXAMPLE" ]]; then
+    if jq empty "$STATE_EXAMPLE" 2>/dev/null; then
+        test_result "State file is valid JSON" "true"
+        # Verify expected keys are readable (backwards compat: scope, setupType, selectedCustomAgents optional)
+        jq -e '.version and .selectedTools != null' "$STATE_EXAMPLE" >/dev/null 2>&1 && test_result "State file has version and selectedTools" "true" || test_result "State file has version and selectedTools" "false" "Missing required keys"
+    else
+        test_result "State file is valid JSON" "false" "Invalid JSON in state file"
+    fi
+else
+    test_result "State file (optional, not in repo)" "true"
+fi
+
+# Test 9: Claude agents config (claude-subagents.json optional; if present must be valid JSON)
+if [[ -f "$SCRIPT_DIR/claude-subagents.json" ]]; then
+    if jq empty "$SCRIPT_DIR/claude-subagents.json" 2>/dev/null; then
+        test_result "claude-subagents.json is valid JSON" "true"
+    else
+        test_result "claude-subagents.json is valid JSON" "false" "Invalid JSON"
+    fi
+else
+    test_result "claude-subagents.json (optional) present" "true"
+fi
+
+# Test 10: Persona split files exist (for agent setup: one agent, one specialisation)
+for f in persona-core persona-specialist-software persona-specialist-seo persona-specialist-ui-ux persona-specialist-testing persona-specialist-devops; do
+    if [[ -f "$SCRIPT_DIR/rules/general/${f}.md" ]]; then
+        test_result "Persona split: ${f}.md exists" "true"
+    else
+        test_result "Persona split: ${f}.md exists" "false" "Missing rules/general/${f}.md"
+    fi
+done
+
+# Test 11: Custom agents example (if present must be valid JSON with agents array)
+if [[ -f "$SCRIPT_DIR/examples/claude-agents.example.json" ]]; then
+    if jq empty "$SCRIPT_DIR/examples/claude-agents.example.json" 2>/dev/null; then
+        test_result "claude-agents.example.json is valid JSON" "true"
+        if jq -e '.agents | type == "array"' "$SCRIPT_DIR/examples/claude-agents.example.json" >/dev/null 2>&1; then
+            test_result "claude-agents.example.json has agents array" "true"
+        else
+            test_result "claude-agents.example.json has agents array" "false" "Missing or invalid agents array"
+        fi
+    else
+        test_result "claude-agents.example.json is valid JSON" "false" "Invalid JSON"
+    fi
+else
+    test_result "claude-agents.example.json (optional)" "true"
+fi
+
 # Summary
 echo -e "\n${CYAN}=== Summary ===${NC}"
 echo -e "${GREEN}Passed: $pass_count${NC}"

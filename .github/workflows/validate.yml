@@ -28,7 +28,13 @@ jobs:
           test -d .ai-iap/rules || { echo "Missing .ai-iap/rules directory"; exit 1; }
           test -f .ai-iap/config.json || { echo "Missing config.json"; exit 1; }
           test -f .ai-iap/setup.sh || { echo "Missing setup.sh"; exit 1; }
+          test -f .ai-iap/setup-common.sh || { echo "Missing setup-common.sh"; exit 1; }
+          test -f .ai-iap/setup-rules.sh || { echo "Missing setup-rules.sh"; exit 1; }
+          test -f .ai-iap/setup-agents.sh || { echo "Missing setup-agents.sh"; exit 1; }
           test -f .ai-iap/setup.ps1 || { echo "Missing setup.ps1"; exit 1; }
+          test -f .ai-iap/setup-common.ps1 || { echo "Missing setup-common.ps1"; exit 1; }
+          test -f .ai-iap/setup-rules.ps1 || { echo "Missing setup-rules.ps1"; exit 1; }
+          test -f .ai-iap/setup-agents.ps1 || { echo "Missing setup-agents.ps1"; exit 1; }
           echo "✓ Directory structure is valid"
       
       - name: Install markdownlint-cli
@@ -87,13 +93,16 @@ jobs:
           echo "Validating bash scripts..."
           bash -n .ai-iap/setup.sh
           echo "✓ setup.sh syntax is valid"
-          
+          bash -n .ai-iap/setup-common.sh
+          echo "✓ setup-common.sh syntax is valid"
+          bash -n .ai-iap/setup-rules.sh
+          echo "✓ setup-rules.sh syntax is valid"
+          bash -n .ai-iap/setup-agents.sh
+          echo "✓ setup-agents.sh syntax is valid"
           bash -n .ai-iap/validate.sh
           echo "✓ validate.sh syntax is valid"
-          
           bash -n .ai-iap/validate-config.sh
           echo "✓ validate-config.sh syntax is valid"
-          
           bash -n .ai-iap/verify-extension.sh
           echo "✓ verify-extension.sh syntax is valid"
       
@@ -126,6 +135,12 @@ jobs:
           Write-Host "Validating PowerShell scripts..."
           $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content .ai-iap\setup.ps1 -Raw), [ref]$null)
           Write-Host "✓ setup.ps1 syntax is valid"
+          $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content .ai-iap\setup-common.ps1 -Raw), [ref]$null)
+          Write-Host "✓ setup-common.ps1 syntax is valid"
+          $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content .ai-iap\setup-rules.ps1 -Raw), [ref]$null)
+          Write-Host "✓ setup-rules.ps1 syntax is valid"
+          $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content .ai-iap\setup-agents.ps1 -Raw), [ref]$null)
+          Write-Host "✓ setup-agents.ps1 syntax is valid"
           
           $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content .ai-iap\validate.ps1 -Raw), [ref]$null)
           Write-Host "✓ validate.ps1 syntax is valid"

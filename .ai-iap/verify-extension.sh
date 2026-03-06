@@ -66,7 +66,18 @@ test_item "Example custom process exists" "$([[ -f .ai-iap-custom/processes/type
 test_item "CUSTOMIZATION.md exists" "$([[ -f CUSTOMIZATION.md ]] && echo true || echo false)"
 test_item "Custom README.md exists" "$([[ -f .ai-iap-custom/README.md ]] && echo true || echo false)"
 
-# Test 6: Setup scripts have merge functions
+# Test 6: Setup split scripts and common library
+test_item "setup-common.sh exists" "$([[ -f .ai-iap/setup-common.sh ]] && echo true || echo false)"
+test_item "setup-rules.sh exists" "$([[ -f .ai-iap/setup-rules.sh ]] && echo true || echo false)"
+test_item "setup-agents.sh exists" "$([[ -f .ai-iap/setup-agents.sh ]] && echo true || echo false)"
+if [[ -f .ai-iap/setup-rules.sh ]]; then
+    test_item "setup-rules.sh sources setup-common.sh" "$(grep -q 'source.*setup-common' .ai-iap/setup-rules.sh && echo true || echo false)"
+fi
+if [[ -f .ai-iap/setup-agents.sh ]]; then
+    test_item "setup-agents.sh sources setup-common.sh" "$(grep -q 'source.*setup-common' .ai-iap/setup-agents.sh && echo true || echo false)"
+fi
+
+# Test 7: Setup scripts have merge functions
 if [[ -f .ai-iap/setup.sh ]]; then
     if grep -q "merge_custom_config\|CUSTOM_CONFIG" .ai-iap/setup.sh; then
         test_item "Bash setup script has merge function" "true"
@@ -87,7 +98,7 @@ else
     test_item "PowerShell setup script has merge function" "false"
 fi
 
-# Test 7: Config structure (example file)
+# Test 8: Config structure (example file)
 if [[ -f .ai-iap-custom/config.example.json ]]; then
     has_languages=$(jq -r '.languages != null' .ai-iap-custom/config.example.json 2>/dev/null || echo "false")
     has_typescript=$(jq -r '.languages.typescript != null' .ai-iap-custom/config.example.json 2>/dev/null || echo "false")
@@ -100,7 +111,7 @@ if [[ -f .ai-iap-custom/config.example.json ]]; then
     test_item "TypeScript has 'customProcesses'" "$has_custom_processes"
 fi
 
-# Test 8: Merge function syntax (basic check)
+# Test 9: Merge function syntax (basic check)
 if [[ -f .ai-iap/setup.sh ]]; then
     if grep -q "MERGED_CONFIG_FILE" .ai-iap/setup.sh && grep -q "WORKING_CONFIG" .ai-iap/setup.sh; then
         test_item "Bash merge variables defined" "true"

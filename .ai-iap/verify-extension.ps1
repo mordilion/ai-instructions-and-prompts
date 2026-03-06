@@ -57,9 +57,35 @@ Test-Item "Example process file exists (deploy-internal.example.md)" $tsExampleP
 Test-Item "CUSTOMIZATION.md exists" (Test-Path "CUSTOMIZATION.md")
 Test-Item "Custom README.md exists" (Test-Path ".ai-iap-custom/README.md")
 
-# Test 7: Setup scripts have merge functions
-$bashScript = Get-Content .ai-iap/setup.sh -Raw
-$psScript = Get-Content .ai-iap/setup.ps1 -Raw
+# Test 7: Setup split scripts and common library (Bash)
+Test-Item "setup-common.sh exists" (Test-Path ".ai-iap/setup-common.sh")
+Test-Item "setup-rules.sh exists" (Test-Path ".ai-iap/setup-rules.sh")
+Test-Item "setup-agents.sh exists" (Test-Path ".ai-iap/setup-agents.sh")
+if (Test-Path ".ai-iap/setup-rules.sh") {
+    $rulesContent = Get-Content .ai-iap/setup-rules.sh -Raw
+    Test-Item "setup-rules.sh sources setup-common.sh" ($rulesContent -match "setup-common")
+}
+if (Test-Path ".ai-iap/setup-agents.sh") {
+    $agentsContent = Get-Content .ai-iap/setup-agents.sh -Raw
+    Test-Item "setup-agents.sh sources setup-common.sh" ($agentsContent -match "setup-common")
+}
+
+# Test 7b: Setup split scripts (PowerShell)
+Test-Item "setup-common.ps1 exists" (Test-Path ".ai-iap/setup-common.ps1")
+Test-Item "setup-rules.ps1 exists" (Test-Path ".ai-iap/setup-rules.ps1")
+Test-Item "setup-agents.ps1 exists" (Test-Path ".ai-iap/setup-agents.ps1")
+if (Test-Path ".ai-iap/setup-rules.ps1") {
+    $rulesPs1Content = Get-Content .ai-iap/setup-rules.ps1 -Raw
+    Test-Item "setup-rules.ps1 dot-sources setup-common.ps1" ($rulesPs1Content -match "setup-common\.ps1")
+}
+if (Test-Path ".ai-iap/setup-agents.ps1") {
+    $agentsPs1Content = Get-Content .ai-iap/setup-agents.ps1 -Raw
+    Test-Item "setup-agents.ps1 dot-sources setup-common.ps1" ($agentsPs1Content -match "setup-common\.ps1")
+}
+
+# Test 8: Setup scripts have merge functions
+$bashScript = Get-Content .ai-iap/setup-common.sh -Raw
+$psScript = Get-Content .ai-iap/setup-common.ps1 -Raw
 
 $bashHasMerge = $bashScript -match "merge_custom_config|CUSTOM_CONFIG"
 $psHasMerge = $psScript -match "Merge-CustomConfig|CustomConfig"
@@ -67,7 +93,7 @@ $psHasMerge = $psScript -match "Merge-CustomConfig|CustomConfig"
 Test-Item "Bash script has merge function" $bashHasMerge
 Test-Item "PowerShell script has merge function" $psHasMerge
 
-# Test 8: Config structure is correct
+# Test 9: Config structure is correct
 if ($customConfig) {
     $hasLanguages = $null -ne $customConfig.languages
     $hasTypeScript = $null -ne $customConfig.languages.typescript
