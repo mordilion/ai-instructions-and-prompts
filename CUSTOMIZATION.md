@@ -261,7 +261,8 @@ role-adaptive behavior) is used.
 
 Example: an **iOS Developer**, **PHP Developer**, **Vue.js Developer (TypeScript)**, **SEO Specialist**, and
 **UI/UX Designer** are in `.ai-iap/examples/claude-agents.example.json`.
-Copy that file to `.ai-iap-custom/claude-agents.json`, run setup, select Claude Code and then “Set up Claude Code agents?”, and pick the roles you want.
+Copy that file to `.ai-iap-custom/claude-agents.json`, run setup,
+select Claude Code and then “Set up Claude Code agents?”, and pick the roles you want.
 Generated agents in `.claude/agents/` will contain the injected project rules.
 
 ---
