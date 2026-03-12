@@ -509,6 +509,17 @@ cleanup_managed_claude_agents() {
     find "$root" -type d -empty -delete 2>/dev/null || true
 }
 
+cleanup_managed_gemini_rules() {
+    local root="$OUTPUT_ROOT/.gemini/rules"
+    [[ ! -d "$root" ]] && return 0
+
+    find "$root" -type f -name '*.md' -print0 2>/dev/null \
+        | xargs -0 grep -l 'aiIapManaged: true' 2>/dev/null \
+        | while IFS= read -r f; do rm -f "$f"; done
+
+    find "$root" -type d -empty -delete 2>/dev/null || true
+}
+
 cleanup_generated_file_if_managed() {
     local filepath="$1"
     [[ ! -f "$filepath" ]] && return 0
@@ -538,6 +549,9 @@ cleanup_tool_outputs() {
             ;;
         google-ai-studio)
             cleanup_generated_file_if_managed "$OUTPUT_ROOT/GOOGLE_AI_STUDIO.md"
+            ;;
+        gemini-cli)
+            cleanup_managed_gemini_rules
             ;;
         amazon-q)
             cleanup_generated_file_if_managed "$OUTPUT_ROOT/AMAZON_Q.md"
@@ -1986,6 +2000,143 @@ generate_cursor() {
     done
 }
 
+generate_gemini_cli() {
+    local output_dir="$OUTPUT_ROOT/.gemini/rules"
+
+    print_info "Generating Gemini CLI rules..."
+
+    for lang in "${SELECTED_LANGUAGES[@]}"; do
+        local lang_dir="$output_dir/$lang"
+        mkdir -p "$lang_dir"
+
+        # Generate base language files
+        while IFS= read -r file; do
+            local output_file="$lang_dir/$file.md"
+            local content
+
+            content=$(read_instruction_file "$lang" "$file") || continue
+
+            mkdir -p "$(dirname "$output_file")"
+
+            {
+                generate_cursor_frontmatter "$lang" "$file" "false"
+                echo "$content"
+            } > "$output_file"
+
+            local relative_path="${output_file#"$OUTPUT_ROOT/"}"
+            print_success "Created $relative_path"
+        done < <(get_language_files "$lang")
+
+        # Optional: rules gated by setup toggles
+        local opt_key
+        for opt_key in $(get_optional_rule_keys "$lang"); do
+            local toggle file content output_file
+            toggle="$(get_optional_rule_toggle "$lang" "$opt_key")"
+            if is_toggle_enabled "$toggle"; then
+                file="$(get_optional_rule_file "$lang" "$opt_key")"
+                content=$(read_instruction_file "$lang" "$file") || true
+                if [[ -n "${content:-}" ]]; then
+                    output_file="$lang_dir/$file.md"
+                    {
+                        generate_cursor_frontmatter "$lang" "$file" "false"
+                        echo "$content"
+                    } > "$output_file"
+                    local relative_path="${output_file#"$OUTPUT_ROOT/"}"
+                    print_success "Created $relative_path"
+                fi
+            fi
+        done
+
+        # Generate selected documentation files (only for general language)
+        if [[ "$lang" == "general" && ${#SELECTED_DOCUMENTATION[@]} -gt 0 ]]; then
+            for doc_file in "${SELECTED_DOCUMENTATION[@]}"; do
+                local output_file="$lang_dir/$doc_file.md"
+                local content
+
+                content=$(read_instruction_file "$lang" "$doc_file") || continue
+
+                mkdir -p "$(dirname "$output_file")"
+
+                {
+                    generate_cursor_frontmatter "$lang" "$doc_file" "false"
+                    echo "$content"
+                } > "$output_file"
+
+                local relative_path="${output_file#"$OUTPUT_ROOT/"}"
+                print_success "Created $relative_path"
+            done
+        fi
+
+        # Generate framework files for this language
+        if [[ -n "${SELECTED_FRAMEWORKS[$lang]:-}" ]]; then
+            for fw in ${SELECTED_FRAMEWORKS[$lang]}; do
+                local fw_file output_file content
+                fw_file=$(get_framework_file "$lang" "$fw")
+                output_file="$lang_dir/$fw_file.md"
+
+                content=$(read_instruction_file "$lang" "$fw_file" "true") || continue
+
+                mkdir -p "$(dirname "$output_file")"
+
+                {
+                    generate_cursor_frontmatter "$lang" "$fw" "true"
+                    echo "$content"
+                } > "$output_file"
+
+                local relative_path="${output_file#"$OUTPUT_ROOT/"}"
+                print_success "Created $relative_path"
+
+                # Generate structure file if selected
+                local struct_key="$lang-$fw"
+                if [[ -n "${SELECTED_STRUCTURES[$struct_key]:-}" ]]; then
+                    local struct_file="${SELECTED_STRUCTURES[$struct_key]}"
+                    local struct_output="$lang_dir/$struct_file.md"
+                    local struct_content
+
+                    struct_content=$(read_instruction_file "$lang" "$struct_file" "false" "true") || continue
+
+                    mkdir -p "$(dirname "$struct_output")"
+
+                    {
+                        generate_cursor_frontmatter "$lang" "$fw" "true"
+                        echo "$struct_content"
+                    } > "$struct_output"
+
+                    local relative_path="${struct_output#"$OUTPUT_ROOT/"}"
+                    print_success "Created $relative_path"
+                fi
+            done
+        fi
+
+        # Generate process files for this language
+        if [[ -n "${SELECTED_PROCESSES[$lang]:-}" ]]; then
+            for proc in ${SELECTED_PROCESSES[$lang]}; do
+                proc_file=$(get_process_file "$lang" "$proc")
+                load_into_ai=$(get_process_load_into_ai "$lang" "$proc")
+
+                if [[ "$load_into_ai" == "false" ]]; then
+                    print_info "Skipped on-demand process: $proc (copy prompt from .ai-iap/processes/ondemand/$lang/$proc_file.md when needed)"
+                    continue
+                fi
+
+                output_file="$lang_dir/$proc_file.md"
+
+                content=$(read_instruction_file "$lang" "$proc_file" "false" "false" "true") || continue
+
+                mkdir -p "$(dirname "$output_file")"
+
+                {
+                    generate_cursor_frontmatter "$lang" "$proc" "false"
+                    echo "$content"
+                } > "$output_file"
+
+                local relative_path="${output_file#"$OUTPUT_ROOT/"}"
+                print_success "Created $relative_path"
+            done
+        fi
+    done
+}
+
 # Categorize framework key for .claude/rules/ (frontend/backend/mobile). Not used in UI; distinct from get_framework_category(lang, fw).
 get_claude_framework_category() {
     local framework="$1"
@@ -2565,6 +2716,9 @@ generate_tool() {
             ;;
         google-ai-studio)
             generate_concatenated "Google AI Studio" "GOOGLE_AI_STUDIO.md" ""
+            ;;
+        gemini-cli)
+            generate_gemini_cli
             ;;
         amazon-q)
             generate_concatenated "Amazon Q Developer" "AMAZON_Q.md" ""

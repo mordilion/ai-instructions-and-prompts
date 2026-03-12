@@ -1213,6 +1213,186 @@ function New-CursorConfig {
     }
 }
 
+function New-GeminiCliConfig {
+    param(
+        [PSCustomObject]$Config,
+        [array]$SelectedLanguages,
+        [array]$SelectedDocumentation,
+        [hashtable]$SelectedFrameworks,
+        [hashtable]$SelectedStructures,
+        [hashtable]$SelectedProcesses,
+        [bool]$EnableProjectLearnings,
+        [bool]$EnableCommitStandards
+    )
+
+    $outputDir = Join-Path $Script:OutputRoot ".gemini\rules"
+
+    Write-InfoMessage "Generating Gemini CLI rules..."
+    $toggleStates = @{
+        enableProjectLearnings = $EnableProjectLearnings
+    }
+
+    foreach ($lang in $SelectedLanguages) {
+        $langDir = Join-Path $outputDir $lang
+
+        if (-not (Test-Path $langDir)) {
+            New-Item -ItemType Directory -Path $langDir -Force | Out-Null
+        }
+
+        # Generate base language files
+        $files = $Config.languages.$lang.files
+
+        foreach ($file in $files) {
+            if ($lang -eq "general" -and $file -eq "commit-standards" -and -not $EnableCommitStandards) {
+                continue
+            }
+            $content = Read-InstructionFile -Lang $lang -File $file
+
+            if ($null -eq $content) {
+                continue
+            }
+
+            $outputFile = Join-Path $langDir "$file.md"
+
+            $parentDir = Split-Path -Parent $outputFile
+            if (-not (Test-Path $parentDir)) {
+                New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
+            }
+
+            $frontmatter = New-CursorFrontmatter -Config $Config -Lang $lang -File $file
+
+            $fullContent = $frontmatter + $content
+            $fullContent | Out-File -FilePath $outputFile -Encoding UTF8 -NoNewline
+
+            $relativePath = $outputFile.Replace($Script:OutputRoot, "").TrimStart("\", "/")
+            Write-SuccessMessage "Created $relativePath"
+        }
+
+        # Optional: rules gated by setup toggles
+        $optionalRules = Get-EnabledOptionalRules -Config $Config -Lang $lang -ToggleStates $toggleStates
+        foreach ($rule in $optionalRules) {
+            $content = Read-InstructionFile -Lang $lang -File $rule.file
+            if ($null -ne $content) {
+                $outputFile = Join-Path $langDir "$($rule.file).md"
+                $frontmatter = New-CursorFrontmatter -Config $Config -Lang $lang -File $rule.file
+                ($frontmatter + $content) | Out-File -FilePath $outputFile -Encoding UTF8 -NoNewline
+                $relativePath = $outputFile.Replace($Script:OutputRoot, "").TrimStart("\", "/")
+                Write-SuccessMessage "Created $relativePath"
+            }
+        }
+
+        # Generate selected documentation files (only for general language)
+        if ($lang -eq "general" -and $SelectedDocumentation.Count -gt 0) {
+            foreach ($docFile in $SelectedDocumentation) {
+                $content = Read-InstructionFile -Lang $lang -File $docFile
+
+                if ($null -eq $content) {
+                    continue
+                }
+
+                $outputFile = Join-Path $langDir "$docFile.md"
+
+                $parentDir = Split-Path -Parent $outputFile
+                if (-not (Test-Path $parentDir)) {
+                    New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
+                }
+
+                $frontmatter = New-CursorFrontmatter -Config $Config -Lang $lang -File $docFile
+
+                $fullContent = $frontmatter + $content
+                $fullContent | Out-File -FilePath $outputFile -Encoding UTF8 -NoNewline
+
+                $relativePath = $outputFile.Replace($Script:OutputRoot, "").TrimStart("\", "/")
+                Write-SuccessMessage "Created $relativePath"
+            }
+        }
+
+        # Generate framework files for this language
+        if ($SelectedFrameworks.ContainsKey($lang)) {
+            foreach ($fw in $SelectedFrameworks[$lang]) {
+                $fwConfig = $Config.languages.$lang.frameworks.$fw
+                $content = Read-InstructionFile -Lang $lang -File $fwConfig.file -IsFramework $true
+
+                if ($null -eq $content) {
+                    continue
+                }
+
+                $outputFile = Join-Path $langDir "$($fwConfig.file).md"
+
+                $parentDir = Split-Path -Parent $outputFile
+                if (-not (Test-Path $parentDir)) {
+                    New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
+                }
+
+                $frontmatter = New-CursorFrontmatter -Config $Config -Lang $lang -File $fw -IsFramework $true
+
+                $fullContent = $frontmatter + $content
+                $fullContent | Out-File -FilePath $outputFile -Encoding UTF8 -NoNewline
+
+                $relativePath = $outputFile.Replace($Script:OutputRoot, "").TrimStart("\", "/")
+                Write-SuccessMessage "Created $relativePath"
+
+                # Generate structure file if selected
+                $structKey = "$lang-$fw"
+                if ($SelectedStructures.ContainsKey($structKey)) {
+                    $structFile = $SelectedStructures[$structKey]
+                    $structContent = Read-InstructionFile -Lang $lang -File $structFile -IsStructure $true
+
+                    if ($null -ne $structContent) {
+                        $structOutputFile = Join-Path $langDir "$structFile.md"
+
+                        $parentDir = Split-Path -Parent $structOutputFile
+                        if (-not (Test-Path $parentDir)) {
+                            New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
+                        }
+
+                        $structFrontmatter = New-CursorFrontmatter -Config $Config -Lang $lang -File $fw -IsFramework $true
+
+                        $fullStructContent = $structFrontmatter + $structContent
+                        $fullStructContent | Out-File -FilePath $structOutputFile -Encoding UTF8 -NoNewline
+
+                        $relativePath = $structOutputFile.Replace($Script:OutputRoot, "").TrimStart("\", "/")
+                        Write-SuccessMessage "Created $relativePath"
+                    }
+                }
+            }
+        }
+
+        # Generate process files for this language
+        if ($SelectedProcesses.ContainsKey($lang)) {
+            foreach ($proc in $SelectedProcesses[$lang]) {
+                $procConfig = $Config.languages.$lang.processes.$proc
+
+                if ($procConfig.loadIntoAI -eq $false) {
+                    Write-InfoMessage "Skipped on-demand process: $proc (copy prompt from .ai-iap/processes/ondemand/$lang/$($procConfig.file).md when needed)"
+                    continue
+                }
+
+                $content = Read-InstructionFile -Lang $lang -File $procConfig.file -IsProcess $true
+
+                if ($null -eq $content) {
+                    continue
+                }
+
+                $outputFile = Join-Path $langDir "$($procConfig.file).md"
+
+                $parentDir = Split-Path -Parent $outputFile
+                if (-not (Test-Path $parentDir)) {
+                    New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
+                }
+
+                $frontmatter = New-CursorFrontmatter -Config $Config -Lang $lang -File $proc
+
+                $fullContent = $frontmatter + $content
+                $fullContent | Out-File -FilePath $outputFile -Encoding UTF8 -NoNewline
+
+                $relativePath = $outputFile.Replace($Script:OutputRoot, "").TrimStart("\", "/")
+                Write-SuccessMessage "Created $relativePath"
+            }
+        }
+    }
+}
+
 function Get-FrameworkCategory {
     param(
         [string]$Framework,
@@ -1865,6 +2045,9 @@ function New-ToolConfig {
         "google-ai-studio" {
             New-ConcatenatedConfig -Config $Config -ToolKey "google-ai-studio" -ToolName "Google AI Studio" -OutputFile "GOOGLE_AI_STUDIO.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards
         }
+        "gemini-cli" {
+            New-GeminiCliConfig -Config $Config -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards
+        }
         "amazon-q" {
             New-ConcatenatedConfig -Config $Config -ToolKey "amazon-q" -ToolName "Amazon Q Developer" -OutputFile "AMAZON_Q.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards
         }
@@ -2098,6 +2281,28 @@ function Remove-ManagedClaudeRules {
         ForEach-Object { Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue }
 }
 
+function Remove-ManagedGeminiRules {
+    $root = Join-Path $Script:OutputRoot ".gemini\rules"
+    if (-not (Test-Path $root)) {
+        return
+    }
+
+    Get-ChildItem -Path $root -Recurse -File -Filter "*.md" -ErrorAction SilentlyContinue | ForEach-Object {
+        try {
+            $txt = Get-Content $_.FullName -Raw -ErrorAction Stop
+            if ($txt -match "aiIapManaged:\s*true") {
+                Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue
+            }
+        } catch { }
+    }
+
+    # Remove empty directories (bottom-up)
+    Get-ChildItem -Path $root -Recurse -Directory -ErrorAction SilentlyContinue |
+        Sort-Object FullName -Descending |
+        Where-Object { @(Get-ChildItem -Path $_.FullName -Force -ErrorAction SilentlyContinue).Count -eq 0 } |
+        ForEach-Object { Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue }
+}
+
 function Remove-GeneratedFileIfManaged {
     param([string]$Path)
 
@@ -2125,6 +2330,7 @@ function Cleanup-ToolOutputs {
         "windsurf" { Remove-GeneratedFileIfManaged -Path (Join-Path $Script:OutputRoot ".windsurfrules") }
         "aider" { Remove-GeneratedFileIfManaged -Path (Join-Path $Script:OutputRoot "CONVENTIONS.md") }
         "google-ai-studio" { Remove-GeneratedFileIfManaged -Path (Join-Path $Script:OutputRoot "GOOGLE_AI_STUDIO.md") }
+        "gemini-cli" { Remove-ManagedGeminiRules }
         "amazon-q" { Remove-GeneratedFileIfManaged -Path (Join-Path $Script:OutputRoot "AMAZON_Q.md") }
         "tabnine" { Remove-GeneratedFileIfManaged -Path (Join-Path $Script:OutputRoot "TABNINE.md") }
         "cody" { Remove-GeneratedFileIfManaged -Path (Join-Path $Script:OutputRoot ".cody\instructions.md") }

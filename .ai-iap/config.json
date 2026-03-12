@@ -54,6 +54,14 @@
       "concatenate": true,
       "preambleFile": "compliance-preamble"
     },
+    "gemini-cli": {
+      "name": "Gemini CLI",
+      "outputDir": ".gemini/rules",
+      "fileExtension": ".md",
+      "useFrontmatter": true,
+      "supportsGlobs": true,
+      "supportsSubfolders": true
+    },
     "amazon-q": {
       "name": "Amazon Q Developer",
       "outputFile": "AMAZON_Q.md",

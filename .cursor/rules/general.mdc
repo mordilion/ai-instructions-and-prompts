@@ -16,13 +16,14 @@ alwaysApply: true
 - Files **MUST** follow the same structure for a better maintainability
 - All rules and processes **MUST** be understandable the same way for all AI's - The goal is to have the same result no matter which AI is used
 
-**Supported AI Tools** (10 total):
+**Supported AI Tools** (11 total):
 - Cursor (modular rules with glob patterns)
 - Claude (always-on instructions + modular path-specific rules)
 - GitHub Copilot (repository-level instructions)
 - Windsurf (single concatenated rules file)
 - Aider (conventions file)
 - Google AI Studio (single concatenated instructions file)
+- Gemini CLI (modular rules in `.gemini/rules/**/*.md`)
 - Amazon Q Developer (single concatenated instructions file)
 - Tabnine (single concatenated instructions file)
 - Cody / Sourcegraph (repository-level instructions)

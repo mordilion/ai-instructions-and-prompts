@@ -8,12 +8,12 @@
 
 ---
 
-Define your coding standards once, generate configurations for **10 AI coding assistants** including Cursor, Claude Code,
-Copilot, Windsurf, Aider, Google AI Studio, Amazon Q, Tabnine, Cody, and Continue.dev.
+Define your coding standards once, generate configurations for **11 AI coding assistants** including Cursor, Claude Code,
+Copilot, Windsurf, Aider, Google AI Studio, Gemini CLI, Amazon Q, Tabnine, Cody, and Continue.dev.
 
 ## ✨ Features
 
-- 🔧 **Multi-Tool** – One source, 10 AI tools configured
+- 🔧 **Multi-Tool** – One source, 11 AI tools configured
 - 🧠 **Role-Based Adaptive AI** – AI detects your expertise level (PM, Engineer, DevOps) and adapts questions
   accordingly – **no more assumptions!**
 - ✅ **Rule Compliance** – AI must follow all applicable rules; nothing is optional unless explicitly marked

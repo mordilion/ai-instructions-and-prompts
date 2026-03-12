@@ -28,7 +28,8 @@ Your Rules (one source) → Setup Script → All AI Tools Configured
 
 ## ✨ Features
 
-- **🔧 Multi-Tool Support** – 10 AI coding assistants: Cursor, Claude Code, GitHub Copilot, Windsurf, Aider, Google AI Studio, Amazon Q Developer, Tabnine, Cody, Continue.dev
+- **🔧 Multi-Tool Support** – 11 AI coding assistants: Cursor, Claude Code, GitHub Copilot, Windsurf, Aider, Google AI
+  Studio, Gemini CLI, Amazon Q Developer, Tabnine, Cody, Continue.dev
 - **🧠 Role-Based Adaptive AI** – AI detects your expertise level (Product Manager, Software Engineer, DevOps, Junior) and adapts its questions accordingly – eliminates assumptions and provides role-appropriate guidance
 - **✅ Rule Compliance** – AI must follow all applicable rules; nothing is optional unless explicitly marked
 - **🌍 Multi-Language** – Kotlin, JavaScript, TypeScript, HTML, CSS, Sass/SCSS, Less, PostCSS, Stylus, YAML, JSON, dotenv (.env), Dockerfile, SQL, Java, Python, Dart/Flutter, .NET/C#, PHP, Swift, Node.js, Bash, PowerShell
@@ -162,6 +163,7 @@ Setup generates tool-specific outputs into your chosen **output root** (project 
 Examples (project scope):
 - Cursor: `.cursor/rules/**/*.mdc`
 - Claude Code: `.claude/rules/**/*.md`
+- Gemini CLI: `.gemini/rules/**/*.md`
 - Claude Code (project rules): `CLAUDE.md`
 - GitHub Copilot: `.github/copilot-instructions.md`
 
@@ -328,6 +330,7 @@ Want to add company-specific standards, internal processes, or override core rul
 | **Windsurf** | `.windsurfrules` | Single concatenated file |
 | **Aider** | `CONVENTIONS.md` | Convention file for Aider |
 | **Google AI Studio** | `GOOGLE_AI_STUDIO.md` | Single concatenated file for Gemini models |
+| **Gemini CLI** | `.gemini/rules/**/*.md` | Modular rule files (same layout as Cursor) |
 | **Amazon Q Developer** | `AMAZON_Q.md` | Single concatenated file for AWS AI assistant |
 | **Tabnine** | `TABNINE.md` | Single concatenated file for team sharing |
 | **Cody (Sourcegraph)** | `.cody/instructions.md` | Repository-level instructions |
