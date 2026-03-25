@@ -75,7 +75,6 @@ $selectedDocumentation = @()
 $selectedFrameworks = @{}
 $selectedStructures = @{}
 $selectedProcesses = @{}
-$enableProjectLearnings = $false
 $enableCommitStandards = $true
 
 if ($setupMode -eq "reuse" -and $state) {
@@ -85,9 +84,7 @@ if ($setupMode -eq "reuse" -and $state) {
     $selectedFrameworks = ConvertTo-Hashtable -InputObject $state.selectedFrameworks
     $selectedStructures = ConvertTo-Hashtable -InputObject $state.selectedStructures
     $selectedProcesses = ConvertTo-Hashtable -InputObject $state.selectedProcesses
-    if ($null -ne $state.enableProjectLearnings) { $enableProjectLearnings = [bool]$state.enableProjectLearnings }
     if ($null -ne $state.enableCommitStandards) { $enableCommitStandards = [bool]$state.enableCommitStandards }
-    New-ProjectLearningsFileIfMissing -EnableProjectLearnings $enableProjectLearnings
 } else {
     $defaultTools = @()
     $defaultLangs = @()
@@ -95,7 +92,6 @@ if ($setupMode -eq "reuse" -and $state) {
     $defaultFrameworks = @{}
     $defaultStructures = @{}
     $defaultProcesses = @{}
-    $defaultLearnings = $false
     $defaultCommitStandards = $true
     if ($usePreviousDefaults -and $state) {
         $defaultTools = @($state.selectedTools)
@@ -104,7 +100,6 @@ if ($setupMode -eq "reuse" -and $state) {
         $defaultFrameworks = ConvertTo-Hashtable -InputObject $state.selectedFrameworks
         $defaultStructures = ConvertTo-Hashtable -InputObject $state.selectedStructures
         $defaultProcesses = ConvertTo-Hashtable -InputObject $state.selectedProcesses
-        if ($null -ne $state.enableProjectLearnings) { $defaultLearnings = [bool]$state.enableProjectLearnings }
         if ($null -ne $state.enableCommitStandards) { $defaultCommitStandards = [bool]$state.enableCommitStandards }
     }
 
@@ -120,7 +115,6 @@ if ($setupMode -eq "reuse" -and $state) {
     }
     $selectedDocumentation = Select-Documentation -Config $config -SelectedLanguages $selectedLanguages -DefaultSelectedDocumentation $defaultDocs
     $enableCommitStandards = Select-CommitStandards -DefaultEnabled $defaultCommitStandards
-    $enableProjectLearnings = Select-ProjectLearningsCapture -DefaultEnabled $defaultLearnings
     $selectedFrameworks = Select-Frameworks -Config $config -SelectedLanguages $selectedLanguages -DefaultSelectedFrameworks $defaultFrameworks
     $selectedStructures = Select-Structures -Config $config -SelectedLanguages $selectedLanguages -SelectedFrameworks $selectedFrameworks -DefaultSelectedStructures $defaultStructures
     $selectedProcesses = Select-Processes -Config $config -SelectedLanguages $selectedLanguages -DefaultSelectedProcesses $defaultProcesses
@@ -133,7 +127,6 @@ Write-Host "  Languages: $($selectedLanguages -join ', ')"
 if ($selectedDocumentation.Count -gt 0) {
     Write-Host "  Documentation: $($selectedDocumentation -join ', ')"
 }
-Write-Host "  Project learnings capture: $enableProjectLearnings"
 Write-Host "  Commit standards: $enableCommitStandards"
 if ($selectedFrameworks.Count -gt 0) {
     foreach ($lang in $selectedFrameworks.Keys) {
@@ -172,14 +165,14 @@ if ($null -ne $state) {
 }
 
 foreach ($tool in $selectedTools) {
-    New-ToolConfig -Config $config -Tool $tool -SelectedLanguages $selectedLanguages -SelectedDocumentation $selectedDocumentation -SelectedFrameworks $selectedFrameworks -SelectedStructures $selectedStructures -SelectedProcesses $selectedProcesses -EnableProjectLearnings $enableProjectLearnings -EnableCommitStandards $enableCommitStandards
+    New-ToolConfig -Config $config -Tool $tool -SelectedLanguages $selectedLanguages -SelectedDocumentation $selectedDocumentation -SelectedFrameworks $selectedFrameworks -SelectedStructures $selectedStructures -SelectedProcesses $selectedProcesses -EnableCommitStandards $enableCommitStandards
 }
 
 $prevAgents = @()
 if ($null -ne $state -and $state.selectedCustomAgents) {
     $prevAgents = @($state.selectedCustomAgents)
 }
-Save-State -SelectedTools $selectedTools -SelectedLanguages $selectedLanguages -SelectedDocumentation $selectedDocumentation -SelectedFrameworks $selectedFrameworks -SelectedStructures $selectedStructures -SelectedProcesses $selectedProcesses -EnableProjectLearnings $enableProjectLearnings -EnableCommitStandards $enableCommitStandards -Scope $Script:Scope -SetupType "rules" -SelectedCustomAgents $prevAgents
+Save-State -SelectedTools $selectedTools -SelectedLanguages $selectedLanguages -SelectedDocumentation $selectedDocumentation -SelectedFrameworks $selectedFrameworks -SelectedStructures $selectedStructures -SelectedProcesses $selectedProcesses -EnableCommitStandards $enableCommitStandards -Scope $Script:Scope -SetupType "rules" -SelectedCustomAgents $prevAgents
 
 Add-ToGitignore
 

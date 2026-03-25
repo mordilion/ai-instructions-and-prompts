@@ -281,8 +281,6 @@ import { useAuth } from '@/features/auth/hooks/useAuth';  // Internal file
 - [ ] Checking code library before implementing patterns?
 - [ ] Asking clarifying questions when needed?
 - [ ] Using custom patterns (if .ai-iap-custom/ exists)?
-- [ ] Appending learnings to `.ai-iap-custom/rules/general/learnings.md` (if enabled)?
-- [ ] Not storing secrets in learnings?
 - [ ] Following framework-specific rules when loaded?
 - [ ] Avoiding fixed versions (reading from project configs)?
 - [ ] Using explicit directives and examples when needed?

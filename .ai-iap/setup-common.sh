@@ -285,7 +285,6 @@ declare -A PREVIOUS_SELECTED_STRUCTURES
 declare -A PREVIOUS_SELECTED_PROCESSES
 declare -a PREVIOUS_SELECTED_CLAUDE_SUBAGENTS=()
 declare -a PREVIOUS_SELECTED_CLAUDE_CUSTOM_DEFINED_AGENTS=()
-PREVIOUS_ENABLE_PROJECT_LEARNINGS="false"
 PREVIOUS_ENABLE_COMMIT_STANDARDS="true"
 
 have_previous_state() {
@@ -301,7 +300,6 @@ load_previous_state() {
     PREVIOUS_SELECTED_PROCESSES=()
     PREVIOUS_SELECTED_CLAUDE_SUBAGENTS=()
     PREVIOUS_SELECTED_CLAUDE_CUSTOM_DEFINED_AGENTS=()
-    PREVIOUS_ENABLE_PROJECT_LEARNINGS="false"
     PREVIOUS_ENABLE_COMMIT_STANDARDS="true"
 
     [[ ! -f "$STATE_FILE" ]] && return 1
@@ -353,9 +351,6 @@ load_previous_state() {
         [[ -n "${_valid_langs[$lang]:-}" ]] && PREVIOUS_SELECTED_PROCESSES["$lang"]="$keylist"
     done < <(jq -r '.selectedProcesses? // {} | to_entries[] | "\(.key)=\(.value|join(" "))"' "$STATE_FILE")
 
-    PREVIOUS_ENABLE_PROJECT_LEARNINGS="$(jq -r '.enableProjectLearnings // false' "$STATE_FILE")"
-    [[ "$PREVIOUS_ENABLE_PROJECT_LEARNINGS" != "true" ]] && PREVIOUS_ENABLE_PROJECT_LEARNINGS="false"
-
     # Backwards compatible: if missing, default to true (existing projects keep behavior)
     PREVIOUS_ENABLE_COMMIT_STANDARDS="$(jq -r '.enableCommitStandards // true' "$STATE_FILE")"
     [[ "$PREVIOUS_ENABLE_COMMIT_STANDARDS" != "false" ]] && PREVIOUS_ENABLE_COMMIT_STANDARDS="true"
@@ -398,7 +393,6 @@ print_previous_state_summary() {
     if [[ ${#PREVIOUS_SELECTED_CLAUDE_CUSTOM_DEFINED_AGENTS[@]} -gt 0 ]]; then
         echo "  Claude Code agents: ${#PREVIOUS_SELECTED_CLAUDE_CUSTOM_DEFINED_AGENTS[@]}"
     fi
-    echo "  Project learnings capture: ${PREVIOUS_ENABLE_PROJECT_LEARNINGS}"
     echo "  Commit standards: ${PREVIOUS_ENABLE_COMMIT_STANDARDS}"
     echo ""
 }
@@ -689,7 +683,6 @@ save_state() {
         --argjson selectedProcesses "$procs_json" \
         --argjson selectedClaudeSubagents "$subagents_json" \
         --argjson selectedCustomAgents "$custom_agents_json" \
-        --argjson enableProjectLearnings "${ENABLE_PROJECT_LEARNINGS:-false}" \
         --argjson enableCommitStandards "${ENABLE_COMMIT_STANDARDS:-true}" \
         '{
             version: $version,
@@ -703,7 +696,6 @@ save_state() {
             selectedProcesses: $selectedProcesses,
             selectedClaudeSubagents: $selectedClaudeSubagents,
             selectedCustomAgents: $selectedCustomAgents,
-            enableProjectLearnings: $enableProjectLearnings,
             enableCommitStandards: $enableCommitStandards
         }' > "$STATE_FILE"
 }
@@ -718,6 +710,10 @@ get_tool_name() {
 
 get_tool_preamble_file() {
     jq -r ".tools[\"$1\"].preambleFile // empty" "$WORKING_CONFIG" 2>/dev/null || true
+}
+
+get_tool_context_file() {
+    jq -r ".tools[\"$1\"].contextFile // empty" "$WORKING_CONFIG" 2>/dev/null || true
 }
 
 get_languages() {
@@ -979,7 +975,6 @@ get_optional_rule_toggle() {
 is_toggle_enabled() {
     local toggle="$1"
     case "$toggle" in
-        enableProjectLearnings) [[ "${ENABLE_PROJECT_LEARNINGS:-false}" == "true" ]] ;;
         enableCommitStandards) [[ "${ENABLE_COMMIT_STANDARDS:-true}" == "true" ]] ;;
         *) return 1 ;;
     esac
@@ -1237,66 +1232,7 @@ select_languages_simple() {
 
 # Array to store selected documentation files
 SELECTED_DOCUMENTATION=()
-ENABLE_PROJECT_LEARNINGS="false"
 ENABLE_COMMIT_STANDARDS="true"
-
-ensure_project_learnings_file() {
-    [[ "${ENABLE_PROJECT_LEARNINGS:-false}" != "true" ]] && return 0
-
-    local dir="$PROJECT_ROOT/.ai-iap-custom/rules/general"
-    local file="$dir/learnings.md"
-    mkdir -p "$dir"
-
-    if [[ -f "$file" ]]; then
-        return 0
-    fi
-
-    cat >"$file" <<'EOF'
-# Project Learnings (AI-maintained)
-
-> **Purpose**: Store stable project-specific decisions and conventions learned from conversations.
-> This file is meant to be **token-efficient** but **unambiguous** so different AIs interpret it the same way.
->
-> **Important**: AIs must write learnings directly to this file (shared across tools).
->
-> **NEVER** put secrets, credentials, tokens, or sensitive data here.
-
-## Decisions
-- (Add stable decisions: architecture, patterns, tooling choices, constraints)
-
-## Conventions
-- (Add naming, structure, workflow conventions)
-
-## Constraints
-- (Add hard constraints: compliance, performance, deployment, supported runtimes)
-
-## Glossary (Optional)
-- (Add short definitions for project-specific terms)
-EOF
-
-    print_success "Created .ai-iap-custom/rules/general/learnings.md (you can edit it anytime)"
-}
-
-select_project_learnings_capture() {
-    echo ""
-    printf '%b\n' "Enable project learnings capture to ${BOLD}.ai-iap-custom/rules/general/learnings.md${NC}?"
-    echo "When enabled, AIs should append stable project decisions to that file."
-    echo "Note: users must re-run setup after updates so tool outputs include it."
-
-    local default_choice="n"
-    if [[ "${USE_PREVIOUS_DEFAULTS:-false}" == "true" && "$PREVIOUS_ENABLE_PROJECT_LEARNINGS" == "true" ]]; then
-        default_choice="y"
-    fi
-
-    read -rp "Enable learnings capture? (y/N) [$default_choice]: " input
-    input="${input:-$default_choice}"
-    if [[ "$input" =~ ^[Yy]$ ]]; then
-        ENABLE_PROJECT_LEARNINGS="true"
-        ensure_project_learnings_file
-    else
-        ENABLE_PROJECT_LEARNINGS="false"
-    fi
-}
 
 select_commit_standards() {
     echo ""
@@ -2532,13 +2468,15 @@ generate_claude_subagents() {
 }
 
 generate_concatenated() {
-    local tool="$1"
+    local tool_key="$1"
     local output_file="$2"
     local separator="$3"
-    local preamble_file
-    preamble_file="$(get_tool_preamble_file "$tool")"
+    local tool_name preamble_file context_file
+    tool_name="$(jq -r ".tools[\"$tool_key\"].name // \"$tool_key\"" "$WORKING_CONFIG" 2>/dev/null || echo "$tool_key")"
+    preamble_file="$(get_tool_preamble_file "$tool_key")"
+    context_file="$(get_tool_context_file "$tool_key")"
     
-    print_info "Generating $tool configuration..."
+    print_info "Generating $tool_name configuration..."
     
     mkdir -p "$(dirname "$OUTPUT_ROOT/$output_file")"
     
@@ -2678,6 +2616,16 @@ generate_concatenated() {
                 done
             fi
         done
+
+        if [[ -n "${context_file:-}" ]]; then
+            local context_content
+            context_content=$(read_instruction_file "general" "$context_file") || true
+            if [[ -n "${context_content:-}" ]]; then
+                echo "---"
+                echo ""
+                echo "$context_content"
+            fi
+        fi
     } > "$OUTPUT_ROOT/$output_file"
     
     print_success "Created $output_file"
@@ -2706,31 +2654,31 @@ generate_tool() {
         :
             ;;
         github-copilot)
-            generate_concatenated "GitHub Copilot" ".github/copilot-instructions.md" ""
+            generate_concatenated "github-copilot" ".github/copilot-instructions.md" ""
             ;;
         windsurf)
-            generate_concatenated "Windsurf" ".windsurfrules" ""
+            generate_concatenated "windsurf" ".windsurfrules" ""
             ;;
         aider)
-            generate_concatenated "Aider" "CONVENTIONS.md" ""
+            generate_concatenated "aider" "CONVENTIONS.md" ""
             ;;
         google-ai-studio)
-            generate_concatenated "Google AI Studio" "GOOGLE_AI_STUDIO.md" ""
+            generate_concatenated "google-ai-studio" "GOOGLE_AI_STUDIO.md" ""
             ;;
         gemini-cli)
             generate_gemini_cli
             ;;
         amazon-q)
-            generate_concatenated "Amazon Q Developer" "AMAZON_Q.md" ""
+            generate_concatenated "amazon-q" "AMAZON_Q.md" ""
             ;;
         tabnine)
-            generate_concatenated "Tabnine" "TABNINE.md" ""
+            generate_concatenated "tabnine" "TABNINE.md" ""
             ;;
         cody)
-            generate_concatenated "Cody (Sourcegraph)" ".cody/instructions.md" ""
+            generate_concatenated "cody" ".cody/instructions.md" ""
             ;;
         continue)
-            generate_concatenated "Continue.dev" ".continue/instructions.md" ""
+            generate_concatenated "continue" ".continue/instructions.md" ""
             ;;
         *)
             print_warning "Unknown tool: $tool"

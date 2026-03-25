@@ -95,6 +95,17 @@ foreach ($toolKey in $config.tools.PSObject.Properties.Name) {
             Write-Issue "WARNING" "Tool 'claude': outputDir should be '.claude/rules'"
         }
     }
+
+    # Check that preambleFile and contextFile source files exist on disk
+    foreach ($refProp in @("preambleFile", "outputFileSource", "contextFile")) {
+        $refValue = $tool.$refProp
+        if ($refValue) {
+            $srcPath = ".ai-iap/rules/general/$refValue.md"
+            if (-not (Test-Path $srcPath)) {
+                Write-Issue "ERROR" "Tool '$toolKey': '$refProp' references '$refValue' but '$srcPath' does not exist"
+            }
+        }
+    }
 }
 Write-Success "Validated $toolCount tools"
 

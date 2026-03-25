@@ -169,7 +169,9 @@ Examples (project scope):
 
 (See **Supported AI Tools** below for the full mapping.)
 
-**Note**: Concatenated outputs (Copilot, Windsurf, Aider, etc.) include a short compliance preamble at the top. The content is read from `rules/general/compliance-preamble.md` via `tools.*.preambleFile` in `config.json`.
+**Note**: Concatenated outputs (Copilot, Windsurf, Aider, etc.) include two project-level sections:
+- **Preamble** (top): short compliance mandate from `rules/general/compliance-preamble.md` via `tools.*.preambleFile`
+- **Project context** (bottom): project overview template from `rules/general/project-context.md` via `tools.*.contextFile` — fill in stack, quick start, architecture, conventions, and ADRs so every AI tool has accurate project context
 
 **Claude note**: `CLAUDE.md` is generated from `rules/general/claude-project-rules.md` to keep a short, high-signal project rules list. When Claude Code is selected, the wizard can also set up **agents** (`.claude/agents/*.md`): generic helpers (code-reviewer, test-writer, …) or **role-based agents** that have **project rules injected** (e.g. iOS Developer, PHP Developer, Vue.js Developer, SEO Specialist, UI/UX Designer). You can define your own roles in `.ai-iap-custom/claude-agents.json` (see CUSTOMIZATION.md). Subagents are project-level and safe to commit.
 
@@ -224,14 +226,7 @@ Enable commit standards (Conventional Commits) rules?
 Enable commit standards? (y/N):
 ```
 
-**Step 5: Project Learnings Capture** (Optional)
-```
-Enable project learnings capture to .ai-iap-custom/rules/general/learnings.md?
-Enable learnings capture? (y/N):
-```
-When enabled, AIs should append stable project-specific decisions to that file. Setup includes the learnings-capture rules in generated outputs so AIs know to update `.ai-iap-custom/rules/general/learnings.md` directly.
-
-**Step 6: Select Frameworks, Structures & Processes** (if applicable)
+**Step 5: Select Frameworks, Structures & Processes** (if applicable)
 
 **Claude Code agents** (run `./.ai-iap/setup-agents.sh`)
 
@@ -720,7 +715,7 @@ When rules are loaded, they're applied in this order (highest to lowest):
 
 ### Optional Rules (Setup Toggles)
 
-Some general rules are only included when a setup toggle is enabled. These are listed under `languages.general.optionalRules` in `config.json`. For example, `learnings-capture` is gated by `enableProjectLearnings`.
+Some general rules are only included when a setup toggle is enabled. These are listed under `languages.general.optionalRules` in `config.json` and gated by a toggle key (e.g. `enableCommitStandards`).
 
 ### Combining Frameworks
 

@@ -54,9 +54,7 @@ if [[ "${SETUP_MODE:-wizard}" == "reuse" ]]; then
     SELECTED_TOOLS=("${PREVIOUS_SELECTED_TOOLS[@]}")
     SELECTED_LANGUAGES=("${PREVIOUS_SELECTED_LANGUAGES[@]}")
     SELECTED_DOCUMENTATION=("${PREVIOUS_SELECTED_DOCUMENTATION[@]}")
-    ENABLE_PROJECT_LEARNINGS="${PREVIOUS_ENABLE_PROJECT_LEARNINGS:-false}"
     ENABLE_COMMIT_STANDARDS="${PREVIOUS_ENABLE_COMMIT_STANDARDS:-true}"
-    ensure_project_learnings_file
     SELECTED_FRAMEWORKS=()
     SELECTED_STRUCTURES=()
     SELECTED_PROCESSES=()
@@ -80,7 +78,6 @@ else
 
     select_documentation
     select_commit_standards
-    select_project_learnings_capture
     select_frameworks
     select_structures
     select_processes
@@ -94,7 +91,6 @@ echo "  Languages: ${SELECTED_LANGUAGES[*]}"
 if [[ ${#SELECTED_DOCUMENTATION[@]} -gt 0 ]]; then
     echo "  Documentation: ${SELECTED_DOCUMENTATION[*]}"
 fi
-echo "  Project learnings capture: ${ENABLE_PROJECT_LEARNINGS}"
 echo "  Commit standards: ${ENABLE_COMMIT_STANDARDS}"
 for lang in "${!SELECTED_FRAMEWORKS[@]}"; do
     echo "  Frameworks ($lang): ${SELECTED_FRAMEWORKS[$lang]}"

@@ -28,7 +28,8 @@
       "fileExtension": ".md",
       "useFrontmatter": false,
       "concatenate": true,
-      "preambleFile": "compliance-preamble"
+      "preambleFile": "compliance-preamble",
+      "contextFile": "project-context"
     },
     "windsurf": {
       "name": "Windsurf",
@@ -36,7 +37,8 @@
       "fileExtension": "",
       "useFrontmatter": false,
       "concatenate": true,
-      "preambleFile": "compliance-preamble"
+      "preambleFile": "compliance-preamble",
+      "contextFile": "project-context"
     },
     "aider": {
       "name": "Aider",
@@ -44,7 +46,8 @@
       "fileExtension": ".md",
       "useFrontmatter": false,
       "concatenate": true,
-      "preambleFile": "compliance-preamble"
+      "preambleFile": "compliance-preamble",
+      "contextFile": "project-context"
     },
     "google-ai-studio": {
       "name": "Google AI Studio",
@@ -52,7 +55,8 @@
       "fileExtension": ".md",
       "useFrontmatter": false,
       "concatenate": true,
-      "preambleFile": "compliance-preamble"
+      "preambleFile": "compliance-preamble",
+      "contextFile": "project-context"
     },
     "gemini-cli": {
       "name": "Gemini CLI",
@@ -68,7 +72,8 @@
       "fileExtension": ".md",
       "useFrontmatter": false,
       "concatenate": true,
-      "preambleFile": "compliance-preamble"
+      "preambleFile": "compliance-preamble",
+      "contextFile": "project-context"
     },
     "tabnine": {
       "name": "Tabnine",
@@ -76,7 +81,8 @@
       "fileExtension": ".md",
       "useFrontmatter": false,
       "concatenate": true,
-      "preambleFile": "compliance-preamble"
+      "preambleFile": "compliance-preamble",
+      "contextFile": "project-context"
     },
     "cody": {
       "name": "Cody (Sourcegraph)",
@@ -84,7 +90,8 @@
       "fileExtension": ".md",
       "useFrontmatter": false,
       "concatenate": true,
-      "preambleFile": "compliance-preamble"
+      "preambleFile": "compliance-preamble",
+      "contextFile": "project-context"
     },
     "continue": {
       "name": "Continue.dev",
@@ -92,7 +99,8 @@
       "fileExtension": ".md",
       "useFrontmatter": false,
       "concatenate": true,
-      "preambleFile": "compliance-preamble"
+      "preambleFile": "compliance-preamble",
+      "contextFile": "project-context"
     }
   },
   "languages": {
@@ -139,16 +147,7 @@
             "fullstack"
           ]
         }
-      }
-      ,
-      "optionalRules": {
-        "learnings-capture": {
-          "name": "Project Learnings Capture",
-          "file": "learnings-capture",
-          "description": "Rules for when/how to append project learnings",
-          "toggle": "enableProjectLearnings"
-        }
-      }
+      },
     },
     "bash": {
       "name": "Bash",
@@ -1341,6 +1340,8 @@
       "alwaysApply": false,
       "description": "Modern, expressive language for JVM, Android, and multiplatform",
       "files": [
+        "architecture",
+        "code-style",
         "security"
       ],
       "processes": {
@@ -1503,6 +1504,8 @@
       "alwaysApply": false,
       "description": "Apple's modern, type-safe language for iOS, macOS, and server-side development",
       "files": [
+        "architecture",
+        "code-style",
         "security"
       ],
       "processes": {

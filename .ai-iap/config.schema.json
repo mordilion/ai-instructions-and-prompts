@@ -28,6 +28,7 @@
             "supportsSubfolders": { "type": "boolean" },
             "concatenate": { "type": "boolean" },
             "preambleFile": { "type": "string" },
+            "contextFile": { "type": "string" },
             "recommended": { "type": "boolean" }
           },
           "additionalProperties": false
