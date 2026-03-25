@@ -13,7 +13,8 @@ Modular rules, project instructions, and optional agents — ready to use in any
 
 ## ✨ Features
 
-- 🧠 **Claude Code Native** – Generates `.claude/rules/**/*.md` (modular rules with paths frontmatter), `CLAUDE.md` (project instructions), and `.claude/agents/*.md` (optional agents)
+- 🧠 **Claude Code Native** – Generates `.claude/rules/**/*.md` (modular rules with paths frontmatter),
+  `CLAUDE.md` (project instructions), and `.claude/agents/*.md` (optional agents)
 - 🧠 **Role-Based Adaptive AI** – AI detects your expertise level (PM, Engineer, DevOps) and adapts questions accordingly
 - 🌍 **Multi-Language** – Swift, Kotlin, Java, Python, JavaScript, TypeScript,
   HTML, CSS, Sass/SCSS, Less, PostCSS, Stylus, YAML, JSON, dotenv (.env), Dockerfile, SQL, Dart/Flutter, .NET/C#, PHP,
