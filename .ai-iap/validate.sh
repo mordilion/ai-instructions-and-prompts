@@ -4,7 +4,7 @@
 # Usage: ./.ai-iap/validate.sh
 #
 
-set -euo pipefail
+set -uo pipefail
 
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly CONFIG_FILE="$SCRIPT_DIR/config.json"
@@ -49,9 +49,7 @@ if ! command -v jq &> /dev/null; then
     exit 1
 fi
 
-jq_output=$(jq empty "$CONFIG_FILE" 2>&1)
-jq_exit_code=$?
-if [[ $jq_exit_code -eq 0 ]]; then
+if jq_output=$(jq empty "$CONFIG_FILE" 2>&1); then
     test_result "Config file is valid JSON" "true"
 else
     test_result "Config file is valid JSON" "false" "Invalid JSON syntax: $jq_output"
@@ -59,9 +57,9 @@ else
 fi
 
 # Test 3: Config has required fields
-has_version=$(jq 'has("version")' "$CONFIG_FILE")
-has_tool=$(jq 'has("tool")' "$CONFIG_FILE")
-has_languages=$(jq 'has("languages")' "$CONFIG_FILE")
+has_version=$(jq 'has("version")' "$CONFIG_FILE") || has_version="false"
+has_tool=$(jq 'has("tool")' "$CONFIG_FILE") || has_tool="false"
+has_languages=$(jq 'has("languages")' "$CONFIG_FILE") || has_languages="false"
 
 test_result "Config has 'version' field" "$has_version"
 test_result "Config has 'tool' field" "$has_tool"

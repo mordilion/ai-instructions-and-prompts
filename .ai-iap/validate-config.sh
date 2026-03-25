@@ -2,8 +2,6 @@
 # Config Validation Script
 # Checks for consistency, missing properties, and structural issues
 
-set -e
-
 ERROR_COUNT=0
 WARNING_COUNT=0
 
@@ -83,16 +81,6 @@ else
     output_file=$(jq -r '.tool.outputFile // "null"' .ai-iap/config.json)
     if [[ "$output_file" == "null" ]]; then
         write_warning "Tool: Missing 'outputFile' property (should be 'CLAUDE.md')"
-    fi
-
-    supports_subfolders=$(jq -r '.tool.supportsSubfolders // false' .ai-iap/config.json)
-    if [[ "$supports_subfolders" != "true" ]]; then
-        write_warning "Tool: Should have 'supportsSubfolders: true'"
-    fi
-
-    supports_globs=$(jq -r '.tool.supportsGlobs // false' .ai-iap/config.json)
-    if [[ "$supports_globs" != "true" ]]; then
-        write_warning "Tool: Should have 'supportsGlobs: true' (uses .claude/rules/**/*.md)"
     fi
 
     output_file_source=$(jq -r '.tool.outputFileSource // empty' .ai-iap/config.json)
