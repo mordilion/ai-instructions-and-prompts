@@ -102,7 +102,7 @@ try {
 
 # Test 3: Config has required fields
 Test-Result "Config has 'version' field" ($null -ne $config.version)
-Test-Result "Config has 'tools' field" ($null -ne $config.tools)
+Test-Result "Config has 'tool' field" ($null -ne $config.tool)
 Test-Result "Config has 'languages' field" ($null -ne $config.languages)
 
 # Test 4: All rule files referenced in config exist
@@ -155,31 +155,16 @@ foreach ($langKey in $config.languages.PSObject.Properties.Name) {
     }
 }
 
-# Test 4b: Tool preamble files exist (if configured)
-$missingPreambles = @()
-foreach ($toolKey in $config.tools.PSObject.Properties.Name) {
-    $tool = $config.tools.$toolKey
-    if ($null -ne $tool.preambleFile -and -not [string]::IsNullOrWhiteSpace($tool.preambleFile)) {
-        $preamblePath = Join-Path (Join-Path $Script:RulesDir "general") ("$($tool.preambleFile).md")
-        if (-not (Test-Path $preamblePath)) {
-            $missingPreambles += "general/$($tool.preambleFile).md (tool: $toolKey)"
-        }
-    }
-}
-Test-Result "All tool preamble files exist" ($missingPreambles.Count -eq 0) "Missing: $($missingPreambles -join ', ')"
-
-# Test 4c: Tool output file sources exist (if configured)
+# Test 4b: Tool output file source exists (if configured)
 $missingToolSources = @()
-foreach ($toolKey in $config.tools.PSObject.Properties.Name) {
-    $tool = $config.tools.$toolKey
-    if ($null -ne $tool.outputFileSource -and -not [string]::IsNullOrWhiteSpace($tool.outputFileSource)) {
-        $sourcePath = Join-Path (Join-Path $Script:RulesDir "general") ("$($tool.outputFileSource).md")
-        if (-not (Test-Path $sourcePath)) {
-            $missingToolSources += "general/$($tool.outputFileSource).md (tool: $toolKey)"
-        }
+$tool = $config.tool
+if ($null -ne $tool -and $null -ne $tool.outputFileSource -and -not [string]::IsNullOrWhiteSpace($tool.outputFileSource)) {
+    $sourcePath = Join-Path (Join-Path $Script:RulesDir "general") ("$($tool.outputFileSource).md")
+    if (-not (Test-Path $sourcePath)) {
+        $missingToolSources += "general/$($tool.outputFileSource).md"
     }
 }
-Test-Result "All tool outputFileSource files exist" ($missingToolSources.Count -eq 0) "Missing: $($missingToolSources -join ', ')"
+Test-Result "Tool outputFileSource file exists" ($missingToolSources.Count -eq 0) "Missing: $($missingToolSources -join ', ')"
 
 Test-Result "All rule files exist" ($missingFiles.Count -eq 0) "Missing: $($missingFiles -join ', ')"
 
@@ -198,8 +183,7 @@ Test-Result "All markdown files start with header" ($invalidMarkdown.Count -eq 0
 $forbiddenRefs = @()
 $dirsToScan = @(
     (Join-Path $Script:ScriptDir "rules"),
-    (Join-Path $Script:ScriptDir "processes"),
-    (Join-Path $Script:RepoRoot ".cursor\rules")
+    (Join-Path $Script:ScriptDir "processes")
 )
 foreach ($dir in $dirsToScan) {
     if (-not (Test-Path $dir)) { continue }
@@ -294,8 +278,8 @@ if (Test-Path $statePath) {
         $stateJson = Get-Content $statePath -Raw | ConvertFrom-Json
         Test-Result "State file is valid JSON" $true
         $hasVersion = $null -ne $stateJson.version
-        $hasSelectedTools = $null -ne $stateJson.selectedTools
-        Test-Result "State file has version and selectedTools" ($hasVersion -and $hasSelectedTools) "Missing required keys"
+        $hasSelectedLanguages = $null -ne $stateJson.selectedLanguages
+        Test-Result "State file has version and selectedLanguages" ($hasVersion -and $hasSelectedLanguages) "Missing required keys"
     } catch {
         Test-Result "State file is valid JSON" $false $_.Exception.Message
     }

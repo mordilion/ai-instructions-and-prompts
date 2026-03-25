@@ -56,9 +56,6 @@ if [[ ${#SELECTED_CLAUDE_CUSTOM_DEFINED_AGENTS[@]:-0} -eq 0 ]]; then
     exit 0
 fi
 
-# For state/cleanup we treat agents as "claude" tool
-SELECTED_TOOLS=("claude")
-
 echo ""
 echo "Configuration Summary (agents):"
 echo "  Scope: $SCOPE ($OUTPUT_ROOT)"
@@ -83,7 +80,6 @@ fi
 generate_claude_subagents
 
 # Preserve rules state when saving (agents script does not touch rules)
-SELECTED_TOOLS=("${PREVIOUS_SELECTED_TOOLS[@]:-}")
 SELECTED_LANGUAGES=("${PREVIOUS_SELECTED_LANGUAGES[@]:-}")
 SELECTED_DOCUMENTATION=("${PREVIOUS_SELECTED_DOCUMENTATION[@]:-}")
 SELECTED_FRAMEWORKS=()

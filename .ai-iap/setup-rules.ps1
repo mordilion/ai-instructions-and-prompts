@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Rules-only setup: languages, frameworks, tools (Cursor, Claude rules, Copilot, etc.).
+    Rules-only setup: languages, frameworks, structures, processes for Claude Code.
 .DESCRIPTION
     Standalone script. Dot-sources setup-common.ps1 and runs the rules flow.
 .EXAMPLE
@@ -54,12 +54,10 @@ if ($null -ne $state) {
 }
 
 if ($setupMode -eq "cleanup") {
-    if ($state -and $state.selectedTools) {
-        $confirmCleanup = Read-Host "Remove previously generated files for tools: $($state.selectedTools -join ', ')? (Y/n)"
+    if ($null -ne $state) {
+        $confirmCleanup = Read-Host "Remove previously generated files? (Y/n)"
         if ($confirmCleanup -ne "n" -and $confirmCleanup -ne "N") {
-            foreach ($t in @($state.selectedTools)) {
-                Cleanup-ToolOutputs -Tool $t
-            }
+            Cleanup-ClaudeOutputs
             if (Test-Path $Script:StateFile) {
                 Remove-Item $Script:StateFile -Force -ErrorAction SilentlyContinue
             }
@@ -69,7 +67,6 @@ if ($setupMode -eq "cleanup") {
     exit 0
 }
 
-$selectedTools = @()
 $selectedLanguages = @()
 $selectedDocumentation = @()
 $selectedFrameworks = @{}
@@ -78,7 +75,6 @@ $selectedProcesses = @{}
 $enableCommitStandards = $true
 
 if ($setupMode -eq "reuse" -and $state) {
-    $selectedTools = @($state.selectedTools)
     $selectedLanguages = @($state.selectedLanguages)
     $selectedDocumentation = if ($state.selectedDocumentation) { @($state.selectedDocumentation) } else { @() }
     $selectedFrameworks = ConvertTo-Hashtable -InputObject $state.selectedFrameworks
@@ -86,7 +82,6 @@ if ($setupMode -eq "reuse" -and $state) {
     $selectedProcesses = ConvertTo-Hashtable -InputObject $state.selectedProcesses
     if ($null -ne $state.enableCommitStandards) { $enableCommitStandards = [bool]$state.enableCommitStandards }
 } else {
-    $defaultTools = @()
     $defaultLangs = @()
     $defaultDocs = @()
     $defaultFrameworks = @{}
@@ -94,7 +89,6 @@ if ($setupMode -eq "reuse" -and $state) {
     $defaultProcesses = @{}
     $defaultCommitStandards = $true
     if ($usePreviousDefaults -and $state) {
-        $defaultTools = @($state.selectedTools)
         $defaultLangs = @($state.selectedLanguages)
         $defaultDocs = @($state.selectedDocumentation)
         $defaultFrameworks = ConvertTo-Hashtable -InputObject $state.selectedFrameworks
@@ -103,11 +97,6 @@ if ($setupMode -eq "reuse" -and $state) {
         if ($null -ne $state.enableCommitStandards) { $defaultCommitStandards = [bool]$state.enableCommitStandards }
     }
 
-    $selectedTools = Select-Tools -Config $config -DefaultSelected $defaultTools
-    if ($selectedTools.Count -eq 0) {
-        Write-WarningMessage "No tools selected. Exiting."
-        exit 0
-    }
     $selectedLanguages = Select-Languages -Config $config -DefaultSelected $defaultLangs
     if ($selectedLanguages.Count -eq 0) {
         Write-WarningMessage "No languages selected. Exiting."
@@ -122,7 +111,6 @@ if ($setupMode -eq "reuse" -and $state) {
 
 Write-Host ""
 Write-Host "Configuration Summary:" -ForegroundColor Cyan
-Write-Host "  Tools: $($selectedTools -join ', ')"
 Write-Host "  Languages: $($selectedLanguages -join ', ')"
 if ($selectedDocumentation.Count -gt 0) {
     Write-Host "  Documentation: $($selectedDocumentation -join ', ')"
@@ -153,26 +141,19 @@ if ($confirm -eq 'n' -or $confirm -eq 'N') {
 Write-Host ""
 
 if ($null -ne $state) {
-    $doCleanup = Read-Host "Clean up previously generated files for selected tools before regenerating? (Y/n)"
+    $doCleanup = Read-Host "Clean up previously generated files before regenerating? (Y/n)"
     if ($doCleanup -ne "n" -and $doCleanup -ne "N") {
-        $toolSet = @{}
-        foreach ($t in @($state.selectedTools)) { $toolSet[$t] = $true }
-        foreach ($t in @($selectedTools)) { $toolSet[$t] = $true }
-        foreach ($t in $toolSet.Keys) {
-            Cleanup-ToolOutputs -Tool $t
-        }
+        Cleanup-ClaudeOutputs
     }
 }
 
-foreach ($tool in $selectedTools) {
-    New-ToolConfig -Config $config -Tool $tool -SelectedLanguages $selectedLanguages -SelectedDocumentation $selectedDocumentation -SelectedFrameworks $selectedFrameworks -SelectedStructures $selectedStructures -SelectedProcesses $selectedProcesses -EnableCommitStandards $enableCommitStandards
-}
+New-AllConfig -Config $config -SelectedLanguages $selectedLanguages -SelectedDocumentation $selectedDocumentation -SelectedFrameworks $selectedFrameworks -SelectedStructures $selectedStructures -SelectedProcesses $selectedProcesses -EnableCommitStandards $enableCommitStandards
 
 $prevAgents = @()
 if ($null -ne $state -and $state.selectedCustomAgents) {
     $prevAgents = @($state.selectedCustomAgents)
 }
-Save-State -SelectedTools $selectedTools -SelectedLanguages $selectedLanguages -SelectedDocumentation $selectedDocumentation -SelectedFrameworks $selectedFrameworks -SelectedStructures $selectedStructures -SelectedProcesses $selectedProcesses -EnableCommitStandards $enableCommitStandards -Scope $Script:Scope -SetupType "rules" -SelectedCustomAgents $prevAgents
+Save-State -SelectedLanguages $selectedLanguages -SelectedDocumentation $selectedDocumentation -SelectedFrameworks $selectedFrameworks -SelectedStructures $selectedStructures -SelectedProcesses $selectedProcesses -EnableCommitStandards $enableCommitStandards -Scope $Script:Scope -SetupType "rules" -SelectedCustomAgents $prevAgents
 
 Add-ToGitignore
 

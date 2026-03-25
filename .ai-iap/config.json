@@ -1,107 +1,11 @@
 {
   "version": "1.0.0",
-  "tools": {
-    "cursor": {
-      "name": "Cursor",
-      "outputDir": ".cursor/rules",
-      "fileExtension": ".mdc",
-      "useFrontmatter": true,
-      "supportsGlobs": true,
-      "supportsSubfolders": true,
-      "recommended": true
-    },
-    "claude": {
-      "name": "Claude Code",
-      "outputDir": ".claude/rules",
-      "outputFile": "CLAUDE.md",
-      "outputFileSource": "claude-project-rules",
-      "fileExtension": ".md",
-      "useFrontmatter": true,
-      "concatenate": false,
-      "supportsGlobs": true,
-      "supportsSubfolders": true,
-      "recommended": true
-    },
-    "github-copilot": {
-      "name": "GitHub Copilot",
-      "outputFile": ".github/copilot-instructions.md",
-      "fileExtension": ".md",
-      "useFrontmatter": false,
-      "concatenate": true,
-      "preambleFile": "compliance-preamble",
-      "contextFile": "project-context"
-    },
-    "windsurf": {
-      "name": "Windsurf",
-      "outputFile": ".windsurfrules",
-      "fileExtension": "",
-      "useFrontmatter": false,
-      "concatenate": true,
-      "preambleFile": "compliance-preamble",
-      "contextFile": "project-context"
-    },
-    "aider": {
-      "name": "Aider",
-      "outputFile": "CONVENTIONS.md",
-      "fileExtension": ".md",
-      "useFrontmatter": false,
-      "concatenate": true,
-      "preambleFile": "compliance-preamble",
-      "contextFile": "project-context"
-    },
-    "google-ai-studio": {
-      "name": "Google AI Studio",
-      "outputFile": "GOOGLE_AI_STUDIO.md",
-      "fileExtension": ".md",
-      "useFrontmatter": false,
-      "concatenate": true,
-      "preambleFile": "compliance-preamble",
-      "contextFile": "project-context"
-    },
-    "gemini-cli": {
-      "name": "Gemini CLI",
-      "outputDir": ".gemini/rules",
-      "fileExtension": ".md",
-      "useFrontmatter": true,
-      "supportsGlobs": true,
-      "supportsSubfolders": true
-    },
-    "amazon-q": {
-      "name": "Amazon Q Developer",
-      "outputFile": "AMAZON_Q.md",
-      "fileExtension": ".md",
-      "useFrontmatter": false,
-      "concatenate": true,
-      "preambleFile": "compliance-preamble",
-      "contextFile": "project-context"
-    },
-    "tabnine": {
-      "name": "Tabnine",
-      "outputFile": "TABNINE.md",
-      "fileExtension": ".md",
-      "useFrontmatter": false,
-      "concatenate": true,
-      "preambleFile": "compliance-preamble",
-      "contextFile": "project-context"
-    },
-    "cody": {
-      "name": "Cody (Sourcegraph)",
-      "outputFile": ".cody/instructions.md",
-      "fileExtension": ".md",
-      "useFrontmatter": false,
-      "concatenate": true,
-      "preambleFile": "compliance-preamble",
-      "contextFile": "project-context"
-    },
-    "continue": {
-      "name": "Continue.dev",
-      "outputFile": ".continue/instructions.md",
-      "fileExtension": ".md",
-      "useFrontmatter": false,
-      "concatenate": true,
-      "preambleFile": "compliance-preamble",
-      "contextFile": "project-context"
-    }
+  "tool": {
+    "name": "Claude Code",
+    "outputDir": ".claude/rules",
+    "outputFile": "CLAUDE.md",
+    "outputFileSource": "claude-project-rules",
+    "fileExtension": ".md"
   },
   "languages": {
     "general": {

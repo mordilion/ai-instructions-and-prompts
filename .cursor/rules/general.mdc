@@ -2,32 +2,18 @@
 alwaysApply: true
 ---
 
-# AI Instructions & Prompts (A setup routine for Coding AI's)
+# AI Instructions & Prompts (A setup routine for Claude Code)
 
 > **Scope**: This applies to ALL tasks. Always active.
 
-**Project Nature**: This is a **meta-project** that creates AI rules, processes, and prompts for end users to configure in their own projects.
+**Project Nature**: This is a **meta-project** that creates AI rules, processes, and prompts for end users to configure Claude Code in their own projects.
 
 **Project Goals**: 
-- Users **MUST** be able to setup AI rules, borders, and prompts for multiple AI tools via setup scripts for their new or existing projects
-- Provide rules and processes in each tool’s native format (modular rules where supported, or a single concatenated instruction file where required)
-- All files for rules and processes **MUST** be token efficient and understandable for all AI's at the same time!
+- Users **MUST** be able to setup AI rules, borders, and prompts for Claude Code via setup scripts for their new or existing projects
+- Provide rules and processes as modular Claude Code rules (`.claude/rules/**/*.md`)
+- All files for rules and processes **MUST** be token efficient and clear
 - **NEVER** work with fixed versions. Use user's project-related versions and make it flexible (read from `.nvmrc`, `global.json`, `pom.xml`, etc.)
 - Files **MUST** follow the same structure for a better maintainability
-- All rules and processes **MUST** be understandable the same way for all AI's - The goal is to have the same result no matter which AI is used
-
-**Supported AI Tools** (11 total):
-- Cursor (modular rules with glob patterns)
-- Claude (always-on instructions + modular path-specific rules)
-- GitHub Copilot (repository-level instructions)
-- Windsurf (single concatenated rules file)
-- Aider (conventions file)
-- Google AI Studio (single concatenated instructions file)
-- Gemini CLI (modular rules in `.gemini/rules/**/*.md`)
-- Amazon Q Developer (single concatenated instructions file)
-- Tabnine (single concatenated instructions file)
-- Cody / Sourcegraph (repository-level instructions)
-- Continue.dev (editor instructions file)
 
 **Project Structure** (source content in this repository):
 - Rules library: hierarchical rules (general → language → framework → structure → security)
@@ -38,14 +24,13 @@ alwaysApply: true
   - Examples: error-handling, async-operations, input-validation, database-query, http-requests, logging, caching, config-secrets, auth-authorization, rate-limiting, webhooks
 - Setup scripts: interactive setup for Bash and PowerShell
 - Config: metadata for all languages, frameworks, structures, and processes
-- State file (in the target project root): last setup selection for safe reruns (add/remove languages/tools)
+- State file (in the target project root): last setup selection for safe reruns
 
-**Success Criteria** - "Same Result" means:
+**Success Criteria**:
 - Consistent code structure and architecture patterns
 - Same security practices applied (OWASP Top 10, input validation, etc.)
 - Same testing approaches (unit, integration, mocking)
 - Same CI/CD best practices (version detection, caching, matrix testing)
-- Not byte-for-byte identical, but architecturally equivalent
 
 **🚨 CRITICAL RULE - Check Functions BEFORE Generating Code**
 
@@ -66,22 +51,17 @@ alwaysApply: true
 
 **Key Principles** (Priority Order):
 
-1. **Cross-AI Understandability** (PRIMARY GOAL)
+1. **Clarity & Structure** (PRIMARY GOAL)
    - **ALWAYS** prioritize clarity over brevity
-   - **ALWAYS** test mental model: "Would GPT-3.5, GPT-4, Claude, Gemini, and Codestral understand this the SAME way?"
-   - **ALWAYS** provide enough context and examples for consistent interpretation
    - **ALWAYS** use explicit directives: `> **ALWAYS**` and `> **NEVER**`
    - **ALWAYS** include concrete examples when ambiguity is possible
    - **NEVER** sacrifice clarity for token count
    - **NEVER** use line counts as hard limits (15 lines or 150 lines - both OK if clear)
-   - Goal: Same architectural result across all AIs
-   
+
    **Clarity Evaluation Criteria** (not line count):
-   - Can two different AIs produce architecturally equivalent results from this?
    - Are directives explicit enough (`> **ALWAYS**` / `> **NEVER**` format)?
-   - Is there an AI Self-Check section (helps all AIs validate)?
+   - Is there an AI Self-Check section?
    - Are there concrete examples (not just prose)?
-   - Would GPT-3.5 understand this the SAME as Claude/GPT-4?
    - Any room for different interpretations?
 
 2. **Token Efficiency** (SECONDARY - only where clarity is maintained)
@@ -105,23 +85,20 @@ alwaysApply: true
    - **ALWAYS** assume a change can require updates in:
      - setup scripts (generation logic, new/renamed outputs, paths)
      - state file behavior (rerun UX, defaults, backwards compatibility)
-     - config metadata (languages/tools/frameworks/structures/processes mappings)
+     - config metadata (languages/frameworks/structures/processes mappings)
      - language/framework/structure rule sources (from this repo)
      - processes library (permanent and on-demand processes)
      - functions library + functions index (patterns and index)
-     - root docs and tool setup docs (readme, customization, troubleshooting)
+     - root docs (readme, customization, troubleshooting)
    - **NEVER** leave docs/scripts pointing to old paths or concepts.
-   - **ALWAYS** update the generated outputs for the supported AI tools when applicable (see **Supported AI Tools** above).
 
 ## Rerunnable Setup (CRITICAL)
 
 > **ALWAYS** treat setup as rerunnable and safe to re-run in existing projects.
 
-- **State**: Setup persists the user’s last selection to `.ai-iap-state.json` (in the project root).
+- **State**: Setup persists the user's last selection to `.ai-iap-state.json` (in the project root).
 - **Safe cleanup**: Generated outputs that can be cleaned must be marked:
-  - Cursor rules (`.cursor/rules/**/*.mdc`): frontmatter includes `aiIapManaged: true`
-  - Claude modular rules (`.claude/rules/**/*.md`): frontmatter includes `aiIapManaged: true`
-  - Single-file outputs (e.g. `.windsurfrules`): include the generated header comment so cleanup can detect ownership
+  - Claude Code modular rules (`.claude/rules/**/*.md`): frontmatter includes `aiIapManaged: true`
 - **NEVER** delete user-owned files during cleanup unless they are clearly marked as generated by this tool.
 
 5. **Functions System** (CRITICAL - Reduce AI Guessing & Token Waste)
@@ -134,9 +111,9 @@ alwaysApply: true
      - **MUST** keep code examples as the only content after the YAML header (no long explanations, no install commands)
      - **MUST** add the new file to the functions index
    
-   **🚨 MANDATORY RULE FOR ALL AIs:**
+   **🚨 MANDATORY RULE:**
    
-  > **BEFORE** implementing ANY of these patterns, **CHECK** the functions index and use the provided pattern
+   > **BEFORE** implementing ANY of these patterns, **CHECK** the functions index and use the provided pattern
    > **DO NOT GUESS** or generate code from scratch if a function pattern exists.
    > **DO NOT WASTE TOKENS** generating what already exists in `/functions/`.
    
@@ -151,7 +128,7 @@ alwaysApply: true
    
 6. **File Scope & Pattern Lookup**
    - **ALWAYS** analyze and work on all relevant source files and any project customizations
-   - **ALWAYS** check the project’s existing dependencies before choosing a framework/library variant
+   - **ALWAYS** check the project's existing dependencies before choosing a framework/library variant
    - **NEVER** add installation commands to function files (functions are code-only after YAML frontmatter)
    - **ALWAYS** check the functions index **BEFORE** implementing patterns
    - **NEVER** generate these patterns from scratch - use the provided implementations

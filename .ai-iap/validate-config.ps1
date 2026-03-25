@@ -40,74 +40,39 @@ if ($config.version) {
     Write-Issue "ERROR" "Missing 'version' property"
 }
 
-# Validate Tools
+# Validate Tool (Claude Code - singular)
 Write-Host ""
-Write-Host "--- Tools Validation ---" -ForegroundColor Cyan
-$toolCount = 0
-foreach ($toolKey in $config.tools.PSObject.Properties.Name) {
-    $toolCount++
-    $tool = $config.tools.$toolKey
-    
-    # Check required properties
+Write-Host "--- Tool Validation ---" -ForegroundColor Cyan
+$tool = $config.tool
+if ($null -eq $tool) {
+    Write-Issue "ERROR" "Missing 'tool' property in config"
+} else {
     if (-not $tool.name) {
-        Write-Issue "ERROR" "Tool '$toolKey': Missing 'name' property"
-    }
-    if ($null -eq $tool.useFrontmatter) {
-        Write-Issue "ERROR" "Tool '$toolKey': Missing 'useFrontmatter' property"
+        Write-Issue "ERROR" "Tool: Missing 'name' property"
     }
     if ($null -eq $tool.fileExtension) {
-        Write-Issue "ERROR" "Tool '$toolKey': Missing 'fileExtension' property"
+        Write-Issue "ERROR" "Tool: Missing 'fileExtension' property"
     }
-    
-    # Check tool type consistency
-    # Exception: Claude needs both outputDir (.claude/rules) and outputFile (CLAUDE.md)
-    if ($tool.outputDir -and $tool.outputFile -and $toolKey -ne "claude") {
-        Write-Issue "ERROR" "Tool '$toolKey': Has both 'outputDir' and 'outputFile' (should have only one)"
+    if (-not $tool.outputDir) {
+        Write-Issue "WARNING" "Tool: Missing 'outputDir' property (should be '.claude/rules')"
+    } elseif ($tool.outputDir -ne ".claude/rules") {
+        Write-Issue "WARNING" "Tool: outputDir should be '.claude/rules'"
     }
-    if (-not $tool.outputDir -and -not $tool.outputFile) {
-        Write-Issue "ERROR" "Tool '$toolKey': Missing both 'outputDir' and 'outputFile' (needs one)"
-    }
-    
-    # Cursor-specific checks
-    if ($toolKey -eq "cursor") {
-        if (-not $tool.supportsGlobs) {
-            Write-Issue "WARNING" "Tool 'cursor': Should have 'supportsGlobs: true'"
-        }
-        if (-not $tool.supportsSubfolders) {
-            Write-Issue "WARNING" "Tool 'cursor': Should have 'supportsSubfolders: true'"
-        }
-    }
-    
-    # Claude-specific checks (unified CLI & Code)
-    if ($toolKey -eq "claude") {
-        if (-not $tool.supportsSubfolders) {
-            Write-Issue "WARNING" "Tool 'claude': Should have 'supportsSubfolders: true'"
-        }
-        if (-not $tool.supportsGlobs) {
-            Write-Issue "WARNING" "Tool 'claude': Should have 'supportsGlobs: true' (uses .claude/rules/**/*.md)"
-        }
-        if (-not $tool.outputFile) {
-            Write-Issue "WARNING" "Tool 'claude': Missing 'outputFile' property (should be 'CLAUDE.md')"
-        }
-        if (-not $tool.outputDir) {
-            Write-Issue "WARNING" "Tool 'claude': Missing 'outputDir' property (should be '.claude/rules')"
-        } elseif ($tool.outputDir -ne ".claude/rules") {
-            Write-Issue "WARNING" "Tool 'claude': outputDir should be '.claude/rules'"
-        }
+    if (-not $tool.outputFile) {
+        Write-Issue "WARNING" "Tool: Missing 'outputFile' property (should be 'CLAUDE.md')"
     }
 
-    # Check that preambleFile and contextFile source files exist on disk
-    foreach ($refProp in @("preambleFile", "outputFileSource", "contextFile")) {
+    foreach ($refProp in @("outputFileSource")) {
         $refValue = $tool.$refProp
         if ($refValue) {
             $srcPath = ".ai-iap/rules/general/$refValue.md"
             if (-not (Test-Path $srcPath)) {
-                Write-Issue "ERROR" "Tool '$toolKey': '$refProp' references '$refValue' but '$srcPath' does not exist"
+                Write-Issue "ERROR" "Tool: '$refProp' references '$refValue' but '$srcPath' does not exist"
             }
         }
     }
+    Write-Success "Validated tool (Claude Code)"
 }
-Write-Success "Validated $toolCount tools"
 
 # Validate Languages
 Write-Host ""
@@ -237,7 +202,7 @@ Write-Success "Validated $langCount languages"
 # Summary
 Write-Host ""
 Write-Host "=== Validation Summary ===" -ForegroundColor Cyan
-Write-Host "Tools: $toolCount" -ForegroundColor White
+Write-Host "Tool: Claude Code" -ForegroundColor White
 Write-Host "Languages: $langCount" -ForegroundColor White
 Write-Host ""
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate detailed comparison report across AI models
+Generate detailed test report for Claude Code
 """
 
 import json
@@ -24,15 +24,13 @@ def load_results(results_dir):
     
     return results
 
-def generate_comparison_report(results, output_file):
-    """Generate detailed comparison markdown"""
+def generate_report(results, output_file):
+    """Generate detailed test report markdown"""
     
-    # Group by test
     by_test = defaultdict(list)
     for result in results:
         for test in result.get('tests', []):
             by_test[test['testId']].append({
-                'model': result['model'],
                 'score': test.get('score', 0),
                 'passed': test.get('passed', False),
                 'output': test.get('output', ''),
@@ -40,7 +38,7 @@ def generate_comparison_report(results, output_file):
             })
     
     md = []
-    md.append("# Detailed AI Comparison Report")
+    md.append("# Claude Code Detailed Test Report")
     md.append("")
     
     for test_id in sorted(by_test.keys()):
@@ -48,11 +46,10 @@ def generate_comparison_report(results, output_file):
         md.append(f"## {test_id}")
         md.append("")
         
-        # Summary table
-        md.append("| Model | Score | Status | Expected Patterns | Forbidden Patterns |")
-        md.append("|-------|-------|--------|-------------------|-------------------|")
+        md.append("| Run | Score | Status | Expected Patterns | Forbidden Patterns |")
+        md.append("|-----|-------|--------|-------------------|-------------------|")
         
-        for tr in sorted(test_results, key=lambda x: -x['score']):
+        for i, tr in enumerate(test_results, 1):
             status = "✅ PASS" if tr['passed'] else "❌ FAIL"
             validation = tr.get('validation', {})
             
@@ -64,13 +61,12 @@ def generate_comparison_report(results, output_file):
             expected_str = f"{expected_match} ✓, {expected_missing} ✗"
             forbidden_str = f"{forbidden_missing} ✓, {forbidden_found} ✗"
             
-            md.append(f"| {tr['model']} | {tr['score']}/100 | {status} | {expected_str} | {forbidden_str} |")
+            md.append(f"| {i} | {tr['score']}/100 | {status} | {expected_str} | {forbidden_str} |")
         
         md.append("")
         
-        # Show issues if any
         issues_found = False
-        for tr in test_results:
+        for i, tr in enumerate(test_results, 1):
             validation = tr.get('validation', {})
             expected_missing = validation.get('expectedMissing', [])
             forbidden_found = validation.get('forbiddenFound', [])
@@ -81,7 +77,7 @@ def generate_comparison_report(results, output_file):
                     md.append("")
                     issues_found = True
                 
-                md.append(f"**{tr['model']}:**")
+                md.append(f"**Run {i}:**")
                 if expected_missing:
                     md.append(f"- Missing expected patterns: `{', '.join(expected_missing)}`")
                 if forbidden_found:
@@ -89,22 +85,21 @@ def generate_comparison_report(results, output_file):
                 md.append("")
         
         if not issues_found:
-            md.append("✅ All models passed this test successfully!")
+            md.append("✅ All runs passed this test successfully!")
             md.append("")
         
         md.append("---")
         md.append("")
     
-    # Write report
     with open(output_file, 'w') as f:
         f.write('\n'.join(md))
     
-    print(f"Comparison report written to {output_file}")
+    print(f"Report written to {output_file}")
 
 def main():
     import argparse
     
-    parser = argparse.ArgumentParser(description='Generate comparison report')
+    parser = argparse.ArgumentParser(description='Generate test report')
     parser.add_argument('--results-dir', required=True)
     parser.add_argument('--output', required=True)
     
@@ -115,9 +110,7 @@ def main():
         print("ERROR: No results found", file=sys.stderr)
         sys.exit(1)
     
-    generate_comparison_report(results, args.output)
+    generate_report(results, args.output)
 
 if __name__ == '__main__':
     main()
-
-

@@ -5,14 +5,14 @@
 <#
 .SYNOPSIS
     AI Instructions and Prompts Setup Script
-    Configures AI coding assistants with standardized instructions
+    Configures Claude Code with standardized instructions
 
 .DESCRIPTION
-    This script sets up AI coding assistant configurations for various tools
-    including Cursor, Claude Code, GitHub Copilot, Windsurf, and Aider.
+    This script sets up Claude Code configuration with standardized rules,
+    frameworks, structures, and processes.
 
 .EXAMPLE
-    .\.ai-iap\setup.ps1
+    .\.ai-iap\setup-rules.ps1
 #>
 
 # Removed StrictMode and CmdletBinding due to compatibility issues
@@ -33,7 +33,7 @@ $Script:CustomFunctionsDir = Join-Path $Script:ProjectRoot ".ai-iap-custom\funct
 $Script:MergedConfigFile = Join-Path $env:TEMP "ai-iap-merged-config-$PID.json"
 $Script:WorkingConfig = $Script:ConfigFile
 $Script:StateFile = Join-Path $Script:ProjectRoot ".ai-iap-state.json"
-# Set by Select-Scope: where to write generated files and state (project vs global)
+# Set by Select-Scope: where to write generated files and state to .claude/ (project vs global)
 $Script:OutputRoot = $Script:ProjectRoot
 $Script:Scope = "project"
 
@@ -330,62 +330,6 @@ function Get-ValidatedSelection {
     }
     
     return $selected
-}
-
-function Select-Tools {
-    param(
-        [PSCustomObject]$Config,
-        [string[]]$DefaultSelected = @()
-    )
-    
-    $tools = @()
-    $toolKeys = @()
-    
-    foreach ($key in $Config.tools.PSObject.Properties.Name) {
-        $toolKeys += $key
-        $tools += $Config.tools.$key.name
-    }
-    
-    Write-Host "Select AI tools to configure:" -ForegroundColor White
-    Write-Host ""
-    
-    for ($i = 0; $i -lt $tools.Count; $i++) {
-        $suffix = ""
-        if ($Config.tools.$($toolKeys[$i]).recommended -eq $true) {
-            $suffix = " *"
-        }
-        Write-Host "  $($i + 1). $($tools[$i])$suffix"
-    }
-    Write-Host ""
-    Write-Host "  * = recommended" -ForegroundColor DarkGray
-    Write-Host "  a. All tools"
-    Write-Host ""
-
-    $defaultInput = ""
-    if ($DefaultSelected -and $DefaultSelected.Count -gt 0) {
-        $idxs = @()
-        for ($i = 0; $i -lt $toolKeys.Count; $i++) {
-            if ($DefaultSelected -contains $toolKeys[$i]) {
-                $idxs += ($i + 1)
-            }
-        }
-        if ($idxs.Count -gt 0) {
-            Write-Host ("Previously selected: " + ($DefaultSelected -join ", ")) -ForegroundColor DarkGray
-            Write-Host "Press Enter to keep the previous selection, or enter a new list." -ForegroundColor DarkGray
-            $defaultInput = ($idxs -join " ")
-            Write-Host ""
-        }
-    }
-    
-    $selectedTools = Get-ValidatedSelection `
-        -Prompt ("Enter choices (e.g., 1 3 or 'a' for all)" + ($(if ($defaultInput) { " [$defaultInput]" } else { "" })) + ":") `
-        -Options $toolKeys `
-        -MaxValue $toolKeys.Count `
-        -AllowEmpty $false `
-        -DefaultInput $defaultInput `
-        -AllowClearDefault $true
-    
-    return $selectedTools
 }
 
 function Select-Languages {
@@ -970,400 +914,6 @@ function Get-EnabledOptionalRules {
     return $rules
 }
 
-function New-CursorFrontmatter {
-    param(
-        [PSCustomObject]$Config,
-        [string]$Lang,
-        [string]$File,
-        [bool]$IsFramework = $false
-    )
-    
-    $langConfig = $Config.languages.$Lang
-    $globs = $langConfig.globs
-    $alwaysApply = if ($null -ne $langConfig.alwaysApply) { $langConfig.alwaysApply.ToString().ToLower() } else { "false" }
-    
-    if ($IsFramework) {
-        $fw = $langConfig.frameworks.$File
-        $description = "$($langConfig.name) - $($fw.name)"
-    }
-    else {
-        $description = "$($langConfig.description) - $File"
-    }
-    
-    $frontmatter = @"
----
-aiIapManaged: true
-aiIapVersion: $Script:Version
-alwaysApply: $alwaysApply
-description: $description
-globs: $globs
----
-
-"@
-    
-    return $frontmatter
-}
-
-function New-CursorConfig {
-    param(
-        [PSCustomObject]$Config,
-        [string[]]$SelectedLanguages,
-        [string[]]$SelectedDocumentation,
-        [hashtable]$SelectedFrameworks,
-        [hashtable]$SelectedStructures,
-        [hashtable]$SelectedProcesses,
-        [bool]$EnableCommitStandards
-    )
-    
-    $outputDir = Join-Path $Script:OutputRoot ".cursor\rules"
-    
-    Write-InfoMessage "Generating Cursor rules..."
-    $toggleStates = @{}
-    
-    foreach ($lang in $SelectedLanguages) {
-        $langDir = Join-Path $outputDir $lang
-        
-        if (-not (Test-Path $langDir)) {
-            New-Item -ItemType Directory -Path $langDir -Force | Out-Null
-        }
-        
-        # Generate base language files
-        $files = $Config.languages.$lang.files
-        
-        foreach ($file in $files) {
-            if ($lang -eq "general" -and $file -eq "commit-standards" -and -not $EnableCommitStandards) {
-                continue
-            }
-            $content = Read-InstructionFile -Lang $lang -File $file
-            
-            if ($null -eq $content) {
-                continue
-            }
-            
-            $outputFile = Join-Path $langDir "$file.mdc"
-            
-            # Create parent directory if it doesn't exist (for nested files)
-            $parentDir = Split-Path -Parent $outputFile
-            if (-not (Test-Path $parentDir)) {
-                New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
-            }
-            
-            $frontmatter = New-CursorFrontmatter -Config $Config -Lang $lang -File $file
-            
-            $fullContent = $frontmatter + $content
-            $fullContent | Out-File -FilePath $outputFile -Encoding UTF8 -NoNewline
-            
-            $relativePath = $outputFile.Replace($Script:OutputRoot, "").TrimStart("\", "/")
-            Write-SuccessMessage "Created $relativePath"
-        }
-        
-        # Optional: rules gated by setup toggles
-        $optionalRules = Get-EnabledOptionalRules -Config $Config -Lang $lang -ToggleStates $toggleStates
-        foreach ($rule in $optionalRules) {
-            $content = Read-InstructionFile -Lang $lang -File $rule.file
-            if ($null -ne $content) {
-                $outputFile = Join-Path $langDir "$($rule.file).mdc"
-                $frontmatter = New-CursorFrontmatter -Config $Config -Lang $lang -File $rule.file
-                ($frontmatter + $content) | Out-File -FilePath $outputFile -Encoding UTF8 -NoNewline
-                $relativePath = $outputFile.Replace($Script:OutputRoot, "").TrimStart("\", "/")
-                Write-SuccessMessage "Created $relativePath"
-            }
-        }
-        
-        # Generate selected documentation files (only for general language)
-        if ($lang -eq "general" -and $SelectedDocumentation.Count -gt 0) {
-            foreach ($docFile in $SelectedDocumentation) {
-                $content = Read-InstructionFile -Lang $lang -File $docFile
-                
-                if ($null -eq $content) {
-                    continue
-                }
-                
-                $outputFile = Join-Path $langDir "$docFile.mdc"
-                
-                # Create parent directory if it doesn't exist (for nested files)
-                $parentDir = Split-Path -Parent $outputFile
-                if (-not (Test-Path $parentDir)) {
-                    New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
-                }
-                
-                $frontmatter = New-CursorFrontmatter -Config $Config -Lang $lang -File $docFile
-                
-                $fullContent = $frontmatter + $content
-                $fullContent | Out-File -FilePath $outputFile -Encoding UTF8 -NoNewline
-                
-                $relativePath = $outputFile.Replace($Script:OutputRoot, "").TrimStart("\", "/")
-                Write-SuccessMessage "Created $relativePath"
-            }
-        }
-
-        # Generate framework files for this language
-        if ($SelectedFrameworks.ContainsKey($lang)) {
-            foreach ($fw in $SelectedFrameworks[$lang]) {
-                $fwConfig = $Config.languages.$lang.frameworks.$fw
-                $content = Read-InstructionFile -Lang $lang -File $fwConfig.file -IsFramework $true
-                
-                if ($null -eq $content) {
-                    continue
-                }
-                
-                $outputFile = Join-Path $langDir "$($fwConfig.file).mdc"
-                
-                # Create parent directory if it doesn't exist (for nested files)
-                $parentDir = Split-Path -Parent $outputFile
-                if (-not (Test-Path $parentDir)) {
-                    New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
-                }
-                
-                $frontmatter = New-CursorFrontmatter -Config $Config -Lang $lang -File $fw -IsFramework $true
-                
-                $fullContent = $frontmatter + $content
-                $fullContent | Out-File -FilePath $outputFile -Encoding UTF8 -NoNewline
-                
-                $relativePath = $outputFile.Replace($Script:OutputRoot, "").TrimStart("\", "/")
-                Write-SuccessMessage "Created $relativePath"
-                
-                # Generate structure file if selected
-                $structKey = "$lang-$fw"
-                if ($SelectedStructures.ContainsKey($structKey)) {
-                    $structFile = $SelectedStructures[$structKey]
-                    $structContent = Read-InstructionFile -Lang $lang -File $structFile -IsStructure $true
-                    
-                    if ($null -ne $structContent) {
-                        $structOutputFile = Join-Path $langDir "$structFile.mdc"
-                        
-                        # Create parent directory if it doesn't exist (for nested files)
-                        $parentDir = Split-Path -Parent $structOutputFile
-                        if (-not (Test-Path $parentDir)) {
-                            New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
-                        }
-                        
-                        $structFrontmatter = New-CursorFrontmatter -Config $Config -Lang $lang -File $fw -IsFramework $true
-                        
-                        $fullStructContent = $structFrontmatter + $structContent
-                        $fullStructContent | Out-File -FilePath $structOutputFile -Encoding UTF8 -NoNewline
-                        
-                        $relativePath = $structOutputFile.Replace($Script:OutputRoot, "").TrimStart("\", "/")
-                        Write-SuccessMessage "Created $relativePath"
-                    }
-                }
-            }
-        }
-        
-        # Generate process files for this language
-        if ($SelectedProcesses.ContainsKey($lang)) {
-            foreach ($proc in $SelectedProcesses[$lang]) {
-                $procConfig = $Config.languages.$lang.processes.$proc
-                
-                # Skip on-demand processes (user copies prompt when needed)
-                if ($procConfig.loadIntoAI -eq $false) {
-                    Write-InfoMessage "Skipped on-demand process: $proc (copy prompt from .ai-iap/processes/ondemand/$lang/$($procConfig.file).md when needed)"
-                    continue
-                }
-                
-                $content = Read-InstructionFile -Lang $lang -File $procConfig.file -IsProcess $true
-                
-                if ($null -eq $content) {
-                    continue
-                }
-                
-                $outputFile = Join-Path $langDir "$($procConfig.file).mdc"
-                
-                # Create parent directory if it doesn't exist (for nested files)
-                $parentDir = Split-Path -Parent $outputFile
-                if (-not (Test-Path $parentDir)) {
-                    New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
-                }
-                
-                $frontmatter = New-CursorFrontmatter -Config $Config -Lang $lang -File $proc
-                
-                $fullContent = $frontmatter + $content
-                $fullContent | Out-File -FilePath $outputFile -Encoding UTF8 -NoNewline
-                
-                $relativePath = $outputFile.Replace($Script:OutputRoot, "").TrimStart("\", "/")
-                Write-SuccessMessage "Created $relativePath"
-            }
-        }
-    }
-}
-
-function New-GeminiCliConfig {
-    param(
-        [PSCustomObject]$Config,
-        [array]$SelectedLanguages,
-        [array]$SelectedDocumentation,
-        [hashtable]$SelectedFrameworks,
-        [hashtable]$SelectedStructures,
-        [hashtable]$SelectedProcesses,
-        [bool]$EnableCommitStandards
-    )
-
-    $outputDir = Join-Path $Script:OutputRoot ".gemini\rules"
-
-    Write-InfoMessage "Generating Gemini CLI rules..."
-    $toggleStates = @{}
-
-    foreach ($lang in $SelectedLanguages) {
-        $langDir = Join-Path $outputDir $lang
-
-        if (-not (Test-Path $langDir)) {
-            New-Item -ItemType Directory -Path $langDir -Force | Out-Null
-        }
-
-        # Generate base language files
-        $files = $Config.languages.$lang.files
-
-        foreach ($file in $files) {
-            if ($lang -eq "general" -and $file -eq "commit-standards" -and -not $EnableCommitStandards) {
-                continue
-            }
-            $content = Read-InstructionFile -Lang $lang -File $file
-
-            if ($null -eq $content) {
-                continue
-            }
-
-            $outputFile = Join-Path $langDir "$file.md"
-
-            $parentDir = Split-Path -Parent $outputFile
-            if (-not (Test-Path $parentDir)) {
-                New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
-            }
-
-            $frontmatter = New-CursorFrontmatter -Config $Config -Lang $lang -File $file
-
-            $fullContent = $frontmatter + $content
-            $fullContent | Out-File -FilePath $outputFile -Encoding UTF8 -NoNewline
-
-            $relativePath = $outputFile.Replace($Script:OutputRoot, "").TrimStart("\", "/")
-            Write-SuccessMessage "Created $relativePath"
-        }
-
-        # Optional: rules gated by setup toggles
-        $optionalRules = Get-EnabledOptionalRules -Config $Config -Lang $lang -ToggleStates $toggleStates
-        foreach ($rule in $optionalRules) {
-            $content = Read-InstructionFile -Lang $lang -File $rule.file
-            if ($null -ne $content) {
-                $outputFile = Join-Path $langDir "$($rule.file).md"
-                $frontmatter = New-CursorFrontmatter -Config $Config -Lang $lang -File $rule.file
-                ($frontmatter + $content) | Out-File -FilePath $outputFile -Encoding UTF8 -NoNewline
-                $relativePath = $outputFile.Replace($Script:OutputRoot, "").TrimStart("\", "/")
-                Write-SuccessMessage "Created $relativePath"
-            }
-        }
-
-        # Generate selected documentation files (only for general language)
-        if ($lang -eq "general" -and $SelectedDocumentation.Count -gt 0) {
-            foreach ($docFile in $SelectedDocumentation) {
-                $content = Read-InstructionFile -Lang $lang -File $docFile
-
-                if ($null -eq $content) {
-                    continue
-                }
-
-                $outputFile = Join-Path $langDir "$docFile.md"
-
-                $parentDir = Split-Path -Parent $outputFile
-                if (-not (Test-Path $parentDir)) {
-                    New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
-                }
-
-                $frontmatter = New-CursorFrontmatter -Config $Config -Lang $lang -File $docFile
-
-                $fullContent = $frontmatter + $content
-                $fullContent | Out-File -FilePath $outputFile -Encoding UTF8 -NoNewline
-
-                $relativePath = $outputFile.Replace($Script:OutputRoot, "").TrimStart("\", "/")
-                Write-SuccessMessage "Created $relativePath"
-            }
-        }
-
-        # Generate framework files for this language
-        if ($SelectedFrameworks.ContainsKey($lang)) {
-            foreach ($fw in $SelectedFrameworks[$lang]) {
-                $fwConfig = $Config.languages.$lang.frameworks.$fw
-                $content = Read-InstructionFile -Lang $lang -File $fwConfig.file -IsFramework $true
-
-                if ($null -eq $content) {
-                    continue
-                }
-
-                $outputFile = Join-Path $langDir "$($fwConfig.file).md"
-
-                $parentDir = Split-Path -Parent $outputFile
-                if (-not (Test-Path $parentDir)) {
-                    New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
-                }
-
-                $frontmatter = New-CursorFrontmatter -Config $Config -Lang $lang -File $fw -IsFramework $true
-
-                $fullContent = $frontmatter + $content
-                $fullContent | Out-File -FilePath $outputFile -Encoding UTF8 -NoNewline
-
-                $relativePath = $outputFile.Replace($Script:OutputRoot, "").TrimStart("\", "/")
-                Write-SuccessMessage "Created $relativePath"
-
-                # Generate structure file if selected
-                $structKey = "$lang-$fw"
-                if ($SelectedStructures.ContainsKey($structKey)) {
-                    $structFile = $SelectedStructures[$structKey]
-                    $structContent = Read-InstructionFile -Lang $lang -File $structFile -IsStructure $true
-
-                    if ($null -ne $structContent) {
-                        $structOutputFile = Join-Path $langDir "$structFile.md"
-
-                        $parentDir = Split-Path -Parent $structOutputFile
-                        if (-not (Test-Path $parentDir)) {
-                            New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
-                        }
-
-                        $structFrontmatter = New-CursorFrontmatter -Config $Config -Lang $lang -File $fw -IsFramework $true
-
-                        $fullStructContent = $structFrontmatter + $structContent
-                        $fullStructContent | Out-File -FilePath $structOutputFile -Encoding UTF8 -NoNewline
-
-                        $relativePath = $structOutputFile.Replace($Script:OutputRoot, "").TrimStart("\", "/")
-                        Write-SuccessMessage "Created $relativePath"
-                    }
-                }
-            }
-        }
-
-        # Generate process files for this language
-        if ($SelectedProcesses.ContainsKey($lang)) {
-            foreach ($proc in $SelectedProcesses[$lang]) {
-                $procConfig = $Config.languages.$lang.processes.$proc
-
-                if ($procConfig.loadIntoAI -eq $false) {
-                    Write-InfoMessage "Skipped on-demand process: $proc (copy prompt from .ai-iap/processes/ondemand/$lang/$($procConfig.file).md when needed)"
-                    continue
-                }
-
-                $content = Read-InstructionFile -Lang $lang -File $procConfig.file -IsProcess $true
-
-                if ($null -eq $content) {
-                    continue
-                }
-
-                $outputFile = Join-Path $langDir "$($procConfig.file).md"
-
-                $parentDir = Split-Path -Parent $outputFile
-                if (-not (Test-Path $parentDir)) {
-                    New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
-                }
-
-                $frontmatter = New-CursorFrontmatter -Config $Config -Lang $lang -File $proc
-
-                $fullContent = $frontmatter + $content
-                $fullContent | Out-File -FilePath $outputFile -Encoding UTF8 -NoNewline
-
-                $relativePath = $outputFile.Replace($Script:OutputRoot, "").TrimStart("\", "/")
-                Write-SuccessMessage "Created $relativePath"
-            }
-        }
-    }
-}
-
 function Get-FrameworkCategory {
     param(
         [string]$Framework,
@@ -1795,12 +1345,9 @@ function Get-SkillDescription {
     }
 }
 
-function New-ConcatenatedConfig {
+function New-AllConfig {
     param(
         [PSCustomObject]$Config,
-        [string]$ToolKey,
-        [string]$ToolName,
-        [string]$OutputFile,
         [string[]]$SelectedLanguages,
         [string[]]$SelectedDocumentation,
         [hashtable]$SelectedFrameworks,
@@ -1808,188 +1355,17 @@ function New-ConcatenatedConfig {
         [hashtable]$SelectedProcesses,
         [bool]$EnableCommitStandards
     )
-    
-    Write-InfoMessage "Generating $ToolName configuration..."
-    $toggleStates = @{}
-    
-    $fullPath = Join-Path $Script:OutputRoot $OutputFile
-    $parentDir = Split-Path -Parent $fullPath
-    
-    if (-not (Test-Path $parentDir)) {
-        New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
-    }
-    
-    $content = @"
-# AI Coding Instructions
 
-<!-- Generated by AI Instructions and Prompts Setup -->
-<!-- https://github.com/your-repo/ai-instructions-and-prompts -->
+    New-ClaudeConfig -Config $Config -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableCommitStandards $EnableCommitStandards
 
-"@
-
-    $preambleFile = $null
-    if ($Config.tools.$ToolKey -and $Config.tools.$ToolKey.preambleFile) {
-        $preambleFile = [string]$Config.tools.$ToolKey.preambleFile
-    }
-    if (-not [string]::IsNullOrWhiteSpace($preambleFile)) {
-        $preambleContent = Read-InstructionFile -Lang "general" -File $preambleFile
-        if ($null -ne $preambleContent) {
-            $content += $preambleContent + "`n`n---`n`n"
-        }
-    }
-    
-    foreach ($lang in $SelectedLanguages) {
-        # Add base language files
-        $files = $Config.languages.$lang.files
-        
-        foreach ($file in $files) {
-            if ($lang -eq "general" -and $file -eq "commit-standards" -and -not $EnableCommitStandards) {
-                continue
-            }
-            $fileContent = Read-InstructionFile -Lang $lang -File $file
-            
-            if ($null -ne $fileContent) {
-                $content += $fileContent + "`n`n---`n`n"
-            }
-        }
-        
-        # Optional: rules gated by setup toggles
-        $optionalRules = Get-EnabledOptionalRules -Config $Config -Lang $lang -ToggleStates $toggleStates
-        foreach ($rule in $optionalRules) {
-            $optContent = Read-InstructionFile -Lang $lang -File $rule.file
-            if ($null -ne $optContent) {
-                $content += $optContent + "`n`n---`n`n"
-            }
-        }
-        
-        # Add selected documentation files (only for general language)
-        if ($lang -eq "general" -and $SelectedDocumentation.Count -gt 0) {
-            foreach ($docFile in $SelectedDocumentation) {
-                $docContent = Read-InstructionFile -Lang $lang -File $docFile
-                
-                if ($null -ne $docContent) {
-                    $content += $docContent + "`n`n---`n`n"
-                }
-            }
-        }
-
-        # Add framework files for this language
-        if ($SelectedFrameworks.ContainsKey($lang)) {
-            foreach ($fw in $SelectedFrameworks[$lang]) {
-                $fwConfig = $Config.languages.$lang.frameworks.$fw
-                $fileContent = Read-InstructionFile -Lang $lang -File $fwConfig.file -IsFramework $true
-                
-                if ($null -ne $fileContent) {
-                    $content += $fileContent + "`n`n---`n`n"
-                }
-                
-                # Add structure file if selected
-                $structKey = "$lang-$fw"
-                if ($SelectedStructures.ContainsKey($structKey)) {
-                    $structFile = $SelectedStructures[$structKey]
-                    $structContent = Read-InstructionFile -Lang $lang -File $structFile -IsStructure $true
-                    
-                    if ($null -ne $structContent) {
-                        $content += $structContent + "`n`n---`n`n"
-                    }
-                }
-            }
-        }
-        
-        # Add process files for this language
-        if ($SelectedProcesses.ContainsKey($lang)) {
-            foreach ($proc in $SelectedProcesses[$lang]) {
-                $procConfig = $Config.languages.$lang.processes.$proc
-                
-                # Skip on-demand processes (user copies prompt when needed)
-                if ($procConfig.loadIntoAI -eq $false) {
-                    continue
-                }
-                
-                $fileContent = Read-InstructionFile -Lang $lang -File $procConfig.file -IsProcess $true
-                
-                if ($null -ne $fileContent) {
-                    $content += $fileContent + "`n`n---`n`n"
-                }
-            }
-        }
-    }
-    
-    $contextFile = $null
-    if ($Config.tools.$ToolKey -and $Config.tools.$ToolKey.contextFile) {
-        $contextFile = [string]$Config.tools.$ToolKey.contextFile
-    }
-    if (-not [string]::IsNullOrWhiteSpace($contextFile)) {
-        $contextContent = Read-InstructionFile -Lang "general" -File $contextFile
-        if ($null -ne $contextContent) {
-            $content += "---`n`n" + $contextContent
-        }
-    }
-
-    $content | Out-File -FilePath $fullPath -Encoding UTF8 -NoNewline
-    
-    Write-SuccessMessage "Created $OutputFile"
-}
-
-function New-ToolConfig {
-    param(
-        [PSCustomObject]$Config,
-        [string]$Tool,
-        [string[]]$SelectedLanguages,
-        [string[]]$SelectedDocumentation,
-        [hashtable]$SelectedFrameworks,
-        [hashtable]$SelectedStructures,
-        [hashtable]$SelectedProcesses,
-        [bool]$EnableCommitStandards
-    )
-    
-    switch ($Tool) {
-        "cursor" {
-            New-CursorConfig -Config $Config -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableCommitStandards $EnableCommitStandards
-        }
-        "claude" {
-            New-ClaudeConfig -Config $Config -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableCommitStandards $EnableCommitStandards
-
-            if ($Config.tools.claude.outputFile -and $Config.tools.claude.outputFileSource) {
-                $source = [string]$Config.tools.claude.outputFileSource
-                $content = Read-InstructionFile -Lang "general" -File $source
-                if ($null -ne $content) {
-                    $outputFile = Join-Path $Script:OutputRoot $Config.tools.claude.outputFile
-                    $content | Out-File -FilePath $outputFile -Encoding UTF8 -NoNewline
-                    $relativePath = $outputFile.Replace($Script:OutputRoot, "").TrimStart("\", "/")
-                    Write-SuccessMessage "Created $relativePath"
-                }
-            }
-        }
-        "github-copilot" {
-            New-ConcatenatedConfig -Config $Config -ToolKey "github-copilot" -ToolName "GitHub Copilot" -OutputFile ".github\copilot-instructions.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableCommitStandards $EnableCommitStandards
-        }
-        "windsurf" {
-            New-ConcatenatedConfig -Config $Config -ToolKey "windsurf" -ToolName "Windsurf" -OutputFile ".windsurfrules" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableCommitStandards $EnableCommitStandards
-        }
-        "aider" {
-            New-ConcatenatedConfig -Config $Config -ToolKey "aider" -ToolName "Aider" -OutputFile "CONVENTIONS.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableCommitStandards $EnableCommitStandards
-        }
-        "google-ai-studio" {
-            New-ConcatenatedConfig -Config $Config -ToolKey "google-ai-studio" -ToolName "Google AI Studio" -OutputFile "GOOGLE_AI_STUDIO.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableCommitStandards $EnableCommitStandards
-        }
-        "gemini-cli" {
-            New-GeminiCliConfig -Config $Config -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableCommitStandards $EnableCommitStandards
-        }
-        "amazon-q" {
-            New-ConcatenatedConfig -Config $Config -ToolKey "amazon-q" -ToolName "Amazon Q Developer" -OutputFile "AMAZON_Q.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableCommitStandards $EnableCommitStandards
-        }
-        "tabnine" {
-            New-ConcatenatedConfig -Config $Config -ToolKey "tabnine" -ToolName "Tabnine" -OutputFile "TABNINE.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableCommitStandards $EnableCommitStandards
-        }
-        "cody" {
-            New-ConcatenatedConfig -Config $Config -ToolKey "cody" -ToolName "Cody (Sourcegraph)" -OutputFile ".cody\instructions.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableCommitStandards $EnableCommitStandards
-        }
-        "continue" {
-            New-ConcatenatedConfig -Config $Config -ToolKey "continue" -ToolName "Continue.dev" -OutputFile ".continue\instructions.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableCommitStandards $EnableCommitStandards
-        }
-        default {
-            Write-WarningMessage "Unknown tool: $Tool"
+    if ($Config.tool.outputFile -and $Config.tool.outputFileSource) {
+        $source = [string]$Config.tool.outputFileSource
+        $content = Read-InstructionFile -Lang "general" -File $source
+        if ($null -ne $content) {
+            $outputFile = Join-Path $Script:OutputRoot $Config.tool.outputFile
+            $content | Out-File -FilePath $outputFile -Encoding UTF8 -NoNewline
+            $relativePath = $outputFile.Replace($Script:OutputRoot, "").TrimStart("\", "/")
+            Write-SuccessMessage "Created $relativePath"
         }
     }
 }
@@ -2030,7 +1406,6 @@ function Write-PreviousStateSummary {
 
     Write-Host ""
     Write-Host "Previous setup detected ($([IO.Path]::GetFileName($Script:StateFile)))" -ForegroundColor Cyan
-    Write-Host "  Tools: $($State.selectedTools -join ', ')"
     Write-Host "  Languages: $($State.selectedLanguages -join ', ')"
     if ($State.selectedDocumentation -and $State.selectedDocumentation.Count -gt 0) {
         Write-Host "  Documentation: $($State.selectedDocumentation -join ', ')"
@@ -2063,7 +1438,6 @@ function Write-PreviousStateSummary {
 
 function Save-State {
     param(
-        [string[]]$SelectedTools,
         [string[]]$SelectedLanguages,
         [string[]]$SelectedDocumentation,
         [hashtable]$SelectedFrameworks,
@@ -2087,13 +1461,11 @@ function Save-State {
                 continue
             }
 
-            # Convert single string to single-item array to keep schema stable.
             if ($v -is [string]) {
                 $out[$k] = @($v)
                 continue
             }
 
-            # If it's already a collection, keep as array.
             if ($v -is [System.Collections.IEnumerable]) {
                 $out[$k] = @($v)
                 continue
@@ -2108,7 +1480,6 @@ function Save-State {
         version = $Script:Version
         scope = $Scope
         setupType = $SetupType
-        selectedTools = $SelectedTools
         selectedLanguages = $SelectedLanguages
         selectedDocumentation = $SelectedDocumentation
         selectedFrameworks = (Normalize-StringArrayHashtable -InputTable $SelectedFrameworks)
@@ -2160,28 +1531,6 @@ function ConvertTo-Hashtable {
     return @{}
 }
 
-function Remove-ManagedCursorRules {
-    $root = Join-Path $Script:OutputRoot ".cursor\rules"
-    if (-not (Test-Path $root)) {
-        return
-    }
-
-    Get-ChildItem -Path $root -Recurse -File -Filter "*.mdc" -ErrorAction SilentlyContinue | ForEach-Object {
-        try {
-            $txt = Get-Content $_.FullName -Raw -ErrorAction Stop
-            if ($txt -match "aiIapManaged:\s*true") {
-                Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue
-            }
-        } catch { }
-    }
-
-    # Remove empty directories (bottom-up)
-    Get-ChildItem -Path $root -Recurse -Directory -ErrorAction SilentlyContinue |
-        Sort-Object FullName -Descending |
-        Where-Object { @(Get-ChildItem -Path $_.FullName -Force -ErrorAction SilentlyContinue).Count -eq 0 } |
-        ForEach-Object { Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue }
-}
-
 function Remove-ManagedClaudeRules {
     $root = Join-Path $Script:OutputRoot ".claude\rules"
     if (-not (Test-Path $root)) {
@@ -2204,8 +1553,8 @@ function Remove-ManagedClaudeRules {
         ForEach-Object { Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue }
 }
 
-function Remove-ManagedGeminiRules {
-    $root = Join-Path $Script:OutputRoot ".gemini\rules"
+function Remove-ManagedClaudeAgents {
+    $root = Join-Path $Script:OutputRoot ".claude\agents"
     if (-not (Test-Path $root)) {
         return
     }
@@ -2219,45 +1568,24 @@ function Remove-ManagedGeminiRules {
         } catch { }
     }
 
-    # Remove empty directories (bottom-up)
     Get-ChildItem -Path $root -Recurse -Directory -ErrorAction SilentlyContinue |
         Sort-Object FullName -Descending |
         Where-Object { @(Get-ChildItem -Path $_.FullName -Force -ErrorAction SilentlyContinue).Count -eq 0 } |
         ForEach-Object { Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue }
 }
 
-function Remove-GeneratedFileIfManaged {
-    param([string]$Path)
+function Cleanup-ClaudeOutputs {
+    Remove-ManagedClaudeRules
+    Remove-ManagedClaudeAgents
 
-    if (-not (Test-Path $Path)) {
-        return
-    }
-
-    try {
-        $txt = Get-Content $Path -Raw -ErrorAction Stop
-        if ($txt -match "Generated by AI Instructions and Prompts Setup") {
-            Remove-Item $Path -Force -ErrorAction SilentlyContinue
-        }
-    } catch { }
-}
-
-function Cleanup-ToolOutputs {
-    param([string]$Tool)
-
-    switch ($Tool) {
-        "cursor" { Remove-ManagedCursorRules }
-        "claude" {
-            Remove-ManagedClaudeRules
-        }
-        "github-copilot" { Remove-GeneratedFileIfManaged -Path (Join-Path $Script:OutputRoot ".github\copilot-instructions.md") }
-        "windsurf" { Remove-GeneratedFileIfManaged -Path (Join-Path $Script:OutputRoot ".windsurfrules") }
-        "aider" { Remove-GeneratedFileIfManaged -Path (Join-Path $Script:OutputRoot "CONVENTIONS.md") }
-        "google-ai-studio" { Remove-GeneratedFileIfManaged -Path (Join-Path $Script:OutputRoot "GOOGLE_AI_STUDIO.md") }
-        "gemini-cli" { Remove-ManagedGeminiRules }
-        "amazon-q" { Remove-GeneratedFileIfManaged -Path (Join-Path $Script:OutputRoot "AMAZON_Q.md") }
-        "tabnine" { Remove-GeneratedFileIfManaged -Path (Join-Path $Script:OutputRoot "TABNINE.md") }
-        "cody" { Remove-GeneratedFileIfManaged -Path (Join-Path $Script:OutputRoot ".cody\instructions.md") }
-        "continue" { Remove-GeneratedFileIfManaged -Path (Join-Path $Script:OutputRoot ".continue\instructions.md") }
+    $claudeMd = Join-Path $Script:OutputRoot "CLAUDE.md"
+    if (Test-Path $claudeMd) {
+        try {
+            $txt = Get-Content $claudeMd -Raw -ErrorAction Stop
+            if ($txt -match "Generated by AI Instructions and Prompts Setup") {
+                Remove-Item $claudeMd -Force -ErrorAction SilentlyContinue
+            }
+        } catch { }
     }
 }
 

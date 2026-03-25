@@ -37,7 +37,7 @@ Write-Host "        AI Instructions and Prompts Setup" -ForegroundColor Cyan
 Write-Host "==================================================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "What do you want to set up?" -ForegroundColor White
-Write-Host "  1. Rules only  - languages, frameworks, tools (Cursor, Claude rules, Copilot, etc.)" -ForegroundColor White
+Write-Host "  1. Rules only  - languages, frameworks, structures, processes for Claude Code" -ForegroundColor White
 Write-Host "  2. Agents only - Claude Code agents (you define each: name, description, tech stack)" -ForegroundColor White
 Write-Host ""
 Write-Host "Tip: run .\.ai-iap\setup-rules.ps1 or .\.ai-iap\setup-agents.ps1 to skip this prompt." -ForegroundColor Gray

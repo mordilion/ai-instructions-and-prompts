@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Check if test results meet minimum quality thresholds
+Check if Claude test results meet minimum quality thresholds
 """
 
 import json
@@ -29,26 +29,23 @@ def check_thresholds(results, min_score):
     failures = []
     
     for result in results:
-        model = result.get('model', 'unknown')
         avg_score = result.get('averageScore', 0)
         pass_rate = result.get('passRate', 0)
         
         if avg_score < min_score:
             failures.append({
-                'model': model,
                 'type': 'score',
                 'value': avg_score,
                 'threshold': min_score,
-                'message': f"{model} average score {avg_score}/100 is below threshold {min_score}/100"
+                'message': f"Average score {avg_score}/100 is below threshold {min_score}/100"
             })
         
         if pass_rate < min_score:
             failures.append({
-                'model': model,
                 'type': 'pass_rate',
                 'value': pass_rate,
                 'threshold': min_score,
-                'message': f"{model} pass rate {pass_rate}% is below threshold {min_score}%"
+                'message': f"Pass rate {pass_rate}% is below threshold {min_score}%"
             })
     
     return failures
@@ -79,17 +76,14 @@ def main():
             print(f"  • {failure['message']}")
         print("")
         print("Action required:")
-        print("  1. Review PRIORITY_ACTIONS.md for improvement strategies")
-        print("  2. Update affected rule files with more explicit directives")
-        print("  3. Re-run tests to verify improvements")
+        print("  1. Update affected rule files with more explicit directives")
+        print("  2. Re-run tests to verify improvements")
         print("")
         sys.exit(1)
     else:
         print(f"\n✅ ALL THRESHOLDS MET")
-        print(f"   All AI models scored above {args.min_score}")
+        print(f"   Score above {args.min_score}")
         sys.exit(0)
 
 if __name__ == '__main__':
     main()
-
-

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Setup rules only: languages, frameworks, tools (Cursor, Claude rules, Copilot, etc.).
+# Setup rules only: languages, frameworks, structures, processes for Claude Code.
 # Standalone script - sources setup-common.sh and runs the rules flow.
 #
 # Usage: ./.ai-iap/setup-rules.sh
@@ -32,15 +32,10 @@ print_info "Output root: $OUTPUT_ROOT (scope: $SCOPE)"
 echo ""
 
 if [[ "${SETUP_MODE:-wizard}" == "cleanup" ]]; then
-    if [[ ${#PREVIOUS_SELECTED_TOOLS[@]} -gt 0 ]] || [[ -n "$(jq -r '.selectedCustomAgents[]? // empty' "$STATE_FILE" 2>/dev/null)" ]]; then
+    if have_previous_state || [[ -n "$(jq -r '.selectedCustomAgents[]? // empty' "$STATE_FILE" 2>/dev/null)" ]]; then
         read -rp "Remove previously generated files? (Y/n): " confirm_cleanup
         if [[ ! "$confirm_cleanup" =~ ^[Nn]$ ]]; then
-            for t in "${PREVIOUS_SELECTED_TOOLS[@]}"; do
-                cleanup_tool_outputs "$t"
-            done
-            if [[ ${#PREVIOUS_SELECTED_TOOLS[@]} -eq 0 ]]; then
-                cleanup_managed_claude_agents
-            fi
+            cleanup_claude_outputs
             rm -f "$STATE_FILE" 2>/dev/null || true
             print_success "Cleanup complete."
         fi
@@ -51,7 +46,6 @@ if [[ "${SETUP_MODE:-wizard}" == "cleanup" ]]; then
 fi
 
 if [[ "${SETUP_MODE:-wizard}" == "reuse" ]]; then
-    SELECTED_TOOLS=("${PREVIOUS_SELECTED_TOOLS[@]}")
     SELECTED_LANGUAGES=("${PREVIOUS_SELECTED_LANGUAGES[@]}")
     SELECTED_DOCUMENTATION=("${PREVIOUS_SELECTED_DOCUMENTATION[@]}")
     ENABLE_COMMIT_STANDARDS="${PREVIOUS_ENABLE_COMMIT_STANDARDS:-true}"
@@ -62,13 +56,6 @@ if [[ "${SETUP_MODE:-wizard}" == "reuse" ]]; then
     for k in "${!PREVIOUS_SELECTED_STRUCTURES[@]}"; do SELECTED_STRUCTURES["$k"]="${PREVIOUS_SELECTED_STRUCTURES[$k]}"; done
     for k in "${!PREVIOUS_SELECTED_PROCESSES[@]}"; do SELECTED_PROCESSES["$k"]="${PREVIOUS_SELECTED_PROCESSES[$k]}"; done
 else
-    select_tools_simple
-
-    if [[ ${#SELECTED_TOOLS[@]} -eq 0 ]]; then
-        print_warning "No tools selected. Exiting."
-        exit 0
-    fi
-
     select_languages_simple
 
     if [[ ${#SELECTED_LANGUAGES[@]} -eq 0 ]]; then
@@ -86,7 +73,6 @@ fi
 echo ""
 echo "Configuration Summary (rules):"
 echo "  Scope: $SCOPE ($OUTPUT_ROOT)"
-echo "  Tools: ${SELECTED_TOOLS[*]}"
 echo "  Languages: ${SELECTED_LANGUAGES[*]}"
 if [[ ${#SELECTED_DOCUMENTATION[@]} -gt 0 ]]; then
     echo "  Documentation: ${SELECTED_DOCUMENTATION[*]}"
@@ -112,18 +98,13 @@ fi
 echo ""
 
 if have_previous_state; then
-    read -rp "Clean up previously generated files for selected tools before regenerating? (Y/n): " do_cleanup
+    read -rp "Clean up previously generated files before regenerating? (Y/n): " do_cleanup
     if [[ ! "$do_cleanup" =~ ^[Nn]$ ]]; then
-        declare -A _cleanup_set
-        for t in "${PREVIOUS_SELECTED_TOOLS[@]}"; do _cleanup_set["$t"]=1; done
-        for t in "${SELECTED_TOOLS[@]}"; do _cleanup_set["$t"]=1; done
-        for t in "${!_cleanup_set[@]}"; do cleanup_tool_outputs "$t"; done
+        cleanup_claude_outputs
     fi
 fi
 
-for tool in "${SELECTED_TOOLS[@]}"; do
-    generate_tool "$tool"
-done
+generate_all
 
 # Preserve agents state when saving (rules script does not touch agents)
 SELECTED_CLAUDE_SUBAGENTS=()

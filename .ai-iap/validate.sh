@@ -60,11 +60,11 @@ fi
 
 # Test 3: Config has required fields
 has_version=$(jq 'has("version")' "$CONFIG_FILE")
-has_tools=$(jq 'has("tools")' "$CONFIG_FILE")
+has_tool=$(jq 'has("tool")' "$CONFIG_FILE")
 has_languages=$(jq 'has("languages")' "$CONFIG_FILE")
 
 test_result "Config has 'version' field" "$has_version"
-test_result "Config has 'tools' field" "$has_tools"
+test_result "Config has 'tool' field" "$has_tool"
 test_result "Config has 'languages' field" "$has_languages"
 
 # Test 4: All rule files referenced in config exist
@@ -130,40 +130,17 @@ else
     test_result "All rule files exist" "false" "Missing: ${missing_files[*]}"
 fi
 
-# Test 4b: Tool preamble files exist (if configured)
-missing_preambles=()
-while IFS= read -r tool_key; do
-    preamble_file=$(jq -r ".tools[\"$tool_key\"].preambleFile // empty" "$CONFIG_FILE")
-    if [[ -n "$preamble_file" ]]; then
-        preamble_path="$RULES_DIR/general/$preamble_file.md"
-        if [[ ! -f "$preamble_path" ]]; then
-            missing_preambles+=("general/$preamble_file.md (tool: $tool_key)")
-        fi
+# Test 4b: Tool outputFileSource file exists (if configured)
+source_file=$(jq -r '.tool.outputFileSource // empty' "$CONFIG_FILE")
+if [[ -n "$source_file" ]]; then
+    source_path="$RULES_DIR/general/$source_file.md"
+    if [[ -f "$source_path" ]]; then
+        test_result "Tool outputFileSource file exists" "true"
+    else
+        test_result "Tool outputFileSource file exists" "false" "Missing: general/$source_file.md"
     fi
-done < <(jq -r '.tools | keys[]' "$CONFIG_FILE")
-
-if [[ ${#missing_preambles[@]} -eq 0 ]]; then
-    test_result "All tool preamble files exist" "true"
 else
-    test_result "All tool preamble files exist" "false" "Missing: ${missing_preambles[*]}"
-fi
-
-# Test 4c: Tool outputFileSource files exist (if configured)
-missing_tool_sources=()
-while IFS= read -r tool_key; do
-    source_file=$(jq -r ".tools[\"$tool_key\"].outputFileSource // empty" "$CONFIG_FILE")
-    if [[ -n "$source_file" ]]; then
-        source_path="$RULES_DIR/general/$source_file.md"
-        if [[ ! -f "$source_path" ]]; then
-            missing_tool_sources+=("general/$source_file.md (tool: $tool_key)")
-        fi
-    fi
-done < <(jq -r '.tools | keys[]' "$CONFIG_FILE")
-
-if [[ ${#missing_tool_sources[@]} -eq 0 ]]; then
-    test_result "All tool outputFileSource files exist" "true"
-else
-    test_result "All tool outputFileSource files exist" "false" "Missing: ${missing_tool_sources[*]}"
+    test_result "Tool outputFileSource file (not configured)" "true"
 fi
 
 # Test 5: All markdown files have valid structure
@@ -230,7 +207,7 @@ if [[ -f "$STATE_EXAMPLE" ]]; then
     if jq empty "$STATE_EXAMPLE" 2>/dev/null; then
         test_result "State file is valid JSON" "true"
         # Verify expected keys are readable (backwards compat: scope, setupType, selectedCustomAgents optional)
-        jq -e '.version and .selectedTools != null' "$STATE_EXAMPLE" >/dev/null 2>&1 && test_result "State file has version and selectedTools" "true" || test_result "State file has version and selectedTools" "false" "Missing required keys"
+        jq -e '.version and .selectedLanguages != null' "$STATE_EXAMPLE" >/dev/null 2>&1 && test_result "State file has version and selectedLanguages" "true" || test_result "State file has version and selectedLanguages" "false" "Missing required keys"
     else
         test_result "State file is valid JSON" "false" "Invalid JSON in state file"
     fi

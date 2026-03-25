@@ -692,29 +692,6 @@ Select Remix when choosing frameworks.
 
 ---
 
-## Project Context (for non-Claude tools)
-
-Concatenated outputs (Windsurf, GitHub Copilot, Aider, Google AI Studio, Amazon Q, Tabnine, Cody, Continue.dev) append a **project context section** at the bottom. This is the recommended place to give every AI tool accurate information about your specific project.
-
-The template is generated from `rules/general/project-context.md` and contains `<!-- FILL IN -->` placeholders for:
-
-| Section | What to fill in |
-|---------|----------------|
-| Project Overview | Tech stack table (backend, frontend, infra + directories) |
-| Quick Start | Local setup and run commands |
-| Language & Locale | UI language, code language, API field naming |
-| Architecture | Key patterns, modules, data flow, auth, tenancy |
-| Conventions | Naming rules, file organization, anything linters don't enforce |
-| Architecture Decisions | ADR table — key decisions with reasoning |
-| Build & Verification | Type-check, build, and test commands |
-| Change Guidelines | Step-by-step for common changes (new entity, component, route, feature) |
-
-**To customize**: Override `rules/general/project-context.md` by creating `.ai-iap-custom/rules/general/project-context.md` with your filled-in version. Re-run setup to regenerate all concatenated outputs.
-
-> For Claude Code (`CLAUDE.md`), project context is handled separately via `rules/general/claude-project-rules.md`, which includes an auto-discovery step that Claude fills in automatically on first run.
-
----
-
 ## Overriding Core Files
 
 Override core files by creating a file with the **exact same path**.

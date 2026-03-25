@@ -1,8 +1,6 @@
-name: AI Compatibility Tests
+name: Claude Code Tests
 
-# When to run: manually, on schedule, or when rules change
 on:
-  # Manual trigger
   workflow_dispatch:
     inputs:
       test_suite:
@@ -13,17 +11,10 @@ on:
         options:
           - critical
           - all
-      models_to_test:
-        description: 'Which models to test (comma-separated: gpt4,claude,gemini,codestral)'
-        required: true
-        default: 'gpt4'
-        type: string
-  
-  # Weekly schedule (Sundays at 00:00 UTC) - cost-effective
+
   schedule:
     - cron: '0 0 * * 0'
-  
-  # When rules or processes change
+
   push:
     paths:
       - '.ai-iap/rules/**'
@@ -31,92 +22,33 @@ on:
     branches:
       - main
 
-# Cost control: Only run one workflow at a time
 concurrency:
   group: ai-tests
   cancel-in-progress: true
 
 jobs:
-  # ============================================================
-  # Job 1: Test with GPT-4
-  # ============================================================
-  test-gpt4:
-    name: Test GPT-4 Turbo
-    runs-on: ubuntu-latest
-    # Only run if GPT-4 is requested or scheduled
-    if: |
-      github.event_name == 'schedule' || 
-      (github.event_name == 'workflow_dispatch' && contains(github.event.inputs.models_to_test, 'gpt4'))
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: .github/scripts/package.json
-      
-      - name: Install dependencies
-        run: |
-          cd .github/scripts
-          npm install
-      
-      - name: Run GPT-4 tests
-        continue-on-error: true  # Don't fail workflow if API key is missing
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: |
-          if [ -z "$OPENAI_API_KEY" ]; then
-            echo "⚠️ OPENAI_API_KEY not set - skipping GPT-4 tests"
-            echo "Add secret in GitHub Settings → Secrets → Actions → OPENAI_API_KEY"
-            exit 0
-          fi
-          cd .github/scripts
-          node test-ai.js \
-            --provider openai \
-            --model gpt-4-turbo-preview \
-            --test-suite ${{ github.event.inputs.test_suite || 'critical' }}
-      
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: gpt4-results
-          path: .github/scripts/test-results/
-          retention-days: 30
-
-  # ============================================================
-  # Job 2: Test with Claude
-  # ============================================================
   test-claude:
-    name: Test Claude 3.5 Sonnet
+    name: Test Claude
     runs-on: ubuntu-latest
-    # Only run if Claude is requested or scheduled
-    if: |
-      github.event_name == 'schedule' || 
-      (github.event_name == 'workflow_dispatch' && contains(github.event.inputs.models_to_test, 'claude'))
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: .github/scripts/package.json
-      
+
       - name: Install dependencies
         run: |
           cd .github/scripts
           npm install
-      
+
       - name: Run Claude tests
-        continue-on-error: true  # Don't fail workflow if API key is missing
+        continue-on-error: true
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
@@ -127,10 +59,8 @@ jobs:
           fi
           cd .github/scripts
           node test-ai.js \
-            --provider anthropic \
-            --model claude-3-5-sonnet-20241022 \
             --test-suite ${{ github.event.inputs.test_suite || 'critical' }}
-      
+
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
@@ -139,131 +69,26 @@ jobs:
           path: .github/scripts/test-results/
           retention-days: 30
 
-  # ============================================================
-  # Job 3: Test with Gemini
-  # ============================================================
-  test-gemini:
-    name: Test Gemini 1.5 Pro
-    runs-on: ubuntu-latest
-    # Only run if Gemini is requested or scheduled
-    if: |
-      github.event_name == 'schedule' || 
-      (github.event_name == 'workflow_dispatch' && contains(github.event.inputs.models_to_test, 'gemini'))
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: .github/scripts/package.json
-      
-      - name: Install dependencies
-        run: |
-          cd .github/scripts
-          npm install
-      
-      - name: Run Gemini tests
-        continue-on-error: true  # Don't fail workflow if API key is missing
-        env:
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-        run: |
-          if [ -z "$GOOGLE_API_KEY" ]; then
-            echo "⚠️ GOOGLE_API_KEY not set - skipping Gemini tests"
-            echo "Add secret in GitHub Settings → Secrets → Actions → GOOGLE_API_KEY"
-            exit 0
-          fi
-          cd .github/scripts
-          node test-ai.js \
-            --provider google \
-            --model gemini-1.5-pro \
-            --test-suite ${{ github.event.inputs.test_suite || 'critical' }}
-      
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: gemini-results
-          path: .github/scripts/test-results/
-          retention-days: 30
-
-  # ============================================================
-  # Job 4: Test with Codestral
-  # ============================================================
-  test-codestral:
-    name: Test Codestral
-    runs-on: ubuntu-latest
-    # Only run if Codestral is requested or scheduled
-    if: |
-      github.event_name == 'schedule' || 
-      (github.event_name == 'workflow_dispatch' && contains(github.event.inputs.models_to_test, 'codestral'))
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: .github/scripts/package.json
-      
-      - name: Install dependencies
-        run: |
-          cd .github/scripts
-          npm install
-      
-      - name: Run Codestral tests
-        continue-on-error: true  # Don't fail workflow if API key is missing
-        env:
-          MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
-        run: |
-          if [ -z "$MISTRAL_API_KEY" ]; then
-            echo "⚠️ MISTRAL_API_KEY not set - skipping Codestral tests"
-            echo "Add secret in GitHub Settings → Secrets → Actions → MISTRAL_API_KEY"
-            exit 0
-          fi
-          cd .github/scripts
-          node test-ai.js \
-            --provider mistral \
-            --model codestral-latest \
-            --test-suite ${{ github.event.inputs.test_suite || 'critical' }}
-      
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: codestral-results
-          path: .github/scripts/test-results/
-          retention-days: 30
-
-  # ============================================================
-  # Job 5: Analyze Results
-  # ============================================================
   analyze-results:
-    name: Analyze & Compare Results
+    name: Analyze Results
     runs-on: ubuntu-latest
-    needs: [test-gpt4, test-claude, test-gemini, test-codestral]
+    needs: [test-claude]
     if: always()
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
-      - name: Download all results
+
+      - name: Download results
         uses: actions/download-artifact@v4
         with:
           path: all-results
-      
-      - name: Analyze cross-AI consistency
+
+      - name: Analyze results
         run: |
           cd .github/scripts
           node analyze-results.js ../all-results
-      
+
       - name: Upload analysis
         uses: actions/upload-artifact@v4
         with:
@@ -271,25 +96,22 @@ jobs:
           path: .github/scripts/analysis-report.md
           retention-days: 90
 
-  # ============================================================
-  # Job 6: Report Status
-  # ============================================================
   report-status:
     name: Report Status
     runs-on: ubuntu-latest
     needs: [analyze-results]
     if: always()
-    
+
     steps:
       - name: Download analysis
         uses: actions/download-artifact@v4
         with:
           name: analysis-report
-      
+
       - name: Post to GitHub Summary
         run: |
           cat analysis-report.md >> $GITHUB_STEP_SUMMARY
-      
+
       - name: Comment on PR (if applicable)
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
@@ -303,10 +125,3 @@ jobs:
               repo: context.repo.repo,
               body: report
             });
-
-# Cost estimates:
-# - Critical suite (3 tests): ~$0.20 per run
-# - All tests (5 tests): ~$0.35 per run
-# - Weekly schedule: ~$1.60/month (critical) or ~$2.80/month (all)
-# - Per-commit (if enabled): Variable, depends on commit frequency
-

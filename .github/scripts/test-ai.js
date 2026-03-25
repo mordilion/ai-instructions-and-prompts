@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 /**
- * AI Compatibility Test Runner
+ * Claude Code Test Runner
  * 
- * Tests AI models against standardized prompts to ensure consistent code quality
+ * Tests Claude against standardized prompts to ensure consistent code quality
  */
 
 import fs from 'fs';
@@ -13,13 +13,11 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Parse command line arguments
 const args = process.argv.slice(2);
-const model = args[args.indexOf('--model') + 1];
-const provider = args[args.indexOf('--provider') + 1];
 const testSuite = args[args.indexOf('--test-suite') + 1] || 'critical';
 
-// Load test definitions
+const model = 'claude-3-5-sonnet-20241022';
+
 const testDefinitions = {
   'spring-boot': {
     id: 'test-1-spring-boot',
@@ -38,7 +36,7 @@ const testDefinitions = {
     ],
     forbiddenPatterns: [
       '@Autowired',
-      'return.*User[^D]',  // Returns User not UserDto
+      'return.*User[^D]',
       '\\.get\\(\\)'
     ],
     rules: [
@@ -61,14 +59,14 @@ const testDefinitions = {
       'const.*=.*React\\.FC',
       'useState',
       'useEffect',
-      'userId.*\\]',  // userId in deps
+      'userId.*\\]',
       'if.*loading',
       'if.*!user'
     ],
     forbiddenPatterns: [
       'class.*extends.*Component',
-      'useEffect.*\\[\\]',  // Empty deps when should have userId
-      '^\\s*const\\s+[a-z]'  // camelCase component name
+      'useEffect.*\\[\\]',
+      '^\\s*const\\s+[a-z]'
     ],
     rules: [
       '.ai-iap/rules/general/persona.md',
@@ -96,10 +94,10 @@ const testDefinitions = {
       'private readonly.*Service'
     ],
     forbiddenPatterns: [
-      'return.*User[^D]',  // Returns User not UserDto
+      'return.*User[^D]',
       '\\[Autowired\\]',
-      '_context\\.',  // Direct DB access
-      'try.*catch'  // Try-catch in controller
+      '_context\\.',
+      'try.*catch'
     ],
     rules: [
       '.ai-iap/rules/general/persona.md',
@@ -126,8 +124,8 @@ const testDefinitions = {
       'async def'
     ],
     forbiddenPatterns: [
-      '^def ',  // Sync def instead of async
-      '@app\\.post.*\\)',  // Missing response_model
+      '^def ',
+      '@app\\.post.*\\)',
     ],
     rules: [
       '.ai-iap/rules/general/persona.md',
@@ -169,7 +167,6 @@ const testDefinitions = {
   }
 };
 
-// Test suites
 const testSuites = {
   critical: ['spring-boot', 'react', 'aspnet'],
   all: Object.keys(testDefinitions),
@@ -180,61 +177,12 @@ const testSuites = {
   'nextjs': ['nextjs']
 };
 
-// AI Provider clients
-async function createAIClient(provider) {
-  switch (provider) {
-    case 'openai': {
-      const { default: OpenAI } = await import('openai');
-      return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    }
-    
-    case 'anthropic': {
-      const { default: Anthropic } = await import('@anthropic-ai/sdk');
-      return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    }
-    
-    case 'google': {
-      const { GoogleGenerativeAI } = await import('@google/generative-ai');
-      return new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-    }
-    
-    case 'mistral': {
-      // Use OpenAI-compatible API
-      const { default: OpenAI } = await import('openai');
-      return new OpenAI({
-        apiKey: process.env.MISTRAL_API_KEY,
-        baseURL: 'https://api.mistral.ai/v1'
-      });
-    }
-    
-    case 'ollama': {
-      // Local Ollama instance (free, no API key needed)
-      const { default: OpenAI } = await import('openai');
-      const baseURL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434/v1';
-      return new OpenAI({
-        apiKey: 'ollama', // Ollama doesn't require real API key
-        baseURL: baseURL
-      });
-    }
-    
-    case 'lmstudio': {
-      // LM Studio local instance (free, no API key needed)
-      const { default: OpenAI } = await import('openai');
-      const baseURL = process.env.LMSTUDIO_BASE_URL || 'http://localhost:1234/v1';
-      return new OpenAI({
-        apiKey: 'lmstudio', // LM Studio doesn't require real API key
-        baseURL: baseURL
-      });
-    }
-    
-    default:
-      throw new Error(`Unknown provider: ${provider}`);
-  }
+async function createClient() {
+  const { default: Anthropic } = await import('@anthropic-ai/sdk');
+  return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 }
 
-// Load rule files
 function loadRules(ruleFiles) {
-  // Go up to project root (from .github/scripts to project root)
   const projectRoot = path.join(__dirname, '..', '..');
   let rulesContent = '';
   
@@ -250,54 +198,24 @@ function loadRules(ruleFiles) {
   return rulesContent;
 }
 
-// Call AI model
-async function callAI(client, provider, model, systemPrompt, userPrompt) {
+async function callClaude(client, systemPrompt, userPrompt) {
   try {
-    switch (provider) {
-      case 'openai':
-      case 'mistral':
-      case 'ollama':
-      case 'lmstudio':
-        const completion = await client.chat.completions.create({
-          model: model,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt }
-          ],
-          temperature: 0.3,
-          max_tokens: 2000
-        });
-        return completion.choices[0].message.content;
-      
-      case 'anthropic':
-        const message = await client.messages.create({
-          model: model,
-          max_tokens: 2000,
-          temperature: 0.3,
-          system: systemPrompt,
-          messages: [
-            { role: 'user', content: userPrompt }
-          ]
-        });
-        return message.content[0].text;
-      
-      case 'google':
-        const genModel = client.getGenerativeModel({ model: model });
-        const result = await genModel.generateContent(
-          `${systemPrompt}\n\n${userPrompt}`
-        );
-        return result.response.text();
-      
-      default:
-        throw new Error(`Unknown provider: ${provider}`);
-    }
+    const message = await client.messages.create({
+      model: model,
+      max_tokens: 2000,
+      temperature: 0.3,
+      system: systemPrompt,
+      messages: [
+        { role: 'user', content: userPrompt }
+      ]
+    });
+    return message.content[0].text;
   } catch (error) {
-    console.error(`Error calling ${provider}:`, error.message);
+    console.error(`Error calling Claude:`, error.message);
     throw error;
   }
 }
 
-// Validate output against patterns
 function validateOutput(output, test) {
   const results = {
     expectedMatches: [],
@@ -306,7 +224,6 @@ function validateOutput(output, test) {
     forbiddenMissing: []
   };
   
-  // Check expected patterns
   for (const pattern of test.expectedPatterns) {
     const regex = new RegExp(pattern, 'gm');
     if (regex.test(output)) {
@@ -316,7 +233,6 @@ function validateOutput(output, test) {
     }
   }
   
-  // Check forbidden patterns
   for (const pattern of test.forbiddenPatterns) {
     const regex = new RegExp(pattern, 'gm');
     if (regex.test(output)) {
@@ -326,7 +242,6 @@ function validateOutput(output, test) {
     }
   }
   
-  // Calculate score
   const expectedScore = (results.expectedMatches.length / test.expectedPatterns.length) * 70;
   const forbiddenScore = (results.forbiddenMissing.length / test.forbiddenPatterns.length) * 30;
   const totalScore = Math.round(expectedScore + forbiddenScore);
@@ -338,26 +253,17 @@ function validateOutput(output, test) {
   };
 }
 
-// Run single test
-async function runTest(client, provider, model, testKey) {
+async function runTest(client, testKey) {
   const test = testDefinitions[testKey];
   console.log(`\nRunning test: ${test.name}`);
   
   const startTime = Date.now();
   
   try {
-    // Load rules
     const rules = loadRules(test.rules);
-    
-    // Create system prompt
     const systemPrompt = `You are a senior software engineer. Follow these coding standards strictly:\n\n${rules}`;
-    
-    // Call AI
-    const output = await callAI(client, provider, model, systemPrompt, test.prompt);
-    
-    // Validate output
+    const output = await callClaude(client, systemPrompt, test.prompt);
     const validation = validateOutput(output, test);
-    
     const duration = Date.now() - startTime;
     
     return {
@@ -366,7 +272,7 @@ async function runTest(client, provider, model, testKey) {
       language: test.language,
       framework: test.framework,
       model: model,
-      provider: provider,
+      provider: 'anthropic',
       score: validation.score,
       passed: validation.passed,
       duration: duration,
@@ -381,7 +287,7 @@ async function runTest(client, provider, model, testKey) {
       language: test.language,
       framework: test.framework,
       model: model,
-      provider: provider,
+      provider: 'anthropic',
       score: 0,
       passed: false,
       error: error.message,
@@ -390,26 +296,19 @@ async function runTest(client, provider, model, testKey) {
   }
 }
 
-// Main function
 async function main() {
-  console.log(`Testing ${model} (${provider}) with test suite: ${testSuite}`);
+  console.log(`Testing Claude (${model}) with test suite: ${testSuite}`);
   
-  // Create AI client
-  const client = await createAIClient(provider);
-  
-  // Get tests to run
+  const client = await createClient();
   const tests = testSuites[testSuite] || testSuites.critical;
   
-  // Run tests
   const results = [];
   for (const testKey of tests) {
-    const result = await runTest(client, provider, model, testKey);
+    const result = await runTest(client, testKey);
     results.push(result);
-    
     console.log(`  Score: ${result.score}/100 ${result.passed ? '✓' : '✗'}`);
   }
   
-  // Calculate overall score
   const avgScore = Math.round(
     results.reduce((sum, r) => sum + r.score, 0) / results.length
   );
@@ -419,7 +318,7 @@ async function main() {
   
   const summary = {
     model: model,
-    provider: provider,
+    provider: 'anthropic',
     testSuite: testSuite,
     totalTests: results.length,
     passed: results.filter(r => r.passed).length,
@@ -430,7 +329,6 @@ async function main() {
     timestamp: new Date().toISOString()
   };
   
-  // Save results
   const outputDir = path.join(process.cwd(), 'test-results');
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
@@ -438,7 +336,7 @@ async function main() {
   
   const outputFile = path.join(
     outputDir,
-    `${provider}-${model.replace(/[^a-z0-9]/gi, '-')}-${Date.now()}.json`
+    `anthropic-${model.replace(/[^a-z0-9]/gi, '-')}-${Date.now()}.json`
   );
   fs.writeFileSync(outputFile, JSON.stringify(summary, null, 2));
   
@@ -450,7 +348,6 @@ async function main() {
   console.log(`Pass Rate: ${summary.passRate}%`);
   console.log(`\nResults saved to: ${outputFile}`);
   
-  // Exit with error if pass rate < 90%
   if (passRate < 90) {
     console.error(`\nERROR: Pass rate ${passRate}% is below threshold (90%)`);
     process.exit(1);
@@ -461,5 +358,3 @@ main().catch(error => {
   console.error('Fatal error:', error);
   process.exit(1);
 });
-
-

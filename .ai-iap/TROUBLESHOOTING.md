@@ -79,25 +79,6 @@ chmod +x .ai-iap/setup.sh
 
 ---
 
-### "General rules missing in Cursor output"
-
-**Error**: Generated `.cursor/rules/` folder doesn't contain general rules
-
-**Cause**: This was a bug in early versions (fixed in v1.0.0)
-
-**Fix**:
-```bash
-# Pull latest version
-git pull origin main
-
-# Re-run setup
-.\.ai-iap\setup.ps1
-```
-
-**Status**: ✅ Fixed in current version (general rules have `alwaysApply: true`)
-
----
-
 ### "No frameworks showing for my language"
 
 **Issue**: Selected a language but no frameworks appear
@@ -129,9 +110,9 @@ jq empty .ai-iap/config.json
 
 ## 📁 File Generation Issues
 
-### "No files generated in .cursor folder"
+### "No files generated after setup"
 
-**Issue**: Setup completes but no files created
+**Issue**: Setup completes but no Claude Code files created
 
 **Cause**: Script didn't have write permissions or wrong directory
 
@@ -140,8 +121,9 @@ jq empty .ai-iap/config.json
 # Verify you're in project root
 pwd
 
-# Check if .cursor folder was created
-ls -la .cursor/
+# Check if .claude folder was created
+ls -la .claude/
+ls -la CLAUDE.md
 
 # Check write permissions
 ls -ld .
@@ -246,8 +228,8 @@ git status --ignored
 
 # Look for:
 # Ignored files:
-#   .cursor/
 #   .claude/
+#   CLAUDE.md
 ```
 
 **Fix** (only if you intentionally want to commit generated outputs):
@@ -257,12 +239,12 @@ nano .gitignore
 # Delete or comment out the ignore patterns for generated files
 
 # Option 2: Force add specific files
-git add -f .cursor/rules/*.mdc
-git commit -m "Add generated AI configs"
+git add -f .claude/rules/*.md CLAUDE.md
+git commit -m "Add generated Claude Code configs"
 ```
 
 **Recommendation**: Ensure your repo is not ignoring the files you intend to share.
-For team sharing, commit the source folders (`.ai-iap/`, `.ai-iap-custom/`) and the state file (`.ai-iap-state.json`), and decide whether to also commit generated outputs (`.cursor/rules/`, `.claude/rules/`, etc.).
+For team sharing, commit the source folders (`.ai-iap/`, `.ai-iap-custom/`) and the state file (`.ai-iap-state.json`), and decide whether to also commit generated outputs (`.claude/rules/`, `CLAUDE.md`, `.claude/agents/`).
 
 ---
 
@@ -291,51 +273,13 @@ cat .ai-iap/rules/typescript/architecture.md
 
 # Generate test config
 .\.ai-iap\setup.ps1
-# Select: Cursor, TypeScript, React
-# Check generated .cursor/rules/ files
+# Select: Claude Code, TypeScript, React
+# Check generated .claude/rules/ files and CLAUDE.md
 ```
 
 ---
 
-## 🔧 Tool-Specific Issues
-
-### Cursor: Rules not being applied
-
-**Issue**: Generated `.cursor/rules/*.mdc` but AI not following them
-
-**Cause 1**: Cursor needs to index the rules
-
-**Fix**: Restart Cursor or reload window
-
-**Cause 2**: Rules files have syntax errors
-
-**Check**:
-```bash
-# Validate frontmatter
-head -10 .cursor/rules/general/persona.mdc
-
-# Should start with:
-# ---
-# aiIapManaged: true
-# ...
-# ---
-```
-
-**Cause 3**: File globs don't match your files
-
-**Example**:
-```yaml
-# If rule has:
-globs:
-  - "*.ts"
-
-# But your files are .js
-# Then rule won't apply
-```
-
-**Fix**: Check glob patterns match your file types
-
----
+## 🔧 Claude Code Issues
 
 ### Claude: too many rules applying
 
@@ -357,32 +301,6 @@ globs:
 **Tip**: Ensure `paths:` patterns match your repo layout so rules only apply to relevant files.
 
 **Claude Code subagents**: To add or remove subagents (e.g. code-reviewer, codebase-explorer), re-run setup and choose "reuse" then when prompted "Set up Claude Code subagents?" answer yes and pick the ones you want. Generated subagent files in `.claude/agents/` are marked `aiIapManaged: true` and are removed on cleanup when you run setup in cleanup mode.
-
----
-
-### GitHub Copilot: Instructions not being followed
-
-**Issue**: Generated `.github/copilot-instructions.md` but Copilot ignores it
-
-**Cause 1**: File must be in `.github/` at repo root
-
-**Check**:
-```bash
-ls .github/copilot-instructions.md
-# Should exist
-```
-
-**Cause 2**: Copilot needs time to index
-
-**Fix**: Wait 5-10 minutes, then try again
-
-**Cause 3**: File too large (>100KB)
-
-**Check**:
-```bash
-du -h .github/copilot-instructions.md
-# Should be <100KB
-```
 
 ---
 
@@ -440,8 +358,8 @@ ls -R .ai-iap/rules/ | grep -c ".md"
 
 # 5. Test file generation
 .\.ai-iap\setup.ps1
-# Select: Cursor, TypeScript, React
-# Check: .cursor/rules/ folder created
+# Select: Claude Code, TypeScript, React
+# Check: .claude/rules/ folder and CLAUDE.md created
 ```
 
 ### Get Help

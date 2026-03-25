@@ -2,7 +2,7 @@
 
 ## Overview
 
-For engineering teams evaluating AI Instructions & Prompts
+For engineering teams adopting AI Instructions & Prompts with Claude Code
 
 ---
 
@@ -32,7 +32,7 @@ These are universally applicable and conflict-free:
 | **Documentation standards** | Code comments, API docs, READMEs |
 | **Framework best practices** | React hooks, Django ORM, Spring patterns |
 
-**Action**: Load these into your AI tools immediately.
+**Action**: Load these into Claude Code immediately.
 
 ### **Adapt to your workflow**
 
@@ -100,7 +100,7 @@ These may conflict with established practices:
 
 **Month 3+**: Refinement
 
-- Monitor AI behavior consistency
+- Monitor Claude Code behavior consistency
 - Update based on team feedback
 - Document deviations
 
@@ -115,9 +115,9 @@ These may conflict with established practices:
 
 **Steps**:
 
-1. Run setup for all tools: `.ai-iap/setup.sh`
-2. Select all applicable languages/frameworks
-3. Commit generated configs
+1. Run setup: `.ai-iap/setup.sh`
+2. Select Claude Code, then applicable languages/frameworks
+3. Commit generated configs (`.claude/rules/`, `CLAUDE.md`, `.claude/agents/`)
 4. Announce to team with training session
 
 ### Strategy 3: **Cherry-Pick** (Conservative)
@@ -179,13 +179,13 @@ These may conflict with established practices:
 
 - [ ] Clone repository
 
-- [ ] Run setup script for primary AI tool (Cursor/Claude Code)
+- [ ] Run setup script for Claude Code
 
 - [ ] Review generated configs
 
 - [ ] Commit `.ai-iap/`, `.ai-iap-custom/`, and `.ai-iap-state.json` in the repo (shared across the team)
 
-- [ ] Re-run setup in **Modify selection** mode when you need to add/remove tools, languages, frameworks, or processes
+- [ ] Re-run setup in **Modify selection** mode when you need to add/remove languages, frameworks, or processes
 
 - [ ] Create/update `.ai-iap-custom/` with team overrides and custom code patterns
 
@@ -211,7 +211,7 @@ These may conflict with established practices:
 
 - [ ] Sync with upstream project (if using vanilla)
 
-- [ ] Document AI behavior issues
+- [ ] Document Claude Code behavior issues
 
 - [ ] Refine custom extensions
 
@@ -222,7 +222,7 @@ These may conflict with established practices:
 - **Don't adopt everything blindly** → conflicts with existing workflows
 - **Don't modify core `.ai-iap/` files directly** → makes upstream updates painful
 - **Don't skip security rules** → increases risk of vulnerabilities in AI-generated code
-- **Don't ignore team feedback** → low adoption and inconsistent usage
+- **Don't ignore team feedback** → low adoption and inconsistent Claude Code usage
 - **Don't run without ownership** → rules become stale and unused
 
 ---
@@ -236,7 +236,7 @@ Track these after 30-60 days:
 | **AI code quality** | 90% PR approval without AI-specific feedback | PR review comments |
 | **Security issues** | <5% OWASP violations | Security scan results |
 | **Consistency** | Same patterns across projects | Code review |
-| **Adoption rate** | 80% team using AI tools | Survey |
+| **Adoption rate** | 80% team using Claude Code | Survey |
 | **Time saved** | 20% reduction in code review time | PR metrics |
 
 ---
@@ -267,8 +267,8 @@ Decision guide:
 
 ## FAQs
 
-**Q: Can we use this with our internal AI tool?**
-A: Yes, if it supports markdown instructions. Add your tool to `config.json`.
+**Q: Can we use this with other AI tools besides Claude Code?**
+A: The setup is focused on Claude Code. For other tools, check if they support markdown-based instructions and adapt accordingly.
 
 **Q: What if we find a bug or bad advice?**
 A: Override in `.ai-iap-custom/` immediately, then report upstream.

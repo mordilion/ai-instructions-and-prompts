@@ -1,6 +1,6 @@
 # AI Instructions & Prompts
 
-**Consistent AI coding assistants across all your projects and tools.**
+**Consistent AI coding standards for Claude Code across all your projects.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-blue.svg)
@@ -10,26 +10,23 @@
 
 ## The Problem
 
-Every AI coding assistant (Cursor, Copilot, Claude, etc.) needs its own configuration file. When you work across multiple projects and tools, you end up with:
+AI coding assistants need configuration to produce consistent, high-quality code. Without it, you end up with:
 - Inconsistent code quality between projects
-- Different AI behaviors in different tools
-- Copy-pasting the same rules everywhere
 - No standard for architecture and code style
+- Copy-pasting the same rules everywhere
 
 ## The Solution
 
-**AI Instructions & Prompts** is a portable, tool-agnostic collection of coding rules. Define your standards once, generate configurations for any AI tool.
+**AI Instructions & Prompts** is a portable collection of coding rules. Define your standards once, generate Claude Code configurations automatically.
 
 ```
-Your Rules (one source) → Setup Script → All AI Tools Configured
+Your Rules (one source) → Setup Script → Claude Code Configured
 ```
 
 ---
 
 ## ✨ Features
 
-- **🔧 Multi-Tool Support** – 11 AI coding assistants: Cursor, Claude Code, GitHub Copilot, Windsurf, Aider, Google AI
-  Studio, Gemini CLI, Amazon Q Developer, Tabnine, Cody, Continue.dev
 - **🧠 Role-Based Adaptive AI** – AI detects your expertise level (Product Manager, Software Engineer, DevOps, Junior) and adapts its questions accordingly – eliminates assumptions and provides role-appropriate guidance
 - **✅ Rule Compliance** – AI must follow all applicable rules; nothing is optional unless explicitly marked
 - **🌍 Multi-Language** – Kotlin, JavaScript, TypeScript, HTML, CSS, Sass/SCSS, Less, PostCSS, Stylus, YAML, JSON, dotenv (.env), Dockerfile, SQL, Java, Python, Dart/Flutter, .NET/C#, PHP, Swift, Node.js, Bash, PowerShell
@@ -118,8 +115,8 @@ chmod +x .ai-iap/setup.sh && ./.ai-iap/setup.sh
 
 When you run setup, you choose where to apply the configuration:
 
-- **This project** – Generated files go into the current directory (e.g. `.claude/`, `.cursor/`). State is stored in `.ai-iap-state.json` in the project. Use for version-controlled, per-repo setup.
-- **Global (user)** – Generated files go to your home directory (e.g. `~/.claude/`, `~/.cursor/`). State is stored in `~/.ai-iap-state.json`. Use for personal defaults across all projects. Only Cursor and Claude Code are offered when scope is global (other tools are project-bound).
+- **This project** – Generated files go into the current directory (e.g. `.claude/`). State is stored in `.ai-iap-state.json` in the project. Use for version-controlled, per-repo setup.
+- **Global (user)** – Generated files go to your home directory (e.g. `~/.claude/`). State is stored in `~/.ai-iap-state.json`. Use for personal defaults across all projects.
 
 ### Setup split: Rules vs Agents
 
@@ -127,7 +124,7 @@ Setup is split into two **standalone scripts** (no shared argument to one file).
 
 **Bash (macOS / Linux):**
 - **`setup-common.sh`** – Shared library (sourced by both). Constants, config loading, state, scope, cleanup, generation helpers.
-- **`setup-rules.sh`** – Rules flow only: tools, languages, frameworks, structures, processes, then generates Cursor/Claude/Copilot/etc. outputs.
+- **`setup-rules.sh`** – Rules flow only: languages, frameworks, structures, processes, then generates `.claude/rules/**/*.md` and `CLAUDE.md`.
 - **`setup-agents.sh`** – Agents flow only: define Claude Code agents (name, description, tech stack), then generates `.claude/agents/*.md`.
 
 **PowerShell (Windows):**
@@ -142,13 +139,13 @@ Use the script that matches what you want to configure:
 
 You can also run **`./.ai-iap/setup.sh`** or **`.\.ai-iap\setup.ps1`** (dispatcher) and choose "Rules only" or "Agents only" when prompted; it then runs the corresponding script.
 
-### Re-running Setup (Add/Remove Languages & Tools)
+### Re-running Setup (Add/Remove Languages)
 
 You can safely run setup multiple times.
 
 - The setup script stores your last choices in `.ai-iap-state.json` (project) or `~/.ai-iap-state.json` (global)
 - On rerun, you can **reuse**, **modify**, or **clean up** previously generated outputs
-- Cleanup is **safe by default**: only files marked `aiIapManaged: true` (or files with the generated header comment) are removed
+- Cleanup is **safe by default**: only files marked `aiIapManaged: true` (in YAML frontmatter) are removed
 
 When you choose **Modify selection**, the wizard will show your previous selection and use it as the default:
 
@@ -156,39 +153,22 @@ When you choose **Modify selection**, the wizard will show your previous selecti
 - Enter a new list of numbers to **add/remove** items
 - Use **`s`** (skip) on optional steps (documentation/frameworks/processes/structures) to remove previously selected items
 
-### Generated Outputs (High Level)
+### Generated Outputs
 
-Setup generates tool-specific outputs into your chosen **output root** (project directory or, for global scope, your home directory).
+Setup generates the following Claude Code outputs into your chosen **output root** (project directory or home directory for global scope):
 
-Examples (project scope):
-- Cursor: `.cursor/rules/**/*.mdc`
-- Claude Code: `.claude/rules/**/*.md`
-- Gemini CLI: `.gemini/rules/**/*.md`
-- Claude Code (project rules): `CLAUDE.md`
-- GitHub Copilot: `.github/copilot-instructions.md`
-
-(See **Supported AI Tools** below for the full mapping.)
-
-**Note**: Concatenated outputs (Copilot, Windsurf, Aider, etc.) include two project-level sections:
-- **Preamble** (top): short compliance mandate from `rules/general/compliance-preamble.md` via `tools.*.preambleFile`
-- **Project context** (bottom): project overview template from `rules/general/project-context.md` via `tools.*.contextFile` — fill in stack, quick start, architecture, conventions, and ADRs so every AI tool has accurate project context
-
-**Claude note**: `CLAUDE.md` is generated from `rules/general/claude-project-rules.md` to keep a short, high-signal project rules list. When Claude Code is selected, the wizard can also set up **agents** (`.claude/agents/*.md`): generic helpers (code-reviewer, test-writer, …) or **role-based agents** that have **project rules injected** (e.g. iOS Developer, PHP Developer, Vue.js Developer, SEO Specialist, UI/UX Designer). You can define your own roles in `.ai-iap-custom/claude-agents.json` (see CUSTOMIZATION.md). Subagents are project-level and safe to commit.
+| Output | Description |
+|--------|-------------|
+| `.claude/rules/**/*.md` | Modular rule files with YAML frontmatter (`aiIapManaged: true`, optional `paths:` globs) |
+| `CLAUDE.md` | Project rules file (generated from `rules/general/claude-project-rules.md`) |
+| `.claude/agents/*.md` | Optional subagents (via `setup-agents`) |
 
 ### 3. Follow the Wizard
 
 The setup wizard will guide you through:
 
-**Step 0: Where to apply (scope)**  
+**Step 1: Where to apply (scope)**
 Choose **This project** or **Global (user)**. When running `setup.sh`, choose **Rules only** or **Agents only** (or use `setup-rules.sh` / `setup-agents.sh` to skip that).
-
-**Step 1: Select AI Tools** (rules only; skipped when running setup-agents)
-```
-Select AI tools to configure:
-  1. Cursor ⭐
-  2. Claude Code ⭐
-  ...
-```
 
 **Step 2: Select Languages**
 ```
@@ -239,7 +219,7 @@ Agents are always defined by you: no presets. **One agent = one specialisation.*
 
 Example: "I need 4 agents: one for iOS, one for Vue.js, one for SEO and Linguistic, one for PHP with Laravel" → run setup-agents, enter 4, then for each agent set name, description, tech stack, and persona. Generated files go to `.claude/agents/` (or global scope).
 
-That's it! Your AI tools are now configured with consistent coding standards.
+That's it! Your Claude Code instance is now configured with consistent coding standards.
 
 ---
 
@@ -312,26 +292,6 @@ Want to add company-specific standards, internal processes, or override core rul
 - ✅ Maintain compliance requirements separately
 
 **📚 Full Documentation**: See [CUSTOMIZATION.md](../CUSTOMIZATION.md) for complete guide with examples.
-
----
-
-## 📋 Supported AI Tools
-
-| Tool | Output | Description |
-|------|--------|-------------|
-| **Cursor** ⭐ | `.cursor/rules/*.mdc` | Separate rule files with glob patterns |
-| **Claude Code** ⭐ | `.claude/rules/**/*.md`, `CLAUDE.md`, `.claude/agents/*.md` | Modular rules, project rules file, optional subagents (code-reviewer, explorer, test-writer, etc.) |
-| **GitHub Copilot** | `.github/copilot-instructions.md` | Repository-level instructions |
-| **Windsurf** | `.windsurfrules` | Single concatenated file |
-| **Aider** | `CONVENTIONS.md` | Convention file for Aider |
-| **Google AI Studio** | `GOOGLE_AI_STUDIO.md` | Single concatenated file for Gemini models |
-| **Gemini CLI** | `.gemini/rules/**/*.md` | Modular rule files (same layout as Cursor) |
-| **Amazon Q Developer** | `AMAZON_Q.md` | Single concatenated file for AWS AI assistant |
-| **Tabnine** | `TABNINE.md` | Single concatenated file for team sharing |
-| **Cody (Sourcegraph)** | `.cody/instructions.md` | Repository-level instructions |
-| **Continue.dev** | `.continue/instructions.md` | VS Code extension instructions |
-
-⭐ = Recommended
 
 ---
 
@@ -508,7 +468,7 @@ In addition to coding rules, this system includes **step-by-step workflow guides
 1. Navigate to `.ai-iap/processes/ondemand/{language}/{process}.md`
 2. Scroll to **"Usage - Copy This Complete Prompt"** section
 3. Copy the entire prompt block
-4. Paste into your AI tool
+4. Paste into Claude Code
 5. AI will guide you through implementation
 
 ### Available Processes (All 8 Core Application Languages)
@@ -533,13 +493,13 @@ In addition to coding rules, this system includes **step-by-step workflow guides
 1. **Smart Loading**: Permanent processes loaded into AI, on-demand processes copied when needed (85% token savings)
 2. **Self-Contained Prompts**: Each on-demand process includes complete, copy-paste prompt with all context
 3. **Phase-Based**: Each process divided into 4-5 clear phases with objectives and deliverables
-4. **Understandability-First**: Clarity prioritized over brevity - same result across GPT-3.5, GPT-4, Claude, Gemini, Codestral
+4. **Understandability-First**: Clarity prioritized over brevity - same result across all AI models
 5. **Token-Optimized**: 30-40% shorter than traditional docs where clarity is maintained
 6. **AI-Optimized**: Explicit directives (`> **ALWAYS**`, `> **NEVER**`), clear implementation steps
 7. **Version Flexible**: No hardcoded versions - reads from project config files (.nvmrc, global.json, pom.xml, etc.)
 8. **Platform Guidance**: GitHub Actions primary, with guidance for GitLab CI, Azure DevOps, CircleCI, Jenkins
-7. **Consistent Structure**: Git Workflow reference, table format comparisons, troubleshooting sections
-8. **DRY Principle**: Process files reference general documentation standards instead of duplicating content
+9. **Consistent Structure**: Git Workflow reference, table format comparisons, troubleshooting sections
+10. **DRY Principle**: Process files reference general documentation standards instead of duplicating content
 
 > **Design Philosophy**: Files may exceed token guidelines when framework complexity requires it. All lengths are justified by the need for clear, unambiguous instructions that produce consistent results across different AI models.
 
@@ -803,7 +763,7 @@ Understanding how many tokens your rule selection consumes helps optimize AI con
 | **Laravel + Doctrine** | General + PHP + Laravel + Doctrine + DDD | ~3,960 |
 | **Flutter + BLoC** | General + Dart + Flutter + BLoC + Feature-First | ~3,510 |
 
-> **Note**: Token estimates based on ~4 characters per token. Actual usage may vary by AI tool.
+> **Note**: Token estimates based on ~4 characters per token. Actual usage may vary.
 
 ### Cost Optimization Tips
 
@@ -988,7 +948,7 @@ MIT License – Free to use in personal and commercial projects.
 
 ## 🙏 Acknowledgments
 
-Built with the goal of making AI coding assistants more consistent and useful across all development environments.
+Built with the goal of making Claude Code more consistent and useful across all development environments.
 
 ---
 

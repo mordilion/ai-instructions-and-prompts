@@ -55,80 +55,56 @@ else
     write_error "Missing 'version' property"
 fi
 
-# Validate Tools
+# Validate Tool (Claude Code - singular)
 echo ""
-echo -e "${CYAN}--- Tools Validation ---${NC}"
-TOOL_COUNT=$(jq '.tools | length' .ai-iap/config.json)
+echo -e "${CYAN}--- Tool Validation ---${NC}"
 
-for tool_key in $(jq -r '.tools | keys[]' .ai-iap/config.json); do
-    # Check required properties
-    name=$(jq -r ".tools[\"$tool_key\"].name // empty" .ai-iap/config.json)
+tool_exists=$(jq 'has("tool")' .ai-iap/config.json)
+if [[ "$tool_exists" != "true" ]]; then
+    write_error "Missing 'tool' property in config"
+else
+    name=$(jq -r '.tool.name // empty' .ai-iap/config.json)
     if [[ -z "$name" ]]; then
-        write_error "Tool '$tool_key': Missing 'name' property"
+        write_error "Tool: Missing 'name' property"
     fi
-    
-    use_frontmatter=$(jq -r ".tools[\"$tool_key\"].useFrontmatter" .ai-iap/config.json)
-    if [[ "$use_frontmatter" == "null" ]]; then
-        write_error "Tool '$tool_key': Missing 'useFrontmatter' property"
-    fi
-    
-    file_extension=$(jq -r ".tools[\"$tool_key\"] | has(\"fileExtension\")" .ai-iap/config.json)
-    if [[ "$file_extension" != "true" ]]; then
-        write_error "Tool '$tool_key': Missing 'fileExtension' property"
-    fi
-    
-    # Check tool type consistency
-    output_dir=$(jq -r ".tools[\"$tool_key\"].outputDir // empty" .ai-iap/config.json)
-    output_file=$(jq -r ".tools[\"$tool_key\"].outputFile // empty" .ai-iap/config.json)
-    
-    # Exception: Claude needs both outputDir (.claude/rules) and outputFile (CLAUDE.md)
-    if [[ -n "$output_dir" && -n "$output_file" && "$tool_key" != "claude" ]]; then
-        write_error "Tool '$tool_key': Has both 'outputDir' and 'outputFile' (should have only one)"
-    fi
-    if [[ -z "$output_dir" && -z "$output_file" ]]; then
-        write_error "Tool '$tool_key': Missing both 'outputDir' and 'outputFile' (needs one)"
-    fi
-    
-    # Cursor-specific checks
-    if [[ "$tool_key" == "cursor" ]]; then
-        supports_globs=$(jq -r ".tools.cursor.supportsGlobs // false" .ai-iap/config.json)
-        if [[ "$supports_globs" != "true" ]]; then
-            write_warning "Tool 'cursor': Should have 'supportsGlobs: true'"
-        fi
-        
-        supports_subfolders=$(jq -r ".tools.cursor.supportsSubfolders // false" .ai-iap/config.json)
-        if [[ "$supports_subfolders" != "true" ]]; then
-            write_warning "Tool 'cursor': Should have 'supportsSubfolders: true'"
-        fi
-    fi
-    
-    # Claude-specific checks (unified CLI & Code)
-    if [[ "$tool_key" == "claude" ]]; then
-        supports_subfolders=$(jq -r ".tools.claude.supportsSubfolders // false" .ai-iap/config.json)
-        if [[ "$supports_subfolders" != "true" ]]; then
-            write_warning "Tool 'claude': Should have 'supportsSubfolders: true'"
-        fi
-        
-        supports_globs=$(jq -r ".tools.claude.supportsGlobs // false" .ai-iap/config.json)
-        if [[ "$supports_globs" != "true" ]]; then
-            write_warning "Tool 'claude': Should have 'supportsGlobs: true' (uses .claude/rules/**/*.md)"
-        fi
-        
-        output_file=$(jq -r ".tools.claude.outputFile // \"null\"" .ai-iap/config.json)
-        if [[ "$output_file" == "null" ]]; then
-            write_warning "Tool 'claude': Missing 'outputFile' property (should be 'CLAUDE.md')"
-        fi
-        
-        output_dir=$(jq -r ".tools.claude.outputDir // \"null\"" .ai-iap/config.json)
-        if [[ "$output_dir" == "null" ]]; then
-            write_warning "Tool 'claude': Missing 'outputDir' property (should be '.claude/rules')"
-        elif [[ "$output_dir" != ".claude/rules" ]]; then
-            write_warning "Tool 'claude': outputDir should be '.claude/rules'"
-        fi
-    fi
-done
 
-write_success "Validated $TOOL_COUNT tools"
+    file_extension=$(jq -r '.tool | has("fileExtension")' .ai-iap/config.json)
+    if [[ "$file_extension" != "true" ]]; then
+        write_error "Tool: Missing 'fileExtension' property"
+    fi
+
+    output_dir=$(jq -r '.tool.outputDir // "null"' .ai-iap/config.json)
+    if [[ "$output_dir" == "null" ]]; then
+        write_warning "Tool: Missing 'outputDir' property (should be '.claude/rules')"
+    elif [[ "$output_dir" != ".claude/rules" ]]; then
+        write_warning "Tool: outputDir should be '.claude/rules'"
+    fi
+
+    output_file=$(jq -r '.tool.outputFile // "null"' .ai-iap/config.json)
+    if [[ "$output_file" == "null" ]]; then
+        write_warning "Tool: Missing 'outputFile' property (should be 'CLAUDE.md')"
+    fi
+
+    supports_subfolders=$(jq -r '.tool.supportsSubfolders // false' .ai-iap/config.json)
+    if [[ "$supports_subfolders" != "true" ]]; then
+        write_warning "Tool: Should have 'supportsSubfolders: true'"
+    fi
+
+    supports_globs=$(jq -r '.tool.supportsGlobs // false' .ai-iap/config.json)
+    if [[ "$supports_globs" != "true" ]]; then
+        write_warning "Tool: Should have 'supportsGlobs: true' (uses .claude/rules/**/*.md)"
+    fi
+
+    output_file_source=$(jq -r '.tool.outputFileSource // empty' .ai-iap/config.json)
+    if [[ -n "$output_file_source" ]]; then
+        src_path=".ai-iap/rules/general/$output_file_source.md"
+        if [[ ! -f "$src_path" ]]; then
+            write_error "Tool: 'outputFileSource' references '$output_file_source' but '$src_path' does not exist"
+        fi
+    fi
+
+    write_success "Validated tool (Claude Code)"
+fi
 
 # Validate Languages
 echo ""
@@ -288,7 +264,7 @@ write_success "Validated $LANG_COUNT languages"
 # Summary
 echo ""
 echo -e "${CYAN}=== Validation Summary ===${NC}"
-echo -e "${WHITE}Tools: $TOOL_COUNT${NC}"
+echo -e "${WHITE}Tool: Claude Code${NC}"
 echo -e "${WHITE}Languages: $LANG_COUNT${NC}"
 echo ""
 
