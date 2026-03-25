@@ -51,7 +51,7 @@
             "fullstack"
           ]
         }
-      },
+      }
     },
     "bash": {
       "name": "Bash",
