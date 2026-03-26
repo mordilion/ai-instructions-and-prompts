@@ -35,11 +35,11 @@ The `.ai-iap-custom/` directory allows you to:
 
 ### How It Works
 
-1. Core files live in `.ai-iap/` (never modify these)
-2. Custom files live in `.ai-iap-custom/` (yours to manage)
-3. Setup scripts merge custom config with core config
+1. Core files live in the plugin's `lib/` directory (never modify these)
+2. Custom files live in `.ai-iap-custom/` in your project (yours to manage)
+3. The `/ai-iap:setup` skill merges custom config with core config
 4. Custom rules files can override core files by matching paths
-5. You can safely pull updates to `.ai-iap/` without conflicts
+5. Plugin updates don't affect your customizations
 
 ---
 
@@ -181,7 +181,7 @@ logger.info('User created', { userId });
 
 ```bash
 # Linux/Mac
-./.ai-iap/setup.sh
+.//ai-iap:setup
 
 # Windows
 .\.ai-iap\setup.ps1
@@ -199,7 +199,7 @@ also **define your own agents** so they use your chosen languages and frameworks
 
 ### Built-in vs custom
 
-- **Built-in**: `.ai-iap/claude-subagents.json` defines generic subagents (code-reviewer, test-writer, …) and
+- **Built-in**: `lib/claude-subagents.json (plugin)` defines generic subagents (code-reviewer, test-writer, …) and
   **agentTemplates** (ios-developer, php-developer, vue-developer, seo-specialist, ui-ux-designer). Templates use
   `ruleBindings` to inject rules from this repo.
 - **Custom**: Create `.ai-iap-custom/claude-agents.json` with the same shape as `agentTemplates`. Setup merges them
@@ -239,7 +239,7 @@ Create `.ai-iap-custom/claude-agents.json`:
 
 ### Persona split (one agent, one specialisation)
 
-Rules under `.ai-iap/rules/general/` include a **persona** that defines how the AI behaves. For agents, the setup can
+Rules under `lib/rules/general/` include a **persona** that defines how the AI behaves. For agents, the setup can
 inject a **split persona** so each agent has a single specialisation:
 
 - **persona-core.md** – Shared rules (defensive programming, clarification gate, code library lookup, self-check).
@@ -260,7 +260,7 @@ When `personaSpecialization` is `software`, `seo`, `ui-ux`, `testing`, or `devop
 role-adaptive behavior) is used.
 
 Example: an **iOS Developer**, **PHP Developer**, **Vue.js Developer (TypeScript)**, **SEO Specialist**, and
-**UI/UX Designer** are in `.ai-iap/examples/claude-agents.example.json`.
+**UI/UX Designer** are in `lib/examples/claude-agents.example.json`.
 Copy that file to `.ai-iap-custom/claude-agents.json`, run setup,
 select Claude Code and then “Set up Claude Code agents?”, and pick the roles you want.
 Generated agents in `.claude/agents/` will contain the injected project rules.
@@ -275,13 +275,13 @@ Custom processes add company-specific implementation guides.
 
 The system has two types of processes:
 
-**📌 Permanent Processes** (in `.ai-iap/processes/permanent/`)
+**📌 Permanent Processes** (in `lib/processes/permanent/`)
 
 - Loaded into AI automatically during setup
 - Used repeatedly throughout project lifecycle
 - Example: `database-migrations.md`
 
-**📋 On-Demand Processes** (in `.ai-iap/processes/ondemand/`)
+**📋 On-Demand Processes** (in `lib/processes/ondemand/`)
 
 - NOT loaded into AI automatically
 - User copies prompt when ready to implement
@@ -363,7 +363,7 @@ During setup, select your custom process when prompted.
 ## Adding Custom Functions
 
 Custom functions are **company-specific implementation patterns** your team uses repeatedly.
-They live in `.ai-iap-custom/code-library/functions/` so they stay **update-safe** when core `.ai-iap/` changes.
+They live in `.ai-iap-custom/code-library/functions/` so they stay **update-safe** when the plugin updates.
 
 ### When to Add Custom Functions
 
@@ -383,7 +383,7 @@ They live in `.ai-iap-custom/code-library/functions/` so they stay **update-safe
 
 ### Step 1: Create the Function File (Template-based)
 
-- Copy `.ai-iap/code-library/functions/_TEMPLATE.md` to:
+- Copy `lib/code-library/functions/_TEMPLATE.md` to:
   - `.ai-iap-custom/code-library/functions/<your-function>.md`
 - Replace the YAML frontmatter values.
 - Keep **only code examples** after the YAML header.
@@ -403,7 +403,7 @@ In your project’s AI rules, add a small directive like:
 
 - Check `.ai-iap-custom/code-library/functions/` (if it exists) for custom implementation patterns
 - Check `.ai-iap-custom/code-library/design-patterns/` (if it exists) for custom design patterns
-- Then check `.ai-iap/code-library/` for core patterns
+- Then check `lib/code-library/` for core patterns
 
 ---
 
@@ -509,7 +509,7 @@ httpClient.DefaultRequestHeaders.Authorization =
 
 ### Function File Structure Rules
 
-- Start from `.ai-iap/code-library/functions/_TEMPLATE.md`
+- Start from `lib/code-library/functions/_TEMPLATE.md`
 - Put all metadata in YAML frontmatter
 - After the YAML header: **code examples only**
 - Keep examples short and copy-paste ready
@@ -541,7 +541,7 @@ specialize the core design patterns library.
 Copy the design pattern template:
 
 ```bash
-cp .ai-iap/code-library/design-patterns/_TEMPLATE.md \
+cp lib/code-library/design-patterns/_TEMPLATE.md \
    .ai-iap-custom/code-library/design-patterns/[category]/your-pattern.md
 ```
 
@@ -574,7 +574,7 @@ Add entry to `.ai-iap-custom/code-library/design-patterns/INDEX.md` (create if d
 AIs automatically check:
 
 1. `.ai-iap-custom/code-library/design-patterns/` first ← **Your patterns**
-2. Then `.ai-iap/code-library/design-patterns/` ← Core patterns
+2. Then `lib/code-library/design-patterns/` ← Core patterns
 
 ### Example: Company Singleton with DI
 
@@ -625,7 +625,7 @@ const config = app.get(ConfigService);
 
 ### Design Pattern File Structure
 
-- Start from `.ai-iap/code-library/design-patterns/_TEMPLATE.md`
+- Start from `lib/code-library/design-patterns/_TEMPLATE.md`
 - Put all metadata in YAML frontmatter
 - After the YAML header: **complete implementations** (20-100 lines)
 - Include usage examples for each language
@@ -701,7 +701,7 @@ Override core files by creating a file with the **exact same path**.
 **Core file** (don't modify):
 
 ```text
-.ai-iap/rules/typescript/code-style.md
+lib/rules/typescript/code-style.md
 ```
 
 **Your override** (will be used instead):
@@ -751,7 +751,7 @@ When setup runs, your file will be used instead of the core file.
 git pull origin main
 
 # Re-run setup to regenerate outputs with the shared customizations
-./.ai-iap/setup.sh
+.//ai-iap:setup
 ```
 
 **Best for**: Teams (recommended when using shared functions/custom patterns)
@@ -1038,7 +1038,7 @@ async function getUserWithCache(userId: string): Promise<User> {
 1. Verify exact path match:
 
    ```text
-   Core:   .ai-iap/rules/typescript/code-style.md
+   Core:   lib/rules/typescript/code-style.md
    Custom: .ai-iap-custom/rules/typescript/code-style.md  ✓
    ```
 
@@ -1048,22 +1048,13 @@ async function getUserWithCache(userId: string): Promise<User> {
 
 ---
 
-### Merge Conflicts When Pulling
+### Plugin Update Issues
 
-**Problem**: Git conflicts in `.ai-iap/` when pulling updates
+**Problem**: Behavior changes after plugin update
 
-**Solution**: You should NEVER modify core files. If you have conflicts:
-
-```bash
-# Reset core files to upstream
-git checkout origin/main -- .ai-iap/
-
-# Keep your customizations separate
-# They live in .ai-iap-custom/ (no conflicts)
-
-# Re-run setup
-./.ai-iap/setup.sh
-```
+**Solution**: The plugin's core files (`lib/`) update automatically. Your customizations
+in `.ai-iap-custom/` are unaffected. Re-run `/ai-iap:setup` to regenerate rules with
+the latest plugin version.
 
 ---
 
@@ -1094,7 +1085,7 @@ git checkout origin/main -- .ai-iap/
 
 ### ❌ DON'T
 
-- Modify files in `.ai-iap/` directory
+- Modify files in the plugin's `lib/` directory
 - Duplicate core content in custom files
 - Hardcode credentials in custom files
 - Skip validation after changes
@@ -1108,23 +1099,17 @@ git checkout origin/main -- .ai-iap/
 
 Before or after making changes, verify the extension system is working:
 
-```bash
-# Linux/Mac
-./.ai-iap/verify-extension.sh
-
-# Windows
-.\.ai-iap\verify-extension.ps1
+```text
+/ai-iap:validate
 ```
 
-The verification script tests:
+The validation skill checks:
 
-- File structure (example files exist)
-- Shared source folders are present (`.ai-iap/`, `.ai-iap-custom/`) and scripts can load/merge customizations
+- Plugin structure and manifest
+- Config file validity and completeness
+- All referenced rule files exist
+- Custom config structure validity
 - Documentation completeness
-- Script integration (merge functions)
-- Config structure validity
-
-**Result**: 13 tests should pass with 0 failures.
 
 ### Automated Testing
 

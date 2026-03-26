@@ -3,13 +3,8 @@
 # Node modules (if any)
 node_modules/
 
-# Generated AI tool configs
-.cursor/
+# Generated outputs (in user projects)
 CLAUDE.md
-.github/copilot-instructions.md
-.windsurfrules
-CONVENTIONS.md
 
 # Git
 .git/
-

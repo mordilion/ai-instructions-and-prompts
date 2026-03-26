@@ -383,9 +383,9 @@ Check `test-results/*.json` for details:
 
 ## 📚 **Related Files**
 
-- **Test Definitions**: `.ai-iap/TEST_PROMPTS.md` (15 manual test cases)
-- **Rules**: `.ai-iap/rules/` (the source of truth)
-- **Config**: `.ai-iap/config.json` (framework/language definitions)
+- **Test Definitions**: `lib/TEST_PROMPTS.md` (15 manual test cases)
+- **Rules**: `lib/rules/` (the source of truth)
+- **Config**: `lib/config.json` (framework/language definitions)
 
 ---
 

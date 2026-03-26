@@ -22,7 +22,7 @@ cd /path/to/your/project
 
 # Then run setup
 .\.ai-iap\setup.ps1  # Windows
-./.ai-iap/setup.sh   # macOS/Linux
+/ai-iap:setup        # In Claude Code
 ```
 
 ---
@@ -59,22 +59,22 @@ jq --version
 
 ---
 
-### "Permission denied" when running setup.sh
+### Plugin Not Loading
 
-**Error**:
-```bash
--bash: ./.ai-iap/setup.sh: Permission denied
-```
+**Issue**: Plugin components (skills, agents, hooks) not appearing
 
-**Cause**: Script is not executable
+**Cause**: Plugin not installed or not loaded correctly
 
 **Fix**:
 ```bash
-# Make script executable
-chmod +x .ai-iap/setup.sh
+# Check installed plugins
+claude plugin list
 
-# Then run it
-./.ai-iap/setup.sh
+# For local development, load with --plugin-dir
+claude --plugin-dir ./path/to/ai-instructions-and-prompts
+
+# Reload plugins within a session
+/reload-plugins
 ```
 
 ---
@@ -88,7 +88,7 @@ chmod +x .ai-iap/setup.sh
 **Check**:
 ```bash
 # View config.json
-cat .ai-iap/config.json | grep -A 10 "\"yourlanguage\""
+cat lib/config.json | grep -A 10 "\"yourlanguage\""
 
 # Check if "frameworks" key exists
 ```
@@ -98,7 +98,7 @@ cat .ai-iap/config.json | grep -A 10 "\"yourlanguage\""
 **Fix**:
 ```bash
 # Validate config.json
-jq empty .ai-iap/config.json
+jq empty lib/config.json
 
 # If error, check for:
 # - Missing commas
@@ -150,13 +150,13 @@ cd /path/to/your/project
 ```bash
 # Run validation script
 .\.ai-iap\validate.ps1  # Windows
-./.ai-iap/validate.sh   # macOS/Linux
+.//ai-iap:validate      # In Claude Code
 
 # Check for errors like:
 # [FAIL] All rule files exist - Missing: dart/frameworks/bloc.md
 ```
 
-**Fix**: If validation fails, check that all referenced files exist in `.ai-iap/rules/`
+**Fix**: If validation fails, check that all referenced files exist in `lib/rules/`
 
 ---
 
@@ -244,7 +244,7 @@ git commit -m "Add generated Claude Code configs"
 ```
 
 **Recommendation**: Ensure your repo is not ignoring the files you intend to share.
-For team sharing, commit the source folders (`.ai-iap/`, `.ai-iap-custom/`) and the state file (`.ai-iap-state.json`), and decide whether to also commit generated outputs (`.claude/rules/`, `CLAUDE.md`, `.claude/agents/`).
+For team sharing, install the `ai-iap` plugin at project scope (`--scope project`), commit `.ai-iap-custom/` and `.ai-iap-state.json`, and decide whether to also commit generated outputs (`.claude/rules/`, `CLAUDE.md`, `.claude/agents/`).
 
 ---
 
@@ -268,8 +268,8 @@ For team sharing, commit the source folders (`.ai-iap/`, `.ai-iap-custom/`) and 
 **Manual Check**:
 ```bash
 # Read a few rule files
-cat .ai-iap/rules/general/persona.md
-cat .ai-iap/rules/typescript/architecture.md
+cat lib/rules/general/persona.md
+cat lib/rules/typescript/architecture.md
 
 # Generate test config
 .\.ai-iap\setup.ps1
@@ -313,7 +313,7 @@ cat .ai-iap/rules/typescript/architecture.md
 **Investigate**:
 ```bash
 # Run token analysis
-cd .ai-iap/rules
+cd lib/rules
 find . -name "*.md" -exec wc -c {} + | sort -n
 
 # Look for unusually large files (>10,000 chars)
@@ -340,12 +340,12 @@ Run through this checklist:
 
 ```bash
 # 1. Validate config
-jq empty .ai-iap/config.json
+jq empty lib/config.json
 echo "✓ Config is valid JSON"
 
 # 2. Run validation tests
 .\.ai-iap\validate.ps1  # Windows
-./.ai-iap/validate.sh   # macOS/Linux
+.//ai-iap:validate      # In Claude Code
 # Should show: Passed: 9, Failed: 0
 
 # 3. Check dependencies (macOS/Linux only)
@@ -353,7 +353,7 @@ which jq
 # Should output: /usr/bin/jq or similar
 
 # 4. Check file structure
-ls -R .ai-iap/rules/ | grep -c ".md"
+ls -R lib/rules/ | grep -c ".md"
 # Should show: 67+ files
 
 # 5. Test file generation
@@ -366,29 +366,27 @@ ls -R .ai-iap/rules/ | grep -c ".md"
 
 If you're still stuck:
 
-1. **Check GitHub Issues**: [github.com/yourusername/ai-instructions-and-prompts/issues](.)
-2. **Review Expert Analysis**: `.ai-iap/EXPERT_ANALYSIS.md`
-3. **Check Implementation Summary**: `.ai-iap/IMPLEMENTATION_SUMMARY.md`
-4. **Review Dependency Guide**: `.ai-iap/DEPENDENCY_GRAPH_GUIDE.md`
+1. **Check GitHub Issues**: [github.com/HenningHuncke/ai-instructions-and-prompts/issues](.)
+2. **Run validation**: `/ai-iap:validate`
+3. **Review full docs**: `lib/README.md`
 
 ### Report a Bug
 
 If you found a bug:
 
-1. Run validation: `.\.ai-iap\validate.ps1`
-2. Note which tests fail
-3. Include your OS, PowerShell/Bash version
+1. Run validation: `/ai-iap:validate`
+2. Note which checks fail
+3. Include your OS and Claude Code version
 4. Include steps to reproduce
 5. Open GitHub issue with details
 
 ---
 
-## 📚 Additional Resources
+## Additional Resources
 
-- **README**: `.ai-iap/README.md` - Full documentation
-- **Expert Analysis**: `.ai-iap/EXPERT_ANALYSIS.md` - Comprehensive review
-- **Remaining Improvements**: `.ai-iap/REMAINING_IMPROVEMENTS.md` - Future enhancements
-- **Dependency Graph**: `.ai-iap/DEPENDENCY_GRAPH_GUIDE.md` - Framework dependencies
+- **Full Documentation**: `lib/README.md`
+- **Customization Guide**: `CUSTOMIZATION.md`
+- **Team Adoption**: `TEAM_ADOPTION_GUIDE.md`
 
 ---
 

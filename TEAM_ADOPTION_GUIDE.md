@@ -115,7 +115,7 @@ These may conflict with established practices:
 
 **Steps**:
 
-1. Run setup: `.ai-iap/setup.sh`
+1. Run setup: `/ai-iap:setup`
 2. Select Claude Code, then applicable languages/frameworks
 3. Commit generated configs (`.claude/rules/`, `CLAUDE.md`, `.claude/agents/`)
 4. Announce to team with training session
@@ -183,7 +183,7 @@ These may conflict with established practices:
 
 - [ ] Review generated configs
 
-- [ ] Commit `.ai-iap/`, `.ai-iap-custom/`, and `.ai-iap-state.json` in the repo (shared across the team)
+- [ ] Install the `ai-iap` plugin, commit `.ai-iap-custom/` and `.ai-iap-state.json` in the repo (shared across the team)
 
 - [ ] Re-run setup in **Modify selection** mode when you need to add/remove languages, frameworks, or processes
 
@@ -220,7 +220,7 @@ These may conflict with established practices:
 ## Common Anti-Patterns (What NOT to Do)
 
 - **Don't adopt everything blindly** → conflicts with existing workflows
-- **Don't modify core `.ai-iap/` files directly** → makes upstream updates painful
+- **Don't modify the plugin's core files** → use `.ai-iap-custom/` for overrides
 - **Don't skip security rules** → increases risk of vulnerabilities in AI-generated code
 - **Don't ignore team feedback** → low adoption and inconsistent Claude Code usage
 - **Don't run without ownership** → rules become stale and unused
@@ -245,7 +245,7 @@ Track these after 30-60 days:
 
 - **Customization**: See [CUSTOMIZATION.md](CUSTOMIZATION.md)
 
-- **Extension System**: `.ai-iap-custom/` examples
+- **Extension System**: `.ai-iap-custom/` for overrides
 
 - **Issues**: Report conflicts/bugs to [GitHub Issues]
 

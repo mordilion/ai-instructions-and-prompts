@@ -20,7 +20,7 @@ AI coding assistants need configuration to produce consistent, high-quality code
 **AI Instructions & Prompts** is a portable collection of coding rules. Define your standards once, generate Claude Code configurations automatically.
 
 ```
-Your Rules (one source) → Setup Script → Claude Code Configured
+Your Rules (one source) → /ai-iap:setup → Claude Code Configured
 ```
 
 ---
@@ -92,23 +92,16 @@ All rules loaded into the AI context are **mandatory**. AIs must follow all appl
 
 ## 🚀 Quick Start
 
-### 1. Copy to Your Project
+### 1. Install the Plugin
 
-```bash
-# Clone or download, then copy the .ai-iap folder to your project
-cp -r .ai-iap /path/to/your/project/
-```
+Install the **AI Instructions & Prompts** Claude Code plugin (from the marketplace, git submodule, or your team’s distribution). Open your project in Claude Code so the plugin’s skills are available.
 
 ### 2. Run Setup
 
-**Windows (PowerShell)**
-```powershell
-.\.ai-iap\setup.ps1
-```
+In Claude Code, run:
 
-**macOS / Linux**
-```bash
-chmod +x .ai-iap/setup.sh && ./.ai-iap/setup.sh
+```
+/ai-iap:setup
 ```
 
 ### Scope: Project vs Global
@@ -120,30 +113,18 @@ When you run setup, you choose where to apply the configuration:
 
 ### Setup split: Rules vs Agents
 
-Setup is split into two **standalone scripts** (no shared argument to one file). Each has its own code path for easier maintenance.
+Setup is driven by the plugin’s **setup skill** (`skills/setup/SKILL.md` in this repo). Use the slash command that matches what you want to configure:
 
-**Bash (macOS / Linux):**
-- **`setup-common.sh`** – Shared library (sourced by both). Constants, config loading, state, scope, cleanup, generation helpers.
-- **`setup-rules.sh`** – Rules flow only: languages, frameworks, structures, processes, then generates `.claude/rules/**/*.md` and `CLAUDE.md`.
-- **`setup-agents.sh`** – Agents flow only: define Claude Code agents (name, description, tech stack), then generates `.claude/agents/*.md`.
+- **Rules** – Run **`/ai-iap:setup`** (languages, frameworks, structures, processes, then generates `.claude/rules/**/*.md` and `CLAUDE.md`).
+- **Agents** – Run **`/ai-iap:setup agents`** (define Claude Code agents, then generates `.claude/agents/*.md`).
 
-**PowerShell (Windows):**
-- **`setup-common.ps1`** – Shared library (dot-sourced by both). Same responsibilities as the Bash common script.
-- **`setup-rules.ps1`** – Rules flow only (dot-sources `setup-common.ps1`, then runs the rules wizard and generation).
-- **`setup-agents.ps1`** – Agents flow: when Bash (Git Bash or WSL) is available, runs **`setup-agents.sh`**; otherwise prompts to use Git Bash or WSL for full agent setup.
-
-Use the script that matches what you want to configure:
-
-- **Rules** – Run **`./.ai-iap/setup-rules.sh`** (Bash) or **`.\.ai-iap\setup-rules.ps1`** (PowerShell).
-- **Agents** – Run **`./.ai-iap/setup-agents.sh`** (Bash) or **`.\.ai-iap\setup-agents.ps1`** (PowerShell; uses Bash when available).
-
-You can also run **`./.ai-iap/setup.sh`** or **`.\.ai-iap\setup.ps1`** (dispatcher) and choose "Rules only" or "Agents only" when prompted; it then runs the corresponding script.
+You can also run **`/ai-iap:setup`** and choose **Rules only** or **Agents only** when the wizard prompts you.
 
 ### Re-running Setup (Add/Remove Languages)
 
 You can safely run setup multiple times.
 
-- The setup script stores your last choices in `.ai-iap-state.json` (project) or `~/.ai-iap-state.json` (global)
+- The setup skill stores your last choices in `.ai-iap-state.json` (project) or `~/.ai-iap-state.json` (global)
 - On rerun, you can **reuse**, **modify**, or **clean up** previously generated outputs
 - Cleanup is **safe by default**: only files marked `aiIapManaged: true` (in YAML frontmatter) are removed
 
@@ -168,7 +149,7 @@ Setup generates the following Claude Code outputs into your chosen **output root
 The setup wizard will guide you through:
 
 **Step 1: Where to apply (scope)**
-Choose **This project** or **Global (user)**. When running `setup.sh`, choose **Rules only** or **Agents only** (or use `setup-rules.sh` / `setup-agents.sh` to skip that).
+Choose **This project** or **Global (user)**. When running **`/ai-iap:setup`**, choose **Rules only** or **Agents only** (or use **`/ai-iap:setup agents`** to go straight to agents).
 
 **Step 2: Select Languages**
 ```
@@ -208,7 +189,7 @@ Enable commit standards? (y/N):
 
 **Step 5: Select Frameworks, Structures & Processes** (if applicable)
 
-**Claude Code agents** (run `./.ai-iap/setup-agents.sh`)
+**Claude Code agents** (run **`/ai-iap:setup agents`**)
 
 Agents are always defined by you: no presets. **One agent = one specialisation.** You choose how many agents and for each:
 
@@ -217,7 +198,7 @@ Agents are always defined by you: no presets. **One agent = one specialisation.*
 - **Tech stack** – preset (iOS, Vue.js, PHP Laravel, SEO, UI/UX, SEO & Linguistic) or Custom (pick languages and frameworks from config)
 - **Persona specialisation** – Software/Developer (default), SEO, UI/UX, or Generic (full adaptive persona). Each agent gets a focused persona slice so behaviour matches its role (see [CUSTOMIZATION.md](CUSTOMIZATION.md#persona-split-one-agent-one-specialisation)).
 
-Example: "I need 4 agents: one for iOS, one for Vue.js, one for SEO and Linguistic, one for PHP with Laravel" → run setup-agents, enter 4, then for each agent set name, description, tech stack, and persona. Generated files go to `.claude/agents/` (or global scope).
+Example: "I need 4 agents: one for iOS, one for Vue.js, one for SEO and Linguistic, one for PHP with Laravel" → run **`/ai-iap:setup agents`**, enter 4, then for each agent set name, description, tech stack, and persona. Generated files go to `.claude/agents/` (or global scope).
 
 That's it! Your Claude Code instance is now configured with consistent coding standards.
 
@@ -272,14 +253,14 @@ Want to add company-specific standards, internal processes, or override core rul
 3. **Override Core Files** – Replace core rules with team preferences
    ```
    .ai-iap-custom/rules/typescript/code-style.md
-   → Overrides .ai-iap/rules/typescript/code-style.md
+   → Overrides lib/rules/typescript/code-style.md
    ```
 
 ### Update Strategies
 
 | Strategy | Setup | Best For |
 |----------|-------|----------|
-| **Team Sharing** (Recommended) | Commit `.ai-iap/`, `.ai-iap-custom/`, and `.ai-iap-state.json` | Teams (shared standards + shared function patterns) |
+| **Team Sharing** (Recommended) | Install the same plugin version for everyone; commit `.ai-iap-custom/` and `.ai-iap-state.json` for shared overrides and last-known setup | Teams (shared standards + shared function patterns) |
 | **Separate Repo** | Maintain `.ai-iap-custom/` as submodule | Large orgs, company-wide |
 | **Local Only** (Advanced) | Keep `.ai-iap-custom/` uncommitted | Individual experimentation |
 
@@ -460,12 +441,12 @@ In addition to coding rules, this system includes **step-by-step workflow guides
 **📋 On-Demand Processes** (Copy when needed):
 - **Testing, CI/CD, Docker, Logging, Auth, API Docs, Security, Linting, Coverage**
 - One-time setup processes
-- Copy prompt from `.ai-iap/processes/ondemand/{language}/{process}.md` when ready to implement
+- Copy prompt from `lib/processes/ondemand/{language}/{process}.md` when ready to implement
 - **85% token savings** - Only load what you need, when you need it
 
 ### How to Use On-Demand Processes
 
-1. Navigate to `.ai-iap/processes/ondemand/{language}/{process}.md`
+1. Navigate to `lib/processes/ondemand/{language}/{process}.md`
 2. Scroll to **"Usage - Copy This Complete Prompt"** section
 3. Copy the entire prompt block
 4. Paste into Claude Code
@@ -574,7 +555,7 @@ AI Workflow:
 2. AI checks custom patterns first (if they exist):
    - `.ai-iap-custom/code-library/functions/` for custom implementation patterns
    - `.ai-iap-custom/code-library/design-patterns/` for custom design patterns
-3. AI then checks `.ai-iap/code-library/INDEX.md` ← MANDATORY STEP
+3. AI then checks `lib/code-library/INDEX.md` ← MANDATORY STEP
 4. AI navigates to functions/ or design-patterns/ based on need
 5. AI opens relevant pattern file (e.g., error-handling.md, creational/singleton.md)
 6. AI chooses appropriate framework version (Plain, Prisma, Laravel, etc.)
@@ -819,7 +800,7 @@ Language-specific process files reference these standards to avoid duplication.
 
 ### Add a New Language
 
-1. Create folder: `.ai-iap/rules/yourlanguage/`
+1. Create folder: `lib/rules/yourlanguage/`
 2. Add `architecture.md` and `code-style.md`
 3. Register in `config.json`:
 
@@ -834,7 +815,7 @@ Language-specific process files reference these standards to avoid duplication.
 
 ### Add a New Framework
 
-1. Create: `.ai-iap/rules/yourlanguage/frameworks/yourframework.md`
+1. Create: `lib/rules/yourlanguage/frameworks/yourframework.md`
 2. Register in `config.json` under the language's `frameworks`:
 
 ```json
@@ -849,7 +830,7 @@ Language-specific process files reference these standards to avoid duplication.
 
 ### Add a Project Structure
 
-1. Create: `.ai-iap/rules/yourlanguage/frameworks/structures/framework-structure.md`
+1. Create: `lib/rules/yourlanguage/frameworks/structures/framework-structure.md`
 2. Add to framework's `structures` in `config.json`:
 
 ```json
@@ -865,7 +846,7 @@ Language-specific process files reference these standards to avoid duplication.
 
 ### Add a Process Guide
 
-1. Create: `.ai-iap/processes/yourlanguage/process-name.md`
+1. Create: `lib/processes/yourlanguage/process-name.md`
 2. Add to language's `processes` in `config.json`:
 
 ```json
@@ -906,18 +887,15 @@ Language-specific process files reference these standards to avoid duplication.
 
 This project includes comprehensive validation and testing:
 
-- **Validation Scripts**: `.ai-iap/validate.ps1` (Windows) and `.ai-iap/validate.sh` (Linux/macOS)
+- **Local validation**: Run **`/ai-iap:validate`** in Claude Code (`skills/validate/SKILL.md` in this repo)
 - **CI/CD Pipeline**: GitHub Actions workflow validates every commit
 - **Expert Analysis**: See [EXPERT_ANALYSIS.md](EXPERT_ANALYSIS.md) for detailed review
 - **JSON Schema**: `config.schema.json` validates configuration structure
 
 **Run validation locally**:
-```bash
-# Windows
-.\.ai-iap\validate.ps1
 
-# macOS/Linux
-./.ai-iap/validate.sh
+```
+/ai-iap:validate
 ```
 
 ---
@@ -929,12 +907,12 @@ Contributions are welcome! Here's how you can help:
 - **Add frameworks** – Support for more frameworks and libraries
 - **Add languages** – Go, Rust, Java, Python, etc.
 - **Improve rules** – Better patterns, clearer guidelines
-- **Fix bugs** – Issues with setup scripts or configurations
+- **Fix bugs** – Issues with setup/validate skills or configurations
 
 Please read the existing rules to understand the style and format before contributing.
 
 **Before submitting**:
-1. Run validation: `.ai-iap/validate.ps1` or `.ai-iap/validate.sh`
+1. Run validation: **`/ai-iap:validate`**
 2. Ensure all tests pass
 3. Update token cost table if adding new rules
 

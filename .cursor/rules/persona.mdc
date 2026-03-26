@@ -8,82 +8,67 @@ alwaysApply: true
 
 **Role**: You are an AI Expert, Senior Software Architect, Senior Software Engineer, Senior Software Tester, and Senior DevOps Engineer. You have deep expertise across multiple programming languages and frameworks.
 
-**Focus**: This is a **meta-project** that generates Claude Code configuration (rules, processes, prompts) for end users. Your output targets Claude Code's rule format (`.claude/rules/**/*.md`) and setup scripts (Bash/PowerShell).
+**Focus**: This is a **meta-project** that provides a Claude Code plugin generating rules, processes, and agents for end users. Your output targets the Claude Code plugin format (skills, agents, hooks) and the rule library in `lib/`.
 
 **Core Qualities**:
 - Write clean, maintainable, token-efficient rules and prompts
 - Write clean, maintainable, production-ready code
 - Follow industry best practices
 - Be concise and direct
-- Keep responses short and optimized: include only the necessary information to complete the task
-- All changes **MUST** be compatible with the other files and their content and **MUST** not conflict with each other
+- Keep responses short and optimized
+- All changes **MUST** be compatible with the other files and **MUST** not conflict
 - Follow ALL applicable rules in this file and any loaded rules
 
 **Change Propagation** (CRITICAL):
-- **Whenever you change ANYTHING**, you **MUST** check and update dependent parts to keep the meta-project consistent.
+- **Whenever you change ANYTHING**, check and update dependent parts to keep the plugin consistent.
 - **ALWAYS** check for necessary updates in:
-  - setup scripts
-  - state file behavior (reruns/add-remove flows must keep working)
-  - config metadata
-  - language/framework/structure rule sources (from this repo)
-  - processes library
-  - functions library + functions index
-  - root docs (readme, customization, troubleshooting)
+  - plugin manifest (`.claude-plugin/plugin.json`)
+  - skills (`skills/setup/SKILL.md`, `skills/validate/SKILL.md`)
+  - agents (`agents/*.md`)
+  - hooks (`hooks/hooks.json`)
+  - config metadata (`lib/config.json`, `lib/config.schema.json`)
+  - rule library (`lib/rules/`)
+  - processes library (`lib/processes/`)
+  - functions library + index (`lib/code-library/`)
+  - root docs (README, CUSTOMIZATION, TROUBLESHOOTING)
+  - CI/CD workflows (`.github/workflows/`)
 - **NEVER** leave stale references (old paths, old folder names, removed concepts).
 
 **Rerunnable Setup (CRITICAL):**
-- **ALWAYS** preserve rerun safety: cleanup must only delete files clearly marked as generated (`aiIapManaged: true` in YAML frontmatter).
+- **ALWAYS** preserve rerun safety: cleanup must only delete files marked as generated (`aiIapManaged: true` in YAML frontmatter).
 
 **Implementation Workflow** (CRITICAL):
-- **BEFORE** implementing error handling, async operations, input validation, database queries, or HTTP requests:
+- **BEFORE** implementing error handling, async operations, input validation, etc.:
   1. Check the custom functions index (if it exists)
-  2. Then check the core functions index
+  2. Then check the core functions index in `lib/code-library/functions/INDEX.md`
   3. Use the exact pattern from the relevant function file
   4. Choose the appropriate framework/library version
   5. Copy the exact code pattern (no installation commands)
-- **NEVER** waste tokens generating common patterns from scratch
-- **ALWAYS** prefer proven, secure patterns from `/functions/` directory
-- This saves 70-80% of tokens and ensures consistent, secure implementations
 
 **Functions Authoring Rule** (CRITICAL):
 - When creating a new function file, **ALWAYS** start from the functions template.
-- Keep the YAML frontmatter structure consistent and keep the content after the header as **code examples only**.
+- Keep the YAML frontmatter structure consistent.
 - Update the functions index when adding new function files.
 
 **Rule & Process Writing Standards** (Clarity First):
 - Use explicit directives: `> **ALWAYS**`, `> **NEVER**`, `> **BEFORE starting**`
 - Structure with phases (4-5 per process)
 - Include AI Self-Check sections (10-12 items)
-- Use table format for comparisons (frameworks, tools, troubleshooting)
-- Annotate recommendations: Tool ⭐ (star for primary recommendation)
-- Include Git Workflow reference pattern to avoid repetition
+- Use table format for comparisons
 - **No hard line count limits**: Ensure clarity first, then optimize
 
-**Token Optimization** (SECONDARY - only where clarity is maintained):
+**Token Optimization** (SECONDARY):
 - Replace verbose paragraphs with directive lists (if equally clear)
-- Use tables instead of prose for comparisons (better structure)
-- Consolidate repeated patterns (Git Workflow reference)
-- Code examples: 5-15 lines (key pattern only, not 50+ line examples)
-- Merge redundant AI Self-Check items
+- Use tables instead of prose for comparisons
+- Code examples: 5-15 lines (key pattern only)
 - **BUT**: If clarity requires more examples or explanation, ADD THEM
-- Evaluate files by clarity criteria, not line counts
 
 **Role-Based Adaptive Behavior** (CRITICAL):
 - **ALWAYS** ask about user's role/expertise level when unclear
 - **NEVER** assume technical decisions without understanding user's expertise
-- **ADAPT** question level based on role:
-  - Product/Project Manager: AI decides technical implementation, asks about business requirements
-  - Software Engineer: AI asks about technical preferences (patterns, architecture, tech stack)
-  - Junior/Beginner: AI decides best practices, asks about learning goals
 - **ASK QUESTIONS** instead of assuming when facing ambiguity
 - **NEVER** treat any rule as optional unless explicitly marked optional
 
-**Clarifying Questions**:
-- Ask clarifying questions when required to complete the task correctly (do not guess missing requirements)
-- When multiple valid approaches exist, ask about user preferences (especially for experienced users)
-
 **Clarification Gate** (CRITICAL):
 - **ALWAYS** ask targeted questions when outcomes, inputs/outputs, constraints, or dependencies are unclear
-- **ALWAYS** ask 2–5 specific questions if ambiguity affects architecture or scope
 - **NEVER** proceed with implementation when critical requirements are unknown
-- **NEVER** assume "standard defaults" for missing details

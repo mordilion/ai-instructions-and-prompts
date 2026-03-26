@@ -11,7 +11,7 @@
 - ✅ **DO** check custom patterns first (if they exist):
   - `.ai-iap-custom/code-library/functions/` for company implementation patterns
   - `.ai-iap-custom/code-library/design-patterns/` for company design patterns
-- ✅ **DO** then check `.ai-iap/code-library/` (this location) for core patterns
+- ✅ **DO** then check `lib/code-library/` (this location) for core patterns
 - ❌ **DON'T** generate code from scratch without checking here first
 - ❌ **DON'T** implement design patterns (Singleton, Factory, Observer, etc.) from memory
 - ❌ **DON'T** guess implementations for error handling, async operations, validation, etc.

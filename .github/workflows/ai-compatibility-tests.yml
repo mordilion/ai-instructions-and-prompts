@@ -17,8 +17,8 @@ on:
 
   push:
     paths:
-      - '.ai-iap/rules/**'
-      - '.ai-iap/processes/**'
+      - 'lib/rules/**'
+      - 'lib/processes/**'
     branches:
       - main
 

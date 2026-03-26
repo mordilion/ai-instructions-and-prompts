@@ -1,6 +1,6 @@
 # Custom AI Instructions & Prompts
 
-This directory allows you to extend or override the core `.ai-iap/` configuration without modifying core files. This ensures you can safely pull updates from the main repository without losing your customizations.
+This directory lives in **your project** and lets you extend or override the **plugin’s** core configuration (shipped under `lib/` in the plugin repo, resolved at runtime via the plugin install) without editing those core files. You can pull plugin updates without losing your customizations here.
 
 ## 📁 Directory Structure
 
@@ -46,7 +46,7 @@ Then create: `.ai-iap-custom/rules/typescript/company-standards.md`
 
 Replace a core rule file by creating a file with the same path:
 
-- Core: `.ai-iap/rules/typescript/code-style.md`
+- Core (plugin): `lib/rules/typescript/code-style.md`
 - Override: `.ai-iap-custom/rules/typescript/code-style.md` ✅ (this wins)
 
 ### **3. Add Custom Processes**
@@ -95,7 +95,7 @@ Then create: `.ai-iap-custom/rules/typescript/frameworks/remix.md`
 
 Add company-specific implementation patterns (auth flows, API clients, etc.):
 
-- **Start from template**: Copy `.ai-iap/code-library/functions/_TEMPLATE.md`
+- **Start from template**: Copy `lib/code-library/functions/_TEMPLATE.md` from the plugin (or your plugin checkout)
 - **Create file**: `.ai-iap-custom/code-library/functions/company-pattern.md`
 - **Update index**: Add to `.ai-iap-custom/code-library/functions/INDEX.md`
 
@@ -105,7 +105,7 @@ AIs will check custom patterns before core patterns.
 
 Add company-specific design pattern implementations:
 
-- **Start from template**: Copy `.ai-iap/code-library/design-patterns/_TEMPLATE.md`
+- **Start from template**: Copy `lib/code-library/design-patterns/_TEMPLATE.md` from the plugin (or your plugin checkout)
 - **Create file**: `.ai-iap-custom/code-library/design-patterns/[category]/company-pattern.md`
 - **Categories**: creational, structural, or behavioral
 - **Update index**: Add to `.ai-iap-custom/code-library/design-patterns/INDEX.md`
@@ -128,39 +128,31 @@ See example files in this directory:
 - `rules/typescript/company-standards.example.md` - Example custom rule
 - `processes/typescript/deploy-internal.example.md` - Example custom process
 - `code-library/functions/company-auth-header.example.md` - Example custom function
-- Templates available in `.ai-iap/code-library/` for functions and design patterns
+- Templates available under `lib/code-library/` in the plugin for functions and design patterns
 
 Copy and rename (remove `.example`) to activate.
 
 ## ✅ Validation
 
-Run validation to check your custom files:
-
-```bash
-# Linux/Mac
-./.ai-iap/validate.sh
-
-# Windows
-.\.ai-iap\validate.ps1
-```
+Run validation to check your custom files: use `/ai-iap:validate` in Claude Code (replaces legacy `./.ai-iap/validate.sh` and `.\.ai-iap\validate.ps1`).
 
 ## 🆘 Troubleshooting
 
 **Custom files not appearing?**
 - Ensure `config.json` is valid JSON
 - Check file paths match exactly
-- Run validation scripts
+- Run `/ai-iap:validate`
 
 **Merge conflicts when pulling updates?**
-- Core files (`.ai-iap/`) should never conflict
+- Core plugin files (under `lib/` in the plugin) should never conflict with this directory
 - Custom files (`.ai-iap-custom/`) are yours to manage
 
 **Want to reset?**
 - Delete `.ai-iap-custom/` directory
-- Re-run setup script
+- Re-run `/ai-iap:setup` in Claude Code
 
 ## 📚 More Information
 
 - **[CUSTOMIZATION.md](../CUSTOMIZATION.md)** – Complete guide with examples and troubleshooting
-- **[Main README](.ai-iap/README.md)** – Full project documentation
-- **[Core Config](../.ai-iap/config.json)** – See core configuration structure
+- **[Main README](../README.md)** – Full project documentation (plugin repo root)
+- **[Core Config](../lib/config.json)** – See core configuration structure (plugin repo)

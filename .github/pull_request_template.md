@@ -4,20 +4,19 @@ What does this change do and why?
 
 ## Scope
 
-- [ ] Rules library (`.ai-iap/rules/`)
-- [ ] Processes library (`.ai-iap/processes/`)
-- [ ] Code library (`.ai-iap/code-library/`)
-- [ ] Setup scripts (`.ai-iap/setup.*`, validation scripts)
+- [ ] Rules library (`lib/rules/`)
+- [ ] Processes library (`lib/processes/`)
+- [ ] Code library (`lib/code-library/`)
+- [ ] Plugin surface (`skills/`, `hooks/`, `agents/`)
 - [ ] Docs (`README.md`, `CUSTOMIZATION.md`, etc.)
 - [ ] CI / GitHub Actions (`.github/workflows/`)
 - [ ] Other (please describe)
 
 ## How to test
 
-- [ ] Windows: `.\.ai-iap\validate.ps1`
-- [ ] macOS/Linux: `./.ai-iap/validate.sh`
+- [ ] `/ai-iap:validate` (replaces legacy `.ai-iap/validate.*` and verify-extension scripts)
 - [ ] Markdown lint passes (`markdownlint '**/*.md'`)
-- [ ] If extension/customization behavior changed: ran `verify-extension` scripts
+- [ ] If extension/customization behavior changed: re-ran `/ai-iap:validate`
 
 ## Checklist
 

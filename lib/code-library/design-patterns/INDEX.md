@@ -12,7 +12,7 @@
   - `.ai-iap-custom/code-library/design-patterns/creational/` for company creational patterns
   - `.ai-iap-custom/code-library/design-patterns/structural/` for company structural patterns
   - `.ai-iap-custom/code-library/design-patterns/behavioral/` for company behavioral patterns
-- ✅ **DO** then check `.ai-iap/code-library/design-patterns/` (this location) for core patterns
+- ✅ **DO** then check `lib/code-library/design-patterns/` (this location) for core patterns
 - ❌ **DON'T** implement design patterns (Singleton, Factory, Observer, etc.) from memory
 - ❌ **DON'T** generate pattern implementations from scratch
 - ❌ **DON'T** mix pattern concepts incorrectly

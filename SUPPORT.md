@@ -2,9 +2,9 @@
 
 ## Start here
 
-- **Documentation**: see `README.md` and the full docs in `.ai-iap/README.md`
+- **Documentation**: see `README.md` and the full docs in `lib/README.md`
 - **Customization / overrides**: `CUSTOMIZATION.md`
-- **Troubleshooting**: `.ai-iap/TROUBLESHOOTING.md`
+- **Troubleshooting**: `TROUBLESHOOTING.md`
 - **Team adoption**: `TEAM_ADOPTION_GUIDE.md`
 
 ## Getting help
