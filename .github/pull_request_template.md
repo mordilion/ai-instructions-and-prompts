@@ -8,7 +8,7 @@ What does this change do and why?
 - [ ] Processes library (`lib/processes/`)
 - [ ] Code library (`lib/code-library/`)
 - [ ] Plugin surface (`skills/`, `hooks/`, `agents/`)
-- [ ] Docs (`README.md`, `CUSTOMIZATION.md`, etc.)
+- [ ] Docs (`README.md`, `TEAM_ADOPTION_GUIDE.md`, etc.)
 - [ ] CI / GitHub Actions (`.github/workflows/`)
 - [ ] Other (please describe)
 
@@ -16,7 +16,6 @@ What does this change do and why?
 
 - [ ] `/ai-iap:validate`
 - [ ] Markdown lint passes (`markdownlint '**/*.md'`)
-- [ ] If extension/customization behavior changed: re-ran `/ai-iap:validate`
 
 ## Checklist
 

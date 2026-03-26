@@ -91,13 +91,6 @@ Verify `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/marketplace.json`:
 2. Must have `name`, `owner`, and `plugins` fields.
 3. `plugins` array must contain at least one entry with `name` and `source`.
 
-### 10. Custom Config (Optional)
-
-If `.ai-iap-custom/config.json` exists in the project root:
-1. Must be valid JSON.
-2. Custom rule files referenced must exist under `.ai-iap-custom/rules/`.
-3. Custom process files referenced must exist under `.ai-iap-custom/processes/`.
-
 ## Output Format
 
 ```

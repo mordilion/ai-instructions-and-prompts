@@ -16,7 +16,6 @@ optimize for **clarity**, **consistency**, and **cross-AI understandability**.
 Please skim:
 
 - `README.md` (overview and quick start)
-- `CUSTOMIZATION.md` (extension system and update-safe overrides)
 - `TEAM_ADOPTION_GUIDE.md` (context and adoption constraints)
 
 ## Project principles (please follow)
@@ -40,7 +39,7 @@ Please skim:
 Use **Conventional Commits** (the repository enforces this style). Examples:
 
 - `docs: update setup instructions`
-- `fix(config): handle missing custom config`
+- `fix(config): handle missing optional fields`
 - `feat(rules): add sql injection guidance`
 
 ### Local checks

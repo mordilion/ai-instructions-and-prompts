@@ -126,12 +126,9 @@
 
 > **BEFORE** implementing common patterns (error handling, async operations, input validation, database queries, HTTP requests, logging, caching, auth, rate limiting, webhooks) or design patterns (Singleton, Factory, Observer, etc.):
 >
-> 1. **CHECK** custom patterns first (if they exist):
->    - `.ai-iap-custom/code-library/functions/` for custom implementation patterns
->    - `.ai-iap-custom/code-library/design-patterns/` for custom design patterns
-> 2. **THEN CHECK** `lib/code-library/INDEX.md` for core patterns overview
-> 3. **BROWSE** either `functions/INDEX.md` (implementation patterns) or `design-patterns/INDEX.md` (design patterns)
-> 4. **OPEN** the relevant pattern file and **COPY** the exact code pattern
+> 1. **CHECK** `lib/code-library/INDEX.md` for core patterns overview
+> 2. **BROWSE** either `functions/INDEX.md` (implementation patterns) or `design-patterns/INDEX.md` (design patterns)
+> 3. **OPEN** the relevant pattern file and **COPY** the exact code pattern
 >
 > **NEVER**: Add installation commands to pattern files.
 > **NEVER**: Generate these patterns from scratch if they exist in the library.
@@ -154,7 +151,7 @@
 - [ ] Following industry best practices?
 - [ ] Checking code library before implementing patterns?
 - [ ] Asking clarifying questions when needed?
-- [ ] Using custom patterns (if .ai-iap-custom/ exists)?
+- [ ] Using code library patterns before implementing from scratch?
 - [ ] Following framework-specific rules when loaded?
 - [ ] Avoiding fixed versions (reading from project configs)?
 - [ ] Using explicit directives and examples when needed?

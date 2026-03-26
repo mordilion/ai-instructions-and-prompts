@@ -140,9 +140,8 @@ function updateUser(userId: string, data: unknown): Result<User, Error> {
 
 > **BEFORE** implementing common patterns (error handling, async, validation, DB queries, HTTP, logging, caching, auth, rate limiting, webhooks) or design patterns:
 >
-> 1. **CHECK** custom patterns first (`.ai-iap-custom/code-library/`)
-> 2. **THEN CHECK** `lib/code-library/INDEX.md`
-> 3. **OPEN** the relevant pattern file and **COPY** the exact code pattern
+> 1. **CHECK** `lib/code-library/INDEX.md`
+> 2. **OPEN** the relevant pattern file and **COPY** the exact code pattern
 >
 > **NEVER**: Generate these patterns from scratch if they exist in the library.
 

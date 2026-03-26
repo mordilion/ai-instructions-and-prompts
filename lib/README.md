@@ -37,7 +37,6 @@ Your Rules (one source) → /ai-iap:setup → Claude Code Configured
 - **🔒 Security Rules** – OWASP Top 10 coverage for all languages (token-optimized, 80% more efficient)
 - **📚 Documentation Standards** – Optional code, project, and API documentation standards with smart suggestions
 - **🔄 Process Guides** – CI/CD, Testing, Logging, Docker, Auth, Migrations, API Docs (78 files across core application languages, token-optimized)
-- **🎨 Extension System** – Add company standards, override rules, custom processes without modifying core (update-safe)
 - **⚡ Interactive Setup** – Wizard guides you through configuration with context-aware suggestions
 - **🎯 Recommended Defaults** – Best practices marked with `⭐`
 - **✅ Quality Verified** – Conflict-free system verified across the repository (95% confidence)
@@ -196,83 +195,11 @@ Agents are always defined by you: no presets. **One agent = one specialisation.*
 - **Name** (slug, e.g. ios-developer)
 - **Description** (when Claude should use this agent)
 - **Tech stack** – preset (iOS, Vue.js, PHP Laravel, SEO, UI/UX, SEO & Linguistic) or Custom (pick languages and frameworks from config)
-- **Persona specialisation** – Software/Developer (default), SEO, UI/UX, or Generic (full adaptive persona). Each agent gets a focused persona slice so behaviour matches its role (see [CUSTOMIZATION.md](../CUSTOMIZATION.md#persona-split-one-agent-one-specialisation)).
+- **Persona specialisation** – Software/Developer (default), SEO, UI/UX, or Generic (full adaptive persona). Each agent gets a focused persona slice so behaviour matches its role.
 
 Example: "I need 4 agents: one for iOS, one for Vue.js, one for SEO and Linguistic, one for PHP with Laravel" → run **`/ai-iap:setup agents`**, enter 4, then for each agent set name, description, tech stack, and persona. Generated files go to `.claude/agents/` (or global scope).
 
 That's it! Your Claude Code instance is now configured with consistent coding standards.
-
----
-
-## 🎨 Customization & Extensions
-
-Want to add company-specific standards, internal processes, or override core rules? Use the **extension system**:
-
-### Create Custom Config
-
-```
-.ai-iap-custom/
-├── config.json                    # Your customizations
-├── rules/
-│   └── typescript/
-│       └── company-standards.md   # Company-specific rules
-└── processes/
-    └── typescript/
-        └── deploy-internal.md     # Internal deployment guide
-```
-
-### Three Ways to Extend
-
-1. **Add Custom Rules** – Extend core rules with company standards
-   ```json
-   {
-     "languages": {
-       "typescript": {
-         "customFiles": ["company-standards"]
-       }
-     }
-   }
-   ```
-
-2. **Add Custom Processes** – Internal tools and platforms
-   ```json
-   {
-     "languages": {
-       "typescript": {
-         "customProcesses": {
-           "deploy-internal": {
-             "name": "Deploy to Internal Platform",
-             "file": "deploy-internal"
-           }
-         }
-       }
-     }
-   }
-   ```
-
-3. **Override Core Files** – Replace core rules with team preferences
-   ```
-   .ai-iap-custom/rules/typescript/code-style.md
-   → Overrides lib/rules/typescript/code-style.md
-   ```
-
-### Update Strategies
-
-| Strategy | Setup | Best For |
-|----------|-------|----------|
-| **Team Sharing** (Recommended) | Install the same plugin version for everyone; commit `.ai-iap-custom/` and `.ai-iap-state.json` for shared overrides and last-known setup | Teams (shared standards + shared function patterns) |
-| **Separate Repo** | Maintain `.ai-iap-custom/` as submodule | Large orgs, company-wide |
-| **Local Only** (Advanced) | Keep `.ai-iap-custom/` uncommitted | Individual experimentation |
-
-### Benefits
-
-- ✅ Pull updates from main repo without conflicts
-- ✅ Keep company secrets/processes private
-- ✅ Share customizations across team (optional)
-- ✅ Test beta frameworks before core inclusion
-- ✅ Maintain compliance requirements separately
-
-**📚 Full Documentation**: See [CUSTOMIZATION.md](../CUSTOMIZATION.md) for complete guide with examples.
 
 ---
 
@@ -552,15 +479,12 @@ All patterns are shown **across all 8 core application languages** in a single f
 ```
 AI Workflow:
 1. User asks to implement a pattern (errors/async/validation/DB/HTTP/Singleton/Factory/etc.)
-2. AI checks custom patterns first (if they exist):
-   - `.ai-iap-custom/code-library/functions/` for custom implementation patterns
-   - `.ai-iap-custom/code-library/design-patterns/` for custom design patterns
-3. AI then checks `lib/code-library/INDEX.md` ← MANDATORY STEP
-4. AI navigates to functions/ or design-patterns/ based on need
-5. AI opens relevant pattern file (e.g., error-handling.md, creational/singleton.md)
-6. AI chooses appropriate framework version (Plain, Prisma, Laravel, etc.)
-7. AI copies exact pattern (no installation commands in pattern files)
-8. AI implements with zero guessing
+2. AI checks `lib/code-library/INDEX.md` ← MANDATORY STEP
+3. AI navigates to functions/ or design-patterns/ based on need
+4. AI opens relevant pattern file (e.g., error-handling.md, creational/singleton.md)
+5. AI chooses appropriate framework version (Plain, Prisma, Laravel, etc.)
+6. AI copies exact pattern (no installation commands in pattern files)
+7. AI implements with zero guessing
 ```
 
 **DO NOT** waste tokens generating these patterns from scratch.

@@ -48,26 +48,7 @@ These assume specific tooling/workflows - customize first:
 | **Test frameworks** | Jest (TS), xUnit (.NET) | Your team's choice |
 | **Commit conventions** | Conventional Commits | Your format |
 
-**Action**: Use [Extension System](CUSTOMIZATION.md) to override. Example:
-
-`.ai-iap-custom/config.json`:
-
-```json
-{
-  "languages": {
-    "typescript": {
-      "customFiles": ["company-standards"],
-      "customProcesses": {
-        "ci-cd-gitlab": {
-          "name": "CI/CD (GitLab CI)",
-          "file": "ci-cd-gitlab",
-          "description": "GitLab CI pipeline for your team"
-        }
-      }
-    }
-  }
-}
-```
+**Action**: Skip or adapt the conflicting rules for your workflow during `/ai-iap:setup`.
 
 ### **Skip or replace**
 
@@ -103,7 +84,6 @@ These may conflict with established practices:
 **Month 2**: Process Integration
 
 - Adapt process guides to your workflow
-- Create custom extensions (`.ai-iap-custom/`)
 - Skip incompatible sections
 
 **Month 3+**: Refinement
@@ -151,7 +131,6 @@ These may conflict with established practices:
    - Structure templates (team-defined)
 
 3. **Create custom processes**:
-   - Use `.ai-iap-custom/` for your actual workflows
 
    - Reference your CI/CD platform
 
@@ -163,11 +142,11 @@ These may conflict with established practices:
 
 | Your Situation | AI Instructions & Prompts Says | Resolution |
 | ---------------- | ------------------------------- | ------------ |
-| **Use GitLab CI** | GitHub Actions | Adapt CI/CD guide, create `.ai-iap-custom/processes/*/ci-cd-gitlab.md` |
-| **Use xUnit (.NET)** | NUnit required | Resolved by customizing: document your preferred test framework via `.ai-iap-custom/` |
+| **Use GitLab CI** | GitHub Actions | Adapt CI/CD process guide for your platform |
+| **Use xUnit (.NET)** | NUnit required | Select your preferred test framework during setup |
 
-| **Trunk-based dev** | Feature branches | Skip branch naming, use `.ai-iap-custom/` to document trunk approach |
-| **Jira integration** | Generic branches | Add `.ai-iap-custom/config.json` with Jira prefix |
+| **Trunk-based dev** | Feature branches | Skip branch naming rules during setup |
+| **Jira integration** | Generic branches | Adapt commit/branch rules to include Jira prefix |
 | **No Docker** | Docker templates | Skip Docker sections, focus on CI/CD logic |
 | **MSTest preferred** | xUnit recommended | Use MSTest - guide now supports all |
 
@@ -195,15 +174,13 @@ These may conflict with established practices:
 
 - [ ] Review generated configs
 
-- [ ] Install the `ai-iap` plugin, commit `.ai-iap-custom/` and `.ai-iap-state.json` in the repo (shared across the team)
+- [ ] Install the `ai-iap` plugin, commit `.ai-iap-state.json` in the repo (shared across the team)
 
 - [ ] Re-run setup in **Modify selection** mode when you need to add/remove languages, frameworks, or processes
 
-- [ ] Create/update `.ai-iap-custom/` with team overrides and custom code patterns
-
 - [ ] Test with 1-2 pilot projects
 
-- [ ] Document deviations in `.ai-iap-custom/README.md`
+- [ ] Document deviations in a team wiki or README
 
 ### Rollout Phase (Team)
 
@@ -225,14 +202,14 @@ These may conflict with established practices:
 
 - [ ] Document Claude Code behavior issues
 
-- [ ] Refine custom extensions
+- [ ] Refine generated rules and document team-specific adjustments
 
 ---
 
 ## Common Anti-Patterns (What NOT to Do)
 
 - **Don't adopt everything blindly** → conflicts with existing workflows
-- **Don't modify the plugin's core files** → use `.ai-iap-custom/` for overrides
+- **Don't modify the plugin's core files** → fork or contribute upstream instead
 - **Don't skip security rules** → increases risk of vulnerabilities in AI-generated code
 - **Don't ignore team feedback** → low adoption and inconsistent Claude Code usage
 - **Don't run without ownership** → rules become stale and unused
@@ -254,10 +231,6 @@ Track these after 30-60 days:
 ---
 
 ## Support & Resources
-
-- **Customization**: See [CUSTOMIZATION.md](CUSTOMIZATION.md)
-
-- **Extension System**: `.ai-iap-custom/` for overrides
 
 - **Issues**: Report conflicts/bugs to [GitHub Issues](https://github.com/HenningHuncke/ai-instructions-and-prompts/issues)
 
@@ -283,7 +256,7 @@ Decision guide:
 A: The setup is focused on Claude Code. For other tools, check if they support markdown-based instructions and adapt accordingly.
 
 **Q: What if we find a bug or bad advice?**
-A: Override in `.ai-iap-custom/` immediately, then report upstream.
+A: Report upstream via GitHub Issues. For immediate fixes, adjust the generated rules in `.claude/rules/` directly.
 
 **Q: How do we keep rules updated?**
 A: Quarterly `git pull` from upstream + merge custom changes.
@@ -293,10 +266,9 @@ A: Yes! Generic improvements belong upstream. Company-specific stays custom.
 
 **Q: Our team uses Rust/Go - not supported?**
 
-A: Create `.ai-iap-custom/rules/rust/` with your standards.
+A: Add your own rule files to `.claude/rules/` manually. Consider contributing the language upstream.
 
 ---
 
 **Bottom Line**: This is a **foundation, not a straitjacket**. Use what helps, adapt what
-conflicts, skip what doesn't fit. The extension system exists specifically to make this work
-for YOUR team.
+conflicts, skip what doesn't fit. The setup wizard lets you select exactly what your team needs.

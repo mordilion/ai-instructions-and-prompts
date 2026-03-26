@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "description": "Claude Code subagent and role-based agent templates. Generic subagents use a fixed prompt; agentTemplates inject project rules for the given languages/frameworks. Custom agents can be defined in .ai-iap-custom/claude-agents.json.",
+  "description": "Claude Code subagent and role-based agent templates. Generic subagents use a fixed prompt; agentTemplates inject project rules for the given languages/frameworks.",
   "subagents": [
     {
       "id": "code-reviewer",

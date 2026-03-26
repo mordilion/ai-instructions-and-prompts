@@ -8,11 +8,7 @@
 
 **BEFORE** implementing **ANY** design pattern, **CHECK THIS INDEX**:
 
-- ✅ **DO** check custom patterns first (if they exist):
-  - `.ai-iap-custom/code-library/design-patterns/creational/` for company creational patterns
-  - `.ai-iap-custom/code-library/design-patterns/structural/` for company structural patterns
-  - `.ai-iap-custom/code-library/design-patterns/behavioral/` for company behavioral patterns
-- ✅ **DO** then check `lib/code-library/design-patterns/` (this location) for core patterns
+- ✅ **DO** check `lib/code-library/design-patterns/` (this location) for core patterns
 - ❌ **DON'T** implement design patterns (Singleton, Factory, Observer, etc.) from memory
 - ❌ **DON'T** generate pattern implementations from scratch
 - ❌ **DON'T** mix pattern concepts incorrectly
@@ -173,12 +169,10 @@ Looking for smaller, tactical code snippets (error handling, async operations, e
 
 If your team maintains custom design patterns:
 1. **Start from the template**: [_TEMPLATE.md](_TEMPLATE.md)
-2. Create `.ai-iap-custom/code-library/design-patterns/` structure
-3. Mirror the folder organization (creational/structural/behavioral)
-4. Follow the same YAML frontmatter structure
-5. Include complete, working implementations (20-100 lines per example)
-6. Add usage examples for each language
-7. AIs will check custom patterns first
+2. Mirror the folder organization (creational/structural/behavioral)
+3. Follow the same YAML frontmatter structure
+4. Include complete, working implementations (20-100 lines per example)
+5. Add usage examples for each language
 
 ---
 

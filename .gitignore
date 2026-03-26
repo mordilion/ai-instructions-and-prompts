@@ -38,30 +38,3 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# ============================================================================
-# Custom AI Instructions (User-Specific)
-# ============================================================================
-# The .ai-iap-custom/ directory allows you to extend or override core files
-# without modifying the plugin's lib/ (ensures safe updates)
-#
-# Options:
-# - Option A (Default): Keep custom files local (git ignored)
-# - Option B: Share with team (remove .ai-iap-custom/ from gitignore)
-# ============================================================================
-
-# Ignore custom files (keep local only)
-.ai-iap-custom/**
-
-# BUT: Always include example files for reference
-!.ai-iap-custom/
-!.ai-iap-custom/rules/
-!.ai-iap-custom/rules/**/
-!.ai-iap-custom/processes/
-!.ai-iap-custom/processes/**/
-!.ai-iap-custom/functions/
-!.ai-iap-custom/functions/**/
-!.ai-iap-custom/*.example.*
-!.ai-iap-custom/**/*.example.*
-!.ai-iap-custom/README.md
-!.ai-iap-custom/INDEX.md
-!.ai-iap-custom/functions/INDEX.md

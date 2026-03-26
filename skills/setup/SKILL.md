@@ -17,9 +17,6 @@ rules for their project by reading the plugin's rule library and generating file
 - Process library: `${CLAUDE_PLUGIN_ROOT}/lib/processes/`
 - Code library: `${CLAUDE_PLUGIN_ROOT}/lib/code-library/`
 - Subagent templates: `${CLAUDE_PLUGIN_ROOT}/lib/claude-subagents.json`
-- Custom config (in user project): `.ai-iap-custom/config.json`
-- Custom rules (in user project): `.ai-iap-custom/rules/`
-- Custom processes (in user project): `.ai-iap-custom/processes/`
 - State file (in user project): `.ai-iap-state.json`
 
 ## Setup Flow
@@ -36,16 +33,13 @@ Follow these steps in order. Present choices clearly and wait for user input at 
    - **Cleanup** previously generated files only
    - **Start fresh** (ignore previous selection)
 4. If "Reuse", skip to Step 7 (Generation) using previous selections.
-5. If "Cleanup", run cleanup (Step 8) and stop.
+5. If "Cleanup", run cleanup (see **Cleanup Command** section below) and stop.
 6. If "Start fresh" or "Modify", continue with Step 1.
 
 ### Step 1: Read Configuration
 
 1. Read `${CLAUDE_PLUGIN_ROOT}/lib/config.json`.
-2. Check for `.ai-iap-custom/config.json` in the project root. If it exists, deep-merge
-   it into the core config (custom overrides core). Merge `customFiles` into `files`,
-   `customFrameworks` into `frameworks`, `customProcesses` into `processes`.
-3. Parse the `languages` object to get available options.
+2. Parse the `languages` object to get available options.
 
 ### Step 2: Select Languages
 
@@ -113,7 +107,6 @@ If `.ai-iap-state.json` exists or `.claude/rules/` exists:
 For each selected language, for each file in `languages[lang].files`:
 
 1. Read the rule content from `${CLAUDE_PLUGIN_ROOT}/lib/rules/{lang}/{file}.md`.
-   - Check `.ai-iap-custom/rules/{lang}/{file}.md` first (custom overrides core).
 2. Skip `commit-standards` if commit standards are disabled.
 3. Write to `.claude/rules/core/{lang}/{file}.md` with this format:
 
@@ -184,7 +177,6 @@ For each selected structure:
 For each selected process where `loadIntoAI: true`:
 
 1. Read from `${CLAUDE_PLUGIN_ROOT}/lib/processes/{ondemand|permanent}/{lang}/{proc_file}.md`.
-   - Check `.ai-iap-custom/processes/` first.
 2. Write to `.claude/rules/processes/{lang}-{proc_key}.md` with `aiIapManaged: true`
    frontmatter (no paths — processes apply broadly).
 
@@ -217,7 +209,6 @@ Write `.ai-iap-state.json` in the project root with this structure:
 Show a summary:
 - Number of rule files generated
 - Location of generated files
-- Remind about `.ai-iap-custom/` for company-specific overrides
 - Note that `.ai-iap-state.json` tracks the setup for safe reruns
 
 ## Agent Setup (Optional)
@@ -259,5 +250,3 @@ If the user runs `/ai-iap:setup cleanup`:
 - All generated `.md` files under `.claude/agents/` MUST have `aiIapManaged: true` in
   YAML frontmatter.
 - NEVER delete files that don't have `aiIapManaged: true` — those are user-owned.
-- Prefer reading custom overrides from `.ai-iap-custom/` before falling back to
-  `${CLAUDE_PLUGIN_ROOT}/lib/`.

@@ -179,7 +179,7 @@ git commit -m "Add generated Claude Code configs"
 
 **Recommendation**: Ensure your repo is not ignoring the files you intend to share.
 For team sharing, install the `ai-iap` plugin at project scope (`--scope project`),
-commit `.ai-iap-custom/` and `.ai-iap-state.json`, and decide whether to also commit
+commit `.ai-iap-state.json`, and decide whether to also commit
 generated outputs (`.claude/rules/`, `CLAUDE.md`, `.claude/agents/`).
 
 ---
@@ -291,7 +291,6 @@ If you found a bug:
 ## Additional Resources
 
 - **Full Documentation**: `lib/README.md`
-- **Customization Guide**: `CUSTOMIZATION.md`
 - **Team Adoption**: `TEAM_ADOPTION_GUIDE.md`
 
 ---

@@ -3,7 +3,6 @@
 ## Start here
 
 - **Documentation**: see `README.md` and the full docs in `lib/README.md`
-- **Customization / overrides**: `CUSTOMIZATION.md`
 - **Troubleshooting**: `TROUBLESHOOTING.md`
 - **Team adoption**: `TEAM_ADOPTION_GUIDE.md`
 

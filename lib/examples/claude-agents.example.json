@@ -1,5 +1,5 @@
 {
-  "description": "Example custom Claude Code agents. Copy to .ai-iap-custom/claude-agents.json and run setup to generate .claude/agents/*.md. ruleBindings: language IDs from config; values = framework IDs. personaSpecialization: software|seo|ui-ux|testing|devops|generic (one agent, one specialisation).",
+  "description": "Example custom Claude Code agents. Use /ai-iap:setup agents to generate .claude/agents/*.md. ruleBindings: language IDs from config; values = framework IDs. personaSpecialization: software|seo|ui-ux|testing|devops|generic (one agent, one specialisation).",
   "agents": [
     {
       "id": "ios-developer",

@@ -8,8 +8,7 @@
 
 **BEFORE** implementing **ANY** of these patterns, **CHECK THIS INDEX**:
 
-- ✅ **DO** check `.ai-iap-custom/code-library/functions/` first (if it exists) for company-specific patterns
-- ✅ **DO** then check `lib/code-library/functions/` (this file) for core patterns
+- ✅ **DO** check `lib/code-library/functions/` (this file) for core patterns
 - ❌ **DON'T** generate error handling code from scratch
 - ❌ **DON'T** guess async/await implementations
 - ❌ **DON'T** create validation logic without checking here first
@@ -140,7 +139,7 @@ Looking for design patterns (Singleton, Factory, Observer, etc.)?
 
 ## Adding Custom Functions
 
-If your team maintains custom function patterns, keep them in a separate, update-safe location and ensure AIs check them before these core patterns.
+If your team maintains custom function patterns, contribute them upstream or add them directly to `lib/code-library/functions/` following the template structure.
 
 ---
 

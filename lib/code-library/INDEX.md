@@ -8,10 +8,7 @@
 
 **BEFORE** implementing **ANY** code patterns or design patterns, **CHECK THIS LIBRARY**:
 
-- ✅ **DO** check custom patterns first (if they exist):
-  - `.ai-iap-custom/code-library/functions/` for company implementation patterns
-  - `.ai-iap-custom/code-library/design-patterns/` for company design patterns
-- ✅ **DO** then check `lib/code-library/` (this location) for core patterns
+- ✅ **DO** check `lib/code-library/` (this location) for core patterns
 - ❌ **DON'T** generate code from scratch without checking here first
 - ❌ **DON'T** implement design patterns (Singleton, Factory, Observer, etc.) from memory
 - ❌ **DON'T** guess implementations for error handling, async operations, validation, etc.
@@ -124,10 +121,9 @@ Each pattern file contains:
 ## Adding Custom Patterns
 
 If your team maintains custom patterns:
-1. Create `.ai-iap-custom/code-library/` structure
-2. Mirror the folder organization
-3. Create custom INDEX.md files
-4. AIs will check custom patterns first
+1. Mirror the folder organization
+2. Create custom INDEX.md files
+3. Follow the same YAML frontmatter structure
 
 ---
 

@@ -30,7 +30,7 @@ alwaysApply: true
   - rule library (`lib/rules/`)
   - processes library (`lib/processes/`)
   - functions library + index (`lib/code-library/`)
-  - root docs (README, CUSTOMIZATION, TROUBLESHOOTING)
+  - root docs (README, TROUBLESHOOTING)
   - CI/CD workflows (`.github/workflows/`)
 - **NEVER** leave stale references (old paths, old folder names, removed concepts).
 
@@ -39,11 +39,10 @@ alwaysApply: true
 
 **Implementation Workflow** (CRITICAL):
 - **BEFORE** implementing error handling, async operations, input validation, etc.:
-  1. Check the custom functions index (if it exists)
-  2. Then check the core functions index in `lib/code-library/functions/INDEX.md`
-  3. Use the exact pattern from the relevant function file
-  4. Choose the appropriate framework/library version
-  5. Copy the exact code pattern (no installation commands)
+  1. Check the core functions index in `lib/code-library/functions/INDEX.md`
+  2. Use the exact pattern from the relevant function file
+  3. Choose the appropriate framework/library version
+  4. Copy the exact code pattern (no installation commands)
 
 **Functions Authoring Rule** (CRITICAL):
 - When creating a new function file, **ALWAYS** start from the functions template.

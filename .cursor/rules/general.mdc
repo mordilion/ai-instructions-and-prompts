@@ -27,7 +27,6 @@ alwaysApply: true
 - `lib/rules/` — Rule library (192 files: general → language → framework → structure)
 - `lib/processes/` — Process guides (78 files: testing, CI/CD, logging, docker, auth, etc.)
 - `lib/code-library/` — Implementation patterns + design patterns
-- `.ai-iap-custom/` — Extension system examples (template for user overrides)
 
 **Success Criteria**:
 - Consistent code structure and architecture patterns
@@ -39,11 +38,10 @@ alwaysApply: true
 
 > **BEFORE** implementing error handling, async operations, input validation, database queries, HTTP requests, or other covered function patterns:
 >
-> 1. **CHECK** the custom functions index **if it exists**
-> 2. **THEN CHECK** the core functions index
-> 3. **USE** the exact pattern from the function file (e.g., `error-handling.md`)
-> 4. **CHOOSE** the appropriate framework version (Plain, Prisma, Laravel, etc.)
-> 5. **COPY** the exact code pattern (no installation commands)
+> 1. **CHECK** the core functions index
+> 2. **USE** the exact pattern from the function file (e.g., `error-handling.md`)
+> 3. **CHOOSE** the appropriate framework version (Plain, Prisma, Laravel, etc.)
+> 4. **COPY** the exact code pattern (no installation commands)
 
 ---
 
@@ -75,7 +73,7 @@ alwaysApply: true
      - functions library + functions index in `lib/code-library/`
      - agents in `agents/`
      - hooks in `hooks/`
-     - root docs (readme, customization, troubleshooting)
+     - root docs (readme, troubleshooting)
      - CI/CD workflows in `.github/workflows/`
    - **NEVER** leave docs/files pointing to old paths or concepts.
 

@@ -27,7 +27,6 @@ and optional agents — configured for your project in seconds.
 - **Process Guides** -- CI/CD, Testing, Logging, Docker, Authentication, Migrations,
   API Documentation
 - **Code Library** -- 17 implementation patterns + 15 design patterns across 8 languages
-- **Extension System** -- Add company standards, override rules, custom processes (update-safe)
 - **Quality Verified** -- 95%+ compliant, understandability-first
 
 ## Quick Start
@@ -78,7 +77,6 @@ then generates your `.claude/rules/` configuration.
 - [Token Costs](lib/README.md#-token-cost-analysis)
 - [Configuration](lib/README.md#-configuration)
 - [**Team Adoption Guide**](TEAM_ADOPTION_GUIDE.md) -- For engineering teams evaluating this project
-- [**Customization Guide**](CUSTOMIZATION.md) -- Extend with company standards (update-safe)
 - [Troubleshooting](TROUBLESHOOTING.md)
 - [Contributing](lib/README.md#-contributing)
 
