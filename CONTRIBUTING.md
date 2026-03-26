@@ -48,7 +48,7 @@ Use **Conventional Commits** (the repository enforces this style). Examples:
 Run the same checks CI runs:
 
 - **Markdown lint**: ensure all `*.md` files pass `markdownlint`
-- **Validation**: run `/ai-iap:validate` in Claude Code (replaces legacy `./.ai-iap/validate.sh`, `./.ai-iap/verify-extension.sh`, and Windows `.ps1` equivalents)
+- **Validation**: run `/ai-iap:validate` in Claude Code
 
 If your change touches setup/merge logic, run `/ai-iap:validate` again after your edits.
 

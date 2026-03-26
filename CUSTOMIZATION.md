@@ -179,12 +179,8 @@ logger.info('User created', { userId });
 
 ### Step 3: Run Setup
 
-```bash
-# Linux/Mac
-.//ai-iap:setup
-
-# Windows
-.\.ai-iap\setup.ps1
+```text
+/ai-iap:setup
 ```
 
 The rule will be included alongside core TypeScript rules.

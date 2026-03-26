@@ -134,7 +134,7 @@ Copy and rename (remove `.example`) to activate.
 
 ## ✅ Validation
 
-Run validation to check your custom files: use `/ai-iap:validate` in Claude Code (replaces legacy `./.ai-iap/validate.sh` and `.\.ai-iap\validate.ps1`).
+Run validation to check your custom files: use `/ai-iap:validate` in Claude Code.
 
 ## 🆘 Troubleshooting
 

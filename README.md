@@ -32,10 +32,19 @@ and optional agents — configured for your project in seconds.
 
 ## Quick Start
 
-### Install the Plugin
+### Option A: Install from GitHub
+
+Add the marketplace and install the plugin:
+
+```text
+/plugin marketplace add HenningHuncke/ai-instructions-and-prompts
+/plugin install ai-iap@ai-iap-marketplace
+```
+
+### Option B: Test Locally (Development)
 
 ```bash
-claude plugin install ai-iap@marketplace
+claude --plugin-dir ./path/to/ai-instructions-and-prompts
 ```
 
 ### Run the Setup Wizard
@@ -46,12 +55,6 @@ claude plugin install ai-iap@marketplace
 
 The AI-driven setup wizard walks you through language, framework, and structure selection,
 then generates your `.claude/rules/` configuration.
-
-### Test Locally (Development)
-
-```bash
-claude --plugin-dir ./path/to/ai-instructions-and-prompts
-```
 
 ## Plugin Components
 

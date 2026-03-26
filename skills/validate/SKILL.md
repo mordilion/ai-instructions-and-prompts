@@ -80,11 +80,16 @@ If `.ai-iap-state.json` exists in the project root:
 1. Must be valid JSON.
 2. Must have `version` and `selectedLanguages`.
 
-### 9. Plugin Manifest
+### 9. Plugin Manifest & Marketplace
 
 Verify `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`:
 1. Must exist and be valid JSON.
 2. Must have `name` field.
+
+Verify `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/marketplace.json`:
+1. Must exist and be valid JSON.
+2. Must have `name`, `owner`, and `plugins` fields.
+3. `plugins` array must contain at least one entry with `name` and `source`.
 
 ### 10. Custom Config (Optional)
 

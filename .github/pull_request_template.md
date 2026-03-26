@@ -14,7 +14,7 @@ What does this change do and why?
 
 ## How to test
 
-- [ ] `/ai-iap:validate` (replaces legacy `.ai-iap/validate.*` and verify-extension scripts)
+- [ ] `/ai-iap:validate`
 - [ ] Markdown lint passes (`markdownlint '**/*.md'`)
 - [ ] If extension/customization behavior changed: re-ran `/ai-iap:validate`
 
