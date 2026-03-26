@@ -1,7 +1,8 @@
 # HTML Architecture
 
 > **Scope**: HTML architectural patterns  
-> **Extends**: General architecture guidelines
+> **Applies to**: *.html, *.htm files  
+> **Extends**: General architecture guidelines  
 
 ## CRITICAL REQUIREMENTS
 

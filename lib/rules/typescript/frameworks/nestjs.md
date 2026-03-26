@@ -50,7 +50,7 @@ export class CreateUserDto {
 // Guard (Auth)
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
-  handleRequest(err: any, user: any) {
+  handleRequest(err: Error | null, user: UserPayload | false) {
     if (err || !user) throw new UnauthorizedException();
     return user;
   }
@@ -107,19 +107,6 @@ export class UserController {
 }
 ```
 
-## AI Self-Check
-
-- [ ] Constructor injection?
-- [ ] DTOs with validation?
-- [ ] Guards for auth?
-- [ ] Interceptors for responses?
-- [ ] Exception filters?
-- [ ] Business logic in services?
-- [ ] @Injectable() on services?
-- [ ] Module imports/exports correct?
-- [ ] No manual instantiation?
-- [ ] Consistent response shapes?
-
 ## Key Decorators
 
 | Decorator | Purpose |
@@ -135,3 +122,16 @@ export class UserController {
 **MUST**: DI, DTOs, Guards, Interceptors, Exception filters
 **SHOULD**: ValidationPipe, TransformInterceptor, proper modules
 **AVOID**: Manual instantiation, skipping validation, logic in controllers
+
+## AI Self-Check
+
+- [ ] Constructor injection?
+- [ ] DTOs with validation?
+- [ ] Guards for auth?
+- [ ] Interceptors for responses?
+- [ ] Exception filters?
+- [ ] Business logic in services?
+- [ ] @Injectable() on services?
+- [ ] Module imports/exports correct?
+- [ ] No manual instantiation?
+- [ ] Consistent response shapes?

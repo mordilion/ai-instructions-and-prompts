@@ -1,6 +1,8 @@
 # React Modular Structure
 
-> Organize by feature/module with co-located concerns. Best for medium to large apps where features are relatively independent.
+> **Scope**: Feature-based modular architecture for medium to large React apps with co-located concerns.  
+> **Applies to**: *.tsx, *.ts files  
+> **Extends**: typescript/frameworks/react.md
 
 ## CRITICAL REQUIREMENTS
 

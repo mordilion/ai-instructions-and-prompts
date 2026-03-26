@@ -1,7 +1,8 @@
 # CSS Code Style
 
 > **Scope**: CSS formatting  
-> **Extends**: General code style guidelines
+> **Applies to**: *.css files  
+> **Extends**: General code style guidelines  
 
 ## CRITICAL REQUIREMENTS
 

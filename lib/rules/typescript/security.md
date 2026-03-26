@@ -1,8 +1,8 @@
 # TypeScript Security
 
 > **Scope**: TypeScript-specific security (frontend & backend)
-> **Extends**: General security rules
 > **Applies to**: *.ts, *.tsx, *.mts, *.cts, *.vue, *.svelte files
+> **Extends**: General security rules
 
 ## CRITICAL REQUIREMENTS
 

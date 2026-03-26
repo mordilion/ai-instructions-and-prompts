@@ -1,7 +1,8 @@
 # JSON Architecture
 
 > **Scope**: JSON configuration patterns (configs, manifests, app settings)  
-> **Extends**: General architecture rules
+> **Applies to**: *.json, *.jsonc files  
+> **Extends**: General architecture rules  
 
 ## CRITICAL REQUIREMENTS
 

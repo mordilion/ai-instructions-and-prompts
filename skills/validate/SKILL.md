@@ -105,7 +105,7 @@ If `.ai-iap-custom/config.json` exists in the project root:
 
 [PASS] Config file exists and is valid JSON
 [PASS] Config has required fields (version, tool, languages)
-[PASS] All 190 rule files exist
+[PASS] All 192 rule files exist
 [FAIL] Missing rule file: typescript/frameworks/structures/angular-ddd.md
 ...
 

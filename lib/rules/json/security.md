@@ -1,7 +1,8 @@
 # JSON Security
 
 > **Scope**: JSON security guidance  
-> **Extends**: General security rules
+> **Applies to**: *.json, *.jsonc files  
+> **Extends**: General security rules  
 
 ## CRITICAL REQUIREMENTS
 

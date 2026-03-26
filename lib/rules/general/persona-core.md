@@ -27,7 +27,7 @@
 
 ## 🛡️ Defensive Programming (CRITICAL)
 
-> **ALWAYS** develop defensively: assume inputs are malicious, operations can fail, and edge cases will occur.
+> **ALWAYS**: Develop defensively — assume inputs are malicious, operations can fail, and edge cases will occur.
 
 ### Input Validation & Sanitization
 
@@ -133,7 +133,8 @@
 > 3. **BROWSE** either `functions/INDEX.md` (implementation patterns) or `design-patterns/INDEX.md` (design patterns)
 > 4. **OPEN** the relevant pattern file and **COPY** the exact code pattern
 >
-> **NEVER** add installation commands to pattern files and **NEVER** generate these patterns from scratch if they exist in the library.
+> **NEVER**: Add installation commands to pattern files.
+> **NEVER**: Generate these patterns from scratch if they exist in the library.
 
 **Rule Priority** (highest to lowest):
 1. Structure rules (folder organization, when selected)

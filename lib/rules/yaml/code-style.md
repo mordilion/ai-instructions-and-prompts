@@ -1,6 +1,8 @@
 # YAML Code Style
 
-> **Scope**: YAML formatting rules
+> **Scope**: YAML formatting rules  
+> **Applies to**: *.yml, *.yaml files  
+> **Extends**: General code style  
 
 ## CRITICAL REQUIREMENTS
 

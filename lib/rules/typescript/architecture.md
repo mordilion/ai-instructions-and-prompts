@@ -103,7 +103,7 @@ export * from './post';
 | Practice | Pattern |
 |----------|---------|
 | **Strict Mode** | Enable `strict: true` in tsconfig |
-| **Enums/Unions** | `type Role = 'admin' \| 'user'` or `enum Status` |
+| **Enums/Unions** | `type Role = 'admin' \| 'user'`, `type Status = 'active' \| 'inactive'` |
 | **Utility Types** | `Partial<T>`, `Required<T>`, `Readonly<T>`, `Pick<T, K>`, `Omit<T, K>` |
 
 ## AI Self-Check

@@ -1,7 +1,8 @@
 # dotenv (.env) Architecture
 
 > **Scope**: `.env` file usage patterns and layering  
-> **Extends**: General architecture rules
+> **Applies to**: .env, .env.* files  
+> **Extends**: General architecture rules  
 
 ## CRITICAL REQUIREMENTS
 

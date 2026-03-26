@@ -14,6 +14,7 @@ ensuring safe updates from the main repository.
 - [Adding Custom Claude Code Agents](#adding-custom-claude-code-agents)
 - [Adding Custom Processes](#adding-custom-processes)
 - [Adding Custom Functions](#adding-custom-functions)
+- [Adding Custom Design Patterns](#adding-custom-design-patterns)
 - [Adding Custom Frameworks](#adding-custom-frameworks)
 - [Overriding Core Files](#overriding-core-files)
 - [Update Strategies](#update-strategies)
@@ -52,7 +53,7 @@ The `.ai-iap-custom/` directory allows you to:
 ├── claude-agents.json                  # Optional: custom Claude Code agents (rule-bound)
 ├── rules/                              # Custom or override rules
 │   ├── general/
-│   │   └── compliance-standards.md      # Optional override of core compliance rule
+│   │   └── compliance-standards.md      # Optional override (same pattern for accessibility.md, i18n.md, etc.)
 │   ├── typescript/
 │   │   ├── company-standards.md        # Additional rule
 │   │   └── code-style.md               # Overrides core code-style.md
@@ -63,10 +64,15 @@ The `.ai-iap-custom/` directory allows you to:
 │   │   └── deploy-internal.md
 │   └── python/
 │       └── deploy-sagemaker.md
-└── functions/                          # Custom function patterns (NEW)
-    ├── custom-auth-flow.md             # Company-specific auth pattern
-    ├── custom-logging.md               # Internal logging service
-    └── custom-cache.md                 # Company cache implementation
+└── code-library/                       # Custom code patterns
+    ├── functions/                      # Custom function patterns
+    │   ├── custom-auth-flow.md         # Company-specific auth pattern
+    │   ├── custom-logging.md           # Internal logging service
+    │   └── custom-cache.md             # Company cache implementation
+    └── design-patterns/                # Custom design patterns
+        ├── creational/
+        ├── structural/
+        └── behavioral/
 ```
 
 ---
@@ -747,7 +753,7 @@ When setup runs, your file will be used instead of the core file.
 git pull origin main
 
 # Re-run setup to regenerate outputs with the shared customizations
-.//ai-iap:setup
+/ai-iap:setup
 ```
 
 **Best for**: Teams (recommended when using shared functions/custom patterns)
@@ -790,6 +796,8 @@ git remote add origin https://github.com/company/ai-standards
 ### Example 1: Override Compliance Standards (Optional)
 
 **Use case**: You want to replace the core compliance guidance with your org’s policy details.
+
+**Note**: Other general rules you can override the same way include `accessibility.md` and `i18n.md` (match the filename under `lib/rules/general/`).
 
 **File**: `.ai-iap-custom/rules/general/compliance-standards.md` (same path as core rule)
 
@@ -1005,7 +1013,7 @@ async function getUserWithCache(userId: string): Promise<User> {
 1. Validate JSON: `jq empty .ai-iap-custom/config.json`
 2. Check file paths match exactly
 3. Ensure file extensions are `.md`
-4. Re-run setup script
+4. Re-run `/ai-iap:setup`
 
 ---
 
@@ -1040,7 +1048,7 @@ async function getUserWithCache(userId: string): Promise<User> {
 
 2. Check file is not empty
 3. Ensure `.md` extension
-4. Re-run setup script
+4. Re-run `/ai-iap:setup`
 
 ---
 

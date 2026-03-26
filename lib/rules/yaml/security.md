@@ -1,7 +1,8 @@
 # YAML Security
 
 > **Scope**: YAML security guidance (CI/CD, infrastructure configs)  
-> **Extends**: General security rules
+> **Applies to**: *.yml, *.yaml files  
+> **Extends**: General security rules  
 
 ## CRITICAL REQUIREMENTS
 

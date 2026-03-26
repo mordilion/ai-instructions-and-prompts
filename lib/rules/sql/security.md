@@ -1,7 +1,8 @@
 # SQL Security
 
 > **Scope**: SQL security rules  
-> **Extends**: General security rules
+> **Applies to**: *.sql files  
+> **Extends**: General security rules  
 
 ## CRITICAL REQUIREMENTS
 

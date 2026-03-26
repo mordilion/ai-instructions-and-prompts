@@ -29,8 +29,9 @@ This directory lives in **your project** and lets you extend or override the **p
 
 Create new rule files that will be included alongside core rules:
 
+`config.json`:
+
 ```json
-// config.json
 {
   "languages": {
     "typescript": {
@@ -48,6 +49,8 @@ Replace a core rule file by creating a file with the same path:
 
 - Core (plugin): `lib/rules/typescript/code-style.md`
 - Override: `.ai-iap-custom/rules/typescript/code-style.md` ✅ (this wins)
+
+**General rules** (under `lib/rules/general/`) work the same way — for example `accessibility.md`, `i18n.md`, `security.md`, or `compliance-standards.md` → `.ai-iap-custom/rules/general/<same-filename>.md`.
 
 ### **3. Add Custom Processes**
 
@@ -127,7 +130,7 @@ See example files in this directory:
 - `config.example.json` - Example custom configuration
 - `rules/typescript/company-standards.example.md` - Example custom rule
 - `processes/typescript/deploy-internal.example.md` - Example custom process
-- `code-library/functions/company-auth-header.example.md` - Example custom function
+- `code-library/functions/company-auth-header.md` - Example custom function (create as needed from `lib/code-library/functions/_TEMPLATE.md`)
 - Templates available under `lib/code-library/` in the plugin for functions and design patterns
 
 Copy and rename (remove `.example`) to activate.

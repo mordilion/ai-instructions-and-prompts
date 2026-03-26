@@ -13,8 +13,8 @@
 > **ALWAYS**: Implement loading.tsx and error.tsx
 > 
 > **NEVER**: Use Pages Router in new projects
-> **NEVER**: Fetch data in Client Components
-> **NEVER**: Use useEffect for data fetching
+> **NEVER**: Fetch data in Client Components when Server Components can handle it
+> **NEVER**: Use useEffect for initial data fetching (prefer Server Components or SWR/React Query)
 > **NEVER**: Forget 'use client' when using hooks
 > **NEVER**: Expose secrets in Client Components
 
@@ -53,7 +53,7 @@
 
 **MUST**: App Router, Server Components, 'use client' for hooks, Server Actions
 **SHOULD**: loading.tsx, error.tsx, dynamic imports, static generation
-**AVOID**: Pages Router, client-side fetching, useEffect for data, API routes for mutations
+**AVOID**: Pages Router, client-side fetching, useEffect for initial data, API routes for mutations when Server Actions are available
 
 ## AI Self-Check
 
@@ -65,7 +65,7 @@
 - [ ] error.tsx for error boundaries?
 - [ ] Dynamic imports for code splitting?
 - [ ] Static generation where possible?
-- [ ] No useEffect for data fetching?
-- [ ] No API routes for mutations (using Server Actions)?
+- [ ] No useEffect for initial data fetching?
+- [ ] No API routes for mutations when Server Actions are available?
 - [ ] Metadata API for SEO?
 - [ ] Route Handlers for API endpoints?

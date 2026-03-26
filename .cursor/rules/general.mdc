@@ -24,7 +24,7 @@ alwaysApply: true
 - `lib/config.json` — Central configuration (languages, frameworks, structures, processes)
 - `lib/config.schema.json` — JSON schema for config validation
 - `lib/claude-subagents.json` — Agent templates with rule bindings
-- `lib/rules/` — Rule library (190 files: general → language → framework → structure)
+- `lib/rules/` — Rule library (192 files: general → language → framework → structure)
 - `lib/processes/` — Process guides (78 files: testing, CI/CD, logging, docker, auth, etc.)
 - `lib/code-library/` — Implementation patterns + design patterns
 - `.ai-iap-custom/` — Extension system examples (template for user overrides)

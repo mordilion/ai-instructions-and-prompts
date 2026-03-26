@@ -1,7 +1,8 @@
 # CSS Architecture
 
 > **Scope**: CSS architectural patterns  
-> **Extends**: General architecture guidelines
+> **Applies to**: *.css files  
+> **Extends**: General architecture guidelines  
 
 ## CRITICAL REQUIREMENTS
 

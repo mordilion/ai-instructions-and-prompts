@@ -10,7 +10,7 @@
 > **ALWAYS**: Use `ref()` or `reactive()` for state
 > **ALWAYS**: Define props with TypeScript interfaces
 > **ALWAYS**: Use computed() for derived state
-> **ALWAYS**: Clean up side effects in onBeforeUnmount
+> **ALWAYS**: Clean up side effects in onUnmounted
 > 
 > **NEVER**: Use Options API in new code
 > **NEVER**: Mutate props directly
@@ -34,8 +34,9 @@ const state = reactive({ user: { name: 'John' } })  // Objects
 const doubled = computed(() => count.value * 2)  // Derived
 
 // Lifecycle
-onMounted(() => interval = setInterval(tick, 1000))
-onBeforeUnmount(() => clearInterval(interval))
+let interval: ReturnType<typeof setInterval>
+onMounted(() => { interval = setInterval(() => count.value++, 1000) })
+onUnmounted(() => clearInterval(interval))
 </script>
 
 <template>
@@ -62,18 +63,6 @@ export function useCounter(initial = 0) {
 | **Prop Mutation** | `props.value = x` | `emit('update:value', x)` |
 | **any Type** | `props: any` | Interface with types |
 
-## AI Self-Check
-
-- [ ] Composition API with <script setup>?
-- [ ] ref()/reactive() for state?
-- [ ] TypeScript interfaces for props?
-- [ ] computed() for derived?
-- [ ] Side effects cleanup?
-- [ ] .value in <script>?
-- [ ] Emits defined?
-- [ ] No prop mutation?
-- [ ] No any types?
-
 ## Key Features
 
 | Feature | Purpose |
@@ -89,3 +78,15 @@ export function useCounter(initial = 0) {
 **MUST**: Composition API, ref()/reactive(), TypeScript, computed(), cleanup
 **SHOULD**: Composables, v-model, provide/inject, Pinia
 **AVOID**: Options API, prop mutation, any types, no .value
+
+## AI Self-Check
+
+- [ ] Composition API with <script setup>?
+- [ ] ref()/reactive() for state?
+- [ ] TypeScript interfaces for props?
+- [ ] computed() for derived?
+- [ ] Side effects cleanup?
+- [ ] .value in <script>?
+- [ ] Emits defined?
+- [ ] No prop mutation?
+- [ ] No any types?

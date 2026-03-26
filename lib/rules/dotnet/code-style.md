@@ -15,7 +15,7 @@
 > **NEVER**: Block on async (.Result, .Wait())
 > **NEVER**: Use async void (except event handlers)
 > **NEVER**: Skip nullable annotations
-> **NEVER**: Use underscores for local variables
+> **NEVER**: Use underscores for local variables (private fields use _camelCase by convention)
 > **NEVER**: Public fields (use properties)
 
 ## Naming Conventions

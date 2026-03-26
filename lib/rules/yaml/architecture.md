@@ -1,7 +1,8 @@
 # YAML Architecture
 
 > **Scope**: YAML configuration design (CI/CD, K8s, Docker Compose, tooling)  
-> **Extends**: General architecture rules
+> **Applies to**: *.yml, *.yaml files  
+> **Extends**: General architecture rules  
 
 ## CRITICAL REQUIREMENTS
 

@@ -1,7 +1,8 @@
 # Dockerfile Security
 
 > **Scope**: Container security practices  
-> **Extends**: General security rules
+> **Applies to**: Dockerfile, Dockerfile.* files  
+> **Extends**: General security rules  
 
 ## CRITICAL REQUIREMENTS
 

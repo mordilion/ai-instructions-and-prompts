@@ -1,6 +1,8 @@
 # Dockerfile Code Style
 
-> **Scope**: Dockerfile formatting and maintainability rules
+> **Scope**: Dockerfile formatting and maintainability rules  
+> **Applies to**: Dockerfile, Dockerfile.* files  
+> **Extends**: General code style  
 
 ## CRITICAL REQUIREMENTS
 

@@ -1,7 +1,8 @@
 # Dockerfile Architecture
 
 > **Scope**: Docker build structure and reproducibility patterns  
-> **Extends**: General architecture rules
+> **Applies to**: Dockerfile, Dockerfile.* files  
+> **Extends**: General architecture rules  
 
 ## CRITICAL REQUIREMENTS
 

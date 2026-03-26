@@ -1,7 +1,8 @@
 # Stylus Architecture
 
 > **Scope**: Stylus stylesheet patterns  
-> **Extends**: General architecture + CSS rules
+> **Applies to**: *.styl, *.stylus files  
+> **Extends**: General architecture + CSS rules  
 
 ## CRITICAL REQUIREMENTS
 

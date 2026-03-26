@@ -1,6 +1,8 @@
 # ASP.NET Core Clean Architecture
 
-> **Scope**: Use this structure for enterprise .NET apps with clean architecture.
+> **Scope**: Use this structure for enterprise .NET apps with clean architecture.  
+> **Applies to**: *.cs files  
+> **Extends**: dotnet/frameworks/aspnetcore.md  
 > **Precedence**: When loaded, this structure overrides any default folder organization from the base ASP.NET Core rules.
 
 ## CRITICAL REQUIREMENTS

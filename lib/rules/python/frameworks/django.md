@@ -91,14 +91,14 @@ class PostViewSet(viewsets.ModelViewSet):
 # ❌ WRONG: N+1 queries
 posts = Post.objects.all()
 for post in posts:
-    print(post.author.name)  // Queries author for each post
+    print(post.author.name)  # Queries author for each post
 
-// ✅ CORRECT: Single query
+# ✅ CORRECT: Single query
 posts = Post.objects.select_related('author').all()
 for post in posts:
     print(post.author.name)
 
-// ✅ CORRECT: Many-to-many
+# ✅ CORRECT: Many-to-many
 posts = Post.objects.prefetch_related('tags').all()
 ```
 
@@ -110,18 +110,6 @@ posts = Post.objects.prefetch_related('tags').all()
 | **N+1 Queries** | Lazy loading | `select_related()` |
 | **Template Queries** | `{% for p in user.posts %}` | Pass in view |
 | **Settings Secrets** | `SECRET_KEY = 'x'` | Environment variables |
-
-## AI Self-Check
-
-- [ ] Using Django ORM?
-- [ ] Forms/serializers for validation?
-- [ ] CBV/FBV consistent?
-- [ ] Built-in authentication?
-- [ ] Migrations for schema?
-- [ ] No raw SQL without params?
-- [ ] CSRF protection?
-- [ ] Env vars for secrets?
-- [ ] select_related/prefetch_related?
 
 ## Key Features
 
@@ -138,3 +126,15 @@ posts = Post.objects.prefetch_related('tags').all()
 **MUST**: ORM, forms/serializers, migrations, authentication, select_related
 **SHOULD**: CBVs for CRUD, DRF for APIs, env vars, CSRF protection
 **AVOID**: Raw SQL, N+1 queries, template queries, settings secrets
+
+## AI Self-Check
+
+- [ ] Using Django ORM?
+- [ ] Forms/serializers for validation?
+- [ ] CBV/FBV consistent?
+- [ ] Built-in authentication?
+- [ ] Migrations for schema?
+- [ ] No raw SQL without params?
+- [ ] CSRF protection?
+- [ ] Env vars for secrets?
+- [ ] select_related/prefetch_related?

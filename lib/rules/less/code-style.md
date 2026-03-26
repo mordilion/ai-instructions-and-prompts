@@ -1,7 +1,8 @@
 # Less Code Style
 
 > **Scope**: Less formatting rules  
-> **Extends**: CSS code style
+> **Applies to**: *.less files  
+> **Extends**: CSS code style  
 
 ## CRITICAL REQUIREMENTS
 

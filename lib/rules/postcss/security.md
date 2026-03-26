@@ -1,7 +1,8 @@
 # Postcss Security
 
 > **Scope**: Postcss security and safety  
-> **Extends**: General security + CSS security
+> **Applies to**: *.pcss, *.postcss files  
+> **Extends**: General security + CSS security  
 
 ## CRITICAL REQUIREMENTS
 

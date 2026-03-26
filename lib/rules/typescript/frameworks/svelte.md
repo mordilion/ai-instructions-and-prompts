@@ -1,24 +1,40 @@
 # Svelte Framework
 
-> **Scope**: Svelte/SvelteKit applications  
+> **Scope**: Svelte 4/5 + SvelteKit applications  
 > **Applies to**: .svelte files and Svelte TypeScript files
 > **Extends**: typescript/architecture.md, typescript/code-style.md
 
 ## CRITICAL REQUIREMENTS
 
-> **ALWAYS**: Use `$:` for reactive statements
-> **ALWAYS**: Use `export let` for props
+> **ALWAYS**: Use `$:` for reactive statements (Svelte 4)
+> **ALWAYS**: Use runes (`$state`, `$derived`, `$effect`) in Svelte 5+ projects
+> **ALWAYS**: Use `export let` for props (Svelte 4) or `$props()` (Svelte 5)
 > **ALWAYS**: Use stores for shared state
 > **ALWAYS**: Clean up subscriptions with onDestroy
 > **ALWAYS**: Use `bind:` for two-way binding
 > 
 > **NEVER**: Use `.subscribe()` without onDestroy
 > **NEVER**: Mutate props directly
-> **NEVER**: Forget `$:` for derived values
+> **NEVER**: Forget `$:` for derived values (Svelte 4) or `$derived` (Svelte 5)
 > **NEVER**: Use complex logic in templates
 > **NEVER**: Create stores inside components
 
-## Core Patterns
+## Svelte 5 (Runes)
+
+> **Note**: `$:` reactive declarations and `export let` are Svelte 4 patterns. Svelte 5 uses runes instead.
+
+```svelte
+<script>
+  let count = $state(0)
+  let doubled = $derived(count * 2)
+  
+  $effect(() => {
+    console.log(`Count is ${count}`)
+  })
+</script>
+```
+
+## Core Patterns (Svelte 4)
 
 ### Component with Props & Events
 
@@ -119,18 +135,6 @@ export const time = readable(new Date(), set => {
 | **No Cleanup** | `store.subscribe()` | `$store` or onDestroy |
 | **Store in Component** | `const s = writable()` inside | Define at module level |
 
-## AI Self-Check
-
-- [ ] Using $: for reactivity?
-- [ ] export let for props?
-- [ ] Stores for shared state?
-- [ ] onDestroy for cleanup?
-- [ ] bind: for two-way binding?
-- [ ] No prop mutation?
-- [ ] No complex template logic?
-- [ ] No store creation in components?
-- [ ] Using $store syntax?
-
 ## Key Features
 
 | Feature | Purpose |
@@ -146,3 +150,15 @@ export const time = readable(new Date(), set => {
 **MUST**: $: for reactivity, export let, stores, onDestroy, bind:
 **SHOULD**: Derived stores, readable stores, auto-subscribe ($)
 **AVOID**: Prop mutation, complex templates, store creation in components
+
+## AI Self-Check
+
+- [ ] Using $: for reactivity?
+- [ ] export let for props?
+- [ ] Stores for shared state?
+- [ ] onDestroy for cleanup?
+- [ ] bind: for two-way binding?
+- [ ] No prop mutation?
+- [ ] No complex template logic?
+- [ ] No store creation in components?
+- [ ] Using $store syntax?

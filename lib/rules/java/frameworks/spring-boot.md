@@ -32,14 +32,6 @@
 ## Core Patterns
 
 ```java
-// Dependency Injection (Constructor)
-@Service
-@RequiredArgsConstructor
-@Transactional(readOnly = true)
-public class UserService {
-    private final UserRepository repository;  // final = immutable
-}
-
 // Controller (Thin)
 @RestController
 @RequiredArgsConstructor
@@ -52,7 +44,7 @@ public class UserController {
     }
 }
 
-// Service (Business Logic)
+// Service (Business Logic + Constructor Injection)
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -94,19 +86,6 @@ public record UserDto(Long id, String name, String email) {}
 ❌ **Exposing Entities**: Controller returns `User` entity → Lazy loading errors, security risks  
 ✅ **Use DTOs**: Controller returns `UserDto` mapped in service layer
 
-## AI Self-Check (Verify BEFORE generating Spring Boot code)
-
-- [ ] Constructor injection with @RequiredArgsConstructor? (NOT @Autowired on fields)
-- [ ] All dependency fields are final? (Immutability required)
-- [ ] @Transactional(readOnly=true) on service class? (Default for all methods)
-- [ ] @Transactional on write methods? (Override readOnly for updates)
-- [ ] Returns DTO from controller? (NOT entity)
-- [ ] @Valid on request bodies? (Automatic validation)
-- [ ] Business logic in service? (NOT in controller)
-- [ ] Exceptions wrapped? (NO JPA exceptions in API layer)
-- [ ] Records used for DTOs? (modern Java recommended)
-- [ ] ResponseEntity for non-200 status codes?
-
 ## Testing
 
 | Test Type | Annotation | Purpose |
@@ -138,3 +117,16 @@ Use `@ConfigurationProperties(prefix = "app")` + `@Validated` for type-safe conf
 - **Validation**: `@Valid`, `@NotBlank`, `@Email`, `@Size`
 - **JPA**: `JpaRepository`, `@Query`, `@Transactional`
 - **Testing**: `@WebMvcTest`, `@SpringBootTest`, `MockMvc`, `@MockBean`
+
+## AI Self-Check (Verify BEFORE generating Spring Boot code)
+
+- [ ] Constructor injection with @RequiredArgsConstructor? (NOT @Autowired on fields)
+- [ ] All dependency fields are final? (Immutability required)
+- [ ] @Transactional(readOnly=true) on service class? (Default for all methods)
+- [ ] @Transactional on write methods? (Override readOnly for updates)
+- [ ] Returns DTO from controller? (NOT entity)
+- [ ] @Valid on request bodies? (Automatic validation)
+- [ ] Business logic in service? (NOT in controller)
+- [ ] Exceptions wrapped? (NO JPA exceptions in API layer)
+- [ ] Records used for DTOs? (modern Java recommended)
+- [ ] ResponseEntity for non-200 status codes?

@@ -1,7 +1,8 @@
 # CSS Security
 
 > **Scope**: CSS-specific security and safety  
-> **Extends**: General security rules
+> **Applies to**: *.css files  
+> **Extends**: General security rules  
 
 ## CRITICAL REQUIREMENTS
 

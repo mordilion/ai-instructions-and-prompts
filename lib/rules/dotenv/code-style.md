@@ -1,6 +1,8 @@
 # dotenv (.env) Code Style
 
-> **Scope**: Formatting rules for `.env` files
+> **Scope**: Formatting rules for `.env` files  
+> **Applies to**: .env, .env.* files  
+> **Extends**: General code style  
 
 ## CRITICAL REQUIREMENTS
 

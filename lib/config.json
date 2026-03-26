@@ -19,6 +19,8 @@
         "code-style",
         "design",
         "security",
+        "accessibility",
+        "i18n",
         "compliance-standards",
         "commit-standards"
       ],
@@ -114,26 +116,12 @@
           "type": "ondemand",
           "loadIntoAI": false
         },
-        "authentication-jwt-oauth": {
-          "name": "Authentication (JWT + OAuth)",
-          "file": "authentication-jwt-oauth",
-          "description": "Implement JWT, OAuth 2.0, and RBAC authentication",
-          "type": "ondemand",
-          "loadIntoAI": false
-        },
         "database-migrations": {
           "name": "Database Migrations",
           "file": "database-migrations",
           "description": "Version-controlled database schema migrations",
           "type": "permanent",
           "loadIntoAI": true
-        },
-        "api-documentation-openapi": {
-          "name": "API Documentation (OpenAPI)",
-          "file": "api-documentation-openapi",
-          "description": "Auto-generate OpenAPI/Swagger API documentation",
-          "type": "ondemand",
-          "loadIntoAI": false
         },
         "security-scanning": {
           "name": "Security Scanning",

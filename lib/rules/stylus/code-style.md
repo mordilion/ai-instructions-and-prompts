@@ -1,7 +1,8 @@
 # Stylus Code Style
 
 > **Scope**: Stylus formatting rules  
-> **Extends**: CSS code style
+> **Applies to**: *.styl, *.stylus files  
+> **Extends**: CSS code style  
 
 ## CRITICAL REQUIREMENTS
 

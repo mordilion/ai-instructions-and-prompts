@@ -1,7 +1,8 @@
 # Stylus Security
 
 > **Scope**: Stylus security and safety  
-> **Extends**: General security + CSS security
+> **Applies to**: *.styl, *.stylus files  
+> **Extends**: General security + CSS security  
 
 ## CRITICAL REQUIREMENTS
 

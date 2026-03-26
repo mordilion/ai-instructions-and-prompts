@@ -1,7 +1,8 @@
 # SQL Architecture
 
 > **Scope**: SQL usage patterns for apps and migrations  
-> **Extends**: General architecture rules
+> **Applies to**: *.sql files  
+> **Extends**: General architecture rules  
 
 ## CRITICAL REQUIREMENTS
 

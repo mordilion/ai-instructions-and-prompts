@@ -1,7 +1,8 @@
 # dotenv (.env) Security
 
 > **Scope**: Prevent secret leakage and unsafe environment usage  
-> **Extends**: General security rules
+> **Applies to**: .env, .env.* files  
+> **Extends**: General security rules  
 
 ## CRITICAL REQUIREMENTS
 

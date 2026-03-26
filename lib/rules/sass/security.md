@@ -1,7 +1,8 @@
 # Sass Security
 
 > **Scope**: Sass security and safety  
-> **Extends**: General security + CSS security
+> **Applies to**: *.scss, *.sass files  
+> **Extends**: General security + CSS security  
 
 ## CRITICAL REQUIREMENTS
 

@@ -1,7 +1,8 @@
 # Kotlin Code Style
 
-> **Scope**: All Kotlin files
+> **Scope**: Kotlin formatting and maintainability
 > **Applies to**: *.kt, *.kts files
+> **Extends**: General code style, kotlin/architecture.md
 
 ## CRITICAL REQUIREMENTS
 
@@ -62,6 +63,12 @@ list.also { log(it.size) }
 | **No data class** | Manual equals/hashCode | `data class` |
 | **Java style** | `getName()` | `name` property |
 
+## Best Practices
+
+**MUST**: `val` default, data classes, null-safety, named arguments
+**SHOULD**: Expression body, extension functions, sealed classes
+**AVOID**: `var` by default, `!!`, Java patterns, mutable collections
+
 ## AI Self-Check
 
 - [ ] `val` by default?
@@ -73,9 +80,3 @@ list.also { log(it.size) }
 - [ ] No unjustified `!!`?
 - [ ] Properties not getters/setters?
 - [ ] Extension functions where appropriate?
-
-## Best Practices
-
-**MUST**: `val` default, data classes, null-safety, named arguments
-**SHOULD**: Expression body, extension functions, sealed classes
-**AVOID**: `var` by default, `!!`, Java patterns, mutable collections

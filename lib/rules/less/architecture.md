@@ -1,7 +1,8 @@
 # Less Architecture
 
 > **Scope**: Less stylesheet patterns  
-> **Extends**: General architecture + CSS rules
+> **Applies to**: *.less files  
+> **Extends**: General architecture + CSS rules  
 
 ## CRITICAL REQUIREMENTS
 

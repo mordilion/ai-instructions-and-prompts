@@ -1,7 +1,8 @@
 # Sass Architecture
 
 > **Scope**: Sass stylesheet patterns  
-> **Extends**: General architecture + CSS rules
+> **Applies to**: *.scss, *.sass files  
+> **Extends**: General architecture + CSS rules  
 
 ## CRITICAL REQUIREMENTS
 

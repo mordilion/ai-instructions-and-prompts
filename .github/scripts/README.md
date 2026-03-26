@@ -37,7 +37,7 @@ ollama pull codellama:13b
 # Download from https://lmstudio.ai/
 ```
 
-**See `FREE_AI_TESTING.md` for complete free testing guide**
+Use the **Usage** section below (`--provider ollama` and the optional install steps above) for the full free/local workflow.
 
 ---
 
@@ -55,7 +55,7 @@ node test-ai.js \
   --model codellama:13b \
   --test-suite critical
 
-# See FREE_AI_TESTING.md for full guide
+# See "Test with Free Local AI" above for the full Ollama/LM Studio workflow
 ```
 
 ### Test GPT-4
@@ -263,7 +263,7 @@ Results are saved to `test-results/` directory:
 
 ## 🔄 **CI/CD Integration**
 
-See `../.github/workflows/ai-compatibility-tests.yml` (create this file)
+See `../workflows/ai-compatibility-tests.yml`
 
 ---
 
@@ -325,10 +325,10 @@ Pass Rate: 33%
     '\\$request->all\\(\\)',  // No validation
   ],
   rules: [
-    'rules/general/persona.md',
-    'rules/general/architecture.md',
-    'rules/php/architecture.md',
-    'rules/php/frameworks/laravel.md'
+    'lib/rules/general/persona.md',
+    'lib/rules/general/architecture.md',
+    'lib/rules/php/architecture.md',
+    'lib/rules/php/frameworks/laravel.md'
   ]
 }
 ```
@@ -383,7 +383,6 @@ Check `test-results/*.json` for details:
 
 ## 📚 **Related Files**
 
-- **Test Definitions**: `lib/TEST_PROMPTS.md` (15 manual test cases)
 - **Rules**: `lib/rules/` (the source of truth)
 - **Config**: `lib/config.json` (framework/language definitions)
 
@@ -394,7 +393,7 @@ Check `test-results/*.json` for details:
 1. **Run locally first**: Test changes before committing
 2. **Review failures**: Don't just re-run, understand why AI failed
 3. **Iterate on rules**: Strengthen directives based on test failures
-4. **Document patterns**: Add common failures to TEST_PROMPTS.md
+4. **Document patterns**: Add common failures to a local test-prompts file
 5. **Version testing**: Test major AI model updates (GPT-4 → GPT-4 Turbo)
 
 ---

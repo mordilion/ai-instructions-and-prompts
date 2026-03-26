@@ -235,8 +235,8 @@ are marked `aiIapManaged: true` and are removed on cleanup.
 
 **Issue**: Token analysis shows >10,000 tokens for simple selection
 
-**Typical File Sizes**:
-- General rules: ~1,500 chars (375 tokens)
+**Typical File Sizes** (approximate; actual size **varies by selection** and rule revisions):
+- General rules: **varies by selection** — the bundled set includes persona, architecture, code-style, design, security, accessibility, i18n, compliance-standards, and commit-standards; total size depends on how many of these your setup loads, not a single fixed chunk
 - Language rules: ~1,700 chars (425 tokens)
 - Framework rules: ~2,500 chars (625 tokens)
 - Structure rules: ~1,800 chars (450 tokens)
@@ -272,7 +272,7 @@ are marked `aiIapManaged: true` and are removed on cleanup.
 
 If you're still stuck:
 
-1. **Check GitHub Issues**: [github.com/HenningHuncke/ai-instructions-and-prompts/issues](.)
+1. **Check GitHub Issues**: [GitHub Issues](https://github.com/HenningHuncke/ai-instructions-and-prompts/issues)
 2. **Run validation**: `/ai-iap:validate`
 3. **Review full docs**: `lib/README.md`
 

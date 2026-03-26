@@ -1,7 +1,8 @@
 # HTML Code Style
 
 > **Scope**: HTML formatting  
-> **Extends**: General code style guidelines
+> **Applies to**: *.html, *.htm files  
+> **Extends**: General code style guidelines  
 
 ## CRITICAL REQUIREMENTS
 

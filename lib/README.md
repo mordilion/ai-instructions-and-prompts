@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-blue.svg)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](../CONTRIBUTING.md)
 
 ---
 
@@ -36,7 +36,7 @@ Your Rules (one source) → /ai-iap:setup → Claude Code Configured
 - **🎨 UI/Design Rules** – Reusable component-first UI guidance (variants, states, accessibility, tokens)
 - **🔒 Security Rules** – OWASP Top 10 coverage for all languages (token-optimized, 80% more efficient)
 - **📚 Documentation Standards** – Optional code, project, and API documentation standards with smart suggestions
-- **🔄 Process Guides** – CI/CD, Testing, Logging, Docker, Auth, Migrations, API Docs (77 files across core application languages, token-optimized)
+- **🔄 Process Guides** – CI/CD, Testing, Logging, Docker, Auth, Migrations, API Docs (78 files across core application languages, token-optimized)
 - **🎨 Extension System** – Add company standards, override rules, custom processes without modifying core (update-safe)
 - **⚡ Interactive Setup** – Wizard guides you through configuration with context-aware suggestions
 - **🎯 Recommended Defaults** – Best practices marked with `⭐`
@@ -196,7 +196,7 @@ Agents are always defined by you: no presets. **One agent = one specialisation.*
 - **Name** (slug, e.g. ios-developer)
 - **Description** (when Claude should use this agent)
 - **Tech stack** – preset (iOS, Vue.js, PHP Laravel, SEO, UI/UX, SEO & Linguistic) or Custom (pick languages and frameworks from config)
-- **Persona specialisation** – Software/Developer (default), SEO, UI/UX, or Generic (full adaptive persona). Each agent gets a focused persona slice so behaviour matches its role (see [CUSTOMIZATION.md](CUSTOMIZATION.md#persona-split-one-agent-one-specialisation)).
+- **Persona specialisation** – Software/Developer (default), SEO, UI/UX, or Generic (full adaptive persona). Each agent gets a focused persona slice so behaviour matches its role (see [CUSTOMIZATION.md](../CUSTOMIZATION.md#persona-split-one-agent-one-specialisation)).
 
 Example: "I need 4 agents: one for iOS, one for Vue.js, one for SEO and Linguistic, one for PHP with Laravel" → run **`/ai-iap:setup agents`**, enter 4, then for each agent set name, description, tech stack, and persona. Generated files go to `.claude/agents/` (or global scope).
 
@@ -467,7 +467,7 @@ In addition to coding rules, this system includes **step-by-step workflow guides
 | **Linting & Formatting** | 📋 On-Demand | Code quality linting and style formatting | ✅ 8 files |
 | **Code Coverage** | 📋 On-Demand | Automated coverage tracking with thresholds | ✅ 8 files |
 
-**Total**: 70 process files (8 permanent, 62 on-demand) across 8 core application languages (not including Bash/PowerShell)
+**Total**: 78 process files (8 permanent, 70 on-demand) across 8 core application languages (not including Bash/PowerShell)
 
 ### Process Quality Features
 
@@ -494,12 +494,12 @@ In addition to rules and processes, the system now includes a **comprehensive co
 
 The code library contains two types of patterns:
 
-1. **Implementation Patterns** (12 patterns) - Tactical, 5-20 line code snippets for common coding tasks
+1. **Implementation Patterns** (17 patterns) - Tactical, 5-20 line code snippets for common coding tasks
 2. **Design Patterns** (15 patterns) - Strategic, 20-100 line architectural patterns (Creational, Structural, Behavioral)
 
 All patterns are shown **across all 8 core application languages** in a single file with multiple framework variants.
 
-### Implementation Patterns (12)
+### Implementation Patterns (17)
 
 | Function | Purpose | Languages | File |
 |----------|---------|-----------|------|
@@ -576,8 +576,8 @@ AI Workflow:
 2. **Navigate to the right category**: Implementation patterns in `functions/` or Design patterns in `design-patterns/`
 3. **Open the pattern file**: Each file shows implementations for all 8 languages side-by-side
 4. **Choose your framework**: Plain (flexibility) or Framework (productivity)
-4. **Copy the exact pattern**: Use the language-specific implementation (no installation commands in function files)
-5. **Stop AI guessing**: Precise patterns = consistent code = fewer bugs
+5. **Copy the exact pattern**: Use the language-specific implementation (no installation commands in function files)
+6. **Stop AI guessing**: Precise patterns = consistent code = fewer bugs
 
 ### Benefits
 
@@ -656,7 +656,7 @@ When rules are loaded, they're applied in this order (highest to lowest):
 
 ### Optional Rules (Setup Toggles)
 
-Some general rules are only included when a setup toggle is enabled. These are listed under `languages.general.optionalRules` in `config.json` and gated by a toggle key (e.g. `enableCommitStandards`).
+In the shipped `lib/config.json`, `languages.general` does **not** define an `optionalRules` object; general rule sources are listed in `languages.general.files` (including `accessibility`, `i18n`, and `commit-standards`). The setup wizard applies toggles in practice—for example, it skips generating `commit-standards` when commit standards are disabled, and documentation rules come from `languages.general.documentation` only when you select them. The `optionalRules` shape exists in `lib/config.schema.json` (and the setup skill describes checking it) as the planned schema for toggle-gated optional rules; it is not yet populated on `languages.general` in the repo’s `config.json`.
 
 ### Combining Frameworks
 
@@ -709,7 +709,7 @@ Understanding how many tokens your rule selection consumes helps optimize AI con
 | **Stylus** | 283 + 130 | – | – | – | **413** |
 | **Grand Total** | | | | | **~180,000 - 184,000** |
 
-> **General Rules**: Updated to 8,254 tokens (previously 2,275) due to role-based adaptive behavior in persona.md, which enables AI to detect user expertise and adapt questioning accordingly.
+> **General Rules**: Updated to 8,254 tokens (previously 2,275) due to role-based adaptive behavior in persona.md, which enables AI to detect user expertise and adapt questioning accordingly. General rules also include dedicated **accessibility** and **i18n** rule files, which add to the base token count alongside persona, architecture, code style, design, security, and related core files.
 
 > **CSS Frameworks**: Tailwind CSS (1,552 tokens) and Bootstrap (1,978 tokens) are optional framework selections. CSS base rules are 929 tokens, so selecting both frameworks brings the total to 4,459 tokens.
 
@@ -846,7 +846,7 @@ Language-specific process files reference these standards to avoid duplication.
 
 ### Add a Process Guide
 
-1. Create: `lib/processes/yourlanguage/process-name.md`
+1. Create the file under the correct tier and language folder: `lib/processes/permanent/{language}/process-name.md` (always-loaded migration-style guides) or `lib/processes/ondemand/{language}/process-name.md` (copy-when-needed guides). Match the `type` and `loadIntoAI` fields you add in `config.json`.
 2. Add to language's `processes` in `config.json`:
 
 ```json
@@ -879,7 +879,7 @@ Language-specific process files reference these standards to avoid duplication.
 | **macOS** | `jq` – Install with `brew install jq` |
 | **Linux** | `jq` – Install with `apt install jq` or `yum install jq` |
 
-**Having issues?** See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for common problems and solutions.
+**Having issues?** See [TROUBLESHOOTING.md](../TROUBLESHOOTING.md) for common problems and solutions.
 
 ---
 
@@ -889,7 +889,6 @@ This project includes comprehensive validation and testing:
 
 - **Local validation**: Run **`/ai-iap:validate`** in Claude Code (`skills/validate/SKILL.md` in this repo)
 - **CI/CD Pipeline**: GitHub Actions workflow validates every commit
-- **Expert Analysis**: See [EXPERT_ANALYSIS.md](EXPERT_ANALYSIS.md) for detailed review
 - **JSON Schema**: `config.schema.json` validates configuration structure
 
 **Run validation locally**:

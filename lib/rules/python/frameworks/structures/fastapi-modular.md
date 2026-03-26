@@ -1,6 +1,8 @@
 # FastAPI Modular Structure
 
 > **Scope**: Feature-first modular structure for FastAPI  
+> **Applies to**: *.py files  
+> **Extends**: python/frameworks/fastapi.md  
 > **Use When**: Medium-large apps, domain-driven design
 
 ## CRITICAL REQUIREMENTS

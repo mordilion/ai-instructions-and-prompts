@@ -20,8 +20,6 @@
 
 ## Core Patterns
 
-### Core Patterns
-
 | Component | Pattern |
 |-----------|---------|
 | **Standalone** | `@Component({ standalone: true, imports: [...] })` + `@Input/@Output` + `OnPush` |
@@ -57,18 +55,6 @@ export class UsersComponent implements OnDestroy {
 | **Default CD** | Default detection | `OnPush` |
 | **Manual Subscribe** | Many subscriptions | async pipe |
 
-## AI Self-Check
-
-- [ ] Standalone components?
-- [ ] Constructor injection?
-- [ ] OnPush change detection?
-- [ ] async pipe for observables?
-- [ ] Unsubscribe handling?
-- [ ] No NgModules?
-- [ ] Strong typing (no any)?
-- [ ] Business logic in services?
-- [ ] Proper lifecycle hooks?
-
 ## Key Features
 
 | Feature | Purpose |
@@ -84,3 +70,15 @@ export class UsersComponent implements OnDestroy {
 **MUST**: Standalone, OnPush, async pipe, constructor injection, strong typing
 **SHOULD**: Signals (16+), RxJS operators, proper unsubscribe, services
 **AVOID**: NgModules, manual subscriptions, default CD, any type, component logic
+
+## AI Self-Check
+
+- [ ] Standalone components?
+- [ ] Constructor injection?
+- [ ] OnPush change detection?
+- [ ] async pipe for observables?
+- [ ] Unsubscribe handling?
+- [ ] No NgModules?
+- [ ] Strong typing (no any)?
+- [ ] Business logic in services?
+- [ ] Proper lifecycle hooks?

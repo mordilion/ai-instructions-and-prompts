@@ -9,6 +9,7 @@
 > **ALWAYS**: Hash passwords (BCrypt/Argon2, 12+ cost)
 > **ALWAYS**: HTTPS in production (TLS 1.2+)
 > **ALWAYS**: Verify permissions on every protected resource
+> **ALWAYS**: CSRF protection on state-changing requests
 > 
 > **NEVER**: Trust user input (GET, POST, headers, cookies)
 > **NEVER**: String concatenation in SQL
@@ -18,29 +19,52 @@
 
 ## 1. OWASP Top 10 Protection
 
+### SQL Injection
+
+```sql
+-- ✅ GOOD: Parameterized query
+SELECT * FROM users WHERE email = @Email;
+
+-- ❌ BAD: String concatenation
+SELECT * FROM users WHERE email = '" + email + "';
+```
+
+### XSS
+
+```html
+<!-- ✅ GOOD: Framework auto-escaping -->
+<p>{{ userInput }}</p>
+
+<!-- ❌ BAD: Unescaped HTML injection -->
+<p v-html="userInput"></p>
+```
+
 ### Input Validation
-- Validate ALL user input (length, format, type, range)
-- Use allowlists over denylists
-- **SQL Injection**: Parameterized queries/ORM ONLY
-- **XSS**: Auto-escape output by default
-- **Path Traversal**: Validate file paths, generate safe filenames
+- Validate ALL user input (length, format, type, range). Use allowlists over denylists.
+- **Path Traversal**: Validate file paths, generate safe filenames.
 
 ### Authentication
 - **ALWAYS**: Hash passwords (BCrypt/Argon2, 12+ cost). NEVER MD5/SHA1/plaintext.
 - **ALWAYS**: Use framework authentication (Spring Security, Django Auth, Passport.js).
-- **ALWAYS**: Multi-factor authentication for sensitive operations.
 - **Session**: Secure, HttpOnly, SameSite=Strict cookies. Rotate session IDs after login.
 - **JWT**: Sign tokens (HS256/RS256). Set expiration (≤15 min). Store secret securely.
 
 ### Authorization
-- **ALWAYS**: Verify permissions on EVERY protected resource.
-- **ALWAYS**: Use role-based (RBAC) or attribute-based (ABAC) access control.
+- **ALWAYS**: Verify permissions on EVERY protected resource (RBAC or ABAC).
 - **NEVER**: Trust client-side checks. Validate server-side.
 
 ### Secrets Management
+
+```python
+# ✅ GOOD: Environment variable
+db_password = os.environ["DB_PASSWORD"]
+
+# ❌ BAD: Hardcoded secret
+db_password = "super_secret_123"
+```
+
 - **ALWAYS**: Environment variables or secret managers (Vault, AWS Secrets Manager).
 - **NEVER**: Hardcode secrets, commit to Git, log secrets.
-- **Rotation**: Regular rotation for API keys, tokens, certificates.
 
 ## 2. Transport & Communication
 
@@ -51,8 +75,9 @@
 - **Certificate**: Valid certificates. Pin certificates for critical APIs.
 
 ### CORS
-- **ALWAYS**: Restrictive origins. NEVER `*` with credentials.
-- **ALWAYS**: Specific methods (GET, POST). Avoid OPTIONS if possible.
+- **ALWAYS**: Restrictive allowed origins. NEVER `Access-Control-Allow-Origin: *` with credentials.
+- **ALWAYS**: Allowlist specific methods and headers in preflight responses.
+- **ALWAYS**: Handle OPTIONS preflight requests correctly (browsers send them automatically for cross-origin requests).
 
 ## 3. Data Protection
 

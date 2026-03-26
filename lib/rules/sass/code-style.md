@@ -1,7 +1,8 @@
 # Sass Code Style
 
 > **Scope**: Sass formatting rules  
-> **Extends**: CSS code style
+> **Applies to**: *.scss, *.sass files  
+> **Extends**: CSS code style  
 
 ## CRITICAL REQUIREMENTS
 

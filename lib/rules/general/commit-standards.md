@@ -1,5 +1,6 @@
 # Commit Message Standards
 
+> **Scope**: Git commit message formatting. Always active.
 > **Reference**: [Conventional Commits v1.0.0](https://www.conventionalcommits.org/en/v1.0.0/)
 
 ---
@@ -27,7 +28,7 @@
 
 ## Format
 
-> **ALWAYS** follow this structure:
+> **ALWAYS**: Follow this structure:
 
 ```
 <type>[optional scope]: <description>
@@ -163,8 +164,4 @@ Reviewed-by: Jane Doe
 - [ ] One logical change per commit
 - [ ] Scope provided when applicable
 
----
-
-## Tools
-
-**commitlint** (enforce standards), **semantic-release** (automate versioning), **conventional-changelog** (generate CHANGELOG)
+**Tools**: commitlint (enforce standards), semantic-release (automate versioning), conventional-changelog (generate CHANGELOG)

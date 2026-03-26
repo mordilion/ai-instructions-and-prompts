@@ -1,7 +1,8 @@
-# Postcss Code Style
+# PostCSS Code Style
 
 > **Scope**: Postcss formatting rules  
-> **Extends**: CSS code style
+> **Applies to**: *.pcss, *.postcss files  
+> **Extends**: CSS code style  
 
 ## CRITICAL REQUIREMENTS
 

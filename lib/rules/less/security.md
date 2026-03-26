@@ -1,7 +1,8 @@
 # Less Security
 
 > **Scope**: Less security and safety  
-> **Extends**: General security + CSS security
+> **Applies to**: *.less files  
+> **Extends**: General security + CSS security  
 
 ## CRITICAL REQUIREMENTS
 

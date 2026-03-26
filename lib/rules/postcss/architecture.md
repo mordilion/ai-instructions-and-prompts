@@ -1,7 +1,8 @@
 # Postcss Architecture
 
 > **Scope**: Postcss stylesheet patterns  
-> **Extends**: General architecture + CSS rules
+> **Applies to**: *.pcss, *.postcss files  
+> **Extends**: General architecture + CSS rules  
 
 ## CRITICAL REQUIREMENTS
 

@@ -11,7 +11,7 @@
 > **ALWAYS**: Zero circular dependencies
 > 
 > **NEVER**: Inner layers import from outer layers
-> **NEVER**: Concrete implementations (use interfaces)
+> **NEVER**: Depend on concrete implementations at boundaries (use interfaces/ports)
 > **NEVER**: God classes (>5 dependencies)
 > **NEVER**: Expose DB exceptions to UI layer
 > **NEVER**: Silent failures (log or rethrow)

@@ -29,6 +29,8 @@ These are universally applicable and conflict-free:
 | **General code-style** | SOLID, DRY, YAGNI - industry standard |
 
 | **Security rules** | OWASP Top 10, prevents vulnerabilities |
+| **Accessibility rules** | WCAG-aligned patterns, inclusive UX |
+| **i18n rules** | Localization, string handling, locale-aware behavior |
 | **Documentation standards** | Code comments, API docs, READMEs |
 | **Framework best practices** | React hooks, Django ORM, Spring patterns |
 
@@ -48,15 +50,21 @@ These assume specific tooling/workflows - customize first:
 
 **Action**: Use [Extension System](CUSTOMIZATION.md) to override. Example:
 
+`.ai-iap-custom/config.json`:
+
 ```json
-// .ai-iap-custom/config.json
 {
-  "git": {
-    "branchPrefix": "PROJ-",
-    "workflow": "trunk-based"
-  },
-  "cicd": {
-    "platform": "gitlab-ci"
+  "languages": {
+    "typescript": {
+      "customFiles": ["company-standards"],
+      "customProcesses": {
+        "ci-cd-gitlab": {
+          "name": "CI/CD (GitLab CI)",
+          "file": "ci-cd-gitlab",
+          "description": "GitLab CI pipeline for your team"
+        }
+      }
+    }
   }
 }
 ```
@@ -82,7 +90,7 @@ These may conflict with established practices:
 
 **Week 1-2**: Foundation
 
-- Load general rules (code-style, security)
+- Load general rules (code-style, security, accessibility, i18n)
 - Add documentation standards
 - Review with 2-3 senior engineers
 
@@ -128,6 +136,10 @@ These may conflict with established practices:
    - security.md
 
    - code-style.md
+
+   - accessibility.md
+
+   - i18n.md
 
    - documentation/api.md
 
@@ -179,7 +191,7 @@ These may conflict with established practices:
 
 - [ ] Clone repository
 
-- [ ] Run setup script for Claude Code
+- [ ] Run `/ai-iap:setup` for Claude Code
 
 - [ ] Review generated configs
 
@@ -247,7 +259,7 @@ Track these after 30-60 days:
 
 - **Extension System**: `.ai-iap-custom/` for overrides
 
-- **Issues**: Report conflicts/bugs to [GitHub Issues]
+- **Issues**: Report conflicts/bugs to [GitHub Issues](https://github.com/HenningHuncke/ai-instructions-and-prompts/issues)
 
 ---
 

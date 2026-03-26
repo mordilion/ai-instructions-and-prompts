@@ -68,20 +68,7 @@ Route::middleware('auth:sanctum')->group(fn() => Route::apiResource('users', Use
 | **Controller Validation** | `$request->validate()` | `StoreUserRequest` |
 | **Business Logic** | Logic in controller | Service class |
 | **env() Usage** | `env('APP_NAME')` | `config('app.name')` |
-| **DB::raw** | `DB::raw($input)` | `DB::raw('col = ?', [$input])` |
-
-## AI Self-Check
-
-- [ ] Using Eloquent ORM?
-- [ ] Form Requests for validation?
-- [ ] API Resources for responses?
-- [ ] Thin controllers?
-- [ ] Services for business logic?
-- [ ] Dependency injection?
-- [ ] Resource routes?
-- [ ] No env() outside config?
-- [ ] No raw models returned?
-- [ ] Parameter binding for raw queries?
+| **DB::raw** | `DB::raw($input)` | `->whereRaw('col = ?', [$input])` |
 
 ## Key Features
 
@@ -98,3 +85,16 @@ Route::middleware('auth:sanctum')->group(fn() => Route::apiResource('users', Use
 **MUST**: Eloquent, Form Requests, API Resources, DI, thin controllers
 **SHOULD**: Services, repositories, events, jobs, middleware
 **AVOID**: Controller logic, direct model returns, env() outside config
+
+## AI Self-Check
+
+- [ ] Using Eloquent ORM?
+- [ ] Form Requests for validation?
+- [ ] API Resources for responses?
+- [ ] Thin controllers?
+- [ ] Services for business logic?
+- [ ] Dependency injection?
+- [ ] Resource routes?
+- [ ] No env() outside config?
+- [ ] No raw models returned?
+- [ ] Parameter binding for raw queries?

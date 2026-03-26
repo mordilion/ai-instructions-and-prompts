@@ -1,6 +1,8 @@
 # Django Modular Structure
 
 > **Scope**: Feature-first modular structure for Django  
+> **Applies to**: *.py files  
+> **Extends**: python/frameworks/django.md  
 > **Use When**: Medium-large apps, domain-driven design
 
 ## CRITICAL REQUIREMENTS

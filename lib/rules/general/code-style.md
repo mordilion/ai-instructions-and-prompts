@@ -33,16 +33,33 @@
 - **Intent**: Name describes WHAT, not HOW.
 
 ## 4. Control Flow
-- **No `else`**: Avoid `else` (and `else if`) everywhere by default.
-  - Prefer early returns, separating concerns into small functions, and using `switch` / pattern matching when you need
-    multiple exclusive branches.
-  - ✅ Good (guard clause): `if (!valid) return; processData();`
-  - ✅ Good (multiple branches): `return status switch { Ok => HandleOk(), _ => HandleError() };`
-  - ❌ Bad: `if (valid) { processData(); } else { return; }`
-  - ❌ Bad: `if (a) { ... } else if (b) { ... } else { ... }`
-- **Happy Path**: Keep main logic at the lowest indentation level.
-- **Template languages**: If the language/framework requires `else` in markup (e.g. Razor `@if/else`, Svelte `{:else}`),
-  prefer modeling UI state explicitly (e.g. enum) and render with `switch` or extracted components to minimize `else`.
+
+> **ALWAYS**: Prefer early returns over else. Keep happy path at lowest indentation.
+
+```typescript
+// ❌ BAD: Nested else chains
+function getDiscount(user: User): number {
+  if (user.isPremium) {
+    if (user.years > 5) {
+      return 0.3;
+    } else {
+      return 0.15;
+    }
+  } else {
+    return 0;
+  }
+}
+
+// ✅ GOOD: Guard clauses, flat logic
+function getDiscount(user: User): number {
+  if (!user.isPremium) return 0;
+  if (user.years > 5) return 0.3;
+  return 0.15;
+}
+```
+
+- **Multiple branches**: Use `switch` / pattern matching instead of `else if` chains.
+- **Template languages**: If markup requires `else` (Razor `@if/else`, Svelte `{:else}`), prefer extracted components or enum-driven rendering.
 
 ## 5. Best Practices
 - **Comments**: Explain WHY, never WHAT. Code MUST be self-documenting.

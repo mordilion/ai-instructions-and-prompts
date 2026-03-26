@@ -64,5 +64,5 @@
 - [ ] No swallowed errors?
 - [ ] Write-Verbose/Warning for logging?
 - [ ] Join-Path for path operations?
-- **ALWAYS**: Use Pester for tests of reusable modules/functions.
+- [ ] Using Pester for tests of reusable modules/functions?
 

@@ -21,7 +21,7 @@
 
 > **ALWAYS**:
 > - Prefer **composition** over inheritance (small pieces that compose well)
-> - Extract a reusable component when you see **repetition** (UI + behavior) across 2+ places
+> - Extract a reusable component when you see **repetition** (UI + behavior) across 3+ places (Rule of Three)
 > - Keep components **single-purpose** and easy to test
 > - Prefer **presentational + container** separation when it helps (UI vs data/side-effects)
 > - Make components configurable via **props/parameters**, not forks/copies
@@ -49,7 +49,7 @@
 
 For every user-facing component/flow, handle all of these states:
 
-> **ALWAYS** implement:
+> **ALWAYS**: Implement:
 > - **Loading**: skeleton/spinner + disabled actions
 > - **Empty**: explain what’s missing and how to proceed
 > - **Error**: actionable message + retry if possible
@@ -85,7 +85,7 @@ For every user-facing component/flow, handle all of these states:
 > - Provide accessible names for icons-only controls
 > - Ensure sufficient color contrast for text and interactive elements
 
-> **NEVER** rely on:
+> **NEVER**: Rely on:
 > - Color alone to convey meaning (add text, icons, or patterns)
 
 ---
