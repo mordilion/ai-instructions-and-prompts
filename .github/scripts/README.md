@@ -325,10 +325,10 @@ Pass Rate: 33%
     '\\$request->all\\(\\)',  // No validation
   ],
   rules: [
-    'lib/rules/general/persona.md',
-    'lib/rules/general/architecture.md',
-    'lib/rules/php/architecture.md',
-    'lib/rules/php/frameworks/laravel.md'
+    'plugin/lib/rules/general/persona.md',
+    'plugin/lib/rules/general/architecture.md',
+    'plugin/lib/rules/php/architecture.md',
+    'plugin/lib/rules/php/frameworks/laravel.md'
   ]
 }
 ```
@@ -383,8 +383,8 @@ Check `test-results/*.json` for details:
 
 ## 📚 **Related Files**
 
-- **Rules**: `lib/rules/` (the source of truth)
-- **Config**: `lib/config.json` (framework/language definitions)
+- **Rules**: `plugin/lib/rules/` (the source of truth)
+- **Config**: `plugin/lib/config.json` (framework/language definitions)
 
 ---
 

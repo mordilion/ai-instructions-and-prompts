@@ -63,8 +63,8 @@ If your change touches setup/merge logic, run `/ai-iap:validate` again after you
 
 If you add or change a pattern:
 
-- **For implementation patterns**: Start from the template in `lib/code-library/functions/_TEMPLATE.md`
-- **For design patterns**: Start from the template in `lib/code-library/design-patterns/_TEMPLATE.md`
+- **For implementation patterns**: Start from the template in `plugin/lib/code-library/functions/_TEMPLATE.md`
+- **For design patterns**: Start from the template in `plugin/lib/code-library/design-patterns/_TEMPLATE.md`
 - Keep the YAML frontmatter format consistent
 - After the YAML header, include **code examples only** (no install commands, no long explanations)
 - Design patterns: Include complete implementations (20-100 lines) plus usage examples

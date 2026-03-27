@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-blue.svg)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](lib/README.md#-contributing)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](plugin/lib/README.md#-contributing)
 
 ---
 
@@ -59,26 +59,26 @@ then generates your `.claude/rules/` configuration.
 
 | Component | Path | Description |
 |-----------|------|-------------|
-| Setup skill | `skills/setup/` | Interactive setup wizard (`/ai-iap:setup`) |
-| Validate skill | `skills/validate/` | Configuration validator (`/ai-iap:validate`) |
-| Code reviewer | `agents/code-reviewer.md` | Reviews code for quality and security |
-| Codebase explorer | `agents/codebase-explorer.md` | Fast read-only code search |
-| Test writer | `agents/test-writer.md` | Writes tests following conventions |
-| Docs writer | `agents/docs-writer.md` | Improves documentation |
-| Refactor helper | `agents/refactor-helper.md` | Refactors without changing behavior |
-| Session hook | `hooks/hooks.json` | Suggests setup on new projects |
+| Setup skill | `plugin/skills/setup/` | Interactive setup wizard (`/ai-iap:setup`) |
+| Validate skill | `plugin/skills/validate/` | Configuration validator (`/ai-iap:validate`) |
+| Code reviewer | `plugin/agents/code-reviewer.md` | Reviews code for quality and security |
+| Codebase explorer | `plugin/agents/codebase-explorer.md` | Fast read-only code search |
+| Test writer | `plugin/agents/test-writer.md` | Writes tests following conventions |
+| Docs writer | `plugin/agents/docs-writer.md` | Improves documentation |
+| Refactor helper | `plugin/agents/refactor-helper.md` | Refactors without changing behavior |
+| Session hook | `plugin/hooks/hooks.json` | Suggests setup on new projects |
 
 ## Documentation
 
-**[Full Documentation](lib/README.md)**
+**[Full Documentation](plugin/lib/README.md)**
 
-- [Languages & Frameworks](lib/README.md#-supported-languages--frameworks)
-- [Project Structures](lib/README.md#-project-structure-options)
-- [Token Costs](lib/README.md#-token-cost-analysis)
-- [Configuration](lib/README.md#-configuration)
+- [Languages & Frameworks](plugin/lib/README.md#-supported-languages--frameworks)
+- [Project Structures](plugin/lib/README.md#-project-structure-options)
+- [Token Costs](plugin/lib/README.md#-token-cost-analysis)
+- [Configuration](plugin/lib/README.md#-configuration)
 - [**Team Adoption Guide**](TEAM_ADOPTION_GUIDE.md) -- For engineering teams evaluating this project
 - [Troubleshooting](TROUBLESHOOTING.md)
-- [Contributing](lib/README.md#-contributing)
+- [Contributing](plugin/lib/README.md#-contributing)
 
 ## License
 

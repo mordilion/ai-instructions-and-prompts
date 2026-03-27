@@ -2,7 +2,7 @@
 
 ## Start here
 
-- **Documentation**: see `README.md` and the full docs in `lib/README.md`
+- **Documentation**: see `README.md` and the full docs in `plugin/lib/README.md`
 - **Troubleshooting**: `TROUBLESHOOTING.md`
 - **Team adoption**: `TEAM_ADOPTION_GUIDE.md`
 

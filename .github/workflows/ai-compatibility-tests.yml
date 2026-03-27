@@ -17,8 +17,8 @@ on:
 
   push:
     paths:
-      - 'lib/rules/**'
-      - 'lib/processes/**'
+      - 'plugin/lib/rules/**'
+      - 'plugin/lib/processes/**'
     branches:
       - main
 

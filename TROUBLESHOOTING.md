@@ -50,7 +50,7 @@ claude --plugin-dir ./path/to/ai-instructions-and-prompts
 
 **Issue**: Selected a language but no frameworks appear during `/ai-iap:setup`
 
-**Cause 1**: Language has no frameworks defined in `lib/config.json`
+**Cause 1**: Language has no frameworks defined in `plugin/lib/config.json`
 
 **Cause 2**: JSON parsing error in config
 
@@ -91,7 +91,7 @@ ls -la CLAUDE.md
 # [FAIL] All rule files exist - Missing: dart/frameworks/bloc.md
 ```
 
-If validation fails, check that all referenced files exist in the plugin's `lib/rules/`.
+If validation fails, check that all referenced files exist in the plugin repository under `plugin/lib/rules/`.
 
 ---
 
@@ -202,7 +202,7 @@ generated outputs (`.claude/rules/`, `CLAUDE.md`, `.claude/agents/`).
 - Broken internal links in markdown
 
 **Manual Check**: Review a few generated rule files in `.claude/rules/` and
-compare them to the source files in the plugin's `lib/rules/` directory.
+compare them to the source files under `plugin/lib/rules/` in the plugin repository.
 
 ---
 
@@ -274,7 +274,7 @@ If you're still stuck:
 
 1. **Check GitHub Issues**: [GitHub Issues](https://github.com/mordilion/ai-instructions-and-prompts/issues)
 2. **Run validation**: `/ai-iap:validate`
-3. **Review full docs**: `lib/README.md`
+3. **Review full docs**: `plugin/lib/README.md`
 
 ### Report a Bug
 
@@ -290,7 +290,7 @@ If you found a bug:
 
 ## Additional Resources
 
-- **Full Documentation**: `lib/README.md`
+- **Full Documentation**: `plugin/lib/README.md`
 - **Team Adoption**: `TEAM_ADOPTION_GUIDE.md`
 
 ---

@@ -4,10 +4,10 @@ What does this change do and why?
 
 ## Scope
 
-- [ ] Rules library (`lib/rules/`)
-- [ ] Processes library (`lib/processes/`)
-- [ ] Code library (`lib/code-library/`)
-- [ ] Plugin surface (`skills/`, `hooks/`, `agents/`)
+- [ ] Rules library (`plugin/lib/rules/`)
+- [ ] Processes library (`plugin/lib/processes/`)
+- [ ] Code library (`plugin/lib/code-library/`)
+- [ ] Plugin surface (`plugin/skills/`, `plugin/hooks/`, `plugin/agents/`)
 - [ ] Docs (`README.md`, `TEAM_ADOPTION_GUIDE.md`, etc.)
 - [ ] CI / GitHub Actions (`.github/workflows/`)
 - [ ] Other (please describe)
