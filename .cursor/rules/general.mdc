@@ -2,29 +2,31 @@
 alwaysApply: true
 ---
 
-# AI Instructions & Prompts (A setup routine for Claude Code)
+# AI Instructions & Prompts (Claude Code Plugin)
 
 > **Scope**: This applies to ALL tasks. Always active.
 
-**Project Nature**: This is a **meta-project** that creates AI rules, processes, and prompts for end users to configure Claude Code in their own projects.
+**Project Nature**: This is a **meta-project** that creates a Claude Code plugin providing AI rules, processes, and prompts for end users.
 
-**Project Goals**: 
-- Users **MUST** be able to setup AI rules, borders, and prompts for Claude Code via setup scripts for their new or existing projects
+**Project Goals**:
+- Users install the plugin and run `/ai-iap:setup` to configure Claude Code rules for their projects
 - Provide rules and processes as modular Claude Code rules (`.claude/rules/**/*.md`)
 - All files for rules and processes **MUST** be token efficient and clear
-- **NEVER** work with fixed versions. Use user's project-related versions and make it flexible (read from `.nvmrc`, `global.json`, `pom.xml`, etc.)
-- Files **MUST** follow the same structure for a better maintainability
+- **NEVER** work with fixed versions. Use user's project-related versions and make it flexible
+- Files **MUST** follow the same structure for better maintainability
 
-**Project Structure** (source content in this repository):
-- Rules library: hierarchical rules (general → language → framework → structure → security)
-- Processes library: step-by-step implementation guides (testing, CI/CD, logging, docker, auth, migrations, API docs)
-- Functions library: cross-language implementation patterns (5-20 lines each, reduces AI guessing)
-  - Functions index: quick reference for all function patterns
-  - One file per pattern, all 8 languages in same file for comparison
-  - Examples: error-handling, async-operations, input-validation, database-query, http-requests, logging, caching, config-secrets, auth-authorization, rate-limiting, webhooks
-- Setup scripts: interactive setup for Bash and PowerShell
-- Config: metadata for all languages, frameworks, structures, and processes
-- State file (in the target project root): last setup selection for safe reruns
+**Plugin Structure** (this repository IS the plugin):
+- `.claude-plugin/plugin.json` — Plugin manifest
+- `skills/setup/SKILL.md` — Interactive setup wizard (`/ai-iap:setup`)
+- `skills/validate/SKILL.md` — Configuration validator (`/ai-iap:validate`)
+- `agents/*.md` — 5 built-in agents (code-reviewer, codebase-explorer, test-writer, docs-writer, refactor-helper)
+- `hooks/hooks.json` — SessionStart hook for setup hint
+- `lib/config.json` — Central configuration (languages, frameworks, structures, processes)
+- `lib/config.schema.json` — JSON schema for config validation
+- `lib/claude-subagents.json` — Agent templates with rule bindings
+- `lib/rules/` — Rule library (192 files: general → language → framework → structure)
+- `lib/processes/` — Process guides (78 files: testing, CI/CD, logging, docker, auth, etc.)
+- `lib/code-library/` — Implementation patterns + design patterns
 
 **Success Criteria**:
 - Consistent code structure and architecture patterns
@@ -32,20 +34,14 @@ alwaysApply: true
 - Same testing approaches (unit, integration, mocking)
 - Same CI/CD best practices (version detection, caching, matrix testing)
 
-**🚨 CRITICAL RULE - Check Functions BEFORE Generating Code**
+**CRITICAL RULE - Check Functions BEFORE Generating Code**
 
 > **BEFORE** implementing error handling, async operations, input validation, database queries, HTTP requests, or other covered function patterns:
 >
-> 1. **CHECK** the custom functions index **if it exists**
-> 2. **THEN CHECK** the core functions index
-> 3. **USE** the exact pattern from the function file (e.g., `error-handling.md`)
-> 4. **CHOOSE** the appropriate framework version (Plain, Prisma, Laravel, etc.)
-> 5. **COPY** the exact code pattern (no installation commands)
->
-> **DO NOT** waste tokens generating code from scratch when patterns exist.
-> **DO NOT** guess implementations - use proven, secure patterns.
->
-> This saves 70-80% of tokens and ensures consistent, secure code across all projects.
+> 1. **CHECK** the core functions index
+> 2. **USE** the exact pattern from the function file (e.g., `error-handling.md`)
+> 3. **CHOOSE** the appropriate framework version (Plain, Prisma, Laravel, etc.)
+> 4. **COPY** the exact code pattern (no installation commands)
 
 ---
 
@@ -56,79 +52,47 @@ alwaysApply: true
    - **ALWAYS** use explicit directives: `> **ALWAYS**` and `> **NEVER**`
    - **ALWAYS** include concrete examples when ambiguity is possible
    - **NEVER** sacrifice clarity for token count
-   - **NEVER** use line counts as hard limits (15 lines or 150 lines - both OK if clear)
-
-   **Clarity Evaluation Criteria** (not line count):
-   - Are directives explicit enough (`> **ALWAYS**` / `> **NEVER**` format)?
-   - Is there an AI Self-Check section?
-   - Are there concrete examples (not just prose)?
-   - Any room for different interpretations?
 
 2. **Token Efficiency** (SECONDARY - only where clarity is maintained)
    - Prefer concise directives over verbose paragraphs (if equally clear)
-   - Use tables instead of prose for comparisons (better structure)
-   - Prefer pattern names over code examples (if pattern is well-known)
-   - Code examples: 5-15 lines (key pattern only, not 50+ line examples)
-   - Remove verbosity: "In order to achieve X, you should consider Y" → "**ALWAYS**: Use Y for X"
-   - **No hard line count limits**: A clear 20-line file is better than a confusing 80-line file
-   - **When to add content**: Missing directives, no AI Self-Check, ambiguous patterns
-   - **When to condense**: Verbose prose, 50+ line code examples, repeated explanations
+   - Use tables instead of prose for comparisons
+   - Code examples: 5-15 lines (key pattern only)
 
 3. **Consistency & Structure**
    - Pattern-based: Consistent format across all files
    - Self-validating: AI Self-Check sections with 10-12 items
-   - Git Workflow reference pattern to avoid repetition
    - Same section order across similar file types
 
 4. **Change Propagation** (CRITICAL - Keep the meta-project consistent)
    - **Whenever you change ANYTHING**, you **MUST** evaluate and update all dependent parts.
    - **ALWAYS** assume a change can require updates in:
-     - setup scripts (generation logic, new/renamed outputs, paths)
-     - state file behavior (rerun UX, defaults, backwards compatibility)
+     - plugin manifest and skills (setup wizard logic, validation)
      - config metadata (languages/frameworks/structures/processes mappings)
-     - language/framework/structure rule sources (from this repo)
-     - processes library (permanent and on-demand processes)
-     - functions library + functions index (patterns and index)
-     - root docs (readme, customization, troubleshooting)
-   - **NEVER** leave docs/scripts pointing to old paths or concepts.
+     - language/framework/structure rule sources in `lib/rules/`
+     - processes library in `lib/processes/`
+     - functions library + functions index in `lib/code-library/`
+     - agents in `agents/`
+     - hooks in `hooks/`
+     - root docs (readme, troubleshooting)
+     - CI/CD workflows in `.github/workflows/`
+   - **NEVER** leave docs/files pointing to old paths or concepts.
 
 ## Rerunnable Setup (CRITICAL)
 
 > **ALWAYS** treat setup as rerunnable and safe to re-run in existing projects.
 
 - **State**: Setup persists the user's last selection to `.ai-iap-state.json` (in the project root).
-- **Safe cleanup**: Generated outputs that can be cleaned must be marked:
-  - Claude Code modular rules (`.claude/rules/**/*.md`): frontmatter includes `aiIapManaged: true`
-- **NEVER** delete user-owned files during cleanup unless they are clearly marked as generated by this tool.
+- **Safe cleanup**: Generated outputs must be marked with `aiIapManaged: true` in YAML frontmatter.
+- **NEVER** delete user-owned files during cleanup.
 
 5. **Functions System** (CRITICAL - Reduce AI Guessing & Token Waste)
-   - **Purpose**: Provide exact implementation patterns across all 8 languages to reduce token consumption and guessing
-   - **Location**: Functions library (in this repo / copied into projects that keep the source folder)
+   - **Purpose**: Provide exact implementation patterns across all 8 languages
+   - **Location**: `lib/code-library/` (in this repo)
    - **Structure**: ONE file per pattern, ALL languages in same file
-   - **Index**: Quick lookup table - **ALWAYS CHECK THE INDEX FIRST** before implementing common patterns
-   - **Template**: **ALWAYS** start new function files from the functions template
-     - **MUST** keep the same YAML frontmatter keys/structure
-     - **MUST** keep code examples as the only content after the YAML header (no long explanations, no install commands)
-     - **MUST** add the new file to the functions index
-   
-   **🚨 MANDATORY RULE:**
-   
-   > **BEFORE** implementing ANY of these patterns, **CHECK** the functions index and use the provided pattern
-   > **DO NOT GUESS** or generate code from scratch if a function pattern exists.
-   > **DO NOT WASTE TOKENS** generating what already exists in `/functions/`.
-   
-   - **When to use**: ALWAYS check before implementing any covered function pattern
-   - **How to use**: 
-     1. Check `INDEX.md` for pattern availability
-     2. Open relevant function file (e.g., `error-handling.md`)
-     3. Choose appropriate framework/library version for the project
-     4. Copy exact code pattern (no installation commands)
-   - **Benefits**: Consistent code, 70-80% less token waste, fewer bugs, faster development
-   - **Pattern**: Each function file shows TypeScript, Python, Java, C#, PHP, Kotlin, Swift, Dart with 2-4 framework versions each
-   
+   - **Index**: Quick lookup table - **ALWAYS CHECK THE INDEX FIRST**
+
 6. **File Scope & Pattern Lookup**
    - **ALWAYS** analyze and work on all relevant source files and any project customizations
    - **ALWAYS** check the project's existing dependencies before choosing a framework/library variant
-   - **NEVER** add installation commands to function files (functions are code-only after YAML frontmatter)
+   - **NEVER** add installation commands to function files
    - **ALWAYS** check the functions index **BEFORE** implementing patterns
-   - **NEVER** generate these patterns from scratch - use the provided implementations

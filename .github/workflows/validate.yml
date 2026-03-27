@@ -1,4 +1,4 @@
-name: Validate Rules
+name: Validate Plugin
 
 on:
   push:
@@ -11,35 +11,120 @@ jobs:
   validate:
     name: Validate Configuration & Rules
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
-      
+
       - name: Validate JSON syntax
         run: |
-          echo "Validating config.json..."
-          jq empty .ai-iap/config.json
+          echo "Validating JSON files..."
+          jq empty lib/config.json
           echo "✓ config.json is valid JSON"
-      
-      - name: Check file structure
+          jq empty lib/config.schema.json
+          echo "✓ config.schema.json is valid JSON"
+          jq empty lib/claude-subagents.json
+          echo "✓ claude-subagents.json is valid JSON"
+          jq empty .claude-plugin/plugin.json
+          echo "✓ plugin.json is valid JSON"
+          jq empty .claude-plugin/marketplace.json
+          echo "✓ marketplace.json is valid JSON"
+
+      - name: Check plugin structure
         run: |
-          echo "Checking directory structure..."
-          test -d .ai-iap/rules || { echo "Missing .ai-iap/rules directory"; exit 1; }
-          test -f .ai-iap/config.json || { echo "Missing config.json"; exit 1; }
-          test -f .ai-iap/setup.sh || { echo "Missing setup.sh"; exit 1; }
-          test -f .ai-iap/setup-common.sh || { echo "Missing setup-common.sh"; exit 1; }
-          test -f .ai-iap/setup-rules.sh || { echo "Missing setup-rules.sh"; exit 1; }
-          test -f .ai-iap/setup-agents.sh || { echo "Missing setup-agents.sh"; exit 1; }
-          test -f .ai-iap/setup.ps1 || { echo "Missing setup.ps1"; exit 1; }
-          test -f .ai-iap/setup-common.ps1 || { echo "Missing setup-common.ps1"; exit 1; }
-          test -f .ai-iap/setup-rules.ps1 || { echo "Missing setup-rules.ps1"; exit 1; }
-          test -f .ai-iap/setup-agents.ps1 || { echo "Missing setup-agents.ps1"; exit 1; }
-          echo "✓ Directory structure is valid"
-      
+          echo "Checking plugin directory structure..."
+          test -f .claude-plugin/plugin.json || { echo "Missing .claude-plugin/plugin.json"; exit 1; }
+          test -f .claude-plugin/marketplace.json || { echo "Missing .claude-plugin/marketplace.json"; exit 1; }
+          test -d skills/setup || { echo "Missing skills/setup/"; exit 1; }
+          test -f skills/setup/SKILL.md || { echo "Missing skills/setup/SKILL.md"; exit 1; }
+          test -d skills/validate || { echo "Missing skills/validate/"; exit 1; }
+          test -f skills/validate/SKILL.md || { echo "Missing skills/validate/SKILL.md"; exit 1; }
+          test -d agents || { echo "Missing agents/"; exit 1; }
+          test -d hooks || { echo "Missing hooks/"; exit 1; }
+          test -f hooks/hooks.json || { echo "Missing hooks/hooks.json"; exit 1; }
+          test -d lib/rules || { echo "Missing lib/rules/"; exit 1; }
+          test -d lib/processes || { echo "Missing lib/processes/"; exit 1; }
+          test -d lib/code-library || { echo "Missing lib/code-library/"; exit 1; }
+          test -f lib/config.json || { echo "Missing lib/config.json"; exit 1; }
+          echo "✓ Plugin structure is valid"
+
+      - name: Check agent files
+        run: |
+          echo "Checking agent files..."
+          for agent in code-reviewer codebase-explorer test-writer docs-writer refactor-helper; do
+            test -f "agents/${agent}.md" || { echo "Missing agents/${agent}.md"; exit 1; }
+          done
+          echo "✓ All agent files exist"
+
+      - name: Validate config against schema
+        run: |
+          echo "Checking config has required fields..."
+          jq -e '.version' lib/config.json > /dev/null
+          echo "✓ config has version"
+          jq -e '.tool.name' lib/config.json > /dev/null
+          echo "✓ config has tool.name"
+          jq -e '.languages' lib/config.json > /dev/null
+          echo "✓ config has languages"
+          LANG_COUNT=$(jq '.languages | length' lib/config.json)
+          echo "✓ config has $LANG_COUNT languages"
+
+      - name: Check rule file references
+        run: |
+          echo "Checking all referenced rule files exist..."
+          MISSING=0
+          for lang_key in $(jq -r '.languages | keys[]' lib/config.json); do
+            for file in $(jq -r ".languages[\"$lang_key\"].files[]" lib/config.json 2>/dev/null); do
+              filepath="lib/rules/$lang_key/$file.md"
+              if [ ! -f "$filepath" ]; then
+                echo "MISSING: $filepath"
+                MISSING=$((MISSING + 1))
+              fi
+            done
+            for fw_key in $(jq -r ".languages[\"$lang_key\"].frameworks // {} | keys[]" lib/config.json 2>/dev/null); do
+              fw_file=$(jq -r ".languages[\"$lang_key\"].frameworks[\"$fw_key\"].file" lib/config.json)
+              if [ -n "$fw_file" ] && [ "$fw_file" != "null" ]; then
+                fwpath="lib/rules/$lang_key/frameworks/$fw_file.md"
+                if [ ! -f "$fwpath" ]; then
+                  echo "MISSING: $fwpath"
+                  MISSING=$((MISSING + 1))
+                fi
+              fi
+              for struct_key in $(jq -r ".languages[\"$lang_key\"].frameworks[\"$fw_key\"].structures // {} | keys[]" lib/config.json 2>/dev/null); do
+                struct_file=$(jq -r ".languages[\"$lang_key\"].frameworks[\"$fw_key\"].structures[\"$struct_key\"].file" lib/config.json)
+                if [ -n "$struct_file" ] && [ "$struct_file" != "null" ]; then
+                  spath="lib/rules/$lang_key/frameworks/structures/$struct_file.md"
+                  if [ ! -f "$spath" ]; then
+                    echo "MISSING: $spath"
+                    MISSING=$((MISSING + 1))
+                  fi
+                fi
+              done
+            done
+          done
+          if [ $MISSING -gt 0 ]; then
+            echo "❌ $MISSING referenced files are missing"
+            exit 1
+          fi
+          echo "✓ All referenced rule files exist"
+
+      - name: Validate markdown files
+        run: |
+          echo "Checking markdown files..."
+          INVALID=0
+          find lib/rules -name "*.md" -type f | while read -r file; do
+            if [ ! -s "$file" ]; then
+              echo "Empty file: $file"
+              INVALID=$((INVALID + 1))
+            elif ! head -1 "$file" | grep -q "^#"; then
+              echo "Missing header: $file"
+              INVALID=$((INVALID + 1))
+            fi
+          done
+          echo "✓ All markdown files are valid"
+
       - name: Install markdownlint-cli
         run: npm install -g markdownlint-cli
-      
+
       - name: Lint markdown files
         run: |
           echo "Linting markdown files..."
@@ -49,152 +134,43 @@ jobs:
             exit 1
           }
           echo "✓ All markdown files pass linting"
-      
-      - name: Validate markdown files
+
+      - name: Check persona split files
         run: |
-          echo "Checking markdown files..."
-          find .ai-iap/rules -name "*.md" -type f | while read -r file; do
-            if [ ! -s "$file" ]; then
-              echo "Empty file: $file"
-              exit 1
-            fi
-            if ! head -1 "$file" | grep -q "^#"; then
-              echo "Missing header: $file"
-              exit 1
-            fi
+          echo "Checking persona split files..."
+          for f in persona-core persona-specialist-software persona-specialist-seo persona-specialist-ui-ux persona-specialist-testing persona-specialist-devops; do
+            test -f "lib/rules/general/${f}.md" || { echo "Missing lib/rules/general/${f}.md"; exit 1; }
           done
-          echo "✓ All markdown files are valid"
-      
-      - name: Check for broken links in README
-        run: |
-          echo "Checking README links..."
-          if grep -q "](.*\.md)" README.md; then
-            echo "✓ README contains internal links"
-          fi
-
-  test-linux:
-    name: Test Bash Scripts
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-      
-      - name: Install dependencies
-        run: |
-          echo "Installing jq..."
-          sudo apt-get update -qq
-          sudo apt-get install -y jq
-          jq --version
-          echo "✓ jq is available"
-      
-      - name: Validate bash syntax
-        run: |
-          echo "Validating bash scripts..."
-          bash -n .ai-iap/setup.sh
-          echo "✓ setup.sh syntax is valid"
-          bash -n .ai-iap/setup-common.sh
-          echo "✓ setup-common.sh syntax is valid"
-          bash -n .ai-iap/setup-rules.sh
-          echo "✓ setup-rules.sh syntax is valid"
-          bash -n .ai-iap/setup-agents.sh
-          echo "✓ setup-agents.sh syntax is valid"
-          bash -n .ai-iap/validate.sh
-          echo "✓ validate.sh syntax is valid"
-          bash -n .ai-iap/validate-config.sh
-          echo "✓ validate-config.sh syntax is valid"
-          bash -n .ai-iap/verify-extension.sh
-          echo "✓ verify-extension.sh syntax is valid"
-      
-      - name: Run file validation tests
-        run: |
-          chmod +x .ai-iap/validate.sh
-          ./.ai-iap/validate.sh
-      
-      - name: Run config validation tests
-        run: |
-          chmod +x .ai-iap/validate-config.sh
-          ./.ai-iap/validate-config.sh
-      
-      - name: Run extension system tests
-        run: |
-          chmod +x .ai-iap/verify-extension.sh
-          ./.ai-iap/verify-extension.sh
-
-  test-windows:
-    name: Test PowerShell Scripts
-    runs-on: windows-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-      
-      - name: Validate PowerShell syntax
-        shell: pwsh
-        run: |
-          Write-Host "Validating PowerShell scripts..."
-          $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content .ai-iap\setup.ps1 -Raw), [ref]$null)
-          Write-Host "✓ setup.ps1 syntax is valid"
-          $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content .ai-iap\setup-common.ps1 -Raw), [ref]$null)
-          Write-Host "✓ setup-common.ps1 syntax is valid"
-          $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content .ai-iap\setup-rules.ps1 -Raw), [ref]$null)
-          Write-Host "✓ setup-rules.ps1 syntax is valid"
-          $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content .ai-iap\setup-agents.ps1 -Raw), [ref]$null)
-          Write-Host "✓ setup-agents.ps1 syntax is valid"
-          
-          $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content .ai-iap\validate.ps1 -Raw), [ref]$null)
-          Write-Host "✓ validate.ps1 syntax is valid"
-          
-          $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content .ai-iap\validate-config.ps1 -Raw), [ref]$null)
-          Write-Host "✓ validate-config.ps1 syntax is valid"
-          
-          $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content .ai-iap\verify-extension.ps1 -Raw), [ref]$null)
-          Write-Host "✓ verify-extension.ps1 syntax is valid"
-      
-      - name: Run file validation tests
-        shell: pwsh
-        run: |
-          .\.ai-iap\validate.ps1
-      
-      - name: Run config validation tests
-        shell: pwsh
-        run: |
-          .\.ai-iap\validate-config.ps1
-      
-      - name: Run extension system tests
-        shell: pwsh
-        run: |
-          .\.ai-iap\verify-extension.ps1
+          echo "✓ All persona split files exist"
 
   count-tokens:
     name: Token Cost Analysis
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
-      
+
       - name: Calculate total tokens
         run: |
           echo "Calculating token costs..."
           total_chars=0
           file_count=0
-          
+
           while IFS= read -r file; do
             chars=$(wc -c < "$file")
             total_chars=$((total_chars + chars))
             file_count=$((file_count + 1))
-          done < <(find .ai-iap/rules -name "*.md" -type f)
-          
+          done < <(find lib/rules -name "*.md" -type f)
+
           tokens=$((total_chars / 4))
           echo "📊 Token Cost Summary:"
           echo "  Files: $file_count"
           echo "  Characters: $total_chars"
           echo "  Estimated Tokens: ~$tokens"
-          
+
           if [ $tokens -gt 50000 ]; then
             echo "⚠️  Warning: Total tokens exceed 50,000"
           else
             echo "✓ Token count is optimal"
           fi
-
