@@ -12,8 +12,8 @@
     {
       "name": "ai-iap",
       "source": {
-        "source": "github",
-        "repo": "mordilion/ai-instructions-and-prompts"
+        "source": "url",
+        "url": "https://github.com/mordilion/ai-instructions-and-prompts.git"
       },
       "description": "Consistent AI coding standards for Claude Code. Modular rules, project instructions, and agents for 20+ languages and 52+ frameworks.",
       "version": "1.0.0",
