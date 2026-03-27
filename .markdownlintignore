@@ -6,8 +6,5 @@ node_modules/
 # Generated outputs (in user projects)
 CLAUDE.md
 
-# External reference material
-dogukan_rules/
-
 # Git
 .git/
