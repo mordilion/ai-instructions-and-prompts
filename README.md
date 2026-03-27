@@ -37,7 +37,7 @@ Add the marketplace and install the plugin:
 
 ```text
 /plugin marketplace add mordilion/ai-instructions-and-prompts
-/plugin install ai-iap@ai-iap-marketplace
+/plugin install ai-iap@mordilion
 ```
 
 ### Option B: Test Locally (Development)

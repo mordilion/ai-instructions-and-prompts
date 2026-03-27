@@ -31,7 +31,7 @@ claude --plugin-dir ./path/to/ai-instructions-and-prompts
 
 ### Marketplace Not Found
 
-**Issue**: `/plugin install ai-iap@ai-iap-marketplace` fails
+**Issue**: `/plugin install ai-iap@mordilion` fails
 
 **Cause**: Marketplace not added yet
 
@@ -41,7 +41,7 @@ claude --plugin-dir ./path/to/ai-instructions-and-prompts
 /plugin marketplace add mordilion/ai-instructions-and-prompts
 
 # Then install
-/plugin install ai-iap@ai-iap-marketplace
+/plugin install ai-iap@mordilion
 ```
 
 ---

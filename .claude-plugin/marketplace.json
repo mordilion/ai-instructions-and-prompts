@@ -1,44 +1,18 @@
 {
-  "name": "ai-iap-marketplace",
+  "name": "mordilion",
   "owner": {
-    "name": "Henning Huncke",
-    "email": "henning@huncke.dev"
+    "name": "Henning Huncke"
   },
   "metadata": {
-    "description": "Consistent AI coding standards for Claude Code. Modular rules, agents, and processes for 20+ languages and 52+ frameworks.",
-    "version": "1.0.0"
+    "description": "Plugins by Henning Huncke (mordilion)",
+    "homepage": "https://github.com/mordilion/ai-instructions-and-prompts"
   },
   "plugins": [
     {
       "name": "ai-iap",
-      "source": "./plugin",
-      "description": "Consistent AI coding standards for Claude Code. Modular rules, project instructions, and agents for 20+ languages and 52+ frameworks.",
       "version": "1.0.0",
-      "author": {
-        "name": "Henning Huncke"
-      },
-      "homepage": "https://github.com/mordilion/ai-instructions-and-prompts",
-      "repository": "https://github.com/mordilion/ai-instructions-and-prompts",
-      "license": "MIT",
-      "keywords": [
-        "rules",
-        "coding-standards",
-        "claude-code",
-        "multi-language",
-        "frameworks",
-        "security",
-        "architecture",
-        "best-practices"
-      ],
-      "category": "development-workflows",
-      "tags": [
-        "coding-standards",
-        "rules",
-        "multi-language",
-        "security",
-        "owasp",
-        "architecture"
-      ]
+      "source": "./plugin",
+      "description": "Consistent AI coding standards for Claude Code - rules, agents, and processes for 20+ languages and 52+ frameworks"
     }
   ]
 }
