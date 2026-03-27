@@ -232,7 +232,7 @@ Track these after 30-60 days:
 
 ## Support & Resources
 
-- **Issues**: Report conflicts/bugs to [GitHub Issues](https://github.com/HenningHuncke/ai-instructions-and-prompts/issues)
+- **Issues**: Report conflicts/bugs to [GitHub Issues](https://github.com/mordilion/ai-instructions-and-prompts/issues)
 
 ---
 

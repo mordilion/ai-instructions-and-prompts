@@ -38,7 +38,7 @@ claude --plugin-dir ./path/to/ai-instructions-and-prompts
 **Fix**:
 ```text
 # Add the marketplace first
-/plugin marketplace add HenningHuncke/ai-instructions-and-prompts
+/plugin marketplace add mordilion/ai-instructions-and-prompts
 
 # Then install
 /plugin install ai-iap@ai-iap-marketplace
@@ -272,7 +272,7 @@ are marked `aiIapManaged: true` and are removed on cleanup.
 
 If you're still stuck:
 
-1. **Check GitHub Issues**: [GitHub Issues](https://github.com/HenningHuncke/ai-instructions-and-prompts/issues)
+1. **Check GitHub Issues**: [GitHub Issues](https://github.com/mordilion/ai-instructions-and-prompts/issues)
 2. **Run validation**: `/ai-iap:validate`
 3. **Review full docs**: `lib/README.md`
 

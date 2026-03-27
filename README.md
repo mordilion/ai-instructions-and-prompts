@@ -36,7 +36,7 @@ and optional agents — configured for your project in seconds.
 Add the marketplace and install the plugin:
 
 ```text
-/plugin marketplace add HenningHuncke/ai-instructions-and-prompts
+/plugin marketplace add mordilion/ai-instructions-and-prompts
 /plugin install ai-iap@ai-iap-marketplace
 ```
 
