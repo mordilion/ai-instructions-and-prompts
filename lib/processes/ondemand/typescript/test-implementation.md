@@ -115,7 +115,7 @@ export default {
 ```
 
 3. Create test structure:
-   src/__tests__/ or tests/
+   src/\_\_tests\_\_/ or tests/
 
 4. Add test script to package.json:
 ```json

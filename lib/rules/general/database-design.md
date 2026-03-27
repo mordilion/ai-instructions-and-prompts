@@ -166,7 +166,7 @@ CREATE TABLE orders (
 | Type | Use Case | Example |
 |------|----------|---------|
 | **B-Tree** (default) | Equality, range queries | WHERE id = 5, id BETWEEN 1 AND 10 |
-| **Hash** | Exact matches only | WHERE email = 'user@example.com' |
+| **Hash** | Exact matches only | WHERE email = 'user\@example.com' |
 | **Full-Text** | Text search | WHERE description CONTAINS 'search term' |
 | **GIN/GiST** (PostgreSQL) | JSON, arrays, spatial | WHERE tags @> '["postgres"]' |
 | **Composite** | Multi-column queries | WHERE category_id = 1 AND status = 'active' |

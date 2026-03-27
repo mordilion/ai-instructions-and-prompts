@@ -25,11 +25,10 @@
 |-----------|---------|
 | **Controller** | `@inject()` + constructor DI + `request.validateUsing()` + service calls |
 | **Model** | `extends BaseModel` + `@column()` + `@hasMany()/@belongsTo()` decorators |
-| **Validator** | VineJS schemas: `vine.compile(vine.object({ field: vine.string() }))`
-
+| **Validator** | VineJS schemas: `vine.compile(vine.object({ field: vine.string() }))` |
 | **Service** | `@inject()` + business logic + model/repository calls |
 | **Routes** | `router.group()` + `.prefix()` + `.middleware()` + `resource()` |
-| **Events** | `extends BaseEvent` + `emitter.on(Event, [Listener])`
+| **Events** | `extends BaseEvent` + `emitter.on(Event, [Listener])` |
 
 ## Common AI Mistakes
 

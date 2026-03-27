@@ -131,7 +131,7 @@ Get-Content ~/.ssh/id_ed25519.pub
 ```
 
 4. **Add to GitHub**:
-   - Go to: https://github.com/settings/keys
+   - Go to: <https://github.com/settings/keys>
    - Click "New SSH key"
    - Paste your public key
    - Save

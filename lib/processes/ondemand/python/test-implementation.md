@@ -101,7 +101,7 @@ Deliverable: Tests run in CI/CD
 PHASE 3 - TEST PROJECT SETUP
 ========================================
 
-1. Create tests/ directory with __init__.py
+1. Create tests/ directory with \_\_init\_\_.py
 
 2. Create conftest.py for shared fixtures
 

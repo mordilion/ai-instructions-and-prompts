@@ -24,7 +24,7 @@
 |-----------|---------|
 | **Standalone** | `@Component({ standalone: true, imports: [...] })` + `@Input/@Output` + `OnPush` |
 | **Service** | `@Injectable({ providedIn: 'root' })` + constructor DI + `Observable<T>` |
-| **Observable** | `data$ = service.getData()` + `| async` pipe in template |
+| **Observable** | `data$ = service.getData()` + `\| async` pipe in template |
 | **Signals** | `signal(value)` + `computed()` + `.update()/.set()` methods |
 
 ### Manual Subscription (with cleanup)

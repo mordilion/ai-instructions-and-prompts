@@ -62,7 +62,7 @@ After setup is complete, **delete the entire "Initial Setup — Auto-Discovery &
 
 **IMPORTANT:** This CLAUDE.md is a living document. It MUST be updated as the project evolves.
 
-### Update CLAUDE.md when:
+### Update CLAUDE.md when
 - New tech stack is added (e.g. new framework, new database)
 - New architecture decisions are made (extend ADR table)
 - New conventions are established (coding rules, naming, etc.)
@@ -70,7 +70,7 @@ After setup is complete, **delete the entire "Initial Setup — Auto-Discovery &
 - Build/deploy commands change
 - New directories or structural changes are introduced
 
-### Build Context Memory when:
+### Build Context Memory when
 - The project has no `docs/memory/` yet → **build initial memory**
 - Architecture decisions are made → `architecture-decisions.md`
 - Entity relationships change → `entity-model.md`

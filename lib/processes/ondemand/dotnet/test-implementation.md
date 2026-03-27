@@ -1,4 +1,4 @@
-﻿# .NET Testing Implementation - Copy This Prompt
+# .NET Testing Implementation - Copy This Prompt
 
 > **Type**: One-time setup process (iterative, multi-phase)  
 > **When to use**: When establishing testing infrastructure in a .NET project  
@@ -220,10 +220,10 @@ Steps:
 
 Deliverable: 
 - process-docs/PROJECT_MEMORY.md created with:
-  * Detected .NET version
-  * Project type
-  * Chosen frameworks and rationale
-  * Testing strategy
+  - Detected .NET version
+  - Project type
+  - Chosen frameworks and rationale
+  - Testing strategy
 
 Example PROJECT_MEMORY.md:
 ```
@@ -547,9 +547,9 @@ For EACH component, follow this workflow:
    - Use team's commit message format
    - Example: "test: add comprehensive tests for UserService (12 tests, 95% coverage)"
    - Include:
-     * Number of tests added
-     * Coverage achieved
-     * Any skipped tests due to bugs
+     - Number of tests added
+     - Coverage achieved
+     - Any skipped tests due to bugs
 
 9. WAIT for user confirmation before committing
 
@@ -701,12 +701,12 @@ START HERE:
    - IMPORTANT: Work component-by-component
    - Create STATUS-DETAILS.md to track progress
    - For each component:
-     * Write tests
-     * Run tests (must pass)
-     * Log any bugs found (don't fix)
-     * Update STATUS-DETAILS.md
-     * Propose commit
-     * Wait for confirmation
+     - Write tests
+     - Run tests (must pass)
+     - Log any bugs found (don't fix)
+     - Update STATUS-DETAILS.md
+     - Propose commit
+     - Wait for confirmation
    - Repeat until all components tested
 
 5. Final review:

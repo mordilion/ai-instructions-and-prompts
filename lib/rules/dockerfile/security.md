@@ -21,7 +21,7 @@
 | **User** | `USER root` (default) | `USER node` or `RUN useradd` |
 | **Base Image** | `FROM node:latest` | `FROM node:18.16.0-alpine` or digest |
 | **Secrets** | `ENV TOKEN=abc123` | Runtime injection (K8s Secret, Docker Secrets) |
-| **Downloads** | `curl | sh` | `curl -o file && sha256sum -c checksums.txt` |
+| **Downloads** | `curl \| sh` | `curl -o file && sha256sum -c checksums.txt` |
 
 ## AI Self-Check
 

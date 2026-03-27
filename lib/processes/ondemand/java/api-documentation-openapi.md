@@ -54,7 +54,7 @@ springdoc:
     path: /swagger-ui.html
 ```
 
-Access Swagger UI at http://localhost:8080/swagger-ui.html
+Access Swagger UI at <http://localhost:8080/swagger-ui.html>
 
 Deliverable: Swagger UI running
 
