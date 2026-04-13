@@ -138,7 +138,7 @@ jobs:
       - name: Check persona split files
         run: |
           echo "Checking persona split files..."
-          for f in persona-core persona-specialist-software persona-specialist-seo persona-specialist-ui-ux persona-specialist-testing persona-specialist-devops; do
+          for f in persona persona-specialist-software persona-specialist-seo persona-specialist-ui-ux persona-specialist-testing persona-specialist-devops; do
             test -f "plugin/lib/rules/general/${f}.md" || { echo "Missing plugin/lib/rules/general/${f}.md"; exit 1; }
           done
           echo "✓ All persona split files exist"

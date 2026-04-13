@@ -61,7 +61,7 @@ For each `.md` file under `${CLAUDE_PLUGIN_ROOT}/lib/rules/` and `${CLAUDE_PLUGI
 ### 6. Persona Split Files
 
 Verify these files exist under `${CLAUDE_PLUGIN_ROOT}/lib/rules/general/`:
-- `persona-core.md`
+- `persona.md`
 - `persona-specialist-software.md`
 - `persona-specialist-seo.md`
 - `persona-specialist-ui-ux.md`

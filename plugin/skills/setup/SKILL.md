@@ -257,8 +257,8 @@ defining custom Claude Code agents:
 For rule injection, for each bound language:
 - Read all files from `languages[lang].files`
 - Read framework-specific rules for bound frameworks
-- For persona: use `persona-core.md` + `persona-specialist-{spec}.md` instead of
-  full `persona.md` when a specialization is set
+- For persona: use `persona.md` + `persona-specialist-{spec}.md` when a
+  specialization is set
 
 ## Cleanup Command
 
