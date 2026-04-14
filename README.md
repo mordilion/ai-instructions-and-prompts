@@ -49,11 +49,12 @@ claude --plugin-dir ./path/to/ai-instructions-and-prompts
 ### Run the Setup Wizard
 
 ```text
+/clear
 /ai-iap:setup
 ```
 
-The AI-driven setup wizard walks you through language, framework, and structure selection,
-then generates your `.claude/rules/` configuration.
+Run `/clear` first for a clean context, then start the setup wizard. It walks you through
+language, framework, and structure selection, then generates your `.claude/rules/` configuration.
 
 ## Plugin Components
 

@@ -19,6 +19,11 @@ rules for their project by reading the plugin's rule library and generating file
 - Subagent templates: `${CLAUDE_PLUGIN_ROOT}/lib/claude-subagents.json`
 - State file (in user project): `.ai-iap-state.json`
 
+## Before You Start
+
+Recommend the user run `/clear` before starting setup. This ensures a clean context
+without prior conversation history that could interfere with file generation.
+
 ## Setup Flow
 
 Follow these steps in order. Present choices clearly and wait for user input at each step.
