@@ -687,6 +687,62 @@ Understanding how many tokens your rule selection consumes helps optimize AI con
 
 ---
 
+## 🔀 Fork & Customize (Custom Extensions)
+
+If you fork this repository, you can add your own rules, processes, frameworks, and agent templates **without modifying upstream files**. This ensures you can always pull upstream updates without merge conflicts.
+
+### How It Works
+
+The plugin has a **two-layer system**:
+
+| Layer | Location | Purpose |
+|-------|----------|---------|
+| **Base** | `lib/` | Upstream-maintained rules, processes, config |
+| **Custom** | `custom/` | Your extensions and overrides (never touched by upstream) |
+
+During `/ai-iap:setup`, the plugin automatically detects and merges both layers.
+
+### Quick Start (Fork Users)
+
+1. Fork the repository
+2. Add your custom rules/processes in `plugin/custom/`
+3. Extend the config via `plugin/custom/config.extend.json`
+4. Run `/ai-iap:setup` — your extensions are automatically included
+
+### Custom Directory Structure
+
+```
+plugin/custom/
+  config.extend.json              # Extend config.json (new languages, frameworks, processes)
+  claude-subagents.extend.json    # Additional agent templates
+  rules/                          # Custom rules (mirrors lib/rules/ structure)
+  processes/                      # Custom processes (mirrors lib/processes/ structure)
+  code-library/                   # Custom code patterns
+  README.md                       # Detailed usage instructions
+```
+
+### Override Modes
+
+When a custom rule file has the same path as a base rule, control behavior via YAML frontmatter:
+
+| Mode | Frontmatter | Behavior |
+|------|-------------|----------|
+| **Append** (default) | `override: append` or omitted | Custom content added after base |
+| **Prepend** | `override: prepend` | Custom content added before base |
+| **Replace** | `override: replace` | Custom content replaces base entirely |
+
+### Pulling Upstream Updates
+
+```bash
+git remote add upstream https://github.com/mordilion/ai-instructions-and-prompts.git
+git fetch upstream
+git merge upstream/main
+```
+
+Since upstream never modifies `custom/`, merges are clean. See [`custom/README.md`](../custom/README.md) for detailed instructions.
+
+---
+
 ## 🔧 Extending
 
 ### Documentation Standards (Optional)

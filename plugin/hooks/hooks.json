@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "prompt",
-            "prompt": "If this project does not have a `.claude/rules/` directory with managed rule files (containing `aiIapManaged: true`), briefly mention: 'Tip: Run /ai-iap:setup to configure Claude Code rules for this project.' Do not mention this if rules are already set up."
+            "prompt": "If this project does not have a `.claude/rules/` directory with managed rule files (containing `aiIapManaged: true`), briefly mention: 'Tip: Run /ai-iap:setup to configure Claude Code rules for this project.' Do not mention this if rules are already set up. If custom extensions exist in the plugin's custom/ directory, add: 'Custom extensions detected — they will be included during setup.'"
           }
         ]
       }

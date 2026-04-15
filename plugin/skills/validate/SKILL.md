@@ -11,8 +11,14 @@ Run validation checks on the plugin's configuration and rule library.
 
 - Config: `${CLAUDE_PLUGIN_ROOT}/lib/config.json`
 - Config schema: `${CLAUDE_PLUGIN_ROOT}/lib/config.schema.json`
+- Config extend schema: `${CLAUDE_PLUGIN_ROOT}/lib/config.extend.schema.json`
 - Rule library: `${CLAUDE_PLUGIN_ROOT}/lib/rules/`
 - Process library: `${CLAUDE_PLUGIN_ROOT}/lib/processes/`
+- Custom extensions: `${CLAUDE_PLUGIN_ROOT}/custom/`
+- Custom config: `${CLAUDE_PLUGIN_ROOT}/custom/config.extend.json`
+- Custom rules: `${CLAUDE_PLUGIN_ROOT}/custom/rules/`
+- Custom processes: `${CLAUDE_PLUGIN_ROOT}/custom/processes/`
+- Custom subagents: `${CLAUDE_PLUGIN_ROOT}/custom/claude-subagents.extend.json`
 - State file (in user project): `.ai-iap-state.json`
 
 ## Validation Checks
@@ -90,6 +96,50 @@ Verify `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/marketplace.json`:
 1. Must exist and be valid JSON.
 2. Must have `name`, `owner`, and `plugins` fields.
 3. `plugins` array must contain at least one entry with `name` and `source`.
+
+### 10. Custom Extensions (if `custom/` exists)
+
+If `${CLAUDE_PLUGIN_ROOT}/custom/` exists and contains files, run these additional checks:
+
+#### 10a. Custom Config Validation
+
+If `${CLAUDE_PLUGIN_ROOT}/custom/config.extend.json` exists:
+1. Must be valid JSON.
+2. Validate against `${CLAUDE_PLUGIN_ROOT}/lib/config.extend.schema.json`.
+3. For each language defined: if it references a language that also exists in base config,
+   verify merged properties remain valid (no type conflicts).
+4. For each new language: must have at minimum `name`, `globs`, `alwaysApply`, `description`,
+   and `files` (since these are required in the base schema for new languages).
+
+#### 10b. Custom Rule File Existence
+
+For each language in `custom/config.extend.json`:
+1. For each entry in `files[]`, verify `${CLAUDE_PLUGIN_ROOT}/custom/rules/{lang}/{file}.md` exists.
+2. For each framework, verify `${CLAUDE_PLUGIN_ROOT}/custom/rules/{lang}/frameworks/{fw_file}.md` exists.
+3. For each structure, verify `${CLAUDE_PLUGIN_ROOT}/custom/rules/{lang}/frameworks/structures/{struct_file}.md` exists.
+
+#### 10c. Custom Rule Override Validation
+
+For each `.md` file under `${CLAUDE_PLUGIN_ROOT}/custom/rules/`:
+1. File must not be empty.
+2. File must start with a `#` heading (after optional YAML frontmatter).
+3. If file has YAML frontmatter with `override` field, value must be one of:
+   `replace`, `append`, `prepend`.
+4. If `override` is `replace` or `prepend`, the corresponding base rule in
+   `${CLAUDE_PLUGIN_ROOT}/lib/rules/` should exist (warn if it does not — likely a typo).
+
+#### 10d. Custom Process File Existence
+
+For each process in `custom/config.extend.json`:
+1. Determine the type (`permanent` or `ondemand`).
+2. Verify `${CLAUDE_PLUGIN_ROOT}/custom/processes/{type}/{lang}/{proc_file}.md` exists.
+
+#### 10e. Custom Subagent Templates
+
+If `${CLAUDE_PLUGIN_ROOT}/custom/claude-subagents.extend.json` exists:
+1. Must be valid JSON.
+2. Must have `agentTemplates` array.
+3. Each template must have `id`, `name`, and `description`.
 
 ## Output Format
 

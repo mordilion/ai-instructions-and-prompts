@@ -13,9 +13,15 @@ rules for their project by reading the plugin's rule library and generating file
 - Plugin root: `${CLAUDE_PLUGIN_ROOT}`
 - Config: `${CLAUDE_PLUGIN_ROOT}/lib/config.json`
 - Config schema: `${CLAUDE_PLUGIN_ROOT}/lib/config.schema.json`
+- Config extend schema: `${CLAUDE_PLUGIN_ROOT}/lib/config.extend.schema.json`
 - Rule library: `${CLAUDE_PLUGIN_ROOT}/lib/rules/`
 - Process library: `${CLAUDE_PLUGIN_ROOT}/lib/processes/`
 - Code library: `${CLAUDE_PLUGIN_ROOT}/lib/code-library/`
+- Custom extensions: `${CLAUDE_PLUGIN_ROOT}/custom/`
+- Custom config: `${CLAUDE_PLUGIN_ROOT}/custom/config.extend.json`
+- Custom rules: `${CLAUDE_PLUGIN_ROOT}/custom/rules/`
+- Custom processes: `${CLAUDE_PLUGIN_ROOT}/custom/processes/`
+- Custom subagents: `${CLAUDE_PLUGIN_ROOT}/custom/claude-subagents.extend.json`
 - Subagent templates: `${CLAUDE_PLUGIN_ROOT}/lib/claude-subagents.json`
 - State file (in user project): `.ai-iap-state.json`
 
@@ -23,6 +29,78 @@ rules for their project by reading the plugin's rule library and generating file
 
 Recommend the user run `/clear` before starting setup. This ensures a clean context
 without prior conversation history that could interfere with file generation.
+
+## Custom Extensions Layer
+
+The plugin supports a **custom extensions layer** in `${CLAUDE_PLUGIN_ROOT}/custom/` for users
+who fork the repository. This layer is automatically detected and merged with the base library.
+
+### Custom Layer Detection
+
+Before starting the wizard, check if `${CLAUDE_PLUGIN_ROOT}/custom/` exists and contains
+extension files:
+
+1. Check if `${CLAUDE_PLUGIN_ROOT}/custom/config.extend.json` exists and is valid JSON.
+2. Check if `${CLAUDE_PLUGIN_ROOT}/custom/rules/` contains any `.md` files.
+3. Check if `${CLAUDE_PLUGIN_ROOT}/custom/processes/` contains any `.md` files.
+4. Check if `${CLAUDE_PLUGIN_ROOT}/custom/claude-subagents.extend.json` exists and is valid JSON.
+
+If any custom content is found, display a notice:
+
+```
+Custom extensions detected:
+  - Config extensions: {count} language(s) extended
+  - Custom rules: {count} file(s)
+  - Custom processes: {count} file(s)
+  - Custom agent templates: {count} template(s)
+
+Custom extensions will be merged with base library during generation.
+```
+
+### Config Merge Strategy
+
+When `custom/config.extend.json` exists, deep-merge it over the base `lib/config.json`:
+
+1. Read and parse `${CLAUDE_PLUGIN_ROOT}/lib/config.json` (base config).
+2. Read and parse `${CLAUDE_PLUGIN_ROOT}/custom/config.extend.json` (extension config).
+3. Deep-merge with these rules:
+   - **New language keys**: Added to the merged config.
+   - **Existing language keys**: Properties are merged recursively.
+   - **`files` arrays**: Concatenated (custom entries appended, duplicates removed).
+   - **`frameworks` objects**: Merged by key (custom adds or overrides framework entries).
+   - **`processes` objects**: Merged by key (custom adds or overrides process entries).
+   - **`structures` objects**: Merged by key (custom adds or overrides structure entries).
+   - **Scalar properties** (`name`, `globs`, `description`, etc.): Custom value wins.
+4. Use the merged config for all subsequent wizard steps.
+
+### Rule File Resolution
+
+When reading a rule file, resolve it with custom-first priority:
+
+1. Check if `${CLAUDE_PLUGIN_ROOT}/custom/rules/{relative_path}` exists.
+2. If it exists, read its YAML frontmatter for an `override` field:
+   - `override: replace` — Use **only** the custom file (skip base).
+   - `override: prepend` — Read custom file content first, then append base file content.
+   - `override: append` (default if no `override` field) — Read base file content first,
+     then append custom file content.
+3. If no custom file exists, read from `${CLAUDE_PLUGIN_ROOT}/lib/rules/{relative_path}`.
+
+For custom-only rules (files that exist in `custom/rules/` but not in `lib/rules/`), these
+are always included when the corresponding language/framework is selected. They are treated
+as additional rule files for that language.
+
+### Process File Resolution
+
+Same resolution logic as rules, but using `custom/processes/` and `lib/processes/` paths.
+
+### Agent Template Merge
+
+When `custom/claude-subagents.extend.json` exists:
+
+1. Read base `${CLAUDE_PLUGIN_ROOT}/lib/claude-subagents.json`.
+2. Read custom `${CLAUDE_PLUGIN_ROOT}/custom/claude-subagents.extend.json`.
+3. Merge `agentTemplates` arrays: custom templates with matching `id` override the base
+   template; new IDs are appended.
 
 ## Setup Flow
 
@@ -44,7 +122,9 @@ Follow these steps in order. Present choices clearly and wait for user input at 
 ### Step 1: Read Configuration
 
 1. Read `${CLAUDE_PLUGIN_ROOT}/lib/config.json`.
-2. Parse the `languages` object to get available options.
+2. If `${CLAUDE_PLUGIN_ROOT}/custom/config.extend.json` exists, read and deep-merge it
+   over the base config (see **Config Merge Strategy** above).
+3. Parse the merged `languages` object to get available options.
 
 ### Step 2: Select Languages
 
@@ -112,9 +192,14 @@ If `.ai-iap-state.json` exists or `.claude/rules/` exists:
 
 For each selected language, for each file in `languages[lang].files`:
 
-1. Read the rule content from `${CLAUDE_PLUGIN_ROOT}/lib/rules/{lang}/{file}.md`.
-2. Skip `commit-standards` if commit standards are disabled.
-3. Write to `.claude/rules/core/{lang}/{file}.md` with this format:
+1. Resolve the rule content using **Rule File Resolution** (custom-first, then base):
+   - Check `${CLAUDE_PLUGIN_ROOT}/custom/rules/{lang}/{file}.md` first.
+   - Apply override mode (`replace`, `prepend`, `append`) if custom file exists.
+   - Fall back to `${CLAUDE_PLUGIN_ROOT}/lib/rules/{lang}/{file}.md`.
+2. Also scan `${CLAUDE_PLUGIN_ROOT}/custom/rules/{lang}/` for additional `.md` files not
+   listed in `files[]` — include these as extra custom rules for the language.
+3. Skip `commit-standards` if commit standards are disabled.
+4. Write to `.claude/rules/core/{lang}/{file}.md` with this format:
 
 ```markdown
 ---
@@ -150,7 +235,10 @@ If documentation standards were selected, for each selected doc file:
 
 For each selected framework:
 
-1. Read framework rule from `${CLAUDE_PLUGIN_ROOT}/lib/rules/{lang}/frameworks/{fw_file}.md`.
+1. Resolve framework rule using **Rule File Resolution** (custom-first, then base):
+   - Check `${CLAUDE_PLUGIN_ROOT}/custom/rules/{lang}/frameworks/{fw_file}.md` first.
+   - Apply override mode if custom file exists.
+   - Fall back to `${CLAUDE_PLUGIN_ROOT}/lib/rules/{lang}/frameworks/{fw_file}.md`.
 2. Write to `.claude/rules/frameworks/{lang}/{fw_key}.md` with `aiIapManaged: true` and
    `paths:` frontmatter based on framework-specific glob patterns:
 
@@ -174,7 +262,10 @@ For frameworks not listed, use the language's globs.
 
 For each selected structure:
 
-1. Read from `${CLAUDE_PLUGIN_ROOT}/lib/rules/{lang}/frameworks/structures/{struct_file}.md`.
+1. Resolve structure rule using **Rule File Resolution** (custom-first, then base):
+   - Check `${CLAUDE_PLUGIN_ROOT}/custom/rules/{lang}/frameworks/structures/{struct_file}.md` first.
+   - Apply override mode if custom file exists.
+   - Fall back to `${CLAUDE_PLUGIN_ROOT}/lib/rules/{lang}/frameworks/structures/{struct_file}.md`.
 2. Write to `.claude/rules/structures/{lang}/{fw}-{struct_name}.md` with same paths
    as the parent framework.
 
@@ -182,7 +273,10 @@ For each selected structure:
 
 For each selected process where `loadIntoAI: true`:
 
-1. Read from `${CLAUDE_PLUGIN_ROOT}/lib/processes/{ondemand|permanent}/{lang}/{proc_file}.md`.
+1. Resolve process file using **Process File Resolution** (custom-first, then base):
+   - Check `${CLAUDE_PLUGIN_ROOT}/custom/processes/{ondemand|permanent}/{lang}/{proc_file}.md` first.
+   - Apply override mode if custom file exists.
+   - Fall back to `${CLAUDE_PLUGIN_ROOT}/lib/processes/{ondemand|permanent}/{lang}/{proc_file}.md`.
 2. Write to `.claude/rules/processes/{lang}-{proc_key}.md` with `aiIapManaged: true`
    frontmatter (no paths — processes apply broadly).
 
@@ -240,6 +334,7 @@ Write `.ai-iap-state.json` in the project root with this structure:
 
 Show a summary:
 - Number of rule files generated
+- Number of custom extensions applied (if any)
 - Location of generated files
 - Note that `.ai-iap-state.json` tracks the setup for safe reruns
 
@@ -249,6 +344,8 @@ If the user asks about agents (e.g., `/ai-iap:setup agents`), guide them through
 defining custom Claude Code agents:
 
 1. Read `${CLAUDE_PLUGIN_ROOT}/lib/claude-subagents.json` for templates.
+   If `${CLAUDE_PLUGIN_ROOT}/custom/claude-subagents.extend.json` exists, merge custom
+   templates (see **Agent Template Merge** above).
 2. Ask how many agents the user wants to define.
 3. For each agent, collect:
    - Name (slug, e.g., `ios-developer`)

@@ -69,12 +69,30 @@ language, framework, and structure selection, then generates your `.claude/rules
 | Refactor helper | `plugin/agents/refactor-helper.md` | Refactors without changing behavior |
 | Session hook | `plugin/hooks/hooks.json` | Suggests setup on new projects |
 
+## Fork & Customize
+
+Want to add your own rules, frameworks, or processes? **Fork the repo** and use the
+built-in custom extensions layer:
+
+```
+plugin/custom/
+  config.extend.json        # Add languages, frameworks, processes
+  rules/                    # Your custom rules (override or extend base)
+  processes/                # Your custom processes
+  claude-subagents.extend.json  # Your agent templates
+```
+
+Your customizations live in `plugin/custom/` which upstream never modifies — pull
+updates without merge conflicts. See [Custom Extensions Guide](plugin/custom/README.md)
+for details.
+
 ## Documentation
 
 **[Full Documentation](plugin/lib/README.md)**
 
 - [Languages & Frameworks](plugin/lib/README.md#-supported-languages--frameworks)
 - [Project Structures](plugin/lib/README.md#-project-structure-options)
+- [Fork & Customize](plugin/lib/README.md#-fork--customize-custom-extensions)
 - [Token Costs](plugin/lib/README.md#-token-cost-analysis)
 - [Configuration](plugin/lib/README.md#-configuration)
 - [**Team Adoption Guide**](TEAM_ADOPTION_GUIDE.md) -- For engineering teams evaluating this project

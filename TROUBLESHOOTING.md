@@ -248,6 +248,77 @@ are marked `aiIapManaged: true` and are removed on cleanup.
 
 ---
 
+## Custom Extensions Issues
+
+### "Custom rules not being picked up"
+
+**Issue**: Files in `plugin/custom/rules/` are ignored during `/ai-iap:setup`
+
+**Cause 1**: The custom directory structure does not mirror `lib/rules/`
+
+**Fix**: Ensure your custom rule file is at the correct relative path. For example,
+to override the TypeScript security rule, place it at:
+```
+plugin/custom/rules/typescript/security.md
+```
+
+**Cause 2**: A new language or framework in `custom/config.extend.json` is missing
+required fields
+
+**Fix**: Run `/ai-iap:validate` — check 10a validates the custom config structure.
+New languages need `name`, `globs`, `alwaysApply`, `description`, and `files`.
+
+---
+
+### "Merge conflicts when pulling upstream"
+
+**Issue**: `git merge upstream/main` produces conflicts
+
+**Cause**: You modified files in `lib/` or other upstream-managed directories
+
+**Fix**:
+1. Move your customizations to `plugin/custom/` (rules, processes, config extensions)
+2. Revert your changes in `lib/`
+3. Pull upstream again
+
+The `custom/` directory is never touched by upstream — only put your changes there.
+
+---
+
+### "Override mode not working"
+
+**Issue**: Custom rule with `override: replace` still shows base rule content
+
+**Cause**: Missing or malformed YAML frontmatter
+
+**Fix**: Ensure your custom rule starts with valid YAML frontmatter:
+```markdown
+---
+override: replace
+---
+
+# Your Custom Rule Title
+
+Content here...
+```
+
+Valid override values: `replace`, `append`, `prepend`. Default is `append`.
+
+---
+
+### "Custom config.extend.json validation fails"
+
+**Issue**: `/ai-iap:validate` reports errors for custom config
+
+**Fix**: Check that your `config.extend.json`:
+- Is valid JSON (no trailing commas, proper quoting)
+- Language keys use lowercase with hyphens only (`^[a-z-]+$`)
+- Framework/process entries have all required fields (`name`, `file` for frameworks;
+  `name`, `file`, `description`, `type`, `loadIntoAI` for processes)
+- References files that actually exist in `plugin/custom/rules/` or `plugin/custom/processes/`
+
+---
+
 ## Still Having Issues?
 
 ### Validation Checklist

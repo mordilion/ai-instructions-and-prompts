@@ -1,0 +1,125 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AI Instructions & Prompts Custom Extension",
+  "description": "Schema for custom/config.extend.json — extends the base config.json with additional or overridden languages, frameworks, structures, and processes. All properties are optional; only deltas need to be defined.",
+  "type": "object",
+  "properties": {
+    "languages": {
+      "type": "object",
+      "description": "Additional or overridden language configurations (deep-merged over base config)",
+      "patternProperties": {
+        "^[a-z-]+$": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "globs": { "type": "string" },
+            "alwaysApply": { "type": "boolean" },
+            "description": { "type": "string" },
+            "files": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "documentation": {
+              "type": "object",
+              "patternProperties": {
+                "^[a-z-]+$": {
+                  "type": "object",
+                  "required": ["name", "file", "description"],
+                  "properties": {
+                    "name": { "type": "string" },
+                    "file": { "type": "string" },
+                    "description": { "type": "string" },
+                    "recommended": { "type": "boolean" },
+                    "applicableTo": {
+                      "type": "array",
+                      "items": { "type": "string" }
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            "optionalRules": {
+              "type": "object",
+              "patternProperties": {
+                "^[a-z-]+$": {
+                  "type": "object",
+                  "required": ["name", "file", "description", "toggle"],
+                  "properties": {
+                    "name": { "type": "string" },
+                    "file": { "type": "string" },
+                    "description": { "type": "string" },
+                    "toggle": { "type": "string" }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            "processes": {
+              "type": "object",
+              "patternProperties": {
+                "^[a-z-]+$": {
+                  "type": "object",
+                  "required": ["name", "file", "description", "type", "loadIntoAI"],
+                  "properties": {
+                    "name": { "type": "string" },
+                    "file": { "type": "string" },
+                    "description": { "type": "string" },
+                    "type": { "type": "string", "enum": ["ondemand", "permanent"] },
+                    "loadIntoAI": { "type": "boolean" }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            "frameworks": {
+              "type": "object",
+              "patternProperties": {
+                "^[a-z-]+$": {
+                  "type": "object",
+                  "required": ["name", "file"],
+                  "properties": {
+                    "name": { "type": "string" },
+                    "file": { "type": "string" },
+                    "category": { "type": "string" },
+                    "description": { "type": "string" },
+                    "recommended": { "type": "boolean" },
+                    "requires": {
+                      "type": "array",
+                      "items": { "type": "string" }
+                    },
+                    "structures": {
+                      "type": "object",
+                      "patternProperties": {
+                        "^[a-z-]+$": {
+                          "type": "object",
+                          "required": ["name", "file", "description"],
+                          "properties": {
+                            "name": { "type": "string" },
+                            "file": { "type": "string" },
+                            "description": { "type": "string" },
+                            "recommended": { "type": "boolean" }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
