@@ -11,12 +11,14 @@
 > **ALWAYS**: Use guard for early returns
 > **ALWAYS**: Explicit types for public APIs
 > **ALWAYS**: Optional chaining (?) over force unwrapping (!)
-> 
+> **ALWAYS**: Use `??` (nil coalescing) for optional fallbacks
+>
 > **NEVER**: Use force unwrapping (!) without justification
 > **NEVER**: Use implicitly unwrapped optionals (!) unless necessary
 > **NEVER**: Use var when let is sufficient
 > **NEVER**: Use ! for optionals in production code
 > **NEVER**: Skip error handling
+> **NEVER**: Call the same method twice in one expression (extract with `let`)
 
 ## Naming Conventions
 
@@ -72,6 +74,28 @@ guard let user = findUser(id: id) else { return }
 
 // Optional chaining
 let email = user?.profile?.email
+
+// Nil coalescing (?? triggers only on nil)
+let name = user?.name ?? "Anonymous"
+```
+
+## Reduce Method Calls (Extract `let` + `??`)
+
+> **ALWAYS**: Extract repeated method calls into a `let`.
+> **ALWAYS**: Collapse optional-fallback ternaries into `??`.
+
+```swift
+// ❌ BAD: getCompanyName() called 3 times
+let displayName = customer.getCompanyName() != nil && customer.getCompanyName() != ""
+    ? customer.getCompanyName()!
+    : customer.getContactPerson()
+
+// ✅ GOOD: extract + nil coalescing
+let companyName = customer.getCompanyName()
+let displayName = (companyName?.isEmpty == false ? companyName : nil) ?? customer.getContactPerson()
+
+// ✅ GOOD (simpler): when empty string is a valid value
+let displayName = customer.getCompanyName() ?? customer.getContactPerson()
 ```
 
 ## Best Practices
@@ -111,3 +135,5 @@ case .failure(let error):
 - [ ] Error handling with Result or throws?
 - [ ] Trailing closures for readability?
 - [ ] Type inference for locals?
+- [ ] No method called twice in the same expression (extracted to `let`)?
+- [ ] `??` used for nil fallbacks instead of ternaries?

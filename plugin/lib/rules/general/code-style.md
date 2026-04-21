@@ -9,12 +9,14 @@
 > **ALWAYS**: Self-documenting code (comments explain WHY)
 > **ALWAYS**: Refactor methods >50 lines
 > **ALWAYS**: Avoid else (use early returns)
-> 
+> **ALWAYS**: Extract variable for repeated method calls / expensive expressions
+>
 > **NEVER**: Implement features "for later" (YAGNI)
 > **NEVER**: Abstract before 3 repetitions (DRY)
 > **NEVER**: Use else/else if (use early returns/switch)
 > **NEVER**: Magic numbers (use named constants)
 > **NEVER**: Reformat unrelated code
+> **NEVER**: Call the same method twice in one expression (extract variable)
 
 ## 1. Core Principles
 - **SOLID**: Apply strictly
@@ -61,7 +63,50 @@ function getDiscount(user: User): number {
 - **Multiple branches**: Use `switch` / pattern matching instead of `else if` chains.
 - **Template languages**: If markup requires `else` (Razor `@if/else`, Svelte `{:else}`), prefer extracted components or enum-driven rendering.
 
-## 5. Best Practices
+## 5. Reduce Method Calls (Extract Variable)
+
+> **Pattern**: *Extract Variable* (Martin Fowler) — also known as *Introduce Explaining Variable*.
+>
+> **ALWAYS**: Store the result of a method call in a local variable when you need the value more than once in the same scope.
+> **ALWAYS**: Name the variable to reveal intent (the variable name is free documentation).
+> **NEVER**: Invoke the same getter, computation, or I/O-triggering method repeatedly within one expression or block.
+
+### Why
+
+- **Performance**: Avoids redundant work (getters may be expensive, involve DB/HTTP, or allocate).
+- **Consistency**: Guarantees the same value is used across the expression (no race conditions on mutable state).
+- **Readability**: The variable name explains the meaning of the expression.
+- **Debuggability**: A breakpoint can inspect the single computed value.
+
+### Example
+
+```typescript
+// ❌ BAD: Method called twice, condition and result duplicated
+const displayName =
+  customer.getCompanyName() !== null && customer.getCompanyName() !== ''
+    ? customer.getCompanyName()
+    : customer.getContactPerson();
+
+// ✅ GOOD: Called once, intent is clear
+const companyName = customer.getCompanyName();
+const displayName =
+  companyName !== null && companyName !== '' ? companyName : customer.getContactPerson();
+```
+
+### When to extract
+
+| Situation | Extract? |
+|---|---|
+| Method called 2+ times in the same expression | ✅ Always |
+| Method called 2+ times in the same block with same arguments | ✅ Always |
+| Expensive computation / I/O / DB access | ✅ Always |
+| Result used to build an intermediate explanation | ✅ Usually (explaining variable) |
+| Trivial property access used once | ❌ No |
+| Simple local calculation used once | ❌ No |
+
+> **Language shortcuts**: Many languages offer null-coalescing / Elvis operators (`??`, `?:`) that collapse these patterns into a single line. See the language-specific code-style rules for concrete syntax.
+
+## 6. Best Practices
 - **Comments**: Explain WHY, never WHAT. Code MUST be self-documenting.
 - **Refactoring**: ONLY change touched lines. Do NOT reformat unrelated code.
 - **Testability**: Write code that can be tested. Inject dependencies, avoid static state.
@@ -80,4 +125,6 @@ function getDiscount(user: User): number {
 - [ ] Full words in names (except i, j, k)?
 - [ ] Code self-documenting?
 - [ ] Happy path at lowest indentation?
+- [ ] No method called twice in the same expression (extract variable)?
+- [ ] Repeated expensive calls stored in a local variable?
 

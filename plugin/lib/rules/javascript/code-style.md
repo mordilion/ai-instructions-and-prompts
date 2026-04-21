@@ -11,12 +11,16 @@
 > **ALWAYS**: const by default (not let/var)
 > **ALWAYS**: Named exports (not default)
 > **ALWAYS**: ESLint + Prettier for formatting
-> 
+> **ALWAYS**: Use `??` (nullish coalescing) for null/undefined fallbacks
+> **ALWAYS**: Use `||` only when any falsy value (`''`, `0`, `false`) should trigger the fallback
+>
 > **NEVER**: Use var (use const/let)
 > **NEVER**: Use default exports
 > **NEVER**: Skip JSDoc for public APIs
 > **NEVER**: Mutate const objects without reason
 > **NEVER**: Use == (use ===)
+> **NEVER**: Call the same method twice in one expression (extract to const)
+> **NEVER**: Use `||` when only `null`/`undefined` should trigger the fallback (use `??`)
 
 ## 1. Core Patterns
 - **Version**: ES2022+ features
@@ -72,7 +76,35 @@ async function fetchUser(id) {
 - **Destructuring**: Use for objects and arrays when it improves clarity.
 - **Spread Operator**: Prefer over `Object.assign()`.
 
-## 6. Best Practices
+## 6. Reduce Method Calls (Extract Const + `??` / `||`)
+
+> **ALWAYS**: Extract repeated method calls into a `const`.
+> **ALWAYS**: Collapse fallback ternaries into `??` or `||` when possible.
+
+```javascript
+// ❌ BAD: customer.getCompanyName() called 3 times
+const displayName =
+  customer.getCompanyName() !== null && customer.getCompanyName() !== ''
+    ? customer.getCompanyName()
+    : customer.getContactPerson();
+
+// ✅ GOOD: single call, falsy fallback (empty string also falls through)
+const displayName = customer.getCompanyName() || customer.getContactPerson();
+
+// ✅ GOOD (null-only fallback): extract then `??`
+const companyName = customer.getCompanyName();
+const displayName = companyName !== '' ? (companyName ?? customer.getContactPerson()) : customer.getContactPerson();
+```
+
+**Operator cheat sheet**:
+
+| Operator | Falls through on | Use when |
+|---|---|---|
+| `??` | only `null` / `undefined` | Nullable value, `0` / `''` are valid |
+| `\|\|` | any falsy (`0`, `''`, `false`, `null`, `undefined`, `NaN`) | Empty-ish values should trigger fallback |
+| `?.` | chain stops on `null` / `undefined` | Traversing nullable object chains |
+
+## 7. Best Practices
 - **Async**: `async/await` ONLY. NEVER use `.then()` chains.
 - **Error Handling**: Throw errors. NEVER `console.log` and return null.
   - ✅ Good: `throw new Error('User not found');`
@@ -94,4 +126,6 @@ async function fetchUser(id) {
 - [ ] Throwing errors (not console.log + return null)?
 - [ ] kebab-case for files?
 - [ ] camelCase for functions/variables?
+- [ ] No method called twice in the same expression (extracted to const)?
+- [ ] `??` used for null/undefined fallback, `||` for any-falsy fallback?
 

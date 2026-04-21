@@ -11,12 +11,15 @@
 > **ALWAYS**: Explicit return types for public methods
 > **ALWAYS**: Use unknown (not any)
 > **ALWAYS**: Use const for immutable values
-> 
+> **ALWAYS**: Use `??` (nullish coalescing) for null/undefined fallbacks
+>
 > **NEVER**: Use any (use unknown + type guards)
 > **NEVER**: Use var (use const/let)
 > **NEVER**: Use Function type (use specific signature)
 > **NEVER**: Use ! (non-null assertion) without justification
 > **NEVER**: Ignore TypeScript errors with @ts-ignore
+> **NEVER**: Call the same method twice in one expression (extract to const)
+> **NEVER**: Use `||` when only `null`/`undefined` should trigger the fallback (use `??`)
 
 ## Naming Conventions
 
@@ -106,7 +109,7 @@ async function getUser(id: string): Promise<User> {
 // Use optional chaining
 const email = user?.profile?.email;
 
-// Use nullish coalescing
+// Use nullish coalescing (triggers ONLY on null / undefined)
 const name = user.name ?? 'Anonymous';
 
 // Avoid null, prefer undefined
@@ -114,6 +117,34 @@ function findUser(id: string): User | undefined {
   return users.find(u => u.id === id);
 }
 ```
+
+## Reduce Method Calls (Extract Const + `??` / `||`)
+
+> **ALWAYS**: Extract repeated method calls into a `const`.
+> **ALWAYS**: Collapse null-check ternaries into `??` or `||`.
+
+```typescript
+// ❌ BAD: customer.getCompanyName() called 3 times
+const displayName: string =
+  customer.getCompanyName() !== null && customer.getCompanyName() !== ''
+    ? customer.getCompanyName()!
+    : customer.getContactPerson();
+
+// ✅ GOOD: empty string and null both fall through
+const displayName = customer.getCompanyName() || customer.getContactPerson();
+
+// ✅ GOOD (null-only fallback): extract variable, narrow once
+const companyName = customer.getCompanyName();
+const displayName = companyName && companyName !== '' ? companyName : customer.getContactPerson();
+```
+
+**Operator cheat sheet**:
+
+| Operator | Falls through on | Use when |
+|---|---|---|
+| `??` | only `null` / `undefined` | Nullable value, `0` / `''` are valid |
+| `\|\|` | any falsy (`0`, `''`, `false`, `null`, `undefined`, `NaN`) | Empty-ish values should trigger fallback |
+| `?.` | chain stops on `null` / `undefined` | Traversing nullable object chains |
 
 ## Generics
 
@@ -161,3 +192,5 @@ const message = `User ${name} created`;
 - [ ] No ! (non-null assertion) without justification?
 - [ ] No @ts-ignore (using @ts-expect-error if needed)?
 - [ ] Readonly arrays/objects where appropriate?
+- [ ] No method called twice in the same expression (extracted to const)?
+- [ ] `??` used for null/undefined fallback, `||` for any-falsy fallback?

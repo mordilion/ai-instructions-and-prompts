@@ -11,12 +11,14 @@
 > **ALWAYS**: Use `dart analyze` for linting
 > **ALWAYS**: Prefer final over var for immutability
 > **ALWAYS**: Use const constructors where possible
-> 
+> **ALWAYS**: Use `??` and `??=` for null fallbacks
+>
 > **NEVER**: Use ! (null assertion) without justification
 > **NEVER**: Use var when final is sufficient
 > **NEVER**: Skip type annotations for public APIs
 > **NEVER**: Use dynamic unless necessary
 > **NEVER**: Mutable collections without reason
+> **NEVER**: Call the same method twice in one expression (extract to `final`)
 
 ## Naming Conventions
 
@@ -67,11 +69,35 @@ Future<User> getUser(int id) async {
 // Nullable types
 String? findName(int id) => users[id];
 
-// Null-aware operators
+// Null-aware operators (?? triggers only on null)
 final email = user?.profile?.email ?? 'default';
+
+// Null-aware assignment
+cache ??= computeExpensive();
 
 // Assertion operator (use sparingly)
 final name = user!.name;
+```
+
+## Reduce Method Calls (Extract `final` + `??`)
+
+> **ALWAYS**: Extract repeated method calls into a `final` local.
+> **ALWAYS**: Collapse null-check ternaries into `??`.
+
+```dart
+// ❌ BAD: getCompanyName() called 3 times
+final displayName = customer.getCompanyName() != null && customer.getCompanyName() != ''
+    ? customer.getCompanyName()!
+    : customer.getContactPerson();
+
+// ✅ GOOD (null-only fallback): extract + ??
+final companyName = customer.getCompanyName();
+final displayName = (companyName != null && companyName.isNotEmpty)
+    ? companyName
+    : customer.getContactPerson();
+
+// ✅ GOOD (when empty string is a valid value): just ??
+final displayName = customer.getCompanyName() ?? customer.getContactPerson();
 ```
 
 ## Best Practices
@@ -111,3 +137,5 @@ final user = User()
 - [ ] No dynamic unless necessary?
 - [ ] Arrow functions for single expressions?
 - [ ] Trailing commas for collections?
+- [ ] No method called twice in the same expression (extracted to `final`)?
+- [ ] `??` / `??=` used for null fallbacks instead of ternaries?

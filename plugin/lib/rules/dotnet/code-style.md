@@ -11,12 +11,14 @@
 > **ALWAYS**: Use async/await for I/O operations
 > **ALWAYS**: Use var when type is obvious
 > **ALWAYS**: Use expression-bodied members for single statements
-> 
+> **ALWAYS**: Use `??` (null coalescing) and `??=` for null fallbacks
+>
 > **NEVER**: Block on async (.Result, .Wait())
 > **NEVER**: Use async void (except event handlers)
 > **NEVER**: Skip nullable annotations
 > **NEVER**: Use underscores for local variables (private fields use _camelCase by convention)
 > **NEVER**: Public fields (use properties)
+> **NEVER**: Call the same method twice in one expression (extract to local variable)
 
 ## Naming Conventions
 
@@ -74,6 +76,30 @@ var name = user?.Name ?? "Anonymous";
 var email = user?.Profile?.Email;
 ```
 
+## Reduce Method Calls (Extract Variable + `??` / `??=`)
+
+> **ALWAYS**: Extract repeated method calls into a local `var`.
+> **ALWAYS**: Collapse null-check ternaries into `??`.
+
+```csharp
+// ❌ BAD: GetCompanyName() called 3 times
+var displayName = customer.GetCompanyName() != null && customer.GetCompanyName() != ""
+    ? customer.GetCompanyName()
+    : customer.GetContactPerson();
+
+// ✅ GOOD (null-only fallback): extract + ??
+var companyName = customer.GetCompanyName();
+var displayName = string.IsNullOrEmpty(companyName) ? customer.GetContactPerson() : companyName;
+
+// ✅ GOOD (when empty string is a valid value): just ??
+var displayName = customer.GetCompanyName() ?? customer.GetContactPerson();
+
+// ✅ GOOD: ??= for lazy assignment
+_cached ??= ComputeExpensive();
+```
+
+> **Note**: C# has no Elvis-style "falsy" operator. For "null OR empty" use `string.IsNullOrEmpty(...)` on an extracted variable.
+
 ## Best Practices
 
 ```csharp
@@ -107,3 +133,5 @@ var message = $"User {name} created";
 - [ ] No missing nullable annotations?
 - [ ] No public fields (using properties)?
 - [ ] Records for immutable data (C# 9+)?
+- [ ] No method called twice in the same expression (extracted to variable)?
+- [ ] `??` / `??=` used for null fallbacks instead of ternaries?

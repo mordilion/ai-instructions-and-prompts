@@ -11,11 +11,13 @@
 > **ALWAYS**: Use named arguments for 3+ parameters
 > **ALWAYS**: Use expression body for single expressions
 > **ALWAYS**: Use null-safety operators (`?.`, `?:`)
-> 
+> **ALWAYS**: Use Elvis `?:` instead of verbose null-check ternaries
+>
 > **NEVER**: Use `var` unless mutation required
 > **NEVER**: Use `!!` without justification
 > **NEVER**: Ignore null-safety
 > **NEVER**: Use Java-style getters/setters
+> **NEVER**: Call the same nullable getter twice (extract with `?:` or `let`)
 
 ## Naming
 
@@ -54,6 +56,27 @@ User().apply { name = "John" }
 list.also { log(it.size) }
 ```
 
+## Reduce Method Calls (Elvis `?:` + Extract Variable)
+
+> **ALWAYS**: Replace null-check ternaries with the Elvis operator `?:`.
+> **ALWAYS**: Extract repeated calls into a `val` — do NOT call the same getter twice.
+
+```kotlin
+// ❌ BAD: getCompanyName() called 3 times
+val displayName = if (customer.getCompanyName() != null && customer.getCompanyName() != "")
+    customer.getCompanyName()
+else
+    customer.getContactPerson()
+
+// ✅ GOOD: Elvis + takeIf — single call, intent explicit
+val displayName = customer.companyName?.takeIf { it.isNotEmpty() }
+    ?: customer.contactPerson
+
+// ✅ ALSO GOOD: extract variable for clarity / reuse
+val companyName = customer.companyName
+val displayName = companyName?.takeIf { it.isNotEmpty() } ?: customer.contactPerson
+```
+
 ## Common AI Mistakes
 
 | Mistake | ❌ Wrong | ✅ Correct |
@@ -80,3 +103,5 @@ list.also { log(it.size) }
 - [ ] No unjustified `!!`?
 - [ ] Properties not getters/setters?
 - [ ] Extension functions where appropriate?
+- [ ] No nullable getter called twice (extracted or Elvis-collapsed)?
+- [ ] Elvis `?:` used instead of null-check ternaries?
