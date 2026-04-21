@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "ai-iap",
-      "version": "1.0.1",
+      "version": "1.2.0",
       "source": "./plugin",
       "description": "Consistent AI coding standards for Claude Code - rules, agents, and processes for 20+ languages and 52+ frameworks"
     }

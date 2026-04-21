@@ -1,6 +1,6 @@
 {
   "name": "ai-iap",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Consistent AI coding standards for Claude Code. Modular rules, project instructions, and agents for 20+ languages and 52+ frameworks.",
   "author": {
     "name": "Henning Huncke",
