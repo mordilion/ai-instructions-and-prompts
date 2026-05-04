@@ -165,7 +165,7 @@ Select documentation standards to include:
 (Choose based on your project type)
 
   1. Code Documentation ⭐
-      Inline comments, docstrings, JSDoc, XML docs
+      Inline comments, docstrings, JSDoc, XML docs, context-efficient summaries, doc/code sync
   2. Project Documentation ⭐
       README, CHANGELOG, CONTRIBUTING, LICENSE
   3. API Documentation ⭐ (backend/fullstack)
@@ -530,7 +530,7 @@ Select documentation standards to include:
 (Choose based on your project type)
 
   1. Code Documentation ⭐
-      Inline comments, docstrings, JSDoc, XML docs
+      Inline comments, docstrings, JSDoc, XML docs, context-efficient summaries, doc/code sync
   2. Project Documentation ⭐
       README, CHANGELOG, CONTRIBUTING, LICENSE
   3. API Documentation ⭐ (backend/fullstack)
@@ -749,7 +749,7 @@ Since upstream never modifies `custom/`, merges are clean. See [`custom/README.m
 
 The project includes three **optional** documentation rule files in `rules/general/documentation/`:
 
-1. **code.md** (~1,250 tokens) - Inline comments, docstrings, JSDoc, XML docs, PHPDoc
+1. **code.md** — Inline comments, docstrings, JSDoc, XML docs, PHPDoc; **context-efficient** summaries for functions/variables when they save reading cost; doc/code sync
    - Self-documenting code principles
    - Comment types (explanatory, warning, TODOs)
    - Language-specific examples (Python, TypeScript, C#, Java, Swift, PHP)
@@ -890,10 +890,13 @@ Contributions are welcome! Here's how you can help:
 
 Please read the existing rules to understand the style and format before contributing.
 
+**Repository root (maintainers)** — see **[`CONTRIBUTING.md`](../../CONTRIBUTING.md)** for Claude Code rules regeneration (`scripts/generate-ai-iap-claude-rules.mjs`), `.ai-iap-state.json`, and `CLAUDE.md`.
+
 **Before submitting**:
 1. Run validation: **`/ai-iap:validate`**
-2. Ensure all tests pass
-3. Update token cost table if adding new rules
+2. If you changed rule sources under `plugin/lib/rules/` for languages tracked in this repo’s `.claude/rules/`, regenerate: **`node scripts/generate-ai-iap-claude-rules.mjs`** (from repository root)
+3. Ensure all tests pass
+4. Update token cost table if adding new rules
 
 ---
 

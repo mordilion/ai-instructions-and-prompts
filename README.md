@@ -56,6 +56,17 @@ claude --plugin-dir ./path/to/ai-instructions-and-prompts
 Run `/clear` first for a clean context, then start the setup wizard. It walks you through
 language, framework, and structure selection, then generates your `.claude/rules/` configuration.
 
+## Developing this repository
+
+If you **work on the plugin source** (not only consume it as an end user):
+
+- Maintainer instructions: [`CLAUDE.md`](CLAUDE.md) (includes verification and change propagation).
+- Structured notes (ADRs, modules, features): [`docs/memory/README.md`](docs/memory/README.md).
+- **Regenerate checked-in Claude Code rules** after changing which languages apply to this repo or after editing `scripts/generate-ai-iap-claude-rules.mjs`:  
+  `node scripts/generate-ai-iap-claude-rules.mjs`  
+  Selection is stored in [`.ai-iap-state.json`](.ai-iap-state.json); output is [`.claude/rules/`](.claude/rules/).
+- Contributing and local checks: [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
 ## Plugin Components
 
 | Component | Path | Description |
@@ -68,6 +79,7 @@ language, framework, and structure selection, then generates your `.claude/rules
 | Docs writer | `plugin/agents/docs-writer.md` | Improves documentation |
 | Refactor helper | `plugin/agents/refactor-helper.md` | Refactors without changing behavior |
 | Session hook | `plugin/hooks/hooks.json` | Suggests setup on new projects |
+| Rule regen (maintainers) | `scripts/generate-ai-iap-claude-rules.mjs` | Rebuilds `.claude/rules/` from `plugin/lib/rules/` (same layout as setup) |
 
 ## Fork & Customize
 
@@ -97,7 +109,8 @@ for details.
 - [Configuration](plugin/lib/README.md#-configuration)
 - [**Team Adoption Guide**](TEAM_ADOPTION_GUIDE.md) -- For engineering teams evaluating this project
 - [Troubleshooting](TROUBLESHOOTING.md)
-- [Contributing](plugin/lib/README.md#-contributing)
+- [Contributing](CONTRIBUTING.md) (root) — maintainer workflow and checks
+- [Contributing (details)](plugin/lib/README.md#-contributing) — style and extending the library
 
 ## License
 

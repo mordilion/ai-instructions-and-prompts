@@ -28,7 +28,7 @@
         "code": {
           "name": "Code Documentation",
           "file": "documentation/code",
-          "description": "Inline comments, docstrings, JSDoc, XML docs",
+          "description": "Inline comments, docstrings, JSDoc, XML docs, context-efficient summaries, doc/code sync",
           "recommended": true,
           "applicableTo": [
             "all"

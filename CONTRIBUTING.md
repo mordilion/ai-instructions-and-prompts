@@ -16,6 +16,8 @@ optimize for **clarity**, **consistency**, and **cross-AI understandability**.
 Please skim:
 
 - `README.md` (overview and quick start)
+- `CLAUDE.md` (maintainer expectations for **this** repo: propagation, verification, context memory)
+- `docs/memory/README.md` (optional structured notes — ADRs, modules, features)
 - `TEAM_ADOPTION_GUIDE.md` (context and adoption constraints)
 
 ## Project principles (please follow)
@@ -47,7 +49,14 @@ Use **Conventional Commits** (the repository enforces this style). Examples:
 Run the same checks CI runs:
 
 - **Markdown lint**: ensure all `*.md` files pass `markdownlint`
-- **Validation**: run `/ai-iap:validate` in Claude Code
+- **Validation**: run `/ai-iap:validate` in Claude Code with this repo loaded as the plugin (`claude --plugin-dir .` or equivalent)
+- **Checked-in Claude Code rules**: this repository keeps generated rules under `.claude/rules/` so Claude Code matches our sources without relying on a manual setup run. After changing rule **sources** under `plugin/lib/rules/` or changing which languages should apply here, regenerate:
+
+```bash
+node scripts/generate-ai-iap-claude-rules.mjs
+```
+
+Edit `SELECTION` at the top of `scripts/generate-ai-iap-claude-rules.mjs` if you intentionally add or remove languages or documentation bundles; keep `.ai-iap-state.json` in sync with that intent.
 
 If your change touches setup/merge logic, run `/ai-iap:validate` again after your edits.
 

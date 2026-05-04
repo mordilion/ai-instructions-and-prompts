@@ -319,6 +319,22 @@ Valid override values: `replace`, `append`, `prepend`. Default is `append`.
 
 ---
 
+## Plugin repository development (contributors)
+
+### ".claude/rules/ out of date after editing plugin/lib/rules/"
+
+**Issue**: You changed markdown under `plugin/lib/rules/` but Claude Code still reflects old text from `.claude/rules/` in this repo.
+
+**Fix**: From the repository root run:
+
+```bash
+node scripts/generate-ai-iap-claude-rules.mjs
+```
+
+Commit the updated `.claude/rules/` files. Adjust `SELECTION` in that script (and ideally `.ai-iap-state.json`) if you add or remove languages or documentation bundles for this repository.
+
+---
+
 ## Still Having Issues?
 
 ### Validation Checklist

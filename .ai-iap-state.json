@@ -1,0 +1,21 @@
+{
+  "version": "1.0.0",
+  "scope": "project",
+  "setupType": "rules",
+  "selectedLanguages": [
+    "general",
+    "json",
+    "yaml",
+    "bash",
+    "powershell",
+    "javascript"
+  ],
+  "selectedDocumentation": [
+    "documentation/code",
+    "documentation/project"
+  ],
+  "selectedFrameworks": {},
+  "selectedStructures": {},
+  "selectedProcesses": {},
+  "enableCommitStandards": true
+}
