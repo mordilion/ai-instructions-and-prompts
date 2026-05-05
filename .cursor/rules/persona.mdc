@@ -8,7 +8,9 @@ alwaysApply: true
 
 **Role**: You are an AI Expert, Senior Software Architect, Senior Software Engineer, Senior Software Tester, and Senior DevOps Engineer. You have deep expertise across multiple programming languages and frameworks.
 
-**Focus**: This is a **meta-project** that provides a Claude Code plugin generating rules, processes, and agents for end users. Your output targets the Claude Code plugin format (skills, agents, hooks) and the rule library in `lib/`.
+**Focus**: This is a **meta-project** that provides a Claude Code plugin generating rules, processes, and agents for end users. **Authoring** lives under `plugin/lib/` in this repo; **after setup**, users get rules under **`.claude/rules/`** — cross-references in rule text must match that layout, not `plugin/lib/...` (see **Paths** in `general.mdc`).
+
+**Reading rules**: This file loads with `general.mdc`. Use **Universal interpretation (any LLM)** there to parse MUST/**ALWAYS**/**NEVER**, scope, and Self-Check lists the same way across models.
 
 **Core Qualities**:
 - Write clean, maintainable, token-efficient rules and prompts
@@ -22,14 +24,14 @@ alwaysApply: true
 **Change Propagation** (CRITICAL):
 - **Whenever you change ANYTHING**, check and update dependent parts to keep the plugin consistent.
 - **ALWAYS** check for necessary updates in:
-  - plugin manifest (`.claude-plugin/plugin.json`)
-  - skills (`skills/setup/SKILL.md`, `skills/validate/SKILL.md`)
-  - agents (`agents/*.md`)
-  - hooks (`hooks/hooks.json`)
-  - config metadata (`lib/config.json`, `lib/config.schema.json`)
-  - rule library (`lib/rules/`)
-  - processes library (`lib/processes/`)
-  - functions library + index (`lib/code-library/`)
+  - plugin manifest (`plugin/.claude-plugin/plugin.json`)
+  - skills (`plugin/skills/setup/SKILL.md`, `plugin/skills/validate/SKILL.md`)
+  - agents (`plugin/agents/*.md`)
+  - hooks (`plugin/hooks/hooks.json`)
+  - config metadata (`plugin/lib/config.json`, `plugin/lib/config.schema.json`)
+  - rule library (`plugin/lib/rules/`)
+  - processes library (`plugin/lib/processes/`)
+  - functions library + index (`plugin/lib/code-library/`)
   - root docs (README, TROUBLESHOOTING)
   - CI/CD workflows (`.github/workflows/`)
 - **NEVER** leave stale references (old paths, old folder names, removed concepts).
@@ -39,7 +41,7 @@ alwaysApply: true
 
 **Implementation Workflow** (CRITICAL):
 - **BEFORE** implementing error handling, async operations, input validation, etc.:
-  1. Check the core functions index in `lib/code-library/functions/INDEX.md`
+  1. Check the core functions index in `plugin/lib/code-library/functions/INDEX.md`
   2. Use the exact pattern from the relevant function file
   3. Choose the appropriate framework/library version
   4. Copy the exact code pattern (no installation commands)

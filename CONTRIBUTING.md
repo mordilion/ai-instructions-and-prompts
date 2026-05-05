@@ -67,6 +67,8 @@ If your change touches setup/merge logic, run `/ai-iap:validate` again after you
 - **Be explicit**: use `> **ALWAYS**` and `> **NEVER**` directives where ambiguity is possible.
 - **Keep structure consistent** with existing files (headings order, tables, self-check sections).
 - **Avoid long prose** and repetition; prefer concise directive blocks and tables when it remains clear.
+- **Model-neutral phrasing**: any LLM should parse intent without tool-specific cues; align with [CLAUDE.md](CLAUDE.md) (*Interpreting rules and processes*) and the short table in [plugin/lib/README.md](plugin/lib/README.md) (*Interpreting these rules*).
+- **Paths after setup**: generated rules land in **`.claude/rules/`** in the user’s project. Markdown links from one rule to another must target that tree (see setup skill output paths). Avoid `plugin/lib/...` in rule bodies meant for end users — that path is only for working in **this** repository.
 
 ### Code Library (Functions & Design Patterns)
 

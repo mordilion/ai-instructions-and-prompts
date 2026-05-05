@@ -10,6 +10,7 @@
 - Follow all applicable rules and rule precedence (this file, `.cursor/rules/` when using Cursor, and generated `.claude/rules/` when testing setup).
 - Ask targeted questions if outcomes, scope, or constraints are unclear.
 - **Change propagation:** Any change to rules, processes, functions, config, skills, hooks, or agents **must** be checked against dependent files (see [Change Guidelines](#change-guidelines)).
+- **Plugin SemVer:** Any change that ships as part of the plugin (rules, processes, functions, `plugin/lib/config.json`, skills, hooks, agents, manifests, or other user-visible behavior) **must** bump the plugin version. Choose **independently** which segment to increment: **MAJOR** for incompatible or breaking changes, **MINOR** for backward-compatible features or meaningful additions, **PATCH** for fixes and small compatible adjustments. Keep **`plugin/.claude-plugin/plugin.json`**, **`.claude-plugin/marketplace.json`**, and **`plugin/lib/config.json`** (`version` field) **in lockstep** on every such change.
 - **Before** adding error handling, validation, async, HTTP, DB patterns in examples: check [`plugin/lib/code-library/functions/INDEX.md`](plugin/lib/code-library/functions/INDEX.md) and use the pattern file — do not invent variants.
 - Validate all external input in **example** code and in tooling that consumes untrusted data.
 - Never log or store secrets; redact sensitive values in logs and docs.
@@ -17,6 +18,30 @@
 - Prefer the **smallest** change that satisfies the request; avoid drive-by refactors.
 - **Rerunnable setup:** Generated files must remain safe to regenerate; only remove outputs marked `aiIapManaged: true` during cleanup (see setup skill).
 - Keep outputs concise and unambiguous across AI tools.
+
+---
+
+## Interpreting rules and processes (any assistant)
+
+Instructions in this project are written to be **model-neutral**: any LLM should resolve them without product-specific subtext. The same reading contract appears under **Universal interpretation (any LLM)** in [`.cursor/rules/general.mdc`](.cursor/rules/general.mdc) and in [`plugin/lib/README.md`](plugin/lib/README.md) (*Interpreting these rules*).
+
+| Signal | Meaning |
+|--------|---------|
+| **ALWAYS** / **NEVER** / MUST | Hard requirement unless explicitly marked optional |
+| Scope line (`> **Scope**`) | Jurisdiction of that file; narrower rules override broader ones |
+| AI Self-Check | Verify each item before final output |
+| ⭐ / “recommended” | Default when the user gave no preference |
+| Code in fences | Illustrative—adapt to the target project’s stack and detected versions |
+
+**Paths (three contexts):**
+
+| Context | Rules | Code library |
+|--------|-------|--------------|
+| **This repository** | Authoring: `plugin/lib/rules/**` | `plugin/lib/code-library/**` |
+| **Installed plugin** (`CLAUDE_PLUGIN_ROOT`) | `lib/rules/**` | `lib/code-library/functions/INDEX.md` |
+| **User project after `/ai-iap:setup`** | **Generated:** `.claude/rules/core/**`, `.claude/rules/structures/**`, `.claude/rules/processes/**` | Loaded from the plugin’s `lib/code-library/` when the assistant uses the plugin |
+
+**Cross-references:** Links from one rule to another **in content that is emitted to users** must resolve inside **`.claude/rules/`** (layout from the setup skill). Do not link to `plugin/lib/…` in generated rule bodies — that path is only valid in this meta-repository.
 
 ---
 
@@ -34,6 +59,7 @@
 - New directories or structural changes are introduced
 - **This plugin repo:** layout under `plugin/` changes (skills, agents, hooks, `plugin/lib/`); `plugin/lib/config.json` or `plugin/lib/config.schema.json` semantics change; setup/validate skills change; CI validation steps change (see [Build & Verification](#build--verification))
 - This file and [`README.md`](README.md) / [`plugin/lib/README.md`](plugin/lib/README.md) should stay accurate together
+- Cross-model “how to read rules” or **path context** (meta-repo vs `.claude/rules/` after setup) changes — keep [`.cursor/rules/general.mdc`](.cursor/rules/general.mdc), [`plugin/lib/README.md`](plugin/lib/README.md) (*Interpreting these rules*), and this section aligned
 
 ### Build Context Memory when
 
@@ -211,7 +237,7 @@ When you change something in this meta-project, **propagate** as needed:
 2. **New language/framework/process:** `config.json` + schema; add files under `plugin/lib/rules/` or `plugin/lib/processes/`; document in `plugin/lib/README.md` if behavior is non-obvious.
 3. **Setup merge behavior or output paths:** `plugin/skills/setup/SKILL.md`; validate skill if invariants change.
 4. **Functions / code library:** Update the relevant `INDEX.md`; follow `_TEMPLATE.md` for new files.
-5. **Plugin version or marketplace metadata:** `plugin/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`; changelog/release process per team practice.
+5. **Plugin version or marketplace metadata:** Bump SemVer in all three places together: `plugin/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, and `plugin/lib/config.json` (`version`). Decide MAJOR / MINOR / PATCH per the [Hard Rules](#hard-rules-violations-cause-bugs-or-broken-installs) SemVer bullet; follow team changelog/release practice if documented.
 6. **Breaking or behavioral changes to generated output:** Update any quoted examples in root `README.md`, `CONTRIBUTING.md`, or `TROUBLESHOOTING.md`.
 7. **Changes to checked-in `.claude/rules/`:** Regenerate with `scripts/generate-ai-iap-claude-rules.mjs`; update `docs/memory/` if module or feature boundaries shift.
 

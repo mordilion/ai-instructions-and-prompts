@@ -15,18 +15,18 @@ alwaysApply: true
 - **NEVER** work with fixed versions. Use user's project-related versions and make it flexible
 - Files **MUST** follow the same structure for better maintainability
 
-**Plugin Structure** (this repository IS the plugin):
-- `.claude-plugin/plugin.json` — Plugin manifest
-- `skills/setup/SKILL.md` — Interactive setup wizard (`/ai-iap:setup`)
-- `skills/validate/SKILL.md` — Configuration validator (`/ai-iap:validate`)
-- `agents/*.md` — 5 built-in agents (code-reviewer, codebase-explorer, test-writer, docs-writer, refactor-helper)
-- `hooks/hooks.json` — SessionStart hook for setup hint
-- `lib/config.json` — Central configuration (languages, frameworks, structures, processes)
-- `lib/config.schema.json` — JSON schema for config validation
-- `lib/claude-subagents.json` — Agent templates with rule bindings
-- `lib/rules/` — Rule library (192 files: general → language → framework → structure)
-- `lib/processes/` — Process guides (78 files: testing, CI/CD, logging, docker, auth, etc.)
-- `lib/code-library/` — Implementation patterns + design patterns
+**Plugin Structure** (this repository; all under `plugin/` except marketplace root):
+- `plugin/.claude-plugin/plugin.json` — Plugin manifest
+- `plugin/skills/setup/SKILL.md` — Interactive setup wizard (`/ai-iap:setup`)
+- `plugin/skills/validate/SKILL.md` — Configuration validator (`/ai-iap:validate`)
+- `plugin/agents/*.md` — Built-in agents (code-reviewer, codebase-explorer, test-writer, docs-writer, refactor-helper)
+- `plugin/hooks/hooks.json` — SessionStart hook for setup hint
+- `plugin/lib/config.json` — Central configuration (languages, frameworks, structures, processes)
+- `plugin/lib/config.schema.json` — JSON schema for config validation
+- `plugin/lib/claude-subagents.json` — Agent templates with rule bindings
+- `plugin/lib/rules/` — Rule library (general → language → framework → structure)
+- `plugin/lib/processes/` — Process guides (testing, CI/CD, logging, docker, auth, etc.)
+- `plugin/lib/code-library/` — Implementation patterns + design patterns
 
 **Success Criteria**:
 - Consistent code structure and architecture patterns
@@ -38,10 +38,34 @@ alwaysApply: true
 
 > **BEFORE** implementing error handling, async operations, input validation, database queries, HTTP requests, or other covered function patterns:
 >
-> 1. **CHECK** the core functions index
+> 1. **CHECK** the functions index — **same file, two valid path roots:** from this Git repo `plugin/lib/code-library/functions/INDEX.md`; from the installed plugin directory (`CLAUDE_PLUGIN_ROOT`, the `plugin` folder) `lib/code-library/functions/INDEX.md`
 > 2. **USE** the exact pattern from the function file (e.g., `error-handling.md`)
 > 3. **CHOOSE** the appropriate framework version (Plain, Prisma, Laravel, etc.)
 > 4. **COPY** the exact code pattern (no installation commands)
+
+---
+
+## Universal interpretation (any LLM)
+
+| Signal | Meaning |
+|--------|---------|
+| **ALWAYS** / **NEVER** / MUST | Hard constraint unless explicitly marked optional |
+| `> **Scope**` | Where the rule applies; narrower language/framework rules override broader `general` rules |
+| AI Self-Check | Run as a checklist before you finish |
+| ⭐ / “recommended” | Default when the user gave no preference |
+| Code in fences | Adapt to the project stack and detected versions—not verbatim if incompatible |
+
+If instructions conflict, follow the **more specific** scope. If blocked by missing requirements, ask **one** targeted question instead of guessing.
+
+**Paths (do not mix contexts):**
+
+| Context | Where rules live | Code library / `INDEX.md` |
+|--------|-------------------|---------------------------|
+| **This Git repo** (plugin source) | `plugin/lib/rules/**` (authoring) | `plugin/lib/code-library/**` |
+| **Installed plugin** (`CLAUDE_PLUGIN_ROOT`) | `lib/rules/**` (on disk inside the plugin folder) | `lib/code-library/functions/INDEX.md` |
+| **User project after `/ai-iap:setup`** | **Generated** under `.claude/rules/core/**`, `.claude/rules/structures/**`, `.claude/rules/processes/**` (see setup skill) | Still read from the **plugin** copy above when the tool loads the plugin |
+
+**Cross-references between rule files:** Text shipped to users lives under **`.claude/rules/`**, not under `plugin/lib/rules/`. When you add Markdown links from one rule to another, target the **post-setup paths** (relative paths inside `.claude/rules/…`). **Never** point end-user-facing rule bodies at `plugin/lib/…` (that path does not exist in the user’s repo).
 
 ---
 
@@ -68,14 +92,26 @@ alwaysApply: true
    - **ALWAYS** assume a change can require updates in:
      - plugin manifest and skills (setup wizard logic, validation)
      - config metadata (languages/frameworks/structures/processes mappings)
-     - language/framework/structure rule sources in `lib/rules/`
-     - processes library in `lib/processes/`
-     - functions library + functions index in `lib/code-library/`
-     - agents in `agents/`
-     - hooks in `hooks/`
+     - language/framework/structure rule sources in `plugin/lib/rules/`
+     - processes library in `plugin/lib/processes/`
+     - functions library + functions index in `plugin/lib/code-library/`
+     - agents in `plugin/agents/`
+     - hooks in `plugin/hooks/`
      - root docs (readme, troubleshooting)
      - CI/CD workflows in `.github/workflows/`
    - **NEVER** leave docs/files pointing to old paths or concepts.
+
+5. **Functions System** (CRITICAL - Reduce AI Guessing & Token Waste)
+   - **Purpose**: Provide exact implementation patterns across all supported languages
+   - **Location**: `plugin/lib/code-library/` (this repo)
+   - **Structure**: ONE file per pattern, ALL languages in same file
+   - **Index**: Quick lookup table — **ALWAYS CHECK THE INDEX FIRST**
+
+6. **File Scope & Pattern Lookup**
+   - **ALWAYS** analyze and work on all relevant source files and any project customizations
+   - **ALWAYS** check the project's existing dependencies before choosing a framework/library variant
+   - **NEVER** add installation commands to function files
+   - **ALWAYS** check the functions index **BEFORE** implementing patterns
 
 ## Rerunnable Setup (CRITICAL)
 
@@ -84,15 +120,3 @@ alwaysApply: true
 - **State**: Setup persists the user's last selection to `.ai-iap-state.json` (in the project root).
 - **Safe cleanup**: Generated outputs must be marked with `aiIapManaged: true` in YAML frontmatter.
 - **NEVER** delete user-owned files during cleanup.
-
-5. **Functions System** (CRITICAL - Reduce AI Guessing & Token Waste)
-   - **Purpose**: Provide exact implementation patterns across all 8 languages
-   - **Location**: `lib/code-library/` (in this repo)
-   - **Structure**: ONE file per pattern, ALL languages in same file
-   - **Index**: Quick lookup table - **ALWAYS CHECK THE INDEX FIRST**
-
-6. **File Scope & Pattern Lookup**
-   - **ALWAYS** analyze and work on all relevant source files and any project customizations
-   - **ALWAYS** check the project's existing dependencies before choosing a framework/library variant
-   - **NEVER** add installation commands to function files
-   - **ALWAYS** check the functions index **BEFORE** implementing patterns

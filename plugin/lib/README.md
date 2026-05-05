@@ -23,6 +23,20 @@ AI coding assistants need configuration to produce consistent, high-quality code
 Your Rules (one source) → /ai-iap:setup → Claude Code Configured
 ```
 
+## Interpreting these rules (any AI assistant)
+
+| Signal | Meaning |
+|--------|---------|
+| **ALWAYS** / **NEVER** / MUST | Mandatory unless explicitly marked optional |
+| `> **Scope**` | Where the rule applies; narrower language/framework rules override `general` |
+| AI Self-Check | Treat as a checklist before you finish |
+| ⭐ / “recommended” | Default when the user expressed no preference |
+| Code in fences | Adapt to the real project—stack, versions, layout—not copy-pasted blindly |
+
+If two instructions conflict, follow the **more specific** scope. If a requirement is unknown, ask **one** targeted question instead of inventing it.
+
+**Where files live after setup:** The wizard writes modular rules into **`.claude/rules/`** (typically `core/`, `structures/`, and `processes/`). Your project’s `CLAUDE.md` is merged separately. **Cross-links between rules** should use paths **relative to that `.claude/rules/` tree**, not paths from the plugin source repo (`plugin/lib/...` exists only in the plugin package on disk, not in the end-user project).
+
 ---
 
 ## ✨ Features
